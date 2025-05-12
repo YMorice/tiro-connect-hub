@@ -48,6 +48,10 @@ export interface Message {
   read: boolean;
   projectId?: string;
   createdAt: Date;
+  documentUrl?: string; // Added for document sharing
+  documentType?: "proposal" | "final" | "regular"; // Added to identify document type
+  documentName?: string; // Added for document name
+  documentStatus?: "pending" | "approved" | "rejected"; // Added for document approval status
 }
 
 export interface Document {
@@ -58,6 +62,9 @@ export interface Document {
   projectId: string;
   uploadedBy: string;
   createdAt: Date;
+  isDeliverable?: boolean; // Added to mark final deliverables
+  status?: "pending" | "approved" | "rejected"; // Added for approval status
+  reviewComment?: string; // Added for entrepreneur feedback
 }
 
 export interface Review {
