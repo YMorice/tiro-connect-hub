@@ -10,6 +10,7 @@ export interface User {
   bio?: string;
   skills?: string[];
   createdAt: Date;
+  isOnline?: boolean; // Added to track online status
 }
 
 export interface Project {
@@ -22,6 +23,7 @@ export interface Project {
   tasks: Task[];
   documents: Document[];
   packId?: string; // reference to the project pack
+  price?: number; // Added to track project earnings
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,5 +57,15 @@ export interface Document {
   type: string;
   projectId: string;
   uploadedBy: string;
+  createdAt: Date;
+}
+
+export interface Review {
+  id: string;
+  projectId: string;
+  reviewerId: string; // entrepreneur ID
+  studentId: string;
+  rating: number; // 1-5 stars
+  comment: string;
   createdAt: Date;
 }
