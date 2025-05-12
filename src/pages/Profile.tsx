@@ -12,13 +12,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
+// Define schema for student profile
 const studentSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   bio: z.string().optional(),
-  skills: z.string().optional(),
+  skillsText: z.string().optional(),
 });
 
+// Define schema for entrepreneur profile
 const entrepreneurSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
@@ -38,18 +40,25 @@ const Profile = () => {
       name: user?.name || "",
       email: user?.email || "",
       bio: user?.bio || "",
-      ...(isStudent && { skills: user?.skills?.join(", ") || "" }),
+      ...(isStudent && { skillsText: user?.skills?.join(", ") || "" }),
     },
   });
 
   const onSubmit = (values: FormValues) => {
-    updateProfile({
+    const updatedProfile: {
+      name: string;
+      bio?: string;
+      skills?: string[];
+    } = {
       name: values.name,
       bio: values.bio,
-      ...(isStudent && {
-        skills: values.skills ? values.skills.split(",").map(s => s.trim()) : [],
-      }),
-    });
+    };
+    
+    if (isStudent && 'skillsText' in values) {
+      updatedProfile.skills = values.skillsText ? values.skillsText.split(",").map(s => s.trim()) : [];
+    }
+    
+    updateProfile(updatedProfile);
   };
 
   if (!user) return null;
@@ -120,7 +129,7 @@ const Profile = () => {
                 {isStudent && (
                   <FormField
                     control={form.control}
-                    name="skills"
+                    name="skillsText"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Skills</FormLabel>

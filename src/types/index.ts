@@ -21,6 +21,7 @@ export interface Project {
   status: "draft" | "open" | "in_progress" | "review" | "completed";
   tasks: Task[];
   documents: Document[];
+  packId?: string; // reference to the project pack
   createdAt: Date;
   updatedAt: Date;
 }

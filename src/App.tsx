@@ -16,6 +16,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import PackSelection from "./pages/PackSelection";
 import NewProject from "./pages/NewProject";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
@@ -60,6 +61,15 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <ProjectDetail />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/projects/pack-selection" 
+                  element={
+                    <ProtectedRoute requiredRole="entrepreneur">
+                      <PackSelection />
                     </ProtectedRoute>
                   } 
                 />
