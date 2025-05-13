@@ -75,13 +75,27 @@ const step4SchemaStudent = z.object({
 );
 
 // Combined type for all form values
-type FormValues = z.infer<typeof step1Schema> & 
-  Partial<z.infer<typeof step2SchemaStudent>> & 
-  Partial<z.infer<typeof step2SchemaEntrepreneur>> & 
-  Partial<z.infer<typeof step3SchemaStudent>> & 
-  Partial<z.infer<typeof step3SchemaEntrepreneur>> & 
-  Partial<z.infer<typeof step4SchemaStudent>> & 
-  { skipProject?: boolean };
+type FormValues = {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: "student" | "entrepreneur";
+  confidenceCode?: string;
+  specialty?: string;
+  bio?: string;
+  portfolioUrl?: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  companyName?: string;
+  companyRole?: string;
+  siret?: string;
+  companyAddress?: string;
+  isFreelance?: boolean;
+  address?: string;
+  iban?: string;
+  skipProject?: boolean;
+};
 
 const Register = () => {
   const { register: authRegister, loading } = useAuth();
@@ -139,7 +153,7 @@ const Register = () => {
     resolver: zodResolver(step3SchemaEntrepreneur),
     defaultValues: {
       companyName: formValues.companyName || "",
-      role: formValues.role || "",
+      role: formValues.companyRole || "", // Note this maps to companyRole in formValues
       siret: formValues.siret || "",
       companyAddress: formValues.companyAddress || "",
     },
@@ -180,7 +194,15 @@ const Register = () => {
   };
 
   const onSubmitStep3Entrepreneur = (values: z.infer<typeof step3SchemaEntrepreneur>) => {
-    setFormValues({ ...formValues, ...values });
+    // Correctly map 'role' to 'companyRole'
+    const mappedValues = {
+      ...values,
+      companyRole: values.role,
+    };
+    
+    delete mappedValues.role; // Remove the original 'role' field
+    
+    setFormValues({ ...formValues, ...mappedValues });
     setStep(4);
   };
 
@@ -192,7 +214,8 @@ const Register = () => {
   };
 
   const onSkipProject = () => {
-    setFormValues({ ...formValues, skipProject: true });
+    // Make sure to cast or ensure that skipProject becomes a boolean
+    setFormValues(current => ({ ...current, skipProject: true }));
     setStep(5);
   };
 
@@ -223,7 +246,7 @@ const Register = () => {
         address: values.address,
         iban: values.iban,
         companyName: values.companyName,
-        companyRole: values.role, // This is the company role, not the user role
+        companyRole: values.companyRole, // This is the company role, not the user role
         companyAddress: values.companyAddress,
       };
       
@@ -244,6 +267,62 @@ const Register = () => {
       setStep(step - 1);
     }
   };
+
+  // Reset forms when step changes
+  React.useEffect(() => {
+    switch(step) {
+      case 1:
+        step1Form.reset({
+          email: formValues.email,
+          password: formValues.password,
+          confirmPassword: formValues.confirmPassword,
+          role: formValues.role,
+          confidenceCode: formValues.confidenceCode || "",
+        });
+        break;
+      case 2:
+        if (formValues.role === "student") {
+          step2StudentForm.reset({
+            specialty: formValues.specialty || "",
+            bio: formValues.bio || "",
+            portfolioUrl: formValues.portfolioUrl || "",
+          });
+        } else {
+          step2EntrepreneurForm.reset({
+            firstName: formValues.firstName || "",
+            lastName: formValues.lastName || "",
+            phoneNumber: formValues.phoneNumber || "",
+          });
+        }
+        break;
+      case 3:
+        if (formValues.role === "student") {
+          step3StudentForm.reset({
+            firstName: formValues.firstName || "",
+            lastName: formValues.lastName || "",
+            phoneNumber: formValues.phoneNumber || "",
+          });
+        } else {
+          step3EntrepreneurForm.reset({
+            companyName: formValues.companyName || "",
+            role: formValues.companyRole || "",
+            siret: formValues.siret || "",
+            companyAddress: formValues.companyAddress || "",
+          });
+        }
+        break;
+      case 4:
+        if (formValues.role === "student") {
+          step4StudentForm.reset({
+            isFreelance: formValues.isFreelance || false,
+            siret: formValues.siret || "",
+            address: formValues.address || "",
+            iban: formValues.iban || "",
+          });
+        }
+        break;
+    }
+  }, [step, formValues]);
 
   // Render the appropriate step
   const renderStep = () => {
@@ -363,8 +442,9 @@ const Register = () => {
               <Button 
                 type="submit" 
                 className="w-full bg-tiro-purple hover:bg-tiro-purple/90"
+                disabled={loading}
               >
-                Next
+                {loading ? "Processing..." : "Next"}
               </Button>
             </form>
           </Form>
@@ -463,6 +543,7 @@ const Register = () => {
                 <Button 
                   type="submit" 
                   className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  disabled={loading}
                 >
                   Next
                 </Button>
@@ -534,6 +615,7 @@ const Register = () => {
                 <Button 
                   type="submit" 
                   className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  disabled={loading}
                 >
                   Next
                 </Button>
@@ -608,6 +690,7 @@ const Register = () => {
                 <Button 
                   type="submit" 
                   className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  disabled={loading}
                 >
                   Next
                 </Button>
@@ -696,6 +779,7 @@ const Register = () => {
                 <Button 
                   type="submit" 
                   className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  disabled={loading}
                 >
                   Next
                 </Button>
@@ -741,6 +825,7 @@ const Register = () => {
                         <Input 
                           placeholder="12345678901234" 
                           {...field} 
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -794,6 +879,7 @@ const Register = () => {
                 <Button 
                   type="submit" 
                   className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  disabled={loading}
                 >
                   Complete Registration
                 </Button>
@@ -813,12 +899,14 @@ const Register = () => {
               <Button 
                 variant="outline" 
                 onClick={onSkipProject}
+                disabled={loading}
               >
                 Skip for now
               </Button>
               <Button 
                 onClick={onAddProject}
                 className="bg-tiro-purple hover:bg-tiro-purple/90"
+                disabled={loading}
               >
                 Add Project
               </Button>
@@ -829,6 +917,7 @@ const Register = () => {
                 type="button" 
                 variant="link" 
                 onClick={goBack}
+                disabled={loading}
               >
                 Back
               </Button>
@@ -858,6 +947,7 @@ const Register = () => {
             <Button 
               onClick={() => navigate("/dashboard")} 
               className="mt-4 bg-tiro-purple hover:bg-tiro-purple/90 w-full"
+              disabled={loading}
             >
               Go to Dashboard
             </Button>
