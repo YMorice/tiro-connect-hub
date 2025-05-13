@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -112,11 +112,11 @@ const Register = () => {
   const step1Form = useForm<z.infer<typeof step1Schema>>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
-      email: formValues.email,
-      password: formValues.password,
-      confirmPassword: formValues.confirmPassword,
-      role: formValues.role,
-      confidenceCode: formValues.confidenceCode || "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "entrepreneur" as const,
+      confidenceCode: "",
     },
   });
 
@@ -124,18 +124,18 @@ const Register = () => {
   const step2StudentForm = useForm<z.infer<typeof step2SchemaStudent>>({
     resolver: zodResolver(step2SchemaStudent),
     defaultValues: {
-      specialty: formValues.specialty || "",
-      bio: formValues.bio || "",
-      portfolioUrl: formValues.portfolioUrl || "",
+      specialty: "",
+      bio: "",
+      portfolioUrl: "",
     },
   });
 
   const step2EntrepreneurForm = useForm<z.infer<typeof step2SchemaEntrepreneur>>({
     resolver: zodResolver(step2SchemaEntrepreneur),
     defaultValues: {
-      firstName: formValues.firstName || "",
-      lastName: formValues.lastName || "",
-      phoneNumber: formValues.phoneNumber || "",
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
     },
   });
 
@@ -143,19 +143,19 @@ const Register = () => {
   const step3StudentForm = useForm<z.infer<typeof step3SchemaStudent>>({
     resolver: zodResolver(step3SchemaStudent),
     defaultValues: {
-      firstName: formValues.firstName || "",
-      lastName: formValues.lastName || "",
-      phoneNumber: formValues.phoneNumber || "",
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
     },
   });
 
   const step3EntrepreneurForm = useForm<z.infer<typeof step3SchemaEntrepreneur>>({
     resolver: zodResolver(step3SchemaEntrepreneur),
     defaultValues: {
-      companyName: formValues.companyName || "",
-      companyRole: formValues.companyRole || "", 
-      siret: formValues.siret || "",
-      companyAddress: formValues.companyAddress || "",
+      companyName: "",
+      companyRole: "",
+      siret: "",
+      companyAddress: "",
     },
   });
 
@@ -163,57 +163,137 @@ const Register = () => {
   const step4StudentForm = useForm<z.infer<typeof step4SchemaStudent>>({
     resolver: zodResolver(step4SchemaStudent),
     defaultValues: {
-      isFreelance: formValues.isFreelance || false,
-      siret: formValues.siret || "",
-      address: formValues.address || "",
-      iban: formValues.iban || "",
+      isFreelance: false,
+      siret: "",
+      address: "",
+      iban: "",
     },
   });
 
+  // Initialize forms when the component mounts
+  useEffect(() => {
+    step1Form.reset({
+      email: formValues.email,
+      password: formValues.password,
+      confirmPassword: formValues.confirmPassword,
+      role: formValues.role,
+      confidenceCode: formValues.confidenceCode || "",
+    });
+  }, []);
+
   // Handle Step 1 submission
   const onSubmitStep1 = (values: z.infer<typeof step1Schema>) => {
-    setFormValues({ ...formValues, ...values });
+    setFormValues(prev => ({ 
+      ...prev, 
+      email: values.email,
+      password: values.password,
+      confirmPassword: values.confirmPassword,
+      role: values.role,
+      confidenceCode: values.confidenceCode || ""
+    }));
+    
+    // Reset step 2 forms based on role
+    if (values.role === "student") {
+      step2StudentForm.reset({
+        specialty: "",
+        bio: "",
+        portfolioUrl: "",
+      });
+    } else {
+      step2EntrepreneurForm.reset({
+        firstName: "",
+        lastName: "",
+        phoneNumber: "",
+      });
+    }
+    
     setStep(2);
   };
 
   // Handle Step 2 submission
   const onSubmitStep2Student = (values: z.infer<typeof step2SchemaStudent>) => {
-    setFormValues({ ...formValues, ...values });
+    setFormValues(prev => ({
+      ...prev,
+      specialty: values.specialty,
+      bio: values.bio,
+      portfolioUrl: values.portfolioUrl
+    }));
+    
+    // Reset step 3 student form
+    step3StudentForm.reset({
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
+    });
+    
     setStep(3);
   };
 
   const onSubmitStep2Entrepreneur = (values: z.infer<typeof step2SchemaEntrepreneur>) => {
-    setFormValues({ ...formValues, ...values });
+    setFormValues(prev => ({
+      ...prev,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      phoneNumber: values.phoneNumber
+    }));
+    
+    // Reset step 3 entrepreneur form
+    step3EntrepreneurForm.reset({
+      companyName: "",
+      companyRole: "",
+      siret: "",
+      companyAddress: "",
+    });
+    
     setStep(3);
   };
 
   // Handle Step 3 submission
   const onSubmitStep3Student = (values: z.infer<typeof step3SchemaStudent>) => {
-    setFormValues({ ...formValues, ...values });
+    setFormValues(prev => ({
+      ...prev,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      phoneNumber: values.phoneNumber
+    }));
+    
+    // Reset step 4 student form
+    step4StudentForm.reset({
+      isFreelance: false,
+      siret: "",
+      address: "",
+      iban: "",
+    });
+    
     setStep(4);
   };
 
   const onSubmitStep3Entrepreneur = (values: z.infer<typeof step3SchemaEntrepreneur>) => {
-    // Fixed: store values with the correct type
-    setFormValues({ 
-      ...formValues, 
+    setFormValues(prev => ({ 
+      ...prev, 
       companyName: values.companyName,
       companyRole: values.companyRole,
       siret: values.siret,
       companyAddress: values.companyAddress
-    });
+    }));
     setStep(4);
   };
 
   // Handle Step 4 submission
   const onSubmitStep4Student = async (values: z.infer<typeof step4SchemaStudent>) => {
-    const finalFormValues = { ...formValues, ...values };
+    const finalFormValues = { 
+      ...formValues, 
+      isFreelance: values.isFreelance,
+      siret: values.siret,
+      address: values.address,
+      iban: values.iban
+    };
+    
     setFormValues(finalFormValues);
     await finalSubmit(finalFormValues);
   };
 
   const onSkipProject = () => {
-    // Make sure to cast or ensure that skipProject becomes a boolean
     setFormValues(current => ({ ...current, skipProject: true }));
     setStep(5);
   };
@@ -266,62 +346,6 @@ const Register = () => {
       setStep(step - 1);
     }
   };
-
-  // Reset forms when step changes
-  React.useEffect(() => {
-    switch(step) {
-      case 1:
-        step1Form.reset({
-          email: formValues.email,
-          password: formValues.password,
-          confirmPassword: formValues.confirmPassword,
-          role: formValues.role,
-          confidenceCode: formValues.confidenceCode || "",
-        });
-        break;
-      case 2:
-        if (formValues.role === "student") {
-          step2StudentForm.reset({
-            specialty: formValues.specialty || "",
-            bio: formValues.bio || "",
-            portfolioUrl: formValues.portfolioUrl || "",
-          });
-        } else {
-          step2EntrepreneurForm.reset({
-            firstName: formValues.firstName || "",
-            lastName: formValues.lastName || "",
-            phoneNumber: formValues.phoneNumber || "",
-          });
-        }
-        break;
-      case 3:
-        if (formValues.role === "student") {
-          step3StudentForm.reset({
-            firstName: formValues.firstName || "",
-            lastName: formValues.lastName || "",
-            phoneNumber: formValues.phoneNumber || "",
-          });
-        } else {
-          step3EntrepreneurForm.reset({
-            companyName: formValues.companyName || "",
-            companyRole: formValues.companyRole || "",
-            siret: formValues.siret || "",
-            companyAddress: formValues.companyAddress || "",
-          });
-        }
-        break;
-      case 4:
-        if (formValues.role === "student") {
-          step4StudentForm.reset({
-            isFreelance: formValues.isFreelance || false,
-            siret: formValues.siret || "",
-            address: formValues.address || "",
-            iban: formValues.iban || "",
-          });
-        }
-        break;
-    }
-  }, [step, formValues]);
 
   // Render the appropriate step
   const renderStep = () => {
@@ -430,6 +454,7 @@ const Register = () => {
                         <Input 
                           placeholder="Enter your student confidence code" 
                           {...field} 
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -524,6 +549,7 @@ const Register = () => {
                       <Input 
                         placeholder="https://yourportfolio.com" 
                         {...field} 
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormMessage />
