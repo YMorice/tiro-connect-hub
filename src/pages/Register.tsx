@@ -55,7 +55,7 @@ const step3SchemaStudent = z.object({
 
 const step3SchemaEntrepreneur = z.object({
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
-  role: z.string().min(2, "Your role must be at least 2 characters"),
+  companyRole: z.string().min(2, "Your role must be at least 2 characters"),
   siret: z.string().min(14, "SIRET number must be at least 14 characters"),
   companyAddress: z.string().min(5, "Please enter a valid address"),
 });
@@ -153,7 +153,7 @@ const Register = () => {
     resolver: zodResolver(step3SchemaEntrepreneur),
     defaultValues: {
       companyName: formValues.companyName || "",
-      role: formValues.companyRole || "", // Note this maps to companyRole in formValues
+      companyRole: formValues.companyRole || "", 
       siret: formValues.siret || "",
       companyAddress: formValues.companyAddress || "",
     },
@@ -194,15 +194,14 @@ const Register = () => {
   };
 
   const onSubmitStep3Entrepreneur = (values: z.infer<typeof step3SchemaEntrepreneur>) => {
-    // Correctly map 'role' to 'companyRole'
-    const mappedValues = {
-      ...values,
-      companyRole: values.role,
-    };
-    
-    delete mappedValues.role; // Remove the original 'role' field
-    
-    setFormValues({ ...formValues, ...mappedValues });
+    // Fixed: store values with the correct type
+    setFormValues({ 
+      ...formValues, 
+      companyName: values.companyName,
+      companyRole: values.companyRole,
+      siret: values.siret,
+      companyAddress: values.companyAddress
+    });
     setStep(4);
   };
 
@@ -246,7 +245,7 @@ const Register = () => {
         address: values.address,
         iban: values.iban,
         companyName: values.companyName,
-        companyRole: values.companyRole, // This is the company role, not the user role
+        companyRole: values.companyRole,
         companyAddress: values.companyAddress,
       };
       
@@ -305,7 +304,7 @@ const Register = () => {
         } else {
           step3EntrepreneurForm.reset({
             companyName: formValues.companyName || "",
-            role: formValues.companyRole || "",
+            companyRole: formValues.companyRole || "",
             siret: formValues.siret || "",
             companyAddress: formValues.companyAddress || "",
           });
@@ -719,7 +718,7 @@ const Register = () => {
 
               <FormField
                 control={step3EntrepreneurForm.control}
-                name="role"
+                name="companyRole"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Your Role in the Company</FormLabel>
