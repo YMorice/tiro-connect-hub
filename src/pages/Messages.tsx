@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -155,6 +154,7 @@ const Messages = () => {
     return contact ? contact.name : "Unknown User";
   };
 
+  // Render message function
   const renderMessage = (msg: any) => {
     const isSender = msg.sender === user?.id;
     const showDocumentReview = !isSender && 
@@ -319,14 +319,14 @@ const Messages = () => {
                   {sharedProjects.length > 0 && (
                     <div className="mb-2">
                       <Select
-                        value={selectedProjectId}
+                        value={selectedProjectId || ""}
                         onValueChange={(value) => setSelectedProjectId(value || undefined)}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select a project (optional)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No specific project</SelectItem>
+                          <SelectItem value="none">No specific project</SelectItem>
                           {sharedProjects.map((project) => (
                             <SelectItem key={project.id} value={project.id}>
                               {project.title}

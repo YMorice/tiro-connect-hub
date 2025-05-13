@@ -28,7 +28,7 @@ import { useForm } from "react-hook-form";
 import { User } from "@/types";
 
 const Profile = () => {
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
@@ -57,7 +57,7 @@ const Profile = () => {
       skills,
     };
 
-    updateUser(updatedUser);
+    updateProfile(updatedUser);
     setIsEditing(false);
     toast.success("Profile updated successfully");
   };
