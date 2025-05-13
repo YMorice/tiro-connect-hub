@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from "react";
 import { User } from "../types";
 import { toast } from "@/components/ui/sonner";
@@ -6,7 +7,13 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => void;
-  register: (email: string, password: string, name: string, role: "student" | "entrepreneur") => void;
+  register: (
+    email: string, 
+    password: string, 
+    name: string, 
+    role: "student" | "entrepreneur", 
+    userData?: Record<string, any>
+  ) => void;
   logout: () => void;
   updateProfile: (data: Partial<User>) => void;
 }
@@ -53,7 +60,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 1000);
   };
 
-  const register = (email: string, password: string, name: string, role: "student" | "entrepreneur") => {
+  const register = (
+    email: string, 
+    password: string, 
+    name: string, 
+    role: "student" | "entrepreneur", 
+    userData?: Record<string, any>
+  ) => {
     setLoading(true);
     
     // Simulate API call
@@ -64,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name,
         role,
         createdAt: new Date(),
+        ...userData,
       };
       setUser(newUser);
       toast.success("Account created successfully");
