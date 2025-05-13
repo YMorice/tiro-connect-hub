@@ -139,9 +139,12 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setMessages(
       messages.map((message) => {
         if (message.id === messageId && message.documentType === "final") {
-          const updatedMessage = { 
+          // Ensure we're setting the correct type for documentStatus
+          const status: "approved" | "rejected" = isApproved ? "approved" : "rejected";
+          
+          const updatedMessage: Message = { 
             ...message, 
-            documentStatus: isApproved ? "approved" : "rejected" 
+            documentStatus: status
           };
           
           // If it's approved and there's a project, mark it as completed

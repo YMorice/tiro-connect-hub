@@ -9,7 +9,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { User } from "@/types";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -38,12 +37,14 @@ const mockUsers = [
     name: "Jean Martin",
     role: "entrepreneur",
     avatar: "",
+    isOnline: true,
   },
   {
     id: "2",
     name: "Marie Dubois",
     role: "student",
     avatar: "",
+    isOnline: false,
   },
 ];
 
@@ -57,7 +58,6 @@ const Messages = () => {
 
   const [selectedUserId, setSelectedUserId] = useState(initialSelectedUserId);
   const [newMessage, setNewMessage] = useState("");
-  const [documentUrl, setDocumentUrl] = useState("");
   const [documentName, setDocumentName] = useState("");
   const [documentType, setDocumentType] = useState<"regular" | "proposal" | "final">("regular");
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
@@ -65,7 +65,9 @@ const Messages = () => {
   const [reviewFeedback, setReviewFeedback] = useState("");
   const [reviewMessageId, setReviewMessageId] = useState<string | null>(null);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
 
   // Filter users to show contacts
@@ -101,8 +103,19 @@ const Messages = () => {
     setNewMessage("");
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      setDocumentName(file.name);
+    }
+  };
+
   const handleSendDocument = () => {
-    if (!selectedUserId || !documentUrl.trim() || !documentName.trim()) return;
+    if (!selectedUserId || !documentName.trim() || !selectedFile) return;
+    
+    // Create a temporary URL for the selected file
+    const documentUrl = URL.createObjectURL(selectedFile);
 
     sendDocumentMessage(selectedUserId, {
       documentUrl,
@@ -111,10 +124,16 @@ const Messages = () => {
       projectId: selectedProjectId
     });
 
-    setDocumentUrl("");
+    // Reset state
+    setSelectedFile(null);
     setDocumentName("");
     setDocumentType("regular");
     setIsAttachDialogOpen(false);
+    
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleReviewDocument = (approved: boolean) => {
@@ -301,7 +320,7 @@ const Messages = () => {
                     <div className="mb-2">
                       <Select
                         value={selectedProjectId}
-                        onValueChange={(value) => setSelectedProjectId(value)}
+                        onValueChange={(value) => setSelectedProjectId(value || undefined)}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select a project (optional)" />
@@ -349,6 +368,16 @@ const Messages = () => {
                           </DialogHeader>
                           <div className="space-y-4 py-4">
                             <div className="space-y-2">
+                              <Label htmlFor="fileUpload">Upload File</Label>
+                              <Input
+                                id="fileUpload"
+                                ref={fileInputRef}
+                                type="file"
+                                onChange={handleFileChange}
+                              />
+                            </div>
+                            
+                            <div className="space-y-2">
                               <Label htmlFor="documentName">Document Name</Label>
                               <Input
                                 id="documentName"
@@ -356,18 +385,6 @@ const Messages = () => {
                                 onChange={(e) => setDocumentName(e.target.value)}
                                 placeholder="Enter document name"
                               />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="documentUrl">Document URL</Label>
-                              <Input
-                                id="documentUrl"
-                                value={documentUrl}
-                                onChange={(e) => setDocumentUrl(e.target.value)}
-                                placeholder="Enter document URL"
-                              />
-                              <p className="text-xs text-muted-foreground">
-                                You can use services like Google Drive, Dropbox, or similar to host your files and paste the share link here.
-                              </p>
                             </div>
                             
                             {user?.role === "student" && selectedProjectId && (
@@ -403,7 +420,7 @@ const Messages = () => {
                           <DialogFooter>
                             <Button 
                               onClick={handleSendDocument}
-                              disabled={!documentUrl || !documentName}
+                              disabled={!selectedFile || !documentName}
                             >
                               Share Document
                             </Button>
