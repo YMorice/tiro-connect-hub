@@ -363,7 +363,6 @@ const Register = () => {
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        value={field.value}
                         className="flex flex-col space-y-1"
                       >
                         <FormItem className="flex items-center space-x-3 space-y-0">
@@ -453,8 +452,7 @@ const Register = () => {
                       <FormControl>
                         <Input 
                           placeholder="Enter your student confidence code" 
-                          {...field} 
-                          value={field.value || ""}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -487,7 +485,6 @@ const Register = () => {
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        value={field.value}
                         className="flex flex-col space-y-1"
                       >
                         <FormItem className="flex items-center space-x-3 space-y-0">
@@ -548,8 +545,7 @@ const Register = () => {
                     <FormControl>
                       <Input 
                         placeholder="https://yourportfolio.com" 
-                        {...field} 
-                        value={field.value || ""}
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -850,7 +846,6 @@ const Register = () => {
                         <Input 
                           placeholder="12345678901234" 
                           {...field} 
-                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
