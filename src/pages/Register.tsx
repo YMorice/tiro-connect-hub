@@ -1024,7 +1024,7 @@ const Register = () => {
             </CardDescription>
           </CardHeader>
           
-          <CardContent>
+          <CardContent key={step}>
             {step < 5 && renderProgress()}
             {renderStep()}
           </CardContent>
