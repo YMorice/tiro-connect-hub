@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from "react";
 import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
@@ -13,7 +12,7 @@ interface ProjectContextType {
   addTask: (projectId: string, task: Partial<Task>) => void;
   updateTask: (projectId: string, taskId: string, data: Partial<Task>) => void;
   deleteTask: (projectId: string, taskId: string) => void;
-  addDocument: (projectId: string, document: Partial<Document>) => void;
+  addDocument: (projectId: string, document: Partial<Document>, file?: File) => void;
   deleteDocument: (projectId: string, documentId: string) => void;
 }
 
@@ -188,17 +187,35 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     toast.success("Task deleted");
   };
 
-  const addDocument = (projectId: string, documentData: Partial<Document>) => {
+  const addDocument = (projectId: string, documentData: Partial<Document>, file?: File) => {
     if (!user) return;
+    
+    // Create an object URL if a file is provided
+    const documentUrl = file ? URL.createObjectURL(file) : (documentData.url || "#");
+    
+    // Determine document type from file if available
+    const getDocumentType = (file?: File) => {
+      if (!file) return documentData.type || "unknown";
+      
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      if (!extension) return "unknown";
+      
+      if (["pdf"].includes(extension)) return "pdf";
+      if (["doc", "docx"].includes(extension)) return "doc";
+      if (["jpg", "jpeg", "png", "gif"].includes(extension)) return "image";
+      if (["zip", "rar"].includes(extension)) return "zip";
+      
+      return "unknown";
+    };
     
     setProjects(
       projects.map((project) => {
         if (project.id === projectId) {
           const newDocument: Document = {
             id: String(Math.random()).substring(2, 8),
-            name: documentData.name || "Untitled Document",
-            url: documentData.url || "#",
-            type: documentData.type || "unknown",
+            name: file ? file.name : (documentData.name || "Untitled Document"),
+            url: documentUrl,
+            type: getDocumentType(file),
             projectId,
             uploadedBy: user.id,
             createdAt: new Date(),

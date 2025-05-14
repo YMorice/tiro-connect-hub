@@ -28,6 +28,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Paperclip, Send, FileCheck, FileX } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import FileUpload from "@/components/FileUpload";
 
 // Mock users for demonstration (in a real app, this would come from an API)
 const mockUsers = [
@@ -54,12 +55,13 @@ const Messages = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const initialSelectedUserId = queryParams.get("user") || "";
+  const initialSelectedProjectId = queryParams.get("project") || undefined;
 
   const [selectedUserId, setSelectedUserId] = useState(initialSelectedUserId);
   const [newMessage, setNewMessage] = useState("");
   const [documentName, setDocumentName] = useState("");
   const [documentType, setDocumentType] = useState<"regular" | "proposal" | "final">("regular");
-  const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(initialSelectedProjectId);
   const [isAttachDialogOpen, setIsAttachDialogOpen] = useState(false);
   const [reviewFeedback, setReviewFeedback] = useState("");
   const [reviewMessageId, setReviewMessageId] = useState<string | null>(null);
@@ -68,6 +70,13 @@ const Messages = () => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
+
+  // Set selected project if it's in query params
+  useEffect(() => {
+    if (initialSelectedProjectId) {
+      setSelectedProjectId(initialSelectedProjectId);
+    }
+  }, [initialSelectedProjectId]);
 
   // Filter users to show contacts
   const contacts = mockUsers.filter((contact) => contact.id !== user?.id);
@@ -111,28 +120,28 @@ const Messages = () => {
   };
 
   const handleSendDocument = () => {
-    if (!selectedUserId || !documentName.trim() || !selectedFile) return;
+    if (!selectedUserId) return;
     
-    // Create a temporary URL for the selected file
-    const documentUrl = URL.createObjectURL(selectedFile);
+    if (selectedFile) {
+      // Create a temporary URL for the selected file
+      const documentUrl = URL.createObjectURL(selectedFile);
 
-    sendDocumentMessage(selectedUserId, {
-      documentUrl,
-      documentName,
-      documentType,
-      projectId: selectedProjectId
-    });
+      sendDocumentMessage(selectedUserId, {
+        documentUrl,
+        documentName: documentName || selectedFile.name,
+        documentType,
+        projectId: selectedProjectId
+      });
 
-    // Reset state
-    setSelectedFile(null);
-    setDocumentName("");
+      // Reset state
+      setSelectedFile(null);
+      setDocumentName("");
+    } else {
+      toast.error("Please select a file to share");
+    }
+    
     setDocumentType("regular");
     setIsAttachDialogOpen(false);
-    
-    // Reset the file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
   const handleReviewDocument = (approved: boolean) => {
@@ -293,19 +302,27 @@ const Messages = () => {
           <Card className="col-span-1 md:col-span-3 flex flex-col">
             {selectedUserId ? (
               <>
-                <div className="p-4 border-b flex items-center">
-                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-md font-semibold">
-                    {getContactName(selectedUserId).charAt(0)}
+                <div className="p-4 border-b flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-md font-semibold">
+                      {getContactName(selectedUserId).charAt(0)}
+                    </div>
+                    <h2 className="ml-3 font-semibold">
+                      {getContactName(selectedUserId)}
+                    </h2>
                   </div>
-                  <h2 className="ml-3 font-semibold">
-                    {getContactName(selectedUserId)}
-                  </h2>
+                  {selectedProjectId && (
+                    <div className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                      Project: {projects.find(p => p.id === selectedProjectId)?.title || 'Unknown'}
+                    </div>
+                  )}
                 </div>
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {conversation.length > 0 ? (
-                    conversation.map((msg) => renderMessage(msg))
+                    conversation.filter(msg => !selectedProjectId || msg.projectId === selectedProjectId)
+                      .map((msg) => renderMessage(msg))
                   ) : (
                     <div className="text-center text-muted-foreground py-10">
                       No messages yet. Start a conversation!
@@ -319,8 +336,8 @@ const Messages = () => {
                   {sharedProjects.length > 0 && (
                     <div className="mb-2">
                       <Select
-                        value={selectedProjectId || ""}
-                        onValueChange={(value) => setSelectedProjectId(value || undefined)}
+                        value={selectedProjectId || "none"}
+                        onValueChange={(value) => setSelectedProjectId(value === "none" ? undefined : value)}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select a project (optional)" />
@@ -368,22 +385,24 @@ const Messages = () => {
                           </DialogHeader>
                           <div className="space-y-4 py-4">
                             <div className="space-y-2">
-                              <Label htmlFor="fileUpload">Upload File</Label>
-                              <Input
-                                id="fileUpload"
-                                ref={fileInputRef}
-                                type="file"
-                                onChange={handleFileChange}
+                              <Label>Upload Document</Label>
+                              <FileUpload
+                                onFileSelect={(file) => {
+                                  setSelectedFile(file);
+                                  setDocumentName(file.name);
+                                }}
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
+                                maxSize={20}
                               />
                             </div>
                             
                             <div className="space-y-2">
-                              <Label htmlFor="documentName">Document Name</Label>
+                              <Label htmlFor="documentName">Document Name (Optional)</Label>
                               <Input
                                 id="documentName"
                                 value={documentName}
                                 onChange={(e) => setDocumentName(e.target.value)}
-                                placeholder="Enter document name"
+                                placeholder="Use file name if left empty"
                               />
                             </div>
                             
@@ -420,7 +439,7 @@ const Messages = () => {
                           <DialogFooter>
                             <Button 
                               onClick={handleSendDocument}
-                              disabled={!selectedFile || !documentName}
+                              disabled={!selectedFile}
                             >
                               Share Document
                             </Button>

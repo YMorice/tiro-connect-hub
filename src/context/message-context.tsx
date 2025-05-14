@@ -55,7 +55,7 @@ const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
 export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const { projects, updateProject } = useProjects();
+  const { projects, updateProject, addDocument } = useProjects();
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [loading, setLoading] = useState(false);
 
@@ -106,6 +106,15 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     setMessages([...messages, newMessage]);
+    
+    // If a project ID is specified, also add the document to the project
+    if (projectId) {
+      addDocument(projectId, {
+        name: documentName,
+        url: documentUrl,
+        type: documentType === "regular" ? "pdf" : documentType === "proposal" ? "pdf" : "pdf"
+      });
+    }
     
     if (documentType === "final" && projectId) {
       // If it's a final deliverable, update the project status to review

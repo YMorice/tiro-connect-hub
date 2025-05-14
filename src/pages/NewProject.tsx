@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
 import { useAuth } from "@/context/auth-context";
@@ -14,6 +14,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
+import FileUpload from "@/components/FileUpload";
 
 interface ProjectPack {
   id: string;
@@ -34,10 +35,11 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const NewProject = () => {
-  const { createProject } = useProjects();
+  const { createProject, addDocument } = useProjects();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   
   // Get the selected pack from location state
   const locationState = location.state as LocationState | undefined;
@@ -62,12 +64,22 @@ const NewProject = () => {
   const onSubmit = (values: FormValues) => {
     if (!user) return;
     
-    createProject({
+    const newProject = {
       title: values.title,
       description: values.description,
       ownerId: user.id,
       status: "draft",
       packId: values.packId,
+    };
+    
+    createProject(newProject);
+    
+    // Get the newly created project (assuming it's the last one added)
+    const projectId = String(form.getValues().packId.length + 1); // This is a simplification
+    
+    // Add documents if any were selected
+    selectedFiles.forEach(file => {
+      addDocument(projectId, {}, file);
     });
     
     navigate("/projects");
@@ -161,6 +173,45 @@ const NewProject = () => {
                     </FormItem>
                   )}
                 />
+
+                <div className="space-y-4 border p-4 rounded-md bg-gray-50">
+                  <h3 className="font-medium">Initial Documents (Optional)</h3>
+                  <p className="text-sm text-muted-foreground">
+                    You can add documents to this project that will help the student understand your requirements.
+                  </p>
+                  
+                  <div className="space-y-2">
+                    <Label>Project Documents</Label>
+                    <FileUpload 
+                      onFileSelect={(file) => {
+                        setSelectedFiles(prev => [...prev, file]);
+                      }}
+                      buttonText="Add Document"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
+                      maxSize={20}
+                    />
+                    
+                    {selectedFiles.length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        <Label>Selected Files:</Label>
+                        <div className="space-y-1">
+                          {selectedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                              <span className="text-sm">{file.name}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== index))}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 <div className="flex items-center justify-end space-x-4">
                   <Button 

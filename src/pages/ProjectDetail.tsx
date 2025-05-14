@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/sonner";
 import { FileIcon, MessageCircle, Trash2 } from "lucide-react";
+import FileUpload from "@/components/FileUpload";
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +46,7 @@ const ProjectDetail = () => {
 
   const [newTask, setNewTask] = useState({ title: "", description: "" });
   const [newDocument, setNewDocument] = useState({ name: "", url: "", type: "pdf" });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
 
   if (!project) {
@@ -76,10 +78,16 @@ const ProjectDetail = () => {
 
   const handleDocumentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDocument.name.trim() || !newDocument.url.trim()) return;
-
-    addDocument(project.id, newDocument);
-    setNewDocument({ name: "", url: "", type: "pdf" });
+    
+    if (selectedFile) {
+      addDocument(project.id, {}, selectedFile);
+      setSelectedFile(null);
+    } else if (newDocument.name.trim() && newDocument.url.trim()) {
+      addDocument(project.id, newDocument);
+      setNewDocument({ name: "", url: "", type: "pdf" });
+    } else {
+      toast.error("Please provide either a file or document details");
+    }
   };
 
   const handleMessageSend = (e: React.FormEvent) => {
@@ -334,55 +342,77 @@ const ProjectDetail = () => {
                 {/* Add document form */}
                 {(isOwner || isAssignee) && (
                   <form onSubmit={handleDocumentSubmit} className="space-y-4">
-                    <div>
-                      <Label htmlFor="documentName">Document Name</Label>
-                      <Input
-                        id="documentName"
-                        value={newDocument.name}
-                        onChange={(e) =>
-                          setNewDocument({
-                            ...newDocument,
-                            name: e.target.value,
-                          })
-                        }
-                        placeholder="Enter document name"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="documentUrl">Document URL</Label>
-                      <Input
-                        id="documentUrl"
-                        value={newDocument.url}
-                        onChange={(e) =>
-                          setNewDocument({
-                            ...newDocument,
-                            url: e.target.value,
-                          })
-                        }
-                        placeholder="Enter document URL"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="documentType">Document Type</Label>
-                      <select
-                        id="documentType"
-                        value={newDocument.type}
-                        onChange={(e) =>
-                          setNewDocument({
-                            ...newDocument,
-                            type: e.target.value,
-                          })
-                        }
-                        className="w-full p-2 border rounded"
-                      >
-                        <option value="pdf">PDF</option>
-                        <option value="doc">Word Document</option>
-                        <option value="image">Image</option>
-                        <option value="zip">ZIP Archive</option>
-                        <option value="other">Other</option>
-                      </select>
+                    <div className="p-4 border rounded-md bg-gray-50">
+                      <h3 className="font-medium mb-4">Upload Document</h3>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Upload from your computer</Label>
+                          <FileUpload 
+                            onFileSelect={(file) => setSelectedFile(file)} 
+                            buttonText="Select Document"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
+                            maxSize={20}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <div className="flex-grow border-t border-gray-300"></div>
+                          <span className="px-4 text-sm text-muted-foreground">OR</span>
+                          <div className="flex-grow border-t border-gray-300"></div>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="documentName">Document Name</Label>
+                          <Input
+                            id="documentName"
+                            value={newDocument.name}
+                            onChange={(e) =>
+                              setNewDocument({
+                                ...newDocument,
+                                name: e.target.value,
+                              })
+                            }
+                            placeholder="Enter document name"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="documentUrl">Document URL</Label>
+                          <Input
+                            id="documentUrl"
+                            value={newDocument.url}
+                            onChange={(e) =>
+                              setNewDocument({
+                                ...newDocument,
+                                url: e.target.value,
+                              })
+                            }
+                            placeholder="Enter document URL"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="documentType">Document Type</Label>
+                          <select
+                            id="documentType"
+                            value={newDocument.type}
+                            onChange={(e) =>
+                              setNewDocument({
+                                ...newDocument,
+                                type: e.target.value,
+                              })
+                            }
+                            className="w-full p-2 border rounded"
+                          >
+                            <option value="pdf">PDF</option>
+                            <option value="doc">Word Document</option>
+                            <option value="image">Image</option>
+                            <option value="zip">ZIP Archive</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                      </div>
                     </div>
                     <Button type="submit">Add Document</Button>
                   </form>
@@ -401,22 +431,35 @@ const ProjectDetail = () => {
               </CardHeader>
               <CardContent>
                 {otherUserId ? (
-                  <form onSubmit={handleMessageSend} className="space-y-4">
-                    <div>
-                      <Label htmlFor="message">Message</Label>
-                      <Textarea
-                        id="message"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder="Type your message here"
-                        className="min-h-[120px]"
-                      />
-                    </div>
-                    <Button type="submit" className="flex items-center gap-2">
-                      <MessageCircle size={18} />
-                      Send Message
-                    </Button>
-                  </form>
+                  <>
+                    <form onSubmit={handleMessageSend} className="space-y-4">
+                      <div>
+                        <Label htmlFor="message">Message</Label>
+                        <Textarea
+                          id="message"
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
+                          placeholder="Type your message here"
+                          className="min-h-[120px]"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Button 
+                          type="button" 
+                          variant="outline"
+                          onClick={() => navigate(`/messages?user=${otherUserId}&project=${project.id}`)}
+                          className="flex items-center gap-2"
+                        >
+                          <MessageCircle size={18} />
+                          View Conversation
+                        </Button>
+                        <Button type="submit" className="flex items-center gap-2">
+                          <MessageCircle size={18} />
+                          Send Message
+                        </Button>
+                      </div>
+                    </form>
+                  </>
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
                     {project.status === "open"
