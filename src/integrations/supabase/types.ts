@@ -9,6 +9,136 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      documents: {
+        Row: {
+          created_at: string
+          id: string
+          is_deliverable: boolean | null
+          name: string
+          project_id: string
+          review_comment: string | null
+          status: string | null
+          type: string
+          uploaded_by: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_deliverable?: boolean | null
+          name: string
+          project_id: string
+          review_comment?: string | null
+          status?: string | null
+          type: string
+          uploaded_by: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_deliverable?: boolean | null
+          name?: string
+          project_id?: string
+          review_comment?: string | null
+          status?: string | null
+          type?: string
+          uploaded_by?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          document_name: string | null
+          document_status: string | null
+          document_type: string | null
+          document_url: string | null
+          id: string
+          project_id: string | null
+          read: boolean | null
+          recipient: string
+          sender: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          document_name?: string | null
+          document_status?: string | null
+          document_type?: string | null
+          document_url?: string | null
+          id?: string
+          project_id?: string | null
+          read?: boolean | null
+          recipient: string
+          sender: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          document_name?: string | null
+          document_status?: string | null
+          document_type?: string | null
+          document_url?: string | null
+          id?: string
+          project_id?: string | null
+          read?: boolean | null
+          recipient?: string
+          sender?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          role: string
+          skills: string[] | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          id: string
+          name?: string | null
+          role: string
+          skills?: string[] | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          role?: string
+          skills?: string[] | null
+        }
+        Relationships: []
+      }
       project_packs: {
         Row: {
           created_at: string
@@ -29,6 +159,159 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      project_proposals: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          status: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_proposals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          description: string
+          id: string
+          owner_id: string
+          pack_id: string | null
+          price: number | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          owner_id: string
+          pack_id?: string | null
+          price?: number | null
+          status: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          owner_id?: string
+          pack_id?: string | null
+          price?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          project_id: string
+          rating: number
+          reviewer_id: string
+          student_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          project_id: string
+          rating: number
+          reviewer_id: string
+          student_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          rating?: number
+          reviewer_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          project_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          project_id: string
+          status: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          project_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

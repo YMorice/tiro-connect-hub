@@ -1,1 +1,5 @@
+
 project_id = "miiwokptjujanzhsiazg"
+
+[storage.documents]
+public = true
