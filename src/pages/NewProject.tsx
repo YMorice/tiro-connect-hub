@@ -13,8 +13,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
+import { Label } from "@/components/ui/label";
 
 interface ProjectPack {
   id: string;
@@ -68,20 +69,27 @@ const NewProject = () => {
       title: values.title,
       description: values.description,
       ownerId: user.id,
-      status: "draft",
+      status: "draft" as const, // Explicitly type this as a valid status constant
       packId: values.packId,
     };
     
     createProject(newProject);
     
-    // Get the newly created project (assuming it's the last one added)
-    const projectId = String(form.getValues().packId.length + 1); // This is a simplification
+    // Handle file uploads if any were selected
+    if (selectedFiles.length > 0) {
+      // Get the newly created project ID from the context after creation
+      // This is a simplified approach - in a real app, you might want to get the actual ID returned from createProject
+      const projectsContext = useProjects();
+      const projects = projectsContext.projects;
+      const newProjectId = projects[projects.length - 1].id;
+      
+      // Add documents
+      selectedFiles.forEach(file => {
+        addDocument(newProjectId, {}, file);
+      });
+    }
     
-    // Add documents if any were selected
-    selectedFiles.forEach(file => {
-      addDocument(projectId, {}, file);
-    });
-    
+    // Navigate to projects page after successful creation
     navigate("/projects");
   };
 
