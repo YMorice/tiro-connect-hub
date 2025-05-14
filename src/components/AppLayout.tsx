@@ -9,7 +9,8 @@ import {
   UserRound,
   LogOut,
   Menu,
-  X
+  X,
+  Shield
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: UserRound,
       href: "/profile",
     },
+    // Show admin link only for admin users
+    ...(user?.role === "admin" ? [
+      {
+        label: "Admin",
+        icon: Shield,
+        href: "/admin",
+      }
+    ] : [])
   ];
 
   return (

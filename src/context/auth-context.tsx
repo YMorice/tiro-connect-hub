@@ -11,14 +11,14 @@ interface AuthContextType {
     email: string, 
     password: string, 
     name: string, 
-    role: "student" | "entrepreneur", 
+    role: "student" | "entrepreneur" | "admin", 
     userData?: Record<string, any>
   ) => void;
   logout: () => void;
   updateProfile: (data: Partial<User>) => void;
 }
 
-// Mock user for demonstration
+// Mock users for demonstration
 const mockUser: User = {
   id: "1",
   email: "entrepreneur@example.com",
@@ -26,6 +26,24 @@ const mockUser: User = {
   role: "entrepreneur",
   bio: "I'm a startup founder looking for talented students to help with my projects.",
   createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+};
+
+const mockStudentUser: User = {
+  id: "2",
+  email: "student@example.com",
+  name: "Jane Student",
+  role: "student",
+  bio: "Design student with a passion for UI/UX",
+  skills: ["UI/UX Design", "Figma", "Adobe XD"],
+  createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 days ago
+};
+
+const mockAdminUser: User = {
+  id: "3",
+  email: "admin@example.com",
+  name: "Admin User",
+  role: "admin",
+  createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), // 60 days ago
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,15 +61,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(mockUser);
         toast.success("Logged in successfully");
       } else if (email === "student@example.com" && password === "password") {
-        setUser({
-          id: "2",
-          email: "student@example.com",
-          name: "Jane Student",
-          role: "student",
-          bio: "Design student with a passion for UI/UX",
-          skills: ["UI/UX Design", "Figma", "Adobe XD"],
-          createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 days ago
-        });
+        setUser(mockStudentUser);
+        toast.success("Logged in successfully");
+      } else if (email === "admin@example.com" && password === "password") {
+        setUser(mockAdminUser);
         toast.success("Logged in successfully");
       } else {
         toast.error("Invalid credentials");
