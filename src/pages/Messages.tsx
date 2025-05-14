@@ -56,14 +56,9 @@ const Messages = () => {
   const handleSendMessage = () => {
     if (!user || !currentProject) return;
 
-    sendMessage({
-      sender: user.id,
-      recipient: "studentId", // Replace with actual recipient logic
-      content: newMessage,
-      projectId: currentProject,
-      read: false,
-      createdAt: new Date(),
-    });
+    // Fixing the function call to match the signature in message-context.tsx
+    // sendMessage expects (recipient, content, projectId?) parameters
+    sendMessage("studentId", newMessage, currentProject);
 
     setNewMessage("");
   };
