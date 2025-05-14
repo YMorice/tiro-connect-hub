@@ -37,70 +37,72 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                
-                <Route 
-                  path="/dashboard" 
+              
+                <Route
+                  path="/dashboard"
                   element={
                     <ProtectedRoute>
                       <Dashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
-                <Route 
-                  path="/projects" 
+              
+                <Route
+                  path="/projects"
                   element={
                     <ProtectedRoute>
                       <Projects />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
-                <Route 
-                  path="/projects/:id" 
-                  element={
-                    <ProtectedRoute>
-                      <ProjectDetail />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/projects/pack-selection" 
+              
+                {/* --- FIXED-PATH PROJECT ROUTES FIRST --- */}
+                <Route
+                  path="/projects/pack-selection"
                   element={
                     <ProtectedRoute requiredRole="entrepreneur">
                       <PackSelection />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
-                <Route 
-                  path="/projects/new" 
+              
+                <Route
+                  path="/projects/new"
                   element={
                     <ProtectedRoute requiredRole="entrepreneur">
                       <NewProject />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
-                <Route 
-                  path="/messages" 
+              
+                {/* --- DYNAMIC ROUTE LAST --- */}
+                <Route
+                  path="/projects/:id"
+                  element={
+                    <ProtectedRoute>
+                      <ProjectDetail />
+                    </ProtectedRoute>
+                  }
+                />
+              
+                <Route
+                  path="/messages"
                   element={
                     <ProtectedRoute>
                       <Messages />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
-                <Route 
-                  path="/profile" 
+              
+                <Route
+                  path="/profile"
                   element={
                     <ProtectedRoute>
                       <Profile />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
+              
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
