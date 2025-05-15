@@ -1,8 +1,9 @@
+
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-import { useProject } from "@/context/project-context";
+import { useProjects } from "@/context/project-context";
 import { useMessages } from "@/context/message-context";
 import { Link, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
@@ -24,16 +25,16 @@ import {
 } from "lucide-react";
 
 const Dashboard = () => {
-  const { user, profile } = useAuth();
-  const { projects } = useProject();
+  const { user } = useAuth();
+  const { projects } = useProjects();
   const { messages } = useMessages();
   const navigate = useNavigate();
 
   // Filter projects based on user role
   const userProjects = projects.filter((project) => 
-    profile?.role === "entrepreneur" 
-      ? project.ownerId === user?.id 
-      : project.assigneeId === user?.id
+    user?.role === "entrepreneur" 
+      ? project.ownerId === user.id 
+      : project.assigneeId === user.id
   );
 
   // Get open project proposals (for students)
@@ -95,8 +96,8 @@ const Dashboard = () => {
     <AppLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Welcome, {profile?.name || "User"}!</h1>
-          {profile?.role === "entrepreneur" && (
+          <h1 className="text-3xl font-bold">Welcome, {user?.name}!</h1>
+          {user?.role === "entrepreneur" && (
             <Button
               onClick={() => navigate("/projects/new")}
               className="bg-tiro-purple hover:bg-tiro-purple/90"
@@ -111,12 +112,12 @@ const Dashboard = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {profile?.role === "entrepreneur" ? "Total Projects" : "Available Proposals"}
+                {user?.role === "entrepreneur" ? "Total Projects" : "Available Proposals"}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {profile?.role === "entrepreneur" ? totalProjects : projectProposals.length}
+                {user?.role === "entrepreneur" ? totalProjects : projectProposals.length}
               </div>
             </CardContent>
           </Card>
@@ -133,12 +134,12 @@ const Dashboard = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {profile?.role === "student" ? "Total Earnings" : "Unread Messages"}
+                {user?.role === "student" ? "Total Earnings" : "Unread Messages"}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold flex items-center">
-                {profile?.role === "student" ? (
+                {user?.role === "student" ? (
                   <>
                     <BadgeDollarSign className="inline mr-1 h-6 w-6 text-green-600" />
                     {totalEarnings}
@@ -155,7 +156,7 @@ const Dashboard = () => {
         </div>
 
         {/* Student-specific content */}
-        {profile?.role === "student" && (
+        {user?.role === "student" && (
           <>
             {/* Project Proposals */}
             <Card>
@@ -253,7 +254,7 @@ const Dashboard = () => {
         )}
 
         {/* Entrepreneur-specific content */}
-        {profile?.role === "entrepreneur" && (
+        {user?.role === "entrepreneur" && (
           <Card>
             <CardHeader>
               <CardTitle>Your Projects</CardTitle>

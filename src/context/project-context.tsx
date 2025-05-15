@@ -1,697 +1,277 @@
-
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import React, { createContext, useContext, useState } from "react";
+import { Project, Task, Document } from "../types";
+import { toast } from "@/components/ui/sonner";
 import { useAuth } from "./auth-context";
-import { Project, Task, Document, Message } from "@/types";
-import { PostgrestError } from "@supabase/supabase-js";
 
 interface ProjectContextType {
   projects: Project[];
   loading: boolean;
-  error: PostgrestError | null;
-  createProject: (project: Partial<Project>) => Promise<Project | null>;
-  updateProject: (id: string, project: Partial<Project>) => Promise<void>;
-  getProjectById: (id: string) => Promise<Project | null>;
-  deleteProject: (id: string) => Promise<void>;
-  addTask: (projectId: string, task: Partial<Task>) => Promise<void>;
-  updateTask: (taskId: string, task: Partial<Task>) => Promise<void>;
-  deleteTask: (taskId: string) => Promise<void>;
-  uploadDocument: (projectId: string, file: File, type: string, isDeliverable?: boolean) => Promise<void>;
-  getDocuments: (projectId: string) => Promise<Document[]>;
-  updateDocumentStatus: (documentId: string, status: "pending" | "approved" | "rejected", comment?: string) => Promise<void>;
-  sendMessage: (message: Partial<Message>) => Promise<void>;
-  getMessages: (recipientId: string, projectId?: string) => Promise<Message[]>;
-  markMessageAsRead: (messageId: string) => Promise<void>;
-  filterProjectsByStatus: (status: string) => Project[];
-  getProjectTasks: (projectId: string) => Promise<Task[]>;
+  createProject: (data: Partial<Project>) => void;
+  updateProject: (id: string, data: Partial<Project>) => void;
+  deleteProject: (id: string) => void;
+  addTask: (projectId: string, task: Partial<Task>) => void;
+  updateTask: (projectId: string, taskId: string, data: Partial<Task>) => void;
+  deleteTask: (projectId: string, taskId: string) => void;
+  addDocument: (projectId: string, document: Partial<Document>, file?: File) => void;
+  deleteDocument: (projectId: string, documentId: string) => void;
 }
+
+// Mock projects for demonstration
+const mockProjects: Project[] = [
+  {
+    id: "1",
+    title: "E-commerce Website Redesign",
+    description: "Complete overhaul of our online store with improved UX and mobile responsiveness.",
+    ownerId: "1", // entrepreneur
+    assigneeId: "2", // student
+    status: "in_progress",
+    tasks: [
+      {
+        id: "101",
+        projectId: "1",
+        title: "Create wireframes",
+        description: "Design initial wireframes for all key pages",
+        status: "done",
+        assigneeId: "2",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "102",
+        projectId: "1",
+        title: "Implement landing page",
+        description: "Code the new landing page based on approved design",
+        status: "in_progress",
+        assigneeId: "2",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ],
+    documents: [
+      {
+        id: "201",
+        name: "Project Brief.pdf",
+        url: "#",
+        type: "pdf",
+        projectId: "1",
+        uploadedBy: "1",
+        createdAt: new Date(),
+      },
+      {
+        id: "202",
+        name: "Design Assets.zip",
+        url: "#",
+        type: "zip",
+        projectId: "1",
+        uploadedBy: "2",
+        createdAt: new Date(),
+      },
+    ],
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+    updatedAt: new Date(),
+  },
+  {
+    id: "2",
+    title: "Mobile App UI Design",
+    description: "Design the user interface for a new fitness tracking app.",
+    ownerId: "1", // entrepreneur
+    status: "open",
+    tasks: [],
+    documents: [],
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+  },
+];
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<PostgrestError | null>(null);
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (user && profile) {
-      fetchProjects();
-    } else {
-      setProjects([]);
-      setLoading(false);
-    }
-  }, [user, profile]);
+  const createProject = (data: Partial<Project>) => {
+    if (!user) return;
 
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      let query = supabase.from("projects").select(`
-        *,
-        owner:owner_id(*),
-        assignee:assignee_id(*)
-      `);
+    const newProject: Project = {
+      id: String(projects.length + 1),
+      title: data.title || "Untitled Project",
+      description: data.description || "",
+      ownerId: user.id,
+      status: "draft",
+      tasks: [],
+      documents: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...data,
+    };
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      if (data) {
-        const projectsWithTypedStatus = data.map(project => ({
-          ...project,
-          id: project.id,
-          title: project.title,
-          description: project.description,
-          ownerId: project.owner_id,
-          assigneeId: project.assignee_id,
-          // Ensure status is one of the allowed values in the Project type
-          status: project.status as "draft" | "open" | "in_progress" | "review" | "completed",
-          tasks: [],
-          documents: [],
-          packId: project.pack_id,
-          price: project.price,
-          createdAt: new Date(project.created_at),
-          updatedAt: new Date(project.updated_at)
-        }));
-        
-        setProjects(projectsWithTypedStatus);
-      }
-    } catch (err) {
-      console.error("Error fetching projects:", err);
-      setError(err as PostgrestError);
-    } finally {
-      setLoading(false);
-    }
+    setProjects([...projects, newProject]);
+    toast.success("Project created successfully");
   };
 
-  const createProject = async (project: Partial<Project>): Promise<Project | null> => {
-    try {
-      if (!user) throw new Error("User not authenticated");
-
-      const newProject = {
-        title: project.title || "",
-        description: project.description || "",
-        owner_id: user.id,
-        status: "draft" as "draft" | "open" | "in_progress" | "review" | "completed",
-        pack_id: project.packId,
-        price: project.price,
-      };
-
-      const { data, error } = await supabase
-        .from("projects")
-        .insert(newProject)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        const newProject: Project = {
-          id: data.id,
-          title: data.title,
-          description: data.description,
-          ownerId: data.owner_id,
-          assigneeId: data.assignee_id,
-          status: data.status as "draft" | "open" | "in_progress" | "review" | "completed",
-          tasks: [],
-          documents: [],
-          packId: data.pack_id,
-          price: data.price,
-          createdAt: new Date(data.created_at),
-          updatedAt: new Date(data.updated_at)
-        };
-        
-        setProjects([...projects, newProject]);
-        toast({
-          title: "Project Created",
-          description: "Your new project has been created successfully.",
-        });
-        return newProject;
-      }
-      return null;
-    } catch (error: any) {
-      console.error("Error creating project:", error);
-      toast({
-        title: "Project Creation Failed",
-        description: error.message || "An error occurred while creating the project.",
-        variant: "destructive",
-      });
-      return null;
-    }
-  };
-
-  const updateProject = async (id: string, project: Partial<Project>) => {
-    try {
-      const updates = {
-        title: project.title,
-        description: project.description,
-        assignee_id: project.assigneeId,
-        status: project.status,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error } = await supabase
-        .from("projects")
-        .update(updates)
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setProjects(
-        projects.map((p) =>
-          p.id === id ? { ...p, ...project, updatedAt: new Date() } : p
-        )
-      );
-
-      toast({
-        title: "Project Updated",
-        description: "Project has been updated successfully.",
-      });
-    } catch (error: any) {
-      console.error("Error updating project:", error);
-      toast({
-        title: "Update Failed",
-        description: error.message || "An error occurred while updating the project.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getProjectById = async (id: string): Promise<Project | null> => {
-    try {
-      const { data, error } = await supabase
-        .from("projects")
-        .select(`
-          *,
-          owner:owner_id(*),
-          assignee:assignee_id(*)
-        `)
-        .eq("id", id)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        const project: Project = {
-          id: data.id,
-          title: data.title,
-          description: data.description,
-          ownerId: data.owner_id,
-          assigneeId: data.assignee_id,
-          status: data.status as "draft" | "open" | "in_progress" | "review" | "completed",
-          tasks: [],
-          documents: [],
-          packId: data.pack_id,
-          price: data.price,
-          createdAt: new Date(data.created_at),
-          updatedAt: new Date(data.updated_at)
-        };
-
-        // Fetch tasks for this project
-        const tasks = await getProjectTasks(id);
-        project.tasks = tasks;
-
-        // Fetch documents for this project
-        const documents = await getDocuments(id);
-        project.documents = documents;
-
-        return project;
-      }
-      return null;
-    } catch (error) {
-      console.error("Error fetching project:", error);
-      return null;
-    }
-  };
-
-  const deleteProject = async (id: string) => {
-    try {
-      const { error } = await supabase.from("projects").delete().eq("id", id);
-
-      if (error) throw error;
-
-      setProjects(projects.filter((p) => p.id !== id));
-      toast({
-        title: "Project Deleted",
-        description: "Project has been deleted successfully.",
-      });
-    } catch (error: any) {
-      console.error("Error deleting project:", error);
-      toast({
-        title: "Deletion Failed",
-        description: error.message || "An error occurred while deleting the project.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const addTask = async (projectId: string, task: Partial<Task>) => {
-    try {
-      if (!user) throw new Error("User not authenticated");
-
-      const newTask = {
-        project_id: projectId,
-        title: task.title || "",
-        description: task.description || "",
-        status: "todo" as "todo" | "in_progress" | "done",
-        assignee_id: task.assigneeId,
-        due_date: task.dueDate ? task.dueDate.toISOString() : null,
-      };
-
-      const { data, error } = await supabase.from("tasks").insert(newTask).select();
-
-      if (error) throw error;
-
-      if (data) {
-        toast({
-          title: "Task Added",
-          description: "New task has been added to the project.",
-        });
-
-        // Update the local projects state with the new task
-        const updatedProjects = [...projects];
-        const projectIndex = updatedProjects.findIndex(p => p.id === projectId);
-        
-        if (projectIndex >= 0) {
-          const newTask: Task = {
-            id: data[0].id,
-            projectId: data[0].project_id,
-            title: data[0].title,
-            description: data[0].description || "",
-            status: data[0].status as "todo" | "in_progress" | "done",
-            assigneeId: data[0].assignee_id,
-            dueDate: data[0].due_date ? new Date(data[0].due_date) : undefined,
-            createdAt: new Date(data[0].created_at),
-            updatedAt: new Date(data[0].updated_at)
-          };
-          
-          updatedProjects[projectIndex].tasks.push(newTask);
-          setProjects(updatedProjects);
+  const updateProject = (id: string, data: Partial<Project>) => {
+    setProjects(
+      projects.map((project) => {
+        if (project.id === id) {
+          return { ...project, ...data, updatedAt: new Date() };
         }
-      }
-    } catch (error: any) {
-      console.error("Error adding task:", error);
-      toast({
-        title: "Task Addition Failed",
-        description: error.message || "An error occurred while adding the task.",
-        variant: "destructive",
-      });
-    }
+        return project;
+      })
+    );
+    toast.success("Project updated");
   };
 
-  const updateTask = async (taskId: string, task: Partial<Task>) => {
-    try {
-      const updates = {
-        title: task.title,
-        description: task.description,
-        status: task.status,
-        assignee_id: task.assigneeId,
-        due_date: task.dueDate ? task.dueDate.toISOString() : null,
-        updated_at: new Date().toISOString(),
-      };
+  const deleteProject = (id: string) => {
+    setProjects(projects.filter((project) => project.id !== id));
+    toast.success("Project deleted");
+  };
 
-      const { error } = await supabase
-        .from("tasks")
-        .update(updates)
-        .eq("id", taskId);
+  const addTask = (projectId: string, taskData: Partial<Task>) => {
+    setProjects(
+      projects.map((project) => {
+        if (project.id === projectId) {
+          const newTask: Task = {
+            id: String(Math.random()).substring(2, 8),
+            projectId,
+            title: taskData.title || "New Task",
+            description: taskData.description || "",
+            status: "todo",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            ...taskData,
+          };
+          return {
+            ...project,
+            tasks: [...project.tasks, newTask],
+            updatedAt: new Date(),
+          };
+        }
+        return project;
+      })
+    );
+    toast.success("Task added");
+  };
 
-      if (error) throw error;
+  const updateTask = (projectId: string, taskId: string, data: Partial<Task>) => {
+    setProjects(
+      projects.map((project) => {
+        if (project.id === projectId) {
+          const updatedTasks = project.tasks.map((task) => {
+            if (task.id === taskId) {
+              return { ...task, ...data, updatedAt: new Date() };
+            }
+            return task;
+          });
+          return { ...project, tasks: updatedTasks, updatedAt: new Date() };
+        }
+        return project;
+      })
+    );
+    toast.success("Task updated");
+  };
 
-      // Update local state
-      const updatedProjects = projects.map(project => {
-        const updatedTasks = project.tasks.map(t => {
-          if (t.id === taskId) {
-            return {
-              ...t,
-              ...task,
-              updatedAt: new Date()
-            };
-          }
-          return t;
-        });
-        
-        return {
-          ...project,
-          tasks: updatedTasks
-        };
-      });
+  const deleteTask = (projectId: string, taskId: string) => {
+    setProjects(
+      projects.map((project) => {
+        if (project.id === projectId) {
+          return {
+            ...project,
+            tasks: project.tasks.filter((task) => task.id !== taskId),
+            updatedAt: new Date(),
+          };
+        }
+        return project;
+      })
+    );
+    toast.success("Task deleted");
+  };
+
+  const addDocument = (projectId: string, documentData: Partial<Document>, file?: File) => {
+    if (!user) return;
+    
+    // Create an object URL if a file is provided
+    const documentUrl = file ? URL.createObjectURL(file) : (documentData.url || "#");
+    
+    // Determine document type from file if available
+    const getDocumentType = (file?: File) => {
+      if (!file) return documentData.type || "unknown";
       
-      setProjects(updatedProjects);
-
-      toast({
-        title: "Task Updated",
-        description: "Task has been updated successfully.",
-      });
-    } catch (error: any) {
-      console.error("Error updating task:", error);
-      toast({
-        title: "Task Update Failed",
-        description: error.message || "An error occurred while updating the task.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const deleteTask = async (taskId: string) => {
-    try {
-      const { error } = await supabase.from("tasks").delete().eq("id", taskId);
-
-      if (error) throw error;
-
-      // Update local state
-      const updatedProjects = projects.map(project => ({
-        ...project,
-        tasks: project.tasks.filter(t => t.id !== taskId)
-      }));
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      if (!extension) return "unknown";
       
-      setProjects(updatedProjects);
-
-      toast({
-        title: "Task Deleted",
-        description: "Task has been deleted successfully.",
-      });
-    } catch (error: any) {
-      console.error("Error deleting task:", error);
-      toast({
-        title: "Task Deletion Failed",
-        description: error.message || "An error occurred while deleting the task.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const uploadDocument = async (projectId: string, file: File, type: string, isDeliverable = false) => {
-    try {
-      if (!user) throw new Error("User not authenticated");
-
-      // First, upload the file to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${projectId}/${Date.now()}_${file.name}`;
+      if (["pdf"].includes(extension)) return "pdf";
+      if (["doc", "docx"].includes(extension)) return "doc";
+      if (["jpg", "jpeg", "png", "gif"].includes(extension)) return "image";
+      if (["zip", "rar"].includes(extension)) return "zip";
       
-      const { error: uploadError, data: fileData } = await supabase
-        .storage
-        .from('documents')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get the public URL
-      const { data: urlData } = supabase
-        .storage
-        .from('documents')
-        .getPublicUrl(filePath);
-
-      if (!urlData?.publicUrl) throw new Error("Failed to get public URL");
-
-      // Then create a record in the documents table
-      const newDocument = {
-        name: file.name,
-        url: urlData.publicUrl,
-        type: type,
-        project_id: projectId,
-        uploaded_by: user.id,
-        is_deliverable: isDeliverable,
-        status: isDeliverable ? "pending" as "pending" | "approved" | "rejected" : null,
-      };
-
-      const { data: documentData, error: documentError } = await supabase
-        .from("documents")
-        .insert(newDocument)
-        .select()
-        .single();
-
-      if (documentError) throw documentError;
-
-      if (documentData) {
-        toast({
-          title: "Document Uploaded",
-          description: "Document has been uploaded successfully.",
-        });
-
-        // Update local state if needed
-        const newDoc: Document = {
-          id: documentData.id,
-          name: documentData.name,
-          url: documentData.url,
-          type: documentData.type,
-          projectId: documentData.project_id,
-          uploadedBy: documentData.uploaded_by,
-          createdAt: new Date(documentData.created_at),
-          isDeliverable: documentData.is_deliverable,
-          status: documentData.status as "pending" | "approved" | "rejected" | undefined,
-          reviewComment: documentData.review_comment
-        };
-
-        const updatedProjects = projects.map(project => {
-          if (project.id === projectId) {
-            return {
-              ...project,
-              documents: [...project.documents, newDoc]
-            };
-          }
-          return project;
-        });
-        
-        setProjects(updatedProjects);
-      }
-    } catch (error: any) {
-      console.error("Error uploading document:", error);
-      toast({
-        title: "Document Upload Failed",
-        description: error.message || "An error occurred while uploading the document.",
-        variant: "destructive",
-      });
-    }
+      return "unknown";
+    };
+    
+    setProjects(
+      projects.map((project) => {
+        if (project.id === projectId) {
+          const newDocument: Document = {
+            id: String(Math.random()).substring(2, 8),
+            name: file ? file.name : (documentData.name || "Untitled Document"),
+            url: documentUrl,
+            type: getDocumentType(file),
+            projectId,
+            uploadedBy: user.id,
+            createdAt: new Date(),
+          };
+          return {
+            ...project,
+            documents: [...project.documents, newDocument],
+            updatedAt: new Date(),
+          };
+        }
+        return project;
+      })
+    );
+    toast.success("Document added");
   };
 
-  const getDocuments = async (projectId: string): Promise<Document[]> => {
-    try {
-      const { data, error } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("project_id", projectId);
-
-      if (error) throw error;
-
-      return data.map((doc) => ({
-        id: doc.id,
-        name: doc.name,
-        url: doc.url,
-        type: doc.type,
-        projectId: doc.project_id,
-        uploadedBy: doc.uploaded_by,
-        createdAt: new Date(doc.created_at),
-        isDeliverable: doc.is_deliverable,
-        status: doc.status as "pending" | "approved" | "rejected" | undefined,
-        reviewComment: doc.review_comment
-      }));
-    } catch (error) {
-      console.error("Error fetching documents:", error);
-      return [];
-    }
+  const deleteDocument = (projectId: string, documentId: string) => {
+    setProjects(
+      projects.map((project) => {
+        if (project.id === projectId) {
+          return {
+            ...project,
+            documents: project.documents.filter((doc) => doc.id !== documentId),
+            updatedAt: new Date(),
+          };
+        }
+        return project;
+      })
+    );
+    toast.success("Document deleted");
   };
 
-  const updateDocumentStatus = async (
-    documentId: string, 
-    status: "pending" | "approved" | "rejected", 
-    comment?: string
-  ) => {
-    try {
-      const updates = {
-        status,
-        review_comment: comment
-      };
-
-      const { error } = await supabase
-        .from("documents")
-        .update(updates)
-        .eq("id", documentId);
-
-      if (error) throw error;
-
-      // Update local state
-      const updatedProjects = projects.map(project => {
-        const updatedDocs = project.documents.map(doc => {
-          if (doc.id === documentId) {
-            return {
-              ...doc,
-              status,
-              reviewComment: comment
-            };
-          }
-          return doc;
-        });
-        
-        return {
-          ...project,
-          documents: updatedDocs
-        };
-      });
-      
-      setProjects(updatedProjects);
-
-      toast({
-        title: "Document Status Updated",
-        description: `Document has been ${status}.`,
-      });
-    } catch (error: any) {
-      console.error("Error updating document status:", error);
-      toast({
-        title: "Status Update Failed",
-        description: error.message || "An error occurred while updating the document status.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const sendMessage = async (message: Partial<Message>) => {
-    try {
-      if (!user) throw new Error("User not authenticated");
-
-      const newMessage = {
-        sender: user.id,
-        recipient: message.recipient,
-        content: message.content || "",
-        project_id: message.projectId,
-        document_url: message.documentUrl,
-        document_type: message.documentType,
-        document_name: message.documentName,
-        document_status: message.documentStatus
-      };
-
-      const { error } = await supabase.from("messages").insert(newMessage);
-
-      if (error) throw error;
-
-      toast({
-        title: "Message Sent",
-        description: "Your message has been sent successfully.",
-      });
-    } catch (error: any) {
-      console.error("Error sending message:", error);
-      toast({
-        title: "Message Failed",
-        description: error.message || "An error occurred while sending the message.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getMessages = async (recipientId: string, projectId?: string): Promise<Message[]> => {
-    try {
-      if (!user) throw new Error("User not authenticated");
-
-      let query = supabase
-        .from("messages")
-        .select("*")
-        .or(`sender.eq.${user.id},recipient.eq.${user.id}`)
-        .order("created_at", { ascending: false });
-
-      if (recipientId) {
-        query = query.or(`sender.eq.${recipientId},recipient.eq.${recipientId}`);
-      }
-
-      if (projectId) {
-        query = query.eq("project_id", projectId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      return data.map((msg) => ({
-        id: msg.id,
-        sender: msg.sender,
-        recipient: msg.recipient,
-        content: msg.content,
-        read: msg.read,
-        projectId: msg.project_id,
-        createdAt: new Date(msg.created_at),
-        documentUrl: msg.document_url,
-        documentType: msg.document_type as "proposal" | "final" | "regular" | undefined,
-        documentName: msg.document_name,
-        documentStatus: msg.document_status as "pending" | "approved" | "rejected" | undefined
-      }));
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-      return [];
-    }
-  };
-
-  const markMessageAsRead = async (messageId: string) => {
-    try {
-      const { error } = await supabase
-        .from("messages")
-        .update({ read: true })
-        .eq("id", messageId);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error marking message as read:", error);
-    }
-  };
-
-  const filterProjectsByStatus = (status: string) => {
-    if (!status || status === "all") return projects;
-    return projects.filter((project) => project.status === status);
-  };
-
-  const getProjectTasks = async (projectId: string): Promise<Task[]> => {
-    try {
-      const { data, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("project_id", projectId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      return data.map((task) => ({
-        id: task.id,
-        projectId: task.project_id,
-        title: task.title,
-        description: task.description || "",
-        status: task.status as "todo" | "in_progress" | "done",
-        assigneeId: task.assignee_id,
-        dueDate: task.due_date ? new Date(task.due_date) : undefined,
-        createdAt: new Date(task.created_at),
-        updatedAt: new Date(task.updated_at)
-      }));
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-      return [];
-    }
-  };
-
-  const value = {
-    projects,
-    loading,
-    error,
-    createProject,
-    updateProject,
-    getProjectById,
-    deleteProject,
-    addTask,
-    updateTask,
-    deleteTask,
-    uploadDocument,
-    getDocuments,
-    updateDocumentStatus,
-    sendMessage,
-    getMessages,
-    markMessageAsRead,
-    filterProjectsByStatus,
-    getProjectTasks,
-  };
-
-  return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
+  return (
+    <ProjectContext.Provider
+      value={{
+        projects,
+        loading,
+        createProject,
+        updateProject,
+        deleteProject,
+        addTask,
+        updateTask,
+        deleteTask,
+        addDocument,
+        deleteDocument,
+      }}
+    >
+      {children}
+    </ProjectContext.Provider>
+  );
 };
 
-export const useProject = () => {
+export const useProjects = () => {
   const context = useContext(ProjectContext);
   if (context === undefined) {
-    throw new Error("useProject must be used within a ProjectProvider");
+    throw new Error("useProjects must be used within a ProjectProvider");
   }
   return context;
 };

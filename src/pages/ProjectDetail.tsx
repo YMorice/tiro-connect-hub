@@ -1,322 +1,476 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useProjects } from "@/context/project-context";
 import { useAuth } from "@/context/auth-context";
-import { useProject } from "@/context/project-context";
+import { useMessages } from "@/context/message-context";
 import AppLayout from "@/components/AppLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, Copy, MessageSquare, Plus, Upload, X } from "lucide-react";
-import TaskList from "@/components/TaskList";
-import FileUpload from "@/components/FileUpload";
-import { Badge } from "@/components/ui/badge";
-import { Document, Project, Task } from "@/types";
-import { format } from 'date-fns';
 import { toast } from "@/components/ui/sonner";
+import { FileIcon, MessageCircle, Trash2 } from "lucide-react";
+import FileUpload from "@/components/FileUpload";
 
 const ProjectDetail = () => {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { id } = useParams<{ id: string }>();
+  const { projects, updateProject, addTask, updateTask, deleteTask, addDocument, deleteDocument } = useProjects();
   const { user } = useAuth();
-  const { getProjectById, updateProject, addTask, uploadDocument, updateDocumentStatus } = useProject();
+  const { sendMessage } = useMessages();
   const navigate = useNavigate();
-  const [project, setProject] = useState<Project | null>(null);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskDescription, setNewTaskDescription] = useState("");
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isDeliverable, setIsDeliverable] = useState(false);
-  const [reviewComment, setReviewComment] = useState("");
 
-  useEffect(() => {
-    if (projectId) {
-      fetchProjectDetails(projectId);
-    }
-  }, [projectId]);
+  const project = projects.find((p) => p.id === id);
 
-  const fetchProjectDetails = async (id: string) => {
-    const project = await getProjectById(id);
-    setProject(project);
-  };
-
-  const handleStatusUpdate = (status: Project["status"]) => {
-    if (!project) return;
-    updateProject(project.id, { status });
-    setProject({ ...project, status });
-  };
-
-  const handleAddTask = async () => {
-    if (!project || !newTaskTitle) return;
-    await addTask(project.id, {
-      title: newTaskTitle,
-      description: newTaskDescription,
-    });
-    setNewTaskTitle("");
-    setNewTaskDescription("");
-    fetchProjectDetails(projectId!);
-  };
-
-  const handleFileUpload = async (file: File, type: string) => {
-    if (!project) return;
-    await uploadDocument(project.id, file, type, isDeliverable);
-    setSelectedFiles([]);
-    setIsDeliverable(false);
-    fetchProjectDetails(projectId!);
-  };
-
-  const handleDocumentStatusUpdate = async (documentId: string, status: "pending" | "approved" | "rejected") => {
-    if (!project) return;
-    await updateDocumentStatus(documentId, status, reviewComment);
-    setReviewComment("");
-    fetchProjectDetails(projectId!);
-  };
+  const [newTask, setNewTask] = useState({ title: "", description: "" });
+  const [newDocument, setNewDocument] = useState({ name: "", url: "", type: "pdf" });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [message, setMessage] = useState("");
 
   if (!project) {
-    return (
-      <AppLayout>
-        <div>Loading project details...</div>
-      </AppLayout>
-    );
+    return <div>Project not found</div>;
   }
+
+  const isOwner = user?.id === project.ownerId;
+  const isAssignee = user?.id === project.assigneeId;
+  const otherUserId = isOwner ? project.assigneeId : project.ownerId;
+
+  const handleStatusChange = (status: string) => {
+    updateProject(project.id, { status: status as any });
+  };
+
+  const handleTaskSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTask.title.trim()) return;
+
+    addTask(project.id, {
+      ...newTask,
+      assigneeId: project.assigneeId || undefined,
+    });
+    setNewTask({ title: "", description: "" });
+  };
+
+  const handleTaskStatusChange = (taskId: string, status: "todo" | "in_progress" | "done") => {
+    updateTask(project.id, taskId, { status });
+  };
+
+  const handleDocumentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (selectedFile) {
+      addDocument(project.id, {}, selectedFile);
+      setSelectedFile(null);
+    } else if (newDocument.name.trim() && newDocument.url.trim()) {
+      addDocument(project.id, newDocument);
+      setNewDocument({ name: "", url: "", type: "pdf" });
+    } else {
+      toast.error("Please provide either a file or document details");
+    }
+  };
+
+  const handleMessageSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim() || !otherUserId) return;
+
+    sendMessage(otherUserId, message, project.id);
+    setMessage("");
+  };
 
   return (
     <AppLayout>
-      <div className="container max-w-5xl mx-auto py-10">
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/projects")}
-            className="flex items-center text-muted-foreground hover:text-foreground"
-          >
-            <X className="mr-2 h-4 w-4" />
-            Back to projects
-          </Button>
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">{project.title}</h1>
+            <div className="flex items-center gap-2 mt-2">
+              <span
+                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                  project.status === "completed"
+                    ? "bg-green-100 text-green-800"
+                    : project.status === "in_progress"
+                    ? "bg-blue-100 text-blue-800"
+                    : project.status === "open"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : project.status === "review"
+                    ? "bg-purple-100 text-purple-800"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                {project.status.replace("_", " ").toUpperCase()}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                Created on {project.createdAt.toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {isOwner && project.status === "draft" && (
+              <Button
+                onClick={() => handleStatusChange("open")}
+                className="bg-tiro-blue hover:bg-tiro-blue/90"
+              >
+                Publish Project
+              </Button>
+            )}
+            {isOwner && project.status === "in_progress" && (
+              <Button
+                onClick={() => handleStatusChange("review")}
+              >
+                Request Review
+              </Button>
+            )}
+            {isOwner && project.status === "review" && (
+              <Button
+                onClick={() => handleStatusChange("completed")}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Mark as Complete
+              </Button>
+            )}
+            {user?.role === "student" && project.status === "open" && !isAssignee && (
+              <Button
+                onClick={() => {
+                  updateProject(project.id, { assigneeId: user.id, status: "in_progress" });
+                  toast.success("You have successfully taken this project");
+                }}
+                className="bg-tiro-purple hover:bg-tiro-purple/90"
+              >
+                Take Project
+              </Button>
+            )}
+            {isAssignee && project.status === "review" && (
+              <Button
+                onClick={() => handleStatusChange("in_progress")}
+              >
+                Return to In Progress
+              </Button>
+            )}
+            {otherUserId && (
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => navigate(`/messages?user=${otherUserId}`)}
+              >
+                <MessageCircle size={18} />
+                Message
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Project Details */}
-          <div className="lg:col-span-2">
-            <Card className="space-y-4">
+        <div className="p-4 bg-gray-50 rounded-lg border">
+          <h2 className="text-lg font-semibold mb-2">Description</h2>
+          <p>{project.description}</p>
+        </div>
+
+        <Tabs defaultValue="tasks" className="w-full">
+          <TabsList className="w-full grid grid-cols-3">
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="communication">Communication</TabsTrigger>
+          </TabsList>
+          <TabsContent value="tasks">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-2xl font-bold">{project.title}</CardTitle>
-                <CardDescription>{project.description}</CardDescription>
+                <CardTitle>Project Tasks</CardTitle>
+                <CardDescription>
+                  Manage and track all tasks related to this project
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Badge>{project.packId}</Badge>
-                  <Badge variant="secondary">
-                    {project.status.replace("_", " ").toUpperCase()}
-                  </Badge>
-                </div>
+              <CardContent>
+                {/* Task list */}
+                {project.tasks.length > 0 ? (
+                  <div className="space-y-4 mb-6">
+                    {project.tasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+                      >
+                        <div>
+                          <h3 className="font-medium">{task.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {task.description}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 self-end md:self-center">
+                          <select
+                            value={task.status}
+                            onChange={(e) =>
+                              handleTaskStatusChange(
+                                task.id,
+                                e.target.value as any
+                              )
+                            }
+                            className="border rounded p-1 text-sm"
+                            disabled={!isOwner && !isAssignee}
+                          >
+                            <option value="todo">To Do</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="done">Done</option>
+                          </select>
+                          {(isOwner || isAssignee) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteTask(project.id, task.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No tasks added yet
+                  </div>
+                )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">
-                      Created At
-                    </h4>
-                    <p>{format(project.createdAt, 'PPP')}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">
-                      Updated At
-                    </h4>
-                    <p>{format(project.updatedAt, 'PPP')}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">
-                      Owner ID
-                    </h4>
-                    <p>{project.ownerId}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">
-                      Assignee ID
-                    </h4>
-                    <p>{project.assigneeId || "Not assigned"}</p>
-                  </div>
-                </div>
+                {/* Add task form */}
+                {(isOwner || isAssignee) && (
+                  <form onSubmit={handleTaskSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="taskTitle">Task Title</Label>
+                      <Input
+                        id="taskTitle"
+                        value={newTask.title}
+                        onChange={(e) =>
+                          setNewTask({ ...newTask, title: e.target.value })
+                        }
+                        placeholder="Enter task title"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="taskDescription">Description</Label>
+                      <Textarea
+                        id="taskDescription"
+                        value={newTask.description}
+                        onChange={(e) =>
+                          setNewTask({
+                            ...newTask,
+                            description: e.target.value,
+                          })
+                        }
+                        placeholder="Enter task description"
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                    <Button type="submit">Add Task</Button>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                {user?.role === "admin" && (
-                  <div className="flex space-x-2">
-                    <Button onClick={() => handleStatusUpdate("draft")}>
-                      Set to Draft
-                    </Button>
-                    <Button onClick={() => handleStatusUpdate("open")}>
-                      Set to Open
-                    </Button>
-                    <Button onClick={() => handleStatusUpdate("in_progress")}>
-                      Set to In Progress
-                    </Button>
-                    <Button onClick={() => handleStatusUpdate("review")}>
-                      Set to Review
-                    </Button>
-                    <Button onClick={() => handleStatusUpdate("completed")}>
-                      Set to Completed
-                    </Button>
+          <TabsContent value="documents">
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Documents</CardTitle>
+                <CardDescription>
+                  Share and manage all project-related files and documents
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Document list */}
+                {project.documents.length > 0 ? (
+                  <div className="space-y-2 mb-6">
+                    {project.documents.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="p-3 border rounded-lg flex justify-between items-center"
+                      >
+                        <div className="flex items-center gap-3">
+                          <FileIcon className="h-5 w-5 text-blue-500" />
+                          <div>
+                            <p className="font-medium">{doc.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Uploaded on {doc.createdAt.toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={doc.url} target="_blank" rel="noreferrer">
+                              View
+                            </a>
+                          </Button>
+                          {(isOwner || isAssignee) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                deleteDocument(project.id, doc.id)
+                              }
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No documents added yet
+                  </div>
+                )}
+
+                {/* Add document form */}
+                {(isOwner || isAssignee) && (
+                  <form onSubmit={handleDocumentSubmit} className="space-y-4">
+                    <div className="p-4 border rounded-md bg-gray-50">
+                      <h3 className="font-medium mb-4">Upload Document</h3>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Upload from your computer</Label>
+                          <FileUpload 
+                            onFileSelect={(file) => setSelectedFile(file)} 
+                            buttonText="Select Document"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
+                            maxSize={20}
+                          />
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <div className="flex-grow border-t border-gray-300"></div>
+                          <span className="px-4 text-sm text-muted-foreground">OR</span>
+                          <div className="flex-grow border-t border-gray-300"></div>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="documentName">Document Name</Label>
+                          <Input
+                            id="documentName"
+                            value={newDocument.name}
+                            onChange={(e) =>
+                              setNewDocument({
+                                ...newDocument,
+                                name: e.target.value,
+                              })
+                            }
+                            placeholder="Enter document name"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="documentUrl">Document URL</Label>
+                          <Input
+                            id="documentUrl"
+                            value={newDocument.url}
+                            onChange={(e) =>
+                              setNewDocument({
+                                ...newDocument,
+                                url: e.target.value,
+                              })
+                            }
+                            placeholder="Enter document URL"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="documentType">Document Type</Label>
+                          <select
+                            id="documentType"
+                            value={newDocument.type}
+                            onChange={(e) =>
+                              setNewDocument({
+                                ...newDocument,
+                                type: e.target.value,
+                              })
+                            }
+                            className="w-full p-2 border rounded"
+                          >
+                            <option value="pdf">PDF</option>
+                            <option value="doc">Word Document</option>
+                            <option value="image">Image</option>
+                            <option value="zip">ZIP Archive</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <Button type="submit">Add Document</Button>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="communication">
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Communication</CardTitle>
+                <CardDescription>
+                  Send messages related to this project
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {otherUserId ? (
+                  <>
+                    <form onSubmit={handleMessageSend} className="space-y-4">
+                      <div>
+                        <Label htmlFor="message">Message</Label>
+                        <Textarea
+                          id="message"
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
+                          placeholder="Type your message here"
+                          className="min-h-[120px]"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Button 
+                          type="button" 
+                          variant="outline"
+                          onClick={() => navigate(`/messages?user=${otherUserId}&project=${project.id}`)}
+                          className="flex items-center gap-2"
+                        >
+                          <MessageCircle size={18} />
+                          View Conversation
+                        </Button>
+                        <Button type="submit" className="flex items-center gap-2">
+                          <MessageCircle size={18} />
+                          Send Message
+                        </Button>
+                      </div>
+                    </form>
+                  </>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    {project.status === "open"
+                      ? "No student has taken this project yet"
+                      : "No user to message"}
                   </div>
                 )}
               </CardContent>
             </Card>
-
-            {/* Tasks Section */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Tasks</CardTitle>
-                <CardDescription>Manage project tasks</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4 flex items-center space-x-2">
-                  <Input
-                    type="text"
-                    placeholder="New Task Title"
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                  />
-                  <Input
-                    type="text"
-                    placeholder="New Task Description"
-                    value={newTaskDescription}
-                    onChange={(e) => setNewTaskDescription(e.target.value)}
-                  />
-                  <Button onClick={handleAddTask}>
-                    Add Task <Plus className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-                <TaskList tasks={project.tasks} fetchProjectDetails={() => fetchProjectDetails(projectId!)} />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Files and Communication */}
-          <div>
-            <Card className="space-y-4">
-              <CardHeader>
-                <CardTitle>Documents</CardTitle>
-                <CardDescription>Project-related documents</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Upload New Document</Label>
-                    <FileUpload
-                      onFileSelect={(file) => setSelectedFiles([file])}
-                      buttonText="Select File"
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      maxSize={10}
-                    />
-                    {selectedFiles.length > 0 && (
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor="deliverable">Is Deliverable?</Label>
-                        <input
-                          type="checkbox"
-                          id="deliverable"
-                          className="h-4 w-4"
-                          checked={isDeliverable}
-                          onChange={(e) => setIsDeliverable(e.target.checked)}
-                        />
-                        <Button onClick={() => handleFileUpload(selectedFiles[0], "pdf")}>
-                          Upload <Upload className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  {project.documents.length > 0 ? (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-muted-foreground">
-                        Existing Documents
-                      </h4>
-                      <ScrollArea className="h-[200px] w-full">
-                        <div className="space-y-1">
-                          {project.documents.map((doc) => (
-                            <div
-                              key={doc.id}
-                              className="flex items-center justify-between p-2 rounded-md bg-secondary"
-                            >
-                              <a
-                                href={doc.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm hover:underline"
-                              >
-                                {doc.name}
-                              </a>
-                              <div className="flex items-center space-x-2">
-                                {doc.isDeliverable && (
-                                  <Badge 
-                                    variant={
-                                      doc.status === "approved" ? "default" : 
-                                      doc.status === "rejected" ? "destructive" : 
-                                      "secondary"
-                                    }
-                                  >
-                                    {doc.status?.toUpperCase()}
-                                  </Badge>
-                                )}
-                                <Button variant="ghost" size="sm">
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      No documents uploaded yet.
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Review Section */}
-            {project.status === "review" && user?.role === "entrepreneur" && (
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Review Deliverable</CardTitle>
-                  <CardDescription>Approve or reject the final deliverable</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Textarea
-                    placeholder="Add a comment (optional)"
-                    value={reviewComment}
-                    onChange={(e) => setReviewComment(e.target.value)}
-                  />
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => handleDocumentStatusUpdate(project.documents[0].id, "rejected")}>
-                      Reject <X className="ml-2 h-4 w-4" />
-                    </Button>
-                    <Button onClick={() => handleDocumentStatusUpdate(project.documents[0].id, "approved")}>
-                      Approve <Check className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Communication Section */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Communication</CardTitle>
-                <CardDescription>
-                  Discuss project details with the student
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  className="w-full"
-                  onClick={() => navigate(`/messages?projectId=${project.id}`)}
-                >
-                  View Messages <MessageSquare className="ml-2 h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );

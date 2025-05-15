@@ -1,7 +1,8 @@
+
 import React, { createContext, useContext, useState } from "react";
 import { Message } from "../types";
 import { useAuth } from "./auth-context";
-import { useProject } from "./project-context";
+import { useProjects } from "./project-context";
 import { toast } from "@/components/ui/sonner";
 
 interface MessageContextType {
@@ -54,7 +55,7 @@ const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
 export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const { projects, updateProject } = useProject();
+  const { projects, updateProject, addDocument } = useProjects();
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [loading, setLoading] = useState(false);
 
@@ -106,10 +107,13 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     setMessages([...messages, newMessage]);
     
-    // If a project ID is specified, we'll track the document in the project state
+    // If a project ID is specified, also add the document to the project
     if (projectId) {
-      // Since addDocument doesn't exist, we'll use the project state directly
-      // In a real app, this would be handled by the project context
+      addDocument(projectId, {
+        name: documentName,
+        url: documentUrl,
+        type: documentType === "regular" ? "pdf" : documentType === "proposal" ? "pdf" : "pdf"
+      });
     }
     
     if (documentType === "final" && projectId) {

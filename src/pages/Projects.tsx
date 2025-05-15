@@ -1,8 +1,9 @@
+
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-import { useProject } from "@/context/project-context";
+import { useProjects } from "@/context/project-context";
 import { Link } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ import {
 
 const Projects = () => {
   const { user } = useAuth();
-  const { projects } = useProject();
+  const { projects } = useProjects();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 

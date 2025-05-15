@@ -1,127 +1,149 @@
 
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import React, { useState } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { 
+  LayoutDashboard, 
+  MessageCircle, 
+  FolderOpen, 
+  UserRound,
+  LogOut,
+  Menu,
+  X,
+  Shield
+} from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { useEffect, useState } from "react";
-import { Moon, Sun, Menu, X } from "lucide-react";
-import { useTheme } from "@/components/theme-provider";
-import { ModeToggle } from "@/components/mode-toggle";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 
-interface Props {
+interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-const AppLayout = ({ children }: Props) => {
-  const { user, logout, profile } = useAuth();
+const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isMounted, setIsMounted] = useState(false);
-  const { setTheme } = useTheme();
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return null;
-  }
-
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isActive = (path: string) => location.pathname === path;
+
+  const navItems = [
+    {
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      href: "/dashboard",
+    },
+    {
+      label: "Projects",
+      icon: FolderOpen,
+      href: "/projects",
+    },
+    {
+      label: "Messages",
+      icon: MessageCircle,
+      href: "/messages",
+    },
+    {
+      label: "Profile",
+      icon: UserRound,
+      href: "/profile",
+    },
+    // Show admin link only for admin users
+    ...(user?.role === "admin" ? [
+      {
+        label: "Admin",
+        icon: Shield,
+        href: "/admin",
+      }
+    ] : [])
+  ];
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="bg-background sticky top-0 z-50 border-b">
-        <div className="container flex h-16 items-center justify-between py-4">
-          <Link to="/" className="mr-4 flex items-center space-x-2">
-            <span className="font-bold">TIRO</span>
-          </Link>
-          <NavigationMenu>
-            <NavigationMenuList>
-              <NavigationMenuItem>
-                <Link to="/projects" className="font-medium">
-                  Projects
-                </Link>
-              </NavigationMenuItem>
-              {profile?.role === "admin" && (
-                <NavigationMenuItem>
-                  <Link to="/admin" className="font-medium">
-                    Admin
-                  </Link>
-                </NavigationMenuItem>
-              )}
-            </NavigationMenuList>
-          </NavigationMenu>
-          <div className="flex items-center space-x-2">
-            <ModeToggle />
-            {profile ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/avatars/01.png" alt={profile.name} />
-                      <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link to="/login">
-                <Button>Login</Button>
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar Toggle Button for Mobile */}
+      <div className="lg:hidden absolute top-4 left-4 z-50">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="rounded-full"
+        >
+          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </Button>
+      </div>
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 flex flex-col transition-all duration-300 bg-white shadow-lg lg:relative",
+          sidebarOpen ? "w-64" : "w-0 lg:w-20 overflow-hidden"
+        )}
+      >
+        <div className="flex items-center justify-center h-16 border-b">
+          {sidebarOpen ? (
+            <h1 className="text-2xl font-bold text-tiro-purple">Tiro</h1>
+          ) : (
+            <h1 className="text-xl font-bold text-tiro-purple">T</h1>
+          )}
+        </div>
+
+        <div className="flex flex-col flex-1 overflow-y-auto">
+          <nav className="flex-1 px-2 py-4 space-y-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center p-3 rounded-lg transition-all",
+                  isActive(item.href)
+                    ? "bg-tiro-purple text-white"
+                    : "hover:bg-gray-100"
+                )}
+              >
+                <item.icon size={20} />
+                {sidebarOpen && <span className="ml-3">{item.label}</span>}
               </Link>
+            ))}
+          </nav>
+        </div>
+
+        <div className="p-4 border-t">
+          <div className="flex items-center mb-4">
+            <div className="w-8 h-8 rounded-full bg-tiro-purple text-white flex items-center justify-center">
+              {user?.name.charAt(0)}
+            </div>
+            {sidebarOpen && (
+              <div className="ml-3">
+                <p className="font-medium">{user?.name}</p>
+                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+              </div>
             )}
           </div>
+          <Button
+            variant="outline"
+            className={cn(
+              "flex items-center w-full",
+              !sidebarOpen && "justify-center"
+            )}
+            onClick={handleLogout}
+          >
+            <LogOut size={18} />
+            {sidebarOpen && <span className="ml-2">Logout</span>}
+          </Button>
         </div>
-      </header>
+      </aside>
 
-      <main className="flex-1">
-        <div className="container py-12">{children}</div>
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        <div className="container py-6">
+          {children}
+        </div>
       </main>
-
-      <footer className="bg-background border-t py-8">
-        <div className="container text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} TIRO. All rights reserved.
-        </div>
-      </footer>
     </div>
   );
 };

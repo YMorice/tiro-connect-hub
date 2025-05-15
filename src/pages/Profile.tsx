@@ -25,9 +25,10 @@ import {
 } from "@/components/ui/form";
 import { toast } from "@/components/ui/sonner";
 import { useForm } from "react-hook-form";
+import { User } from "@/types";
 
 const Profile = () => {
-  const { user, logout, profile } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
@@ -35,26 +36,30 @@ const Profile = () => {
 
   const form = useForm({
     defaultValues: {
-      name: profile?.name || "",
-      email: profile?.email || "",
-      bio: profile?.bio || "",
+      name: user?.name || "",
+      email: user?.email || "",
+      bio: user?.bio || "",
     },
   });
 
   useEffect(() => {
-    if (profile?.skills) {
-      setSkills(profile.skills);
-      setSkillsText(profile.skills.join(", "));
+    if (user?.skills) {
+      setSkills(user.skills);
+      setSkillsText(user.skills.join(", "));
     }
-  }, [profile]);
+  }, [user]);
 
   const handleSaveProfile = (data: { name: string; email: string; bio: string }) => {
     if (!user) return;
 
-    // Since updateProfile doesn't exist in the auth context yet, we'll just show a toast
-    // This would normally call updateProfile from auth context
-    toast.success("Profile updated successfully");
+    const updatedUser: Partial<User> = {
+      ...data,
+      skills,
+    };
+
+    updateProfile(updatedUser);
     setIsEditing(false);
+    toast.success("Profile updated successfully");
   };
 
   const handleAddSkill = () => {
@@ -73,7 +78,7 @@ const Profile = () => {
     toast.success("Logged out successfully");
   };
 
-  if (!profile) {
+  if (!user) {
     return <div>Loading...</div>;
   }
 
@@ -191,19 +196,19 @@ const Profile = () => {
                   <h3 className="text-sm font-medium text-muted-foreground">
                     Full Name
                   </h3>
-                  <p className="mt-1">{profile.name}</p>
+                  <p className="mt-1">{user.name}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">
                     Email
                   </h3>
-                  <p className="mt-1">{profile.email}</p>
+                  <p className="mt-1">{user.email}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">
                     Bio
                   </h3>
-                  <p className="mt-1">{profile.bio || "No bio provided"}</p>
+                  <p className="mt-1">{user.bio || "No bio provided"}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">

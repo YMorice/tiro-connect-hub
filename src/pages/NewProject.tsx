@@ -1,6 +1,7 @@
+
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useProject } from "@/context/project-context";
+import { useProjects } from "@/context/project-context";
 import { useAuth } from "@/context/auth-context";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +36,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const NewProject = () => {
-  const { createProject } = useProject();
+  const { createProject, addDocument } = useProjects();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -76,9 +77,16 @@ const NewProject = () => {
     
     // Handle file uploads if any were selected
     if (selectedFiles.length > 0) {
-      // For now, we'll simply create the project without handling document uploads
-      // since addDocument isn't available in the project context
-      console.log("Files would be uploaded:", selectedFiles);
+      // Get the newly created project ID from the context after creation
+      // This is a simplified approach - in a real app, you might want to get the actual ID returned from createProject
+      const projectsContext = useProjects();
+      const projects = projectsContext.projects;
+      const newProjectId = projects[projects.length - 1].id;
+      
+      // Add documents
+      selectedFiles.forEach(file => {
+        addDocument(newProjectId, {}, file);
+      });
     }
     
     // Navigate to projects page after successful creation
