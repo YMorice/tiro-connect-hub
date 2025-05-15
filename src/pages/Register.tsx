@@ -1,13 +1,28 @@
+
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
-import { Icons } from "@/components/icons";
 import { Checkbox } from "@/components/ui/checkbox";
+
+// Define a simple spinner component to replace the Icons import
+const Spinner = () => (
+  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+);
+
+// Define a ChevronLeft icon component
+const ChevronLeft = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-left h-4 w-4">
+    <path d="m15 18-6-6 6-6"/>
+  </svg>
+);
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -16,7 +31,7 @@ const Register = () => {
   const [isEntrepreneur, setIsEntrepreneur] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +40,6 @@ const Register = () => {
     try {
       if (!name || !email || !password) {
         toast({
-          title: "Error",
           description: "Please fill in all fields.",
           variant: "destructive",
         });
@@ -33,15 +47,13 @@ const Register = () => {
       }
 
       const role = isEntrepreneur ? "entrepreneur" : "student";
-      await signUp(email, password, name, role);
+      await register(email, password, name, role);
       toast({
-        title: "Success",
         description: "Registration successful!",
       });
       navigate("/dashboard");
     } catch (error: any) {
       toast({
-        title: "Error",
         description: error.message || "Something went wrong.",
         variant: "destructive",
       });
@@ -57,14 +69,13 @@ const Register = () => {
         className="absolute left-4 top-4 md:left-8 md:top-8 text-tiro-purple"
       >
         <Button variant="ghost">
-          <Icons.chevronLeft className="mr-2 h-4 w-4" />
+          <ChevronLeft />
           Back
         </Button>
       </Link>
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex">
         <div className="absolute inset-0 bg-zinc-900/80" />
         <div className="relative z-20 flex items-center text-lg font-medium">
-          <Icons.logo className="mr-2 h-6 w-6" />
           Tiro
         </div>
         <div className="relative z-20 mt-auto">
@@ -125,7 +136,7 @@ const Register = () => {
                 <Checkbox
                   id="entrepreneur"
                   checked={isEntrepreneur}
-                  onCheckedChange={setIsEntrepreneur}
+                  onCheckedChange={() => setIsEntrepreneur(!isEntrepreneur)}
                 />
                 <Label
                   htmlFor="entrepreneur"
@@ -137,9 +148,7 @@ const Register = () => {
             </CardContent>
           </Card>
           <Button disabled={isLoading} onClick={handleSubmit}>
-            {isLoading && (
-              <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {isLoading && <Spinner />}
             Create Account
           </Button>
           <p className="px-8 text-center text-sm text-muted-foreground">

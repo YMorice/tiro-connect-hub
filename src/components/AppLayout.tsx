@@ -1,3 +1,4 @@
+
 import {
   Sheet,
   SheetContent,
@@ -38,7 +39,7 @@ interface Props {
 }
 
 const AppLayout = ({ children }: Props) => {
-  const { user, logout } = useAuth();
+  const { user, logout, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMounted, setIsMounted] = useState(false);
@@ -73,7 +74,7 @@ const AppLayout = ({ children }: Props) => {
                   Projects
                 </Link>
               </NavigationMenuItem>
-              {user?.role === "admin" && (
+              {profile?.role === "admin" && (
                 <NavigationMenuItem>
                   <Link to="/admin" className="font-medium">
                     Admin
@@ -84,13 +85,13 @@ const AppLayout = ({ children }: Props) => {
           </NavigationMenu>
           <div className="flex items-center space-x-2">
             <ModeToggle />
-            {user ? (
+            {profile ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="/avatars/01.png" alt={user.name} />
-                      <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                      <AvatarImage src="/avatars/01.png" alt={profile.name} />
+                      <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>

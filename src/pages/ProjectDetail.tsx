@@ -245,7 +245,13 @@ const ProjectDetail = () => {
                               </a>
                               <div className="flex items-center space-x-2">
                                 {doc.isDeliverable && (
-                                  <Badge variant={doc.status === "approved" ? "success" : doc.status === "rejected" ? "destructive" : "secondary"}>
+                                  <Badge 
+                                    variant={
+                                      doc.status === "approved" ? "default" : 
+                                      doc.status === "rejected" ? "destructive" : 
+                                      "secondary"
+                                    }
+                                  >
                                     {doc.status?.toUpperCase()}
                                   </Badge>
                                 )}

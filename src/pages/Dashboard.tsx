@@ -24,16 +24,16 @@ import {
 } from "lucide-react";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { projects } = useProject();
   const { messages } = useMessages();
   const navigate = useNavigate();
 
   // Filter projects based on user role
   const userProjects = projects.filter((project) => 
-    user?.role === "entrepreneur" 
-      ? project.ownerId === user.id 
-      : project.assigneeId === user.id
+    profile?.role === "entrepreneur" 
+      ? project.ownerId === user?.id 
+      : project.assigneeId === user?.id
   );
 
   // Get open project proposals (for students)
@@ -95,8 +95,8 @@ const Dashboard = () => {
     <AppLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Welcome, {user?.name}!</h1>
-          {user?.role === "entrepreneur" && (
+          <h1 className="text-3xl font-bold">Welcome, {profile?.name || "User"}!</h1>
+          {profile?.role === "entrepreneur" && (
             <Button
               onClick={() => navigate("/projects/new")}
               className="bg-tiro-purple hover:bg-tiro-purple/90"
@@ -111,12 +111,12 @@ const Dashboard = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {user?.role === "entrepreneur" ? "Total Projects" : "Available Proposals"}
+                {profile?.role === "entrepreneur" ? "Total Projects" : "Available Proposals"}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {user?.role === "entrepreneur" ? totalProjects : projectProposals.length}
+                {profile?.role === "entrepreneur" ? totalProjects : projectProposals.length}
               </div>
             </CardContent>
           </Card>
@@ -133,12 +133,12 @@ const Dashboard = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                {user?.role === "student" ? "Total Earnings" : "Unread Messages"}
+                {profile?.role === "student" ? "Total Earnings" : "Unread Messages"}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold flex items-center">
-                {user?.role === "student" ? (
+                {profile?.role === "student" ? (
                   <>
                     <BadgeDollarSign className="inline mr-1 h-6 w-6 text-green-600" />
                     {totalEarnings}
@@ -155,7 +155,7 @@ const Dashboard = () => {
         </div>
 
         {/* Student-specific content */}
-        {user?.role === "student" && (
+        {profile?.role === "student" && (
           <>
             {/* Project Proposals */}
             <Card>
@@ -253,7 +253,7 @@ const Dashboard = () => {
         )}
 
         {/* Entrepreneur-specific content */}
-        {user?.role === "entrepreneur" && (
+        {profile?.role === "entrepreneur" && (
           <Card>
             <CardHeader>
               <CardTitle>Your Projects</CardTitle>

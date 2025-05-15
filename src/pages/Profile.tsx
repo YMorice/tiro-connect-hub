@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -24,10 +25,9 @@ import {
 } from "@/components/ui/form";
 import { toast } from "@/components/ui/sonner";
 import { useForm } from "react-hook-form";
-import { User } from "@/types";
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, profile } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
@@ -35,18 +35,18 @@ const Profile = () => {
 
   const form = useForm({
     defaultValues: {
-      name: user?.name || "",
-      email: user?.email || "",
-      bio: user?.bio || "",
+      name: profile?.name || "",
+      email: profile?.email || "",
+      bio: profile?.bio || "",
     },
   });
 
   useEffect(() => {
-    if (user?.skills) {
-      setSkills(user.skills);
-      setSkillsText(user.skills.join(", "));
+    if (profile?.skills) {
+      setSkills(profile.skills);
+      setSkillsText(profile.skills.join(", "));
     }
-  }, [user]);
+  }, [profile]);
 
   const handleSaveProfile = (data: { name: string; email: string; bio: string }) => {
     if (!user) return;
@@ -73,7 +73,7 @@ const Profile = () => {
     toast.success("Logged out successfully");
   };
 
-  if (!user) {
+  if (!profile) {
     return <div>Loading...</div>;
   }
 
@@ -191,19 +191,19 @@ const Profile = () => {
                   <h3 className="text-sm font-medium text-muted-foreground">
                     Full Name
                   </h3>
-                  <p className="mt-1">{user.name}</p>
+                  <p className="mt-1">{profile.name}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">
                     Email
                   </h3>
-                  <p className="mt-1">{user.email}</p>
+                  <p className="mt-1">{profile.email}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">
                     Bio
                   </h3>
-                  <p className="mt-1">{user.bio || "No bio provided"}</p>
+                  <p className="mt-1">{profile.bio || "No bio provided"}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">

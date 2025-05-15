@@ -105,13 +105,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       toast({
-        title: "Logged in successfully",
-        description: "Welcome back!",
+        description: "Logged in successfully. Welcome back!",
       });
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
-        title: "Login failed",
         description: error.message || "An error occurred during login",
         variant: "destructive",
       });
@@ -137,13 +135,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       toast({
-        title: "Registration successful",
-        description: "Your account has been created",
+        description: "Registration successful. Your account has been created.",
       });
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({
-        title: "Registration failed",
         description: error.message || "An error occurred during registration",
         variant: "destructive",
       });
@@ -160,12 +156,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       toast({
-        title: "Logged out successfully",
+        description: "Logged out successfully.",
       });
     } catch (error: any) {
       console.error("Logout error:", error);
       toast({
-        title: "Logout failed",
         description: error.message || "An error occurred during logout",
         variant: "destructive",
       });
