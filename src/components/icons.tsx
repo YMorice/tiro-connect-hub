@@ -23,11 +23,10 @@ import {
   Twitter,
   User,
   X,
-  type LucideIcon,
-  type LucideProps
+  LucideProps
 } from "lucide-react"
 
-export type Icon = typeof LucideIcon
+export type Icon = React.ComponentType<React.SVGProps<SVGSVGElement> & { size?: number | string }>
 
 export const Icons = {
   logo: Command,

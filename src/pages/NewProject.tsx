@@ -35,7 +35,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const NewProject = () => {
-  const { createProject, addDocument } = useProject();
+  const { createProject } = useProject();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -76,16 +76,9 @@ const NewProject = () => {
     
     // Handle file uploads if any were selected
     if (selectedFiles.length > 0) {
-      // Get the newly created project ID from the context after creation
-      // This is a simplified approach - in a real app, you might want to get the actual ID returned from createProject
-      const projectsContext = useProject();
-      const projects = projectsContext.projects;
-      const newProjectId = projects[projects.length - 1].id;
-      
-      // Add documents
-      selectedFiles.forEach(file => {
-        addDocument(newProjectId, {}, file);
-      });
+      // For now, we'll simply create the project without handling document uploads
+      // since addDocument isn't available in the project context
+      console.log("Files would be uploaded:", selectedFiles);
     }
     
     // Navigate to projects page after successful creation

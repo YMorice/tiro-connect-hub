@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +40,7 @@ const Register = () => {
     try {
       if (!name || !email || !password) {
         toast({
+          title: "Missing Fields",
           description: "Please fill in all fields.",
           variant: "destructive",
         });
@@ -49,11 +50,13 @@ const Register = () => {
       const role = isEntrepreneur ? "entrepreneur" : "student";
       await register(email, password, name, role);
       toast({
+        title: "Success",
         description: "Registration successful!",
       });
       navigate("/dashboard");
     } catch (error: any) {
       toast({
+        title: "Registration Failed",
         description: error.message || "Something went wrong.",
         variant: "destructive",
       });
@@ -95,9 +98,9 @@ const Register = () => {
               <CardTitle className="text-2xl font-bold">
                 Create an account
               </CardTitle>
-              <CardDescription>
+              <p className="text-sm text-muted-foreground">
                 Enter your email below to create your account
-              </CardDescription>
+              </p>
             </CardHeader>
           </div>
           <Card className="border-none">
@@ -136,7 +139,7 @@ const Register = () => {
                 <Checkbox
                   id="entrepreneur"
                   checked={isEntrepreneur}
-                  onCheckedChange={() => setIsEntrepreneur(!isEntrepreneur)}
+                  onCheckedChange={(checked) => setIsEntrepreneur(checked === true)}
                 />
                 <Label
                   htmlFor="entrepreneur"
