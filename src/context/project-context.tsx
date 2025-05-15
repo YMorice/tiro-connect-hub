@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from "react";
 import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
@@ -191,11 +192,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!user) return;
     
     // Create an object URL if a file is provided
-    const documentUrl = file ? URL.createObjectURL(file) : (documentData.url || "#");
+    const documentUrl = file ? URL.createObjectURL(file) : "#";
     
     // Determine document type from file if available
     const getDocumentType = (file?: File) => {
-      if (!file) return documentData.type || "unknown";
+      if (!file) return "unknown";
       
       const extension = file.name.split('.').pop()?.toLowerCase();
       if (!extension) return "unknown";
@@ -213,7 +214,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (project.id === projectId) {
           const newDocument: Document = {
             id: String(Math.random()).substring(2, 8),
-            name: file ? file.name : (documentData.name || "Untitled Document"),
+            name: documentData.name || (file ? file.name : "Untitled Document"),
             url: documentUrl,
             type: getDocumentType(file),
             projectId,

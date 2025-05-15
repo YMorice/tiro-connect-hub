@@ -143,7 +143,7 @@ const ProjectDetail = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [newTask, setNewTask] = useState({ title: "", description: "" });
-  const [newDocument, setNewDocument] = useState({ name: "", url: "", type: "pdf" });
+  const [newDocumentName, setNewDocumentName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [projectMessages, setProjectMessages] = useState<Message[]>([]);
@@ -193,13 +193,14 @@ const ProjectDetail = () => {
     e.preventDefault();
     
     if (selectedFile) {
-      addDocument(project.id, {}, selectedFile);
+      // If a file name is provided, use it; otherwise use the file's name
+      const documentName = newDocumentName.trim() || selectedFile.name;
+      
+      addDocument(project.id, { name: documentName }, selectedFile);
       setSelectedFile(null);
-    } else if (newDocument.name.trim() && newDocument.url.trim()) {
-      addDocument(project.id, newDocument);
-      setNewDocument({ name: "", url: "", type: "pdf" });
+      setNewDocumentName("");
     } else {
-      toast.error("Please provide either a file or document details");
+      toast.error("Please select a file to upload");
     }
   };
 
@@ -552,7 +553,7 @@ const ProjectDetail = () => {
                   </div>
                 )}
 
-                {/* Add document form */}
+                {/* Add document form - Modified to remove URL input */}
                 {(isOwner || isAssignee) && (
                   <form onSubmit={handleDocumentSubmit} className="space-y-4">
                     <div className="p-4 border rounded-md bg-gray-50">
@@ -569,61 +570,14 @@ const ProjectDetail = () => {
                           />
                         </div>
                         
-                        <div className="flex items-center">
-                          <div className="flex-grow border-t border-gray-300"></div>
-                          <span className="px-4 text-sm text-muted-foreground">OR</span>
-                          <div className="flex-grow border-t border-gray-300"></div>
-                        </div>
-                        
                         <div>
-                          <Label htmlFor="documentName">Document Name</Label>
+                          <Label htmlFor="documentName">Document Name (Optional)</Label>
                           <Input
                             id="documentName"
-                            value={newDocument.name}
-                            onChange={(e) =>
-                              setNewDocument({
-                                ...newDocument,
-                                name: e.target.value,
-                              })
-                            }
-                            placeholder="Enter document name"
+                            value={newDocumentName}
+                            onChange={(e) => setNewDocumentName(e.target.value)}
+                            placeholder="Enter document name (defaults to file name)"
                           />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="documentUrl">Document URL</Label>
-                          <Input
-                            id="documentUrl"
-                            value={newDocument.url}
-                            onChange={(e) =>
-                              setNewDocument({
-                                ...newDocument,
-                                url: e.target.value,
-                              })
-                            }
-                            placeholder="Enter document URL"
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="documentType">Document Type</Label>
-                          <select
-                            id="documentType"
-                            value={newDocument.type}
-                            onChange={(e) =>
-                              setNewDocument({
-                                ...newDocument,
-                                type: e.target.value,
-                              })
-                            }
-                            className="w-full p-2 border rounded"
-                          >
-                            <option value="pdf">PDF</option>
-                            <option value="doc">Word Document</option>
-                            <option value="image">Image</option>
-                            <option value="zip">ZIP Archive</option>
-                            <option value="other">Other</option>
-                          </select>
                         </div>
                       </div>
                     </div>
