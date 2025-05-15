@@ -13,7 +13,7 @@ import { Send, Upload, Clock, Check, X } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { useMessages } from "@/context/message-context";
 import { toast } from "@/components/ui/sonner";
-import { useProjects } from "@/context/project-context";
+import { useProject } from "@/context/project-context";
 import { User, Message } from "@/types";
 
 interface ChatMessageProps {
@@ -34,7 +34,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => 
 const Messages = () => {
   const { user } = useAuth();
   const { messages, sendMessage } = useMessages();
-  const { projects } = useProjects();
+  const { projects } = useProject();
   const [currentProject, setCurrentProject] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);

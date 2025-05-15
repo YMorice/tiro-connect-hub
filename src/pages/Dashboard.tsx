@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-import { useProjects } from "@/context/project-context";
+import { useProject } from "@/context/project-context";
 import { useMessages } from "@/context/message-context";
 import { Link, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
@@ -26,7 +25,7 @@ import {
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { projects } = useProjects();
+  const { projects } = useProject();
   const { messages } = useMessages();
   const navigate = useNavigate();
 

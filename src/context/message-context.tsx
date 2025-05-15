@@ -1,8 +1,7 @@
-
 import React, { createContext, useContext, useState } from "react";
 import { Message } from "../types";
 import { useAuth } from "./auth-context";
-import { useProjects } from "./project-context";
+import { useProject } from "./project-context";
 import { toast } from "@/components/ui/sonner";
 
 interface MessageContextType {
@@ -55,7 +54,7 @@ const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
 export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const { projects, updateProject, addDocument } = useProjects();
+  const { projects, updateProject, addDocument } = useProject();
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [loading, setLoading] = useState(false);
 

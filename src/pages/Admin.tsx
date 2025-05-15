@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
-import { useProjects } from "@/context/project-context";
+import { useProject } from "@/context/project-context";
 import AppLayout from "@/components/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,7 +44,7 @@ const mockStudents: User[] = [
 
 const Admin = () => {
   const { user } = useAuth();
-  const { projects, updateProject } = useProjects();
+  const { projects, updateProject } = useProject();
   const navigate = useNavigate();
   const [studentsToAssign, setStudentsToAssign] = useState<{ [projectId: string]: User[] }>({});
   

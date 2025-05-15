@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useProjects } from "@/context/project-context";
+import { useProject } from "@/context/project-context";
 import { useAuth } from "@/context/auth-context";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +35,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const NewProject = () => {
-  const { createProject, addDocument } = useProjects();
+  const { createProject, addDocument } = useProject();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -79,7 +78,7 @@ const NewProject = () => {
     if (selectedFiles.length > 0) {
       // Get the newly created project ID from the context after creation
       // This is a simplified approach - in a real app, you might want to get the actual ID returned from createProject
-      const projectsContext = useProjects();
+      const projectsContext = useProject();
       const projects = projectsContext.projects;
       const newProjectId = projects[projects.length - 1].id;
       

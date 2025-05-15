@@ -1,1045 +1,165 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/context/auth-context";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useAuth } from "@/context/auth-context";
-import { UserRole } from "@/types";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/sonner";
-
-// Step 1 schema - Basic registration information
-const step1Schema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["student", "entrepreneur"] as const),
-  confidenceCode: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-}).refine(
-  (data) => data.role !== "student" || (data.confidenceCode && data.confidenceCode.length > 0),
-  {
-    message: "Confidence code is required for students",
-    path: ["confidenceCode"],
-  }
-);
-
-// Step 2 schema - Role-specific information (part 1)
-const step2SchemaStudent = z.object({
-  specialty: z.string().min(1, "Please select a specialty"),
-  bio: z.string().min(10, "Please provide at least 10 characters about yourself"),
-  portfolioUrl: z.string().url("Please enter a valid URL").or(z.string().length(0)),
-});
-
-const step2SchemaEntrepreneur = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  phoneNumber: z.string().min(10, "Please enter a valid phone number"),
-});
-
-// Step 3 schema - Role-specific information (part 2)
-const step3SchemaStudent = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  phoneNumber: z.string().min(10, "Please enter a valid phone number"),
-});
-
-const step3SchemaEntrepreneur = z.object({
-  companyName: z.string().min(2, "Company name must be at least 2 characters"),
-  companyRole: z.string().min(2, "Your role must be at least 2 characters"),
-  siret: z.string().min(14, "SIRET number must be at least 14 characters"),
-  companyAddress: z.string().min(5, "Please enter a valid address"),
-});
-
-// Step 4 schema - Additional information
-const step4SchemaStudent = z.object({
-  isFreelance: z.boolean(),
-  siret: z.string().optional(),
-  address: z.string().min(5, "Please enter a valid address"),
-  iban: z.string().min(15, "Please enter a valid IBAN"),
-}).refine(
-  (data) => !data.isFreelance || (data.siret && data.siret.length >= 14),
-  {
-    message: "SIRET number is required for freelancers",
-    path: ["siret"],
-  }
-);
-
-// Combined type for all form values
-type FormValues = {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  role: "student" | "entrepreneur";
-  confidenceCode?: string;
-  specialty?: string;
-  bio?: string;
-  portfolioUrl?: string;
-  firstName?: string;
-  lastName?: string;
-  phoneNumber?: string;
-  companyName?: string;
-  companyRole?: string;
-  siret?: string;
-  companyAddress?: string;
-  isFreelance?: boolean;
-  address?: string;
-  iban?: string;
-  skipProject?: boolean;
-};
+import { Icons } from "@/components/icons";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Register = () => {
-  const { register: authRegister, loading } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [isEntrepreneur, setIsEntrepreneur] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [formValues, setFormValues] = useState<FormValues>({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    role: "entrepreneur",
-  });
-  
-  // Step 1 form
-  const step1Form = useForm<z.infer<typeof step1Schema>>({
-    resolver: zodResolver(step1Schema),
-    defaultValues: {
-      email: "",
-      password: "",
-      confirmPassword: "",
-      role: "entrepreneur" as const,
-      confidenceCode: "",
-    },
-  });
+  const { signUp } = useAuth();
 
-  // Step 2 forms
-  const step2StudentForm = useForm<z.infer<typeof step2SchemaStudent>>({
-    resolver: zodResolver(step2SchemaStudent),
-    defaultValues: {
-      specialty: "",
-      bio: "",
-      portfolioUrl: "",
-    },
-  });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  const step2EntrepreneurForm = useForm<z.infer<typeof step2SchemaEntrepreneur>>({
-    resolver: zodResolver(step2SchemaEntrepreneur),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      phoneNumber: "",
-    },
-  });
-
-  // Step 3 forms
-  const step3StudentForm = useForm<z.infer<typeof step3SchemaStudent>>({
-    resolver: zodResolver(step3SchemaStudent),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      phoneNumber: "",
-    },
-  });
-
-  const step3EntrepreneurForm = useForm<z.infer<typeof step3SchemaEntrepreneur>>({
-    resolver: zodResolver(step3SchemaEntrepreneur),
-    defaultValues: {
-      companyName: "",
-      companyRole: "",
-      siret: "",
-      companyAddress: "",
-    },
-  });
-
-  // Step 4 form for students
-  const step4StudentForm = useForm<z.infer<typeof step4SchemaStudent>>({
-    resolver: zodResolver(step4SchemaStudent),
-    defaultValues: {
-      isFreelance: false,
-      siret: "",
-      address: "",
-      iban: "",
-    },
-  });
-
-  // Initialize forms when the component mounts
-  useEffect(() => {
-    step1Form.reset({
-      email: formValues.email,
-      password: formValues.password,
-      confirmPassword: formValues.confirmPassword,
-      role: formValues.role,
-      confidenceCode: formValues.confidenceCode || "",
-    });
-  }, []);
-
-  // Handle Step 1 submission
-  const onSubmitStep1 = (values: z.infer<typeof step1Schema>) => {
-    setFormValues(prev => ({ 
-      ...prev, 
-      email: values.email,
-      password: values.password,
-      confirmPassword: values.confirmPassword,
-      role: values.role,
-      confidenceCode: values.confidenceCode || ""
-    }));
-    
-    // Reset step 2 forms based on role
-    if (values.role === "student") {
-      step2StudentForm.reset({
-        specialty: "",
-        bio: "",
-        portfolioUrl: "",
-      });
-    } else {
-      step2EntrepreneurForm.reset({
-        firstName: "",
-        lastName: "",
-        phoneNumber: "",
-      });
-    }
-    
-    setStep(2);
-  };
-
-  // Handle Step 2 submission
-  const onSubmitStep2Student = (values: z.infer<typeof step2SchemaStudent>) => {
-    setFormValues(prev => ({
-      ...prev,
-      specialty: values.specialty,
-      bio: values.bio,
-      portfolioUrl: values.portfolioUrl
-    }));
-    
-    // Reset step 3 student form
-    step3StudentForm.reset({
-      firstName: "",
-      lastName: "",
-      phoneNumber: "",
-    });
-    
-    setStep(3);
-  };
-
-  const onSubmitStep2Entrepreneur = (values: z.infer<typeof step2SchemaEntrepreneur>) => {
-    setFormValues(prev => ({
-      ...prev,
-      firstName: values.firstName,
-      lastName: values.lastName,
-      phoneNumber: values.phoneNumber
-    }));
-    
-    // Reset step 3 entrepreneur form
-    step3EntrepreneurForm.reset({
-      companyName: "",
-      companyRole: "",
-      siret: "",
-      companyAddress: "",
-    });
-    
-    setStep(3);
-  };
-
-  // Handle Step 3 submission
-  const onSubmitStep3Student = (values: z.infer<typeof step3SchemaStudent>) => {
-    setFormValues(prev => ({
-      ...prev,
-      firstName: values.firstName,
-      lastName: values.lastName,
-      phoneNumber: values.phoneNumber
-    }));
-    
-    // Reset step 4 student form
-    step4StudentForm.reset({
-      isFreelance: false,
-      siret: "",
-      address: "",
-      iban: "",
-    });
-    
-    setStep(4);
-  };
-
-  const onSubmitStep3Entrepreneur = (values: z.infer<typeof step3SchemaEntrepreneur>) => {
-    setFormValues(prev => ({ 
-      ...prev, 
-      companyName: values.companyName,
-      companyRole: values.companyRole,
-      siret: values.siret,
-      companyAddress: values.companyAddress
-    }));
-    setStep(4);
-  };
-
-  // Handle Step 4 submission
-  const onSubmitStep4Student = async (values: z.infer<typeof step4SchemaStudent>) => {
-    const finalFormValues = { 
-      ...formValues, 
-      isFreelance: values.isFreelance,
-      siret: values.siret,
-      address: values.address,
-      iban: values.iban
-    };
-    
-    setFormValues(finalFormValues);
-    await finalSubmit(finalFormValues);
-  };
-
-  const onSkipProject = () => {
-    setFormValues(current => ({ ...current, skipProject: true }));
-    setStep(5);
-  };
-
-  const onAddProject = () => {
-    // Register the user first
-    finalSubmit(formValues).then(() => {
-      // Then navigate to new project page
-      navigate("/projects/new");
-    });
-  };
-
-  // Final submit function
-  const finalSubmit = async (values: FormValues) => {
     try {
-      // Create a name from first and last name
-      const name = values.firstName && values.lastName 
-        ? `${values.firstName} ${values.lastName}` 
-        : "New User";
-        
-      // Register the user with the constructed profile data
-      const userData = {
-        bio: values.bio,
-        specialty: values.specialty,
-        portfolioUrl: values.portfolioUrl,
-        phoneNumber: values.phoneNumber,
-        isFreelance: values.isFreelance,
-        siret: values.siret,
-        address: values.address,
-        iban: values.iban,
-        companyName: values.companyName,
-        companyRole: values.companyRole,
-        companyAddress: values.companyAddress,
-      };
-      
-      await authRegister(values.email, values.password, name, values.role, userData);
-      
-      // Move to thank you step if we're not already on it
-      if (step !== 5) {
-        setStep(5);
+      if (!name || !email || !password) {
+        toast({
+          title: "Error",
+          description: "Please fill in all fields.",
+          variant: "destructive",
+        });
+        return;
       }
-    } catch (error) {
-      console.error("Registration error:", error);
-      // Error is handled by auth context with toast
+
+      const role = isEntrepreneur ? "entrepreneur" : "student";
+      await signUp(email, password, name, role);
+      toast({
+        title: "Success",
+        description: "Registration successful!",
+      });
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const goBack = () => {
-    if (step > 1) {
-      setStep(step - 1);
-    }
-  };
-
-  // Render the appropriate step
-  const renderStep = () => {
-    switch (step) {
-      case 1:
-        return (
-          <Form {...step1Form}>
-            <form onSubmit={step1Form.handleSubmit(onSubmitStep1)} className="space-y-4">
-              <FormField
-                control={step1Form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>I am a:</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        className="flex flex-col space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="student" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Student - I want to work on web projects
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="entrepreneur" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Entrepreneur - I need web design services
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step1Form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="example@email.com" 
-                        {...field} 
-                        type="email"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step1Form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="******" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step1Form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="******" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {step1Form.watch("role") === "student" && (
-                <FormField
-                  control={step1Form.control}
-                  name="confidenceCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confidence Code</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Enter your student confidence code" 
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <Button 
-                type="submit" 
-                className="w-full bg-tiro-purple hover:bg-tiro-purple/90"
-                disabled={loading}
-              >
-                {loading ? "Processing..." : "Next"}
-              </Button>
-            </form>
-          </Form>
-        );
-
-      case 2:
-        return formValues.role === "student" ? (
-          <Form {...step2StudentForm}>
-            <form onSubmit={step2StudentForm.handleSubmit(onSubmitStep2Student)} className="space-y-4">
-              <FormField
-                control={step2StudentForm.control}
-                name="specialty"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>What's your specialty?</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        className="flex flex-col space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="ui_ux" />
-                          </FormControl>
-                          <FormLabel className="font-normal">UI/UX Design</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="front_end" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Front-end Development</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="full_stack" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Full Stack Development</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="web_design" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Web Design</FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step2StudentForm.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>About You</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Tell us about your skills, experience, and interests..." 
-                        className="min-h-[100px]"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step2StudentForm.control}
-                name="portfolioUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Portfolio URL (optional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="https://yourportfolio.com" 
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-between">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={goBack}
-                >
-                  Back
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
-                  disabled={loading}
-                >
-                  Next
-                </Button>
-              </div>
-            </form>
-          </Form>
-        ) : (
-          <Form {...step2EntrepreneurForm}>
-            <form onSubmit={step2EntrepreneurForm.handleSubmit(onSubmitStep2Entrepreneur)} className="space-y-4">
-              <FormField
-                control={step2EntrepreneurForm.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="John" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step2EntrepreneurForm.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Doe" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step2EntrepreneurForm.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="+33612345678" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-between">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={goBack}
-                >
-                  Back
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
-                  disabled={loading}
-                >
-                  Next
-                </Button>
-              </div>
-            </form>
-          </Form>
-        );
-
-      case 3:
-        return formValues.role === "student" ? (
-          <Form {...step3StudentForm}>
-            <form onSubmit={step3StudentForm.handleSubmit(onSubmitStep3Student)} className="space-y-4">
-              <FormField
-                control={step3StudentForm.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="John" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step3StudentForm.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Doe" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step3StudentForm.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="+33612345678" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-between">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={goBack}
-                >
-                  Back
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
-                  disabled={loading}
-                >
-                  Next
-                </Button>
-              </div>
-            </form>
-          </Form>
-        ) : (
-          <Form {...step3EntrepreneurForm}>
-            <form onSubmit={step3EntrepreneurForm.handleSubmit(onSubmitStep3Entrepreneur)} className="space-y-4">
-              <FormField
-                control={step3EntrepreneurForm.control}
-                name="companyName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Name</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="ACME Inc." 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step3EntrepreneurForm.control}
-                name="companyRole"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Your Role in the Company</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="CEO, CTO, Project Manager, etc." 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step3EntrepreneurForm.control}
-                name="siret"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SIRET Number</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="12345678901234" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step3EntrepreneurForm.control}
-                name="companyAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Address</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Full address of your company" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-between">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={goBack}
-                >
-                  Back
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
-                  disabled={loading}
-                >
-                  Next
-                </Button>
-              </div>
-            </form>
-          </Form>
-        );
-
-      case 4:
-        return formValues.role === "student" ? (
-          <Form {...step4StudentForm}>
-            <form onSubmit={step4StudentForm.handleSubmit(onSubmitStep4Student)} className="space-y-4">
-              <FormField
-                control={step4StudentForm.control}
-                name="isFreelance"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">
-                        Are you a freelancer?
-                      </FormLabel>
-                    </div>
-                    <FormControl>
-                      <input
-                        type="checkbox"
-                        checked={field.value}
-                        onChange={field.onChange}
-                        className="h-4 w-4 text-tiro-purple focus:ring-tiro-purple"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {step4StudentForm.watch("isFreelance") && (
-                <FormField
-                  control={step4StudentForm.control}
-                  name="siret"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SIRET Number</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="12345678901234" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <FormField
-                control={step4StudentForm.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Your full address" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step4StudentForm.control}
-                name="iban"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>IBAN</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="FR76 1234 5678 9012 3456 7890 123" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-between">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={goBack}
-                >
-                  Back
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
-                  disabled={loading}
-                >
-                  Complete Registration
-                </Button>
-              </div>
-            </form>
-          </Form>
-        ) : (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h3 className="text-lg font-medium">Would you like to add a project now?</h3>
-              <p className="text-sm text-muted-foreground mt-2">
-                You can also add projects later from your dashboard.
-              </p>
-            </div>
-            
-            <div className="flex justify-center space-x-4">
-              <Button 
-                variant="outline" 
-                onClick={onSkipProject}
-                disabled={loading}
-              >
-                Skip for now
-              </Button>
-              <Button 
-                onClick={onAddProject}
-                className="bg-tiro-purple hover:bg-tiro-purple/90"
-                disabled={loading}
-              >
-                Add Project
-              </Button>
-            </div>
-            
-            <div className="flex justify-start">
-              <Button 
-                type="button" 
-                variant="link" 
-                onClick={goBack}
-                disabled={loading}
-              >
-                Back
-              </Button>
-            </div>
-          </div>
-        );
-
-      case 5:
-        return (
-          <div className="space-y-6 text-center">
-            <div className="mx-auto h-24 w-24 rounded-full bg-green-100 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-            </div>
-            
-            <h2 className="text-2xl font-bold">Thank You for Signing Up!</h2>
-            
-            <p className="text-muted-foreground">
-              {formValues.role === "student" 
-                ? "Your student account has been created successfully. You can now browse available projects and start collaborating with entrepreneurs."
-                : "Your entrepreneur account has been created successfully. You can now create projects and find talented students to help with your web design needs."
-              }
-            </p>
-            
-            <Button 
-              onClick={() => navigate("/dashboard")} 
-              className="mt-4 bg-tiro-purple hover:bg-tiro-purple/90 w-full"
-              disabled={loading}
-            >
-              Go to Dashboard
-            </Button>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  // Progress indicator
-  const renderProgress = () => {
-    return (
-      <div className="flex justify-between mb-8">
-        {[1, 2, 3, 4, 5].map((stepNumber) => (
-          <div key={stepNumber} className="flex flex-col items-center">
-            <div 
-              className={`rounded-full w-8 h-8 flex items-center justify-center border-2 ${
-                step === stepNumber 
-                  ? "border-tiro-purple bg-tiro-purple text-white" 
-                  : step > stepNumber 
-                    ? "border-green-500 bg-green-500 text-white" 
-                    : "border-gray-300 text-gray-400"
-              }`}
-            >
-              {step > stepNumber ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              ) : (
-                stepNumber
-              )}
-            </div>
-            <span className={`text-xs mt-1 ${
-              step >= stepNumber ? "text-tiro-purple" : "text-gray-400"
-            }`}>
-              Step {stepNumber}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-10">
-      <div className="w-full max-w-md">
-        <Card className="shadow-lg">
-          <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-3xl font-bold text-tiro-purple">Tiro</CardTitle>
-            <CardDescription>
-              {step === 5 ? "Registration Complete" : "Create your account"}
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent key={step}>
-            {step < 5 && renderProgress()}
-            {renderStep()}
-          </CardContent>
-          
-          {step !== 5 && (
-            <CardFooter className="flex justify-center">
-              <div className="text-sm text-center">
-                <span className="text-muted-foreground">Already have an account? </span>
-                <Link to="/login" className="text-tiro-purple hover:underline">
-                  Sign in
-                </Link>
+    <div className="container relative hidden h-[calc(100vh-80px)] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+      <Link
+        to="/login"
+        className="absolute left-4 top-4 md:left-8 md:top-8 text-tiro-purple"
+      >
+        <Button variant="ghost">
+          <Icons.chevronLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+      </Link>
+      <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex">
+        <div className="absolute inset-0 bg-zinc-900/80" />
+        <div className="relative z-20 flex items-center text-lg font-medium">
+          <Icons.logo className="mr-2 h-6 w-6" />
+          Tiro
+        </div>
+        <div className="relative z-20 mt-auto">
+          <blockquote className="space-y-2">
+            <p className="text-lg">
+              &ldquo;Unlock your potential and bring your ideas to life with
+              Tiro.&rdquo;
+            </p>
+            <footer className="text-sm">Tiro Team</footer>
+          </blockquote>
+        </div>
+      </div>
+      <div className="lg:p-8">
+        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+          <div className="flex flex-col space-y-2 text-center">
+            <CardHeader className="space-y-0">
+              <CardTitle className="text-2xl font-bold">
+                Create an account
+              </CardTitle>
+              <CardDescription>
+                Enter your email below to create your account
+              </CardDescription>
+            </CardHeader>
+          </div>
+          <Card className="border-none">
+            <CardContent className="grid gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  placeholder="Enter your name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
               </div>
-            </CardFooter>
-          )}
-        </Card>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  placeholder="Enter your email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  placeholder="Enter your password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="entrepreneur"
+                  checked={isEntrepreneur}
+                  onCheckedChange={setIsEntrepreneur}
+                />
+                <Label
+                  htmlFor="entrepreneur"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  I'm an entrepreneur
+                </Label>
+              </div>
+            </CardContent>
+          </Card>
+          <Button disabled={isLoading} onClick={handleSubmit}>
+            {isLoading && (
+              <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            Create Account
+          </Button>
+          <p className="px-8 text-center text-sm text-muted-foreground">
+            By clicking create account, you agree to our{" "}
+            <Link
+              to="/terms"
+              className="underline underline-offset-4 hover:text-tiro-purple"
+            >
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link
+              to="/privacy"
+              className="underline underline-offset-4 hover:text-tiro-purple"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </p>
+        </div>
       </div>
     </div>
   );
