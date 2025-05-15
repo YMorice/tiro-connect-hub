@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
@@ -314,13 +313,6 @@ const ProjectDetail = () => {
                 Download Invoice
               </Button>
             )}
-            {isOwner && project.status === "in_progress" && (
-              <Button
-                onClick={() => handleStatusChange("review")}
-              >
-                Request Review
-              </Button>
-            )}
             {isOwner && project.status === "review" && (
               <Button
                 onClick={() => handleStatusChange("completed")}
@@ -346,16 +338,6 @@ const ProjectDetail = () => {
                 onClick={() => handleStatusChange("in_progress")}
               >
                 Return to In Progress
-              </Button>
-            )}
-            {otherUserId && (
-              <Button
-                variant="outline"
-                className="flex items-center gap-2"
-                onClick={() => navigate(`/messages?user=${otherUserId}`)}
-              >
-                <MessageCircle size={18} />
-                Message
               </Button>
             )}
           </div>
@@ -701,7 +683,7 @@ const ProjectDetail = () => {
                         <Button 
                           type="button" 
                           variant="outline"
-                          onClick={() => navigate(`/messages?user=${otherUserId}&project=${project.id}`)}
+                          onClick={() => navigate(`/messages?user=${otherUserId}`)}
                           className="flex items-center gap-2"
                         >
                           <MessageCircle size={18} />
