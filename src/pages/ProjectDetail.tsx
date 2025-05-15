@@ -32,10 +32,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/sonner";
-import { FileIcon, MessageCircle, Trash2 } from "lucide-react";
+import { FileIcon, MessageCircle, Trash2, Download, CreditCard } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Message } from "@/types";
+import { Message, User } from "@/types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ChatMessageProps {
   message: Message;
@@ -55,6 +56,83 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => 
   );
 };
 
+// Mock profiles for demonstration
+const mockProfiles: User[] = [
+  {
+    id: "101",
+    email: "sam@example.com",
+    name: "Sam Johnson",
+    role: "student",
+    bio: "Web developer specializing in React and Node.js. 3 years of experience in building responsive web applications.",
+    skills: ["React", "Node.js", "TypeScript", "Tailwind CSS"],
+    createdAt: new Date(),
+    avatar: "https://i.pravatar.cc/150?u=101",
+    isOnline: true,
+  },
+  {
+    id: "102",
+    email: "alex@example.com",
+    name: "Alex Rivera",
+    role: "student",
+    bio: "UX/UI designer with a background in graphic design. Passionate about creating intuitive user experiences.",
+    skills: ["UI/UX", "Figma", "Adobe XD", "User Testing"],
+    createdAt: new Date(),
+    avatar: "https://i.pravatar.cc/150?u=102",
+    isOnline: false,
+  },
+  {
+    id: "103",
+    email: "jordan@example.com",
+    name: "Jordan Smith",
+    role: "student",
+    bio: "Full-stack developer with experience in e-commerce and SaaS applications.",
+    skills: ["JavaScript", "Python", "MongoDB", "Express"],
+    createdAt: new Date(),
+    avatar: "https://i.pravatar.cc/150?u=103",
+    isOnline: true,
+  },
+];
+
+const ProfileProposition: React.FC<{ profile: User, onSelect: () => void }> = ({ profile, onSelect }) => {
+  return (
+    <div className="p-4 border rounded-lg mb-4">
+      <div className="flex items-center gap-3 mb-3">
+        <Avatar>
+          <AvatarImage src={profile.avatar} />
+          <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <div>
+          <p className="font-medium">{profile.name}</p>
+          <div className="flex items-center">
+            <span className={`w-2 h-2 rounded-full mr-1 ${profile.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+            <span className="text-xs text-muted-foreground">{profile.isOnline ? 'Online' : 'Offline'}</span>
+          </div>
+        </div>
+      </div>
+      
+      <p className="text-sm mb-3">{profile.bio}</p>
+      
+      <div className="mb-4">
+        <p className="text-sm font-medium mb-2">Skills:</p>
+        <div className="flex flex-wrap gap-1">
+          {profile.skills?.map(skill => (
+            <span 
+              key={skill} 
+              className="bg-gray-100 px-2 py-1 text-xs rounded"
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+      </div>
+      
+      <Button onClick={onSelect} className="w-full">
+        Select Student
+      </Button>
+    </div>
+  );
+};
+
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { projects, updateProject, addTask, updateTask, deleteTask, addDocument, deleteDocument } = useProjects();
@@ -70,6 +148,7 @@ const ProjectDetail = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [projectMessages, setProjectMessages] = useState<Message[]>([]);
+  const [paymentShown, setPaymentShown] = useState<boolean>(false);
 
   useEffect(() => {
     if (id) {
@@ -133,6 +212,53 @@ const ProjectDetail = () => {
     setMessage("");
   };
 
+  const handleSelectProfile = (profileId: string) => {
+    updateProject(project.id, { assigneeId: profileId, status: "in_progress" });
+    toast.success("Student assigned to project");
+  };
+
+  const handleProceedToPayment = () => {
+    setPaymentShown(true);
+    toast.success("Payment request submitted. Please wait for admin confirmation.");
+  };
+
+  const handleDownloadInvoice = () => {
+    // In a real app, this would generate or download a real invoice
+    toast.success("Invoice downloaded");
+  };
+
+  const getTabsBasedOnStatus = () => {
+    // Default tabs configuration
+    let tabsConfig = [
+      { id: "documents", label: "Documents" },
+      { id: "communication", label: "Communication" }
+    ];
+    
+    // For draft projects, show profile propositions instead of tasks
+    if (project.status === "draft" && isOwner) {
+      tabsConfig = [
+        { id: "profiles", label: "Student Profiles" },
+        ...tabsConfig
+      ];
+    }
+    // For open projects, don't show tasks tab (payment is needed first)
+    else if (project.status === "open") {
+      // No additional tabs needed here, use default without tasks
+    }
+    // For in_progress, review, or completed projects, show tasks
+    else {
+      tabsConfig = [
+        { id: "tasks", label: "Tasks" },
+        ...tabsConfig
+      ];
+    }
+    
+    return tabsConfig;
+  };
+
+  const tabsConfig = getTabsBasedOnStatus();
+  const defaultTab = tabsConfig[0].id;
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -167,6 +293,25 @@ const ProjectDetail = () => {
                 className="bg-tiro-blue hover:bg-tiro-blue/90"
               >
                 Publish Project
+              </Button>
+            )}
+            {isOwner && project.status === "open" && !paymentShown && (
+              <Button
+                onClick={handleProceedToPayment}
+                className="bg-tiro-purple hover:bg-tiro-purple/90 flex items-center gap-2"
+              >
+                <CreditCard size={18} />
+                Pay to Launch Project
+              </Button>
+            )}
+            {isOwner && project.status === "open" && paymentShown && (
+              <Button
+                onClick={handleDownloadInvoice}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Download size={18} />
+                Download Invoice
               </Button>
             )}
             {isOwner && project.status === "in_progress" && (
@@ -221,106 +366,156 @@ const ProjectDetail = () => {
           <p>{project.description}</p>
         </div>
 
-        <Tabs defaultValue="tasks" className="w-full">
-          <TabsList className="w-full grid grid-cols-3">
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="communication">Communication</TabsTrigger>
+        {project.status === "open" && isOwner && paymentShown && (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <h2 className="text-lg font-semibold mb-2 text-yellow-800">Payment Pending</h2>
+            <p className="mb-4">
+              Your payment request has been submitted and is awaiting approval from an administrator. 
+              Once approved, your project will be visible to students who can then apply to work on it.
+            </p>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleDownloadInvoice}
+                className="flex items-center gap-2"
+              >
+                <Download size={18} />
+                Download Invoice
+              </Button>
+              <Button variant="secondary" onClick={() => navigate('/messages?user=admin')}>
+                Contact Support
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <Tabs defaultValue={defaultTab} className="w-full">
+          <TabsList className="w-full grid" style={{ gridTemplateColumns: `repeat(${tabsConfig.length}, 1fr)` }}>
+            {tabsConfig.map(tab => (
+              <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
+            ))}
           </TabsList>
-          <TabsContent value="tasks">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Tasks</CardTitle>
-                <CardDescription>
-                  Manage and track all tasks related to this project
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Task list */}
-                {project.tasks.length > 0 ? (
-                  <div className="space-y-4 mb-6">
-                    {project.tasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-                      >
-                        <div>
-                          <h3 className="font-medium">{task.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {task.description}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2 self-end md:self-center">
-                          <select
-                            value={task.status}
-                            onChange={(e) =>
-                              handleTaskStatusChange(
-                                task.id,
-                                e.target.value as any
-                              )
-                            }
-                            className="border rounded p-1 text-sm"
-                            disabled={!isOwner && !isAssignee}
-                          >
-                            <option value="todo">To Do</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="done">Done</option>
-                          </select>
-                          {(isOwner || isAssignee) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteTask(project.id, task.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
+          
+          {project.status === "draft" && isOwner && (
+            <TabsContent value="profiles">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Student Profiles</CardTitle>
+                  <CardDescription>
+                    Select a student to work on your project
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {mockProfiles.map(profile => (
+                      <ProfileProposition
+                        key={profile.id}
+                        profile={profile}
+                        onSelect={() => handleSelectProfile(profile.id)}
+                      />
                     ))}
                   </div>
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    No tasks added yet
-                  </div>
-                )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+          
+          {["in_progress", "review", "completed"].includes(project.status) && (
+            <TabsContent value="tasks">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Tasks</CardTitle>
+                  <CardDescription>
+                    Manage and track all tasks related to this project
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Task list */}
+                  {project.tasks.length > 0 ? (
+                    <div className="space-y-4 mb-6">
+                      {project.tasks.map((task) => (
+                        <div
+                          key={task.id}
+                          className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+                        >
+                          <div>
+                            <h3 className="font-medium">{task.title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {task.description}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 self-end md:self-center">
+                            <select
+                              value={task.status}
+                              onChange={(e) =>
+                                handleTaskStatusChange(
+                                  task.id,
+                                  e.target.value as any
+                                )
+                              }
+                              className="border rounded p-1 text-sm"
+                              disabled={!isOwner && !isAssignee}
+                            >
+                              <option value="todo">To Do</option>
+                              <option value="in_progress">In Progress</option>
+                              <option value="done">Done</option>
+                            </select>
+                            {(isOwner || isAssignee) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteTask(project.id, task.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No tasks added yet
+                    </div>
+                  )}
 
-                {/* Add task form */}
-                {(isOwner || isAssignee) && (
-                  <form onSubmit={handleTaskSubmit} className="space-y-4">
-                    <div>
-                      <Label htmlFor="taskTitle">Task Title</Label>
-                      <Input
-                        id="taskTitle"
-                        value={newTask.title}
-                        onChange={(e) =>
-                          setNewTask({ ...newTask, title: e.target.value })
-                        }
-                        placeholder="Enter task title"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="taskDescription">Description</Label>
-                      <Textarea
-                        id="taskDescription"
-                        value={newTask.description}
-                        onChange={(e) =>
-                          setNewTask({
-                            ...newTask,
-                            description: e.target.value,
-                          })
-                        }
-                        placeholder="Enter task description"
-                        className="min-h-[100px]"
-                      />
-                    </div>
-                    <Button type="submit">Add Task</Button>
-                  </form>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  {/* Add task form */}
+                  {(isOwner || isAssignee) && (
+                    <form onSubmit={handleTaskSubmit} className="space-y-4">
+                      <div>
+                        <Label htmlFor="taskTitle">Task Title</Label>
+                        <Input
+                          id="taskTitle"
+                          value={newTask.title}
+                          onChange={(e) =>
+                            setNewTask({ ...newTask, title: e.target.value })
+                          }
+                          placeholder="Enter task title"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="taskDescription">Description</Label>
+                        <Textarea
+                          id="taskDescription"
+                          value={newTask.description}
+                          onChange={(e) =>
+                            setNewTask({
+                              ...newTask,
+                              description: e.target.value,
+                            })
+                          }
+                          placeholder="Enter task description"
+                          className="min-h-[100px]"
+                        />
+                      </div>
+                      <Button type="submit">Add Task</Button>
+                    </form>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           <TabsContent value="documents">
             <Card>
