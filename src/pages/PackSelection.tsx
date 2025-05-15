@@ -6,13 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Check, ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-
-interface ProjectPack {
-  id: string;
-  name: string;
-  description: string;
-}
+import { supabase, type ProjectPack } from "@/integrations/supabase/client";
 
 const PackSelection = () => {
   const navigate = useNavigate();
