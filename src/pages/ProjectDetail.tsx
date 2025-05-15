@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
 import { useAuth } from "@/context/auth-context";
@@ -34,20 +34,55 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/sonner";
 import { FileIcon, MessageCircle, Trash2 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Message } from "@/types";
+
+interface ChatMessageProps {
+  message: Message;
+  isCurrentUser: boolean;
+}
+
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => {
+  return (
+    <div className={`flex w-full py-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+      <div className={`rounded-lg p-3 text-sm w-fit max-w-[75%] ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
+        {message.content}
+        <div className="mt-1 text-xs opacity-70">
+          {message.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { projects, updateProject, addTask, updateTask, deleteTask, addDocument, deleteDocument } = useProjects();
   const { user } = useAuth();
-  const { sendMessage } = useMessages();
+  const { messages, sendMessage } = useMessages();
   const navigate = useNavigate();
 
   const project = projects.find((p) => p.id === id);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [newTask, setNewTask] = useState({ title: "", description: "" });
   const [newDocument, setNewDocument] = useState({ name: "", url: "", type: "pdf" });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
+  const [projectMessages, setProjectMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    if (id) {
+      // Filter messages for this project
+      const filtered = messages.filter(msg => msg.projectId === id);
+      setProjectMessages(filtered);
+    }
+  }, [messages, id]);
+
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [projectMessages]);
 
   if (!project) {
     return <div>Project not found</div>;
@@ -145,6 +180,7 @@ const ProjectDetail = () => {
               <Button
                 onClick={() => handleStatusChange("completed")}
                 className="bg-green-600 hover:bg-green-700"
+                variant="default"
               >
                 Mark as Complete
               </Button>
@@ -426,24 +462,47 @@ const ProjectDetail = () => {
               <CardHeader>
                 <CardTitle>Project Communication</CardTitle>
                 <CardDescription>
-                  Send messages related to this project
+                  Messages related to this project
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {otherUserId ? (
-                  <>
-                    <form onSubmit={handleMessageSend} className="space-y-4">
+                  <div className="flex flex-col h-[500px]">
+                    <ScrollArea className="flex-grow mb-4 pr-2">
+                      <div className="space-y-2">
+                        {projectMessages.length > 0 ? (
+                          projectMessages.map((msg) => (
+                            <ChatMessage
+                              key={msg.id}
+                              message={msg}
+                              isCurrentUser={msg.sender === user?.id}
+                            />
+                          ))
+                        ) : (
+                          <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">
+                            No messages yet. Start the conversation!
+                          </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    </ScrollArea>
+
+                    <form onSubmit={handleMessageSend} className="mt-auto">
                       <div>
-                        <Label htmlFor="message">Message</Label>
                         <Textarea
-                          id="message"
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}
                           placeholder="Type your message here"
-                          className="min-h-[120px]"
+                          className="min-h-[80px] resize-none"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleMessageSend(e);
+                            }
+                          }}
                         />
                       </div>
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mt-4">
                         <Button 
                           type="button" 
                           variant="outline"
@@ -451,7 +510,7 @@ const ProjectDetail = () => {
                           className="flex items-center gap-2"
                         >
                           <MessageCircle size={18} />
-                          View Conversation
+                          View All Messages
                         </Button>
                         <Button type="submit" className="flex items-center gap-2">
                           <MessageCircle size={18} />
@@ -459,7 +518,7 @@ const ProjectDetail = () => {
                         </Button>
                       </div>
                     </form>
-                  </>
+                  </div>
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
                     {project.status === "open"
