@@ -364,7 +364,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      document_type: "proposal"
+      document_type: "proposal" | "final_proposal"
       project_state: "draft" | "open" | "in progress" | "completed"
       task_state: "to do" | "in progress" | "done"
       user_role: "student" | "entrepreneur" | "admin"
@@ -483,7 +483,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      document_type: ["proposal"],
+      document_type: ["proposal", "final_proposal"],
       project_state: ["draft", "open", "in progress", "completed"],
       task_state: ["to do", "in progress", "done"],
       user_role: ["student", "entrepreneur", "admin"],

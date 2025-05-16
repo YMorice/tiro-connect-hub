@@ -8,12 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Clock, Check, X } from "lucide-react";
+import { Send, Clock, Check, X, FileText, Download } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { useMessages } from "@/context/message-context";
 import { toast } from "@/components/ui/sonner";
 import { useProjects } from "@/context/project-context";
 import { User, Message } from "@/types";
+import DocumentUpload from "@/components/DocumentUpload";
 
 interface ChatMessageProps {
   message: Message;
@@ -21,6 +22,37 @@ interface ChatMessageProps {
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => {
+  // Special rendering for document messages
+  if (message.documentUrl) {
+    return (
+      <div className={`flex w-full py-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+        <div className={`rounded-lg p-3 text-sm w-fit max-w-[75%] ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            <div className="flex-1">
+              <p className="font-medium">{message.documentName || "Document"}</p>
+              <p>{message.content}</p>
+              <div className="mt-2">
+                <a 
+                  href={message.documentUrl} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className={`flex items-center gap-1 text-xs ${isCurrentUser ? 'text-white/80 hover:text-white' : 'text-blue-600 hover:text-blue-800'}`}
+                >
+                  <Download className="h-3 w-3" /> View document
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="mt-1 text-xs opacity-70">
+            {message.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular message rendering
   return (
     <div className={`flex w-full py-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`rounded-lg p-3 text-sm w-fit max-w-[75%] ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
@@ -35,7 +67,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => 
 
 const Messages = () => {
   const { user } = useAuth();
-  const { messages, sendMessage } = useMessages();
+  const { messages, sendMessage, sendDocumentMessage } = useMessages();
   const { projects } = useProjects();
   const [currentProject, setCurrentProject] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
@@ -68,13 +100,30 @@ const Messages = () => {
   }, [filteredMessages]);
 
   const handleSendMessage = () => {
-    if (!user || !currentProject) return;
+    if (!user || !currentProject || !newMessage.trim()) return;
 
-    // Fixing the function call to match the signature in message-context.tsx
-    // sendMessage expects (recipient, content, projectId?) parameters
     sendMessage("studentId", newMessage, currentProject);
-
     setNewMessage("");
+  };
+
+  const handleDocumentSubmit = (documentDetails: {
+    documentFile: File;
+    documentName: string;
+    documentType: "proposal" | "final" | "regular";
+  }) => {
+    if (!user || !currentProject) return;
+    
+    // Create a URL for the file (in a real app, you would upload to a server/storage)
+    const documentUrl = URL.createObjectURL(documentDetails.documentFile);
+    
+    sendDocumentMessage("studentId", {
+      documentUrl,
+      documentName: documentDetails.documentName,
+      documentType: documentDetails.documentType,
+      projectId: currentProject,
+    });
+    
+    toast.success("Document shared");
   };
 
   return (
@@ -136,22 +185,33 @@ const Messages = () => {
                   </div>
                 </ScrollArea>
 
-                <div className="flex items-center space-x-2 mt-auto">
-                  <Textarea
-                    placeholder="Type your message here..."
-                    className="flex-grow min-h-[60px] max-h-[120px]"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                  />
-                  <Button onClick={handleSendMessage} className="h-[60px]">
-                    <Send className="h-5 w-5" />
-                  </Button>
+                <div className="flex flex-col space-y-2 mt-auto">
+                  {/* Document upload button */}
+                  <div className="flex justify-end">
+                    <DocumentUpload
+                      onDocumentSubmit={handleDocumentSubmit}
+                      projectId={currentProject}
+                    />
+                  </div>
+                  
+                  {/* Text message input */}
+                  <div className="flex items-center space-x-2">
+                    <Textarea
+                      placeholder="Type your message here..."
+                      className="flex-grow min-h-[60px] max-h-[120px]"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                    />
+                    <Button onClick={handleSendMessage} className="h-[60px]">
+                      <Send className="h-5 w-5" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
