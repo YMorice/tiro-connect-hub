@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { FileUpload } from "lucide-react";
+import { Upload, File } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
 interface DocumentUploadProps {
@@ -74,7 +74,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2">
-          <FileUpload className="h-4 w-4" />
+          <File className="h-4 w-4" />
           Share Document
         </Button>
       </DialogTrigger>
@@ -98,7 +98,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full"
               >
-                <FileUpload className="mr-2 h-4 w-4" />
+                <Upload className="mr-2 h-4 w-4" />
                 {selectedFile ? "Change File" : "Select File"}
               </Button>
               <input
