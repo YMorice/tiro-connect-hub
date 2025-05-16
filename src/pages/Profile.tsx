@@ -101,18 +101,19 @@ const Profile = () => {
     toast.success("Profile picture selected");
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+    toast.success("Logged out successfully");
+  };
+
+  // Handle skill toggle for checkbox selection
   const handleSkillToggle = (skill: string) => {
     setSelectedSkills(current => 
       current.includes(skill)
         ? current.filter(s => s !== skill)
         : [...current, skill]
     );
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-    toast.success("Logged out successfully");
   };
 
   if (!user) {
@@ -202,6 +203,7 @@ const Profile = () => {
                     )}
                   />
 
+                  {/* Display skills section only for students */}
                   {user.role === "student" && (
                     <div className="space-y-2">
                       <Label>Skills</Label>
