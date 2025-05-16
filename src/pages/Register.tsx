@@ -366,6 +366,9 @@ const Register = () => {
       const name = values.firstName && values.lastName 
         ? `${values.firstName} ${values.lastName}` 
         : "New User";
+      
+      // Get surname from values
+      const surname = values.lastName || "User";
         
       // Register the user with the constructed profile data
       const userData = {
@@ -384,7 +387,8 @@ const Register = () => {
         avatar: values.avatar,
       };
       
-      await authRegister(values.email, values.password, name, values.role, userData);
+      // Pass name, surname, role, and userData as separate parameters
+      await authRegister(values.email, values.password, name, surname, values.role, userData);
       
       // Move to thank you step if we're not already on it
       if (step !== 5) {
