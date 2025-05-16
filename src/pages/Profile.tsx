@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -26,13 +27,41 @@ import {
 import { toast } from "@/components/ui/sonner";
 import { useForm } from "react-hook-form";
 import { User } from "@/types";
+import FileUpload from "@/components/FileUpload";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
+// Predefined list of skills for checkboxes
+const AVAILABLE_SKILLS = [
+  "UI/UX Design", 
+  "Figma",
+  "Adobe XD", 
+  "HTML", 
+  "CSS",
+  "JavaScript", 
+  "React", 
+  "Vue.js", 
+  "TypeScript", 
+  "Node.js",
+  "Python",
+  "Django",
+  "Ruby on Rails",
+  "PHP",
+  "WordPress",
+  "Mobile Development",
+  "React Native",
+  "iOS Development",
+  "Android Development",
+  "UX Research",
+  "SEO",
+  "Digital Marketing"
+];
 
 const Profile = () => {
   const { user, updateProfile, logout } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
-  const [skills, setSkills] = useState<string[]>([]);
-  const [skillsText, setSkillsText] = useState("");
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(user?.avatar);
 
   const form = useForm({
     defaultValues: {
@@ -44,8 +73,10 @@ const Profile = () => {
 
   useEffect(() => {
     if (user?.skills) {
-      setSkills(user.skills);
-      setSkillsText(user.skills.join(", "));
+      setSelectedSkills(user.skills);
+    }
+    if (user?.avatar) {
+      setAvatarUrl(user.avatar);
     }
   }, [user]);
 
@@ -54,7 +85,8 @@ const Profile = () => {
 
     const updatedUser: Partial<User> = {
       ...data,
-      skills,
+      skills: user.role === "student" ? selectedSkills : undefined,
+      avatar: avatarUrl,
     };
 
     updateProfile(updatedUser);
@@ -62,14 +94,19 @@ const Profile = () => {
     toast.success("Profile updated successfully");
   };
 
-  const handleAddSkill = () => {
-    if (skillsText) {
-      // Check if skillsText is a string before using split
-      const skillsArray = typeof skillsText === 'string' 
-        ? skillsText.split(",").map((skill) => skill.trim()).filter(Boolean)
-        : [];
-      setSkills(skillsArray);
-    }
+  const handleFileSelect = (file: File) => {
+    // Create a temporary URL for the selected image
+    const url = URL.createObjectURL(file);
+    setAvatarUrl(url);
+    toast.success("Profile picture selected");
+  };
+
+  const handleSkillToggle = (skill: string) => {
+    setSelectedSkills(current => 
+      current.includes(skill)
+        ? current.filter(s => s !== skill)
+        : [...current, skill]
+    );
   };
 
   const handleLogout = () => {
@@ -106,6 +143,22 @@ const Profile = () => {
                   onSubmit={form.handleSubmit(handleSaveProfile)}
                   className="space-y-4"
                 >
+                  {/* Avatar upload section */}
+                  <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start mb-4">
+                    <Avatar className="w-24 h-24">
+                      {avatarUrl ? (
+                        <AvatarImage src={avatarUrl} alt={user.name} />
+                      ) : (
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      )}
+                    </Avatar>
+                    <FileUpload 
+                      onFileSelect={handleFileSelect} 
+                      accept="image/*"
+                      buttonText="Upload Profile Picture"
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
                     name="name"
@@ -149,34 +202,28 @@ const Profile = () => {
                     )}
                   />
 
-                  <div className="space-y-2">
-                    <Label htmlFor="skills">Skills (comma separated)</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="skills"
-                        value={skillsText}
-                        onChange={(e) => setSkillsText(e.target.value)}
-                        placeholder="React, TypeScript, UI Design"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleAddSkill}
-                      >
-                        Update
-                      </Button>
+                  {user.role === "student" && (
+                    <div className="space-y-2">
+                      <Label>Skills</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">
+                        {AVAILABLE_SKILLS.map((skill) => (
+                          <div key={skill} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`skill-${skill}`} 
+                              checked={selectedSkills.includes(skill)}
+                              onCheckedChange={() => handleSkillToggle(skill)}
+                            />
+                            <label 
+                              htmlFor={`skill-${skill}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {skill}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {skills.map((skill, index) => (
-                        <div
-                          key={index}
-                          className="bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm"
-                        >
-                          {skill}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  )}
 
                   <div className="flex justify-end gap-2">
                     <Button
@@ -192,6 +239,16 @@ const Profile = () => {
               </Form>
             ) : (
               <div className="space-y-4">
+                <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start mb-4">
+                  <Avatar className="w-24 h-24">
+                    {avatarUrl ? (
+                      <AvatarImage src={avatarUrl} alt={user.name} />
+                    ) : (
+                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    )}
+                  </Avatar>
+                </div>
+                
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">
                     Full Name
@@ -210,25 +267,27 @@ const Profile = () => {
                   </h3>
                   <p className="mt-1">{user.bio || "No bio provided"}</p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Skills
-                  </h3>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {skills.length > 0 ? (
-                      skills.map((skill, index) => (
-                        <div
-                          key={index}
-                          className="bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm"
-                        >
-                          {skill}
-                        </div>
-                      ))
-                    ) : (
-                      <p>No skills added</p>
-                    )}
+                {user.role === "student" && (
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Skills
+                    </h3>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {selectedSkills.length > 0 ? (
+                        selectedSkills.map((skill, index) => (
+                          <div
+                            key={index}
+                            className="bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm"
+                          >
+                            {skill}
+                          </div>
+                        ))
+                      ) : (
+                        <p>No skills added</p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="flex justify-end">
                   <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
                 </div>
