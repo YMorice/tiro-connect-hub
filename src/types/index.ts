@@ -75,3 +75,13 @@ export interface Review {
   comment: string;
   createdAt: Date;
 }
+
+export interface RegistrationFormValues {
+  name: string;
+  email: string;
+  password: string;
+  role: "student" | "entrepreneur";
+  bio?: string;
+  skills?: string[];
+  avatar?: string;
+}

@@ -7,7 +7,6 @@ import {
   MessageCircle, 
   FolderOpen, 
   UserRound,
-  LogOut,
   Menu,
   X,
   Shield
@@ -20,16 +19,11 @@ interface AppLayoutProps {
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
@@ -113,7 +107,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
 
         <div className="p-4 border-t">
-          <div className="flex items-center mb-4">
+          <div className="flex items-center">
             <div className="w-8 h-8 rounded-full bg-tiro-purple text-white flex items-center justify-center">
               {user?.name.charAt(0)}
             </div>
@@ -124,17 +118,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </div>
             )}
           </div>
-          <Button
-            variant="outline"
-            className={cn(
-              "flex items-center w-full",
-              !sidebarOpen && "justify-center"
-            )}
-            onClick={handleLogout}
-          >
-            <LogOut size={18} />
-            {sidebarOpen && <span className="ml-2">Logout</span>}
-          </Button>
         </div>
       </aside>
 
