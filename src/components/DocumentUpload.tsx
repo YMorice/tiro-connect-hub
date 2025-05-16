@@ -16,10 +16,12 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Upload, File } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { uploadDocumentFile, saveDocumentToDB } from "@/services/document-service";
+import { useAuth } from "@/context/auth-context";
 
 interface DocumentUploadProps {
   onDocumentSubmit: (documentDetails: {
-    documentFile: File;
+    documentUrl: string;
     documentName: string;
     documentType: "proposal" | "final" | "regular";
   }) => void;
@@ -27,9 +29,11 @@ interface DocumentUploadProps {
 }
 
 const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, projectId }) => {
+  const { user } = useAuth();
   const [documentName, setDocumentName] = useState("");
   const [documentType, setDocumentType] = useState<"proposal" | "final" | "regular">("regular");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +49,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedFile) {
       toast.error("Please select a file to upload");
       return;
@@ -56,18 +60,65 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
       return;
     }
 
-    onDocumentSubmit({
-      documentFile: selectedFile,
-      documentName: documentName.trim(),
-      documentType
-    });
+    if (!projectId) {
+      toast.error("No project selected");
+      return;
+    }
 
-    // Reset form
-    setDocumentName("");
-    setDocumentType("regular");
-    setSelectedFile(null);
-    
-    // Close dialog (handled by DialogClose)
+    if (!user) {
+      toast.error("You must be logged in to upload documents");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // Map our UI document types to database document types
+      const dbDocumentType = documentType === "proposal" 
+        ? "proposal" 
+        : documentType === "final" ? "final_proposal" : "proposal";
+
+      // Upload the file to Supabase storage
+      const fileUrl = await uploadDocumentFile(selectedFile, projectId);
+      
+      if (!fileUrl) {
+        toast.error("Failed to upload file");
+        setIsUploading(false);
+        return;
+      }
+
+      // Save document metadata to the database
+      const savedDoc = await saveDocumentToDB(
+        projectId,
+        documentName.trim(),
+        dbDocumentType as any,  // Type cast as the API expects specific enum values
+        fileUrl
+      );
+
+      if (!savedDoc) {
+        toast.error("Failed to save document information");
+        setIsUploading(false);
+        return;
+      }
+
+      // Call the onDocumentSubmit callback with the document details
+      onDocumentSubmit({
+        documentUrl: fileUrl,
+        documentName: documentName.trim(),
+        documentType
+      });
+
+      // Reset form
+      setDocumentName("");
+      setDocumentType("regular");
+      setSelectedFile(null);
+      toast.success("Document uploaded successfully");
+    } catch (error) {
+      console.error("Document upload error:", error);
+      toast.error("An error occurred while uploading the document");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -97,6 +148,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
                 variant="secondary" 
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full"
+                disabled={isUploading}
               >
                 <Upload className="mr-2 h-4 w-4" />
                 {selectedFile ? "Change File" : "Select File"}
@@ -108,6 +160,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
                 onChange={handleFileChange}
                 className="hidden"
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
+                disabled={isUploading}
               />
             </div>
             {selectedFile && (
@@ -126,6 +179,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
               value={documentName}
               onChange={(e) => setDocumentName(e.target.value)}
               placeholder="Enter document name"
+              disabled={isUploading}
             />
           </div>
 
@@ -135,6 +189,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
               value={documentType} 
               onValueChange={(value) => setDocumentType(value as "proposal" | "final" | "regular")}
               className="flex flex-col space-y-2"
+              disabled={isUploading}
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="regular" id="regular" />
@@ -154,11 +209,15 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
         
         <DialogFooter className="flex justify-between sm:justify-between">
           <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline" disabled={isUploading}>Cancel</Button>
           </DialogClose>
           <DialogClose asChild>
-            <Button onClick={handleSubmit} type="button">
-              Share Document
+            <Button 
+              onClick={handleSubmit} 
+              type="button"
+              disabled={isUploading || !selectedFile}
+            >
+              {isUploading ? "Uploading..." : "Share Document"}
             </Button>
           </DialogClose>
         </DialogFooter>
