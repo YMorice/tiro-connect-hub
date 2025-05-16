@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -11,7 +12,8 @@ interface AuthContextType {
   register: (
     email: string, 
     password: string, 
-    name: string, 
+    name: string,
+    surname: string, 
     role: "student" | "entrepreneur" | "admin", 
     userData?: Record<string, any>
   ) => Promise<void>;
@@ -96,6 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener first
     const { data: { subscription }} = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
+        console.log("Auth state changed:", event);
         setSession(currentSession);
         
         if (currentSession?.user) {
@@ -170,12 +173,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     password: string,
     name: string,
+    surname: string,
     role: "student" | "entrepreneur" | "admin",
     userData?: Record<string, any>
   ) => {
     setLoading(true);
 
     try {
+      console.log("Registering with data:", { email, name, surname, role, ...userData });
+      
       // Register with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -183,15 +189,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           data: {
             name,
+            surname,
             role,
             ...userData,
+            // Add specific fields for students or entrepreneurs
+            ...(role === 'student' ? {
+              bio: userData?.bio || "No biography provided.",
+              specialty: userData?.specialty || "No formation specified."
+            } : {
+              companyName: userData?.companyName || "Company name not provided",
+              siret: userData?.siret || "00000000000000"
+            })
           },
         },
       });
 
       if (error) {
+        console.error("Registration error:", error);
         toast.error(error.message);
       } else {
+        console.log("Registration successful:", data);
         toast.success("Account created successfully");
         
         // Note: In real implementation, this would be handled by database triggers
