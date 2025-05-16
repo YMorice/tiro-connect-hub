@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,35 @@ import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+import FileUpload from "@/components/FileUpload";
+
+// List of available skills for checkboxes
+const AVAILABLE_SKILLS = [
+  "UI/UX Design", 
+  "Figma",
+  "Adobe XD", 
+  "HTML", 
+  "CSS",
+  "JavaScript", 
+  "React", 
+  "Vue.js", 
+  "TypeScript", 
+  "Node.js",
+  "Python",
+  "Django",
+  "Ruby on Rails",
+  "PHP",
+  "WordPress",
+  "Mobile Development",
+  "React Native",
+  "iOS Development",
+  "Android Development",
+  "UX Research",
+  "SEO",
+  "Digital Marketing"
+];
 
 // Step 1 schema - Basic registration information
 const step1Schema = z.object({
@@ -94,6 +122,8 @@ type FormValues = {
   isFreelance?: boolean;
   address?: string;
   iban?: string;
+  skills?: string[];
+  avatar?: string;
   skipProject?: boolean;
 };
 
@@ -101,6 +131,9 @@ const Register = () => {
   const { register: authRegister, loading } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  
   const [formValues, setFormValues] = useState<FormValues>({
     email: "",
     password: "",
@@ -181,6 +214,23 @@ const Register = () => {
     });
   }, []);
 
+  // Handle avatar upload
+  const handleFileSelect = (file: File) => {
+    // Create a temporary URL for the selected image
+    const url = URL.createObjectURL(file);
+    setAvatarUrl(url);
+    toast.success("Profile picture selected");
+  };
+
+  // Handle skill toggle for checkbox selection
+  const handleSkillToggle = (skill: string) => {
+    setSelectedSkills(current => 
+      current.includes(skill)
+        ? current.filter(s => s !== skill)
+        : [...current, skill]
+    );
+  };
+
   // Handle Step 1 submission
   const onSubmitStep1 = (values: z.infer<typeof step1Schema>) => {
     setFormValues(prev => ({ 
@@ -216,7 +266,8 @@ const Register = () => {
       ...prev,
       specialty: values.specialty,
       bio: values.bio,
-      portfolioUrl: values.portfolioUrl
+      portfolioUrl: values.portfolioUrl,
+      skills: selectedSkills
     }));
     
     // Reset step 3 student form
@@ -254,7 +305,8 @@ const Register = () => {
       ...prev,
       firstName: values.firstName,
       lastName: values.lastName,
-      phoneNumber: values.phoneNumber
+      phoneNumber: values.phoneNumber,
+      avatar: avatarUrl
     }));
     
     // Reset step 4 student form
@@ -274,7 +326,8 @@ const Register = () => {
       companyName: values.companyName,
       companyRole: values.companyRole,
       siret: values.siret,
-      companyAddress: values.companyAddress
+      companyAddress: values.companyAddress,
+      avatar: avatarUrl
     }));
     setStep(4);
   };
@@ -327,6 +380,8 @@ const Register = () => {
         companyName: values.companyName,
         companyRole: values.companyRole,
         companyAddress: values.companyAddress,
+        skills: values.skills,
+        avatar: values.avatar,
       };
       
       await authRegister(values.email, values.password, name, values.role, userData);
@@ -552,6 +607,28 @@ const Register = () => {
                   </FormItem>
                 )}
               />
+              
+              {/* Skills selection with checkboxes */}
+              <div className="space-y-2">
+                <Label>Skills (select all that apply)</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">
+                  {AVAILABLE_SKILLS.map((skill) => (
+                    <div key={skill} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`skill-${skill}`} 
+                        checked={selectedSkills.includes(skill)}
+                        onCheckedChange={() => handleSkillToggle(skill)}
+                      />
+                      <label 
+                        htmlFor={`skill-${skill}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {skill}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <div className="flex justify-between">
                 <Button 
@@ -649,6 +726,27 @@ const Register = () => {
         return formValues.role === "student" ? (
           <Form {...step3StudentForm}>
             <form onSubmit={step3StudentForm.handleSubmit(onSubmitStep3Student)} className="space-y-4">
+              {/* Profile Picture Upload */}
+              <div className="flex flex-col gap-4 items-center mb-4">
+                <Label className="self-start">Profile Picture</Label>
+                <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start">
+                  <Avatar className="w-24 h-24">
+                    {avatarUrl ? (
+                      <AvatarImage src={avatarUrl} alt="Profile" />
+                    ) : (
+                      <AvatarFallback>
+                        {formValues.firstName ? formValues.firstName.charAt(0) : '?'}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <FileUpload 
+                    onFileSelect={handleFileSelect} 
+                    accept="image/*"
+                    buttonText="Upload Profile Picture"
+                  />
+                </div>
+              </div>
+
               <FormField
                 control={step3StudentForm.control}
                 name="firstName"
@@ -721,6 +819,27 @@ const Register = () => {
         ) : (
           <Form {...step3EntrepreneurForm}>
             <form onSubmit={step3EntrepreneurForm.handleSubmit(onSubmitStep3Entrepreneur)} className="space-y-4">
+              {/* Profile Picture Upload */}
+              <div className="flex flex-col gap-4 items-center mb-4">
+                <Label className="self-start">Profile Picture</Label>
+                <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start">
+                  <Avatar className="w-24 h-24">
+                    {avatarUrl ? (
+                      <AvatarImage src={avatarUrl} alt="Profile" />
+                    ) : (
+                      <AvatarFallback>
+                        {formValues.firstName ? formValues.firstName.charAt(0) : '?'}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <FileUpload 
+                    onFileSelect={handleFileSelect} 
+                    accept="image/*"
+                    buttonText="Upload Profile Picture"
+                  />
+                </div>
+              </div>
+
               <FormField
                 control={step3EntrepreneurForm.control}
                 name="companyName"
