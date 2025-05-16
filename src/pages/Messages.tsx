@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
@@ -107,17 +106,14 @@ const Messages = () => {
   };
 
   const handleDocumentSubmit = (documentDetails: {
-    documentFile: File;
+    documentUrl: string;
     documentName: string;
     documentType: "proposal" | "final" | "regular";
   }) => {
     if (!user || !currentProject) return;
     
-    // Create a URL for the file (in a real app, you would upload to a server/storage)
-    const documentUrl = URL.createObjectURL(documentDetails.documentFile);
-    
     sendDocumentMessage("studentId", {
-      documentUrl,
+      documentUrl: documentDetails.documentUrl,
       documentName: documentDetails.documentName,
       documentType: documentDetails.documentType,
       projectId: currentProject,
