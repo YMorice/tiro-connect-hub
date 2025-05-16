@@ -1,6 +1,6 @@
 
-import React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
-  const { login, loading } = useAuth();
+  const { login, loading, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -30,12 +31,21 @@ const Login = () => {
     },
   });
 
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user) {
+      console.log("User already logged in, redirecting to dashboard");
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, navigate]);
+
   const onSubmit = async (values: FormValues) => {
     try {
+      console.log("Login form submitted:", values.email);
       await login(values.email, values.password);
-      navigate("/dashboard");
+      // The redirection will happen in the useEffect when user state changes
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Login error in form handler:", error);
       // Error is handled by auth context with toast
     }
   };

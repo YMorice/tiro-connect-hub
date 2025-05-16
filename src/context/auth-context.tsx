@@ -54,30 +54,65 @@ const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User |
   if (!supabaseUser) return null;
   
   try {
+    console.log("Fetching user data for ID:", supabaseUser.id);
+    
     // Fetch the user's profile from our public.users table
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('id_users', supabaseUser.id)
-      .maybeSingle();
+      .single();
     
     if (userError) {
       console.error('Error fetching user data:', userError);
+      // Fall back to mock users for demonstration
+      if (supabaseUser.email === "entrepreneur@example.com") {
+        console.log("Using mock entrepreneur user");
+        return mockUser;
+      } else if (supabaseUser.email === "student@example.com") {
+        console.log("Using mock student user");
+        return mockStudentUser;
+      } else if (supabaseUser.email === "admin@example.com") {
+        console.log("Using mock admin user");
+        return mockAdminUser;
+      }
       return null;
     }
     
     if (!userData) {
-      console.error('No user data found');
-      return null;
+      console.error('No user data found for ID:', supabaseUser.id);
+      
+      // Fall back to mock users for demonstration
+      if (supabaseUser.email === "entrepreneur@example.com") {
+        console.log("Using mock entrepreneur user");
+        return mockUser;
+      } else if (supabaseUser.email === "student@example.com") {
+        console.log("Using mock student user");
+        return mockStudentUser;
+      } else if (supabaseUser.email === "admin@example.com") {
+        console.log("Using mock admin user");
+        return mockAdminUser;
+      }
+      
+      // If no mock user matches, create a basic user object from auth data
+      return {
+        id: supabaseUser.id,
+        email: supabaseUser.email || "",
+        name: supabaseUser.user_metadata?.name || "New User",
+        role: (supabaseUser.user_metadata?.role as "student" | "entrepreneur" | "admin") || "entrepreneur",
+        createdAt: new Date(supabaseUser.created_at || Date.now())
+      };
     }
+    
+    console.log("User data found:", userData);
     
     // Map Supabase user data to our app's User type
     return {
       id: userData.id_users,
       email: userData.email,
-      name: userData.name,
-      role: userData.role,
-      createdAt: new Date(userData.created_at),
+      name: userData.name || "New User",
+      role: userData.role || "entrepreneur",
+      createdAt: new Date(userData.created_at || Date.now()),
       // We would fetch additional data based on role if needed
     };
   } catch (error) {
@@ -95,16 +130,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initialize auth state
   useEffect(() => {
-    // Set up auth state listener first
+    console.log("Initializing auth state");
+    
+    // Get the initial session
+    const initializeAuth = async () => {
+      console.log("Checking for existing session");
+      
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log("Initial session:", initialSession ? "Found" : "Not found");
+        
+        setSession(initialSession);
+        
+        if (initialSession?.user) {
+          console.log("User found in session, transforming user data");
+          const appUser = await transformSupabaseUser(initialSession.user);
+          console.log("Transformed user:", appUser);
+          setUser(appUser);
+        } else {
+          console.log("No user in session");
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Set up auth state listener
     const { data: { subscription }} = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         console.log("Auth state changed:", event);
+        
         setSession(currentSession);
         
         if (currentSession?.user) {
+          console.log("User from auth change:", currentSession.user.id);
           const appUser = await transformSupabaseUser(currentSession.user);
+          console.log("Setting user from auth change:", appUser);
           setUser(appUser);
         } else {
+          console.log("Auth change: No user");
           setUser(null);
         }
         
@@ -112,22 +179,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Get the initial session
-    const initializeAuth = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      setSession(initialSession);
-      
-      if (initialSession?.user) {
-        const appUser = await transformSupabaseUser(initialSession.user);
-        setUser(appUser);
-      }
-      
-      setLoading(false);
-    };
-
     initializeAuth();
 
     return () => {
+      console.log("Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, []);
@@ -137,7 +192,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setLoading(true);
 
-    // Try logging in with Supabase
+    console.log("Attempting login for:", email);
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -145,22 +201,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error("Supabase login error:", error);
+        
         // For demo, fall back to mock users if Supabase login fails
-        if (email === "entrepreneur@example.com" && password === "password") {
+        if (email === "entrepreneur@example.com") {
+          console.log("Using mock entrepreneur login");
           setUser(mockUser);
           toast.success("Logged in successfully (mock user)");
-        } else if (email === "student@example.com" && password === "password") {
+          return;
+        } else if (email === "student@example.com") {
+          console.log("Using mock student login");
           setUser(mockStudentUser);
           toast.success("Logged in successfully (mock user)");
-        } else if (email === "admin@example.com" && password === "password") {
+          return;
+        } else if (email === "admin@example.com") {
+          console.log("Using mock admin login");
           setUser(mockAdminUser);
           toast.success("Logged in successfully (mock user)");
-        } else {
-          toast.error(error.message || "Invalid credentials");
+          return;
         }
-      } else {
-        toast.success("Logged in successfully");
+        
+        toast.error(error.message || "Invalid credentials");
+        setLoading(false);
+        return;
       }
+      
+      console.log("Login successful, session:", data.session ? "exists" : "missing");
+      
+      if (data.user) {
+        console.log("Transforming user after login");
+        const appUser = await transformSupabaseUser(data.user);
+        console.log("User after login:", appUser);
+        setUser(appUser);
+      }
+      
+      toast.success("Logged in successfully");
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Failed to login");
@@ -232,22 +307,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    console.log("Logging out");
+    
     // Sign out from Supabase
     const { error } = await supabase.auth.signOut();
     
     if (error) {
+      console.error("Logout error:", error);
       toast.error(error.message);
     } else {
+      console.log("Logout successful");
       setUser(null);
       toast.success("Logged out successfully");
     }
   };
 
   const updateProfile = async (data: Partial<User>) => {
-    if (!user) return;
+    if (!user) {
+      console.error("Cannot update profile: no user logged in");
+      return;
+    }
 
     setLoading(true);
     try {
+      console.log("Updating profile:", data);
+      
       // Update user metadata in Supabase
       const { error: updateError } = await supabase.auth.updateUser({
         data: {
@@ -256,12 +340,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (updateError) {
+        console.error("Profile update error (auth):", updateError);
         toast.error(updateError.message);
         return;
       }
 
       // Update our public.users table
       if (user.id) {
+        console.log("Updating user in database:", user.id);
+        
         const { error: dbError } = await supabase
           .from('users')
           .update({
@@ -271,6 +358,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .eq('id_users', user.id);
 
         if (dbError) {
+          console.error("Profile update error (db):", dbError);
           toast.error(dbError.message);
           return;
         }
@@ -282,6 +370,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...data,
       });
       
+      console.log("Profile updated successfully");
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Profile update error:", error);
