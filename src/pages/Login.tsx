@@ -19,7 +19,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
-  const { login, loading, user } = useAuth();
+  const { login, loading, user, session } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -31,13 +31,16 @@ const Login = () => {
     },
   });
 
-  // Redirect if user is already logged in
+  // Redirect if user is already logged in - check for both user and session
   useEffect(() => {
-    if (user) {
-      console.log("User already logged in, redirecting to dashboard");
+    if (user && session) {
+      console.log("User and session found, redirecting to dashboard");
       navigate("/dashboard", { replace: true });
+    } else if (session && !user) {
+      console.log("Session found but no user data, attempting to fix state");
+      // The auth context will handle this case with the onAuthStateChange
     }
-  }, [user, navigate]);
+  }, [user, session, navigate]);
 
   const onSubmit = async (values: FormValues) => {
     try {
