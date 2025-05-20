@@ -29,11 +29,12 @@ interface DocumentUploadProps {
 }
 
 const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, projectId }) => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [documentName, setDocumentName] = useState("");
   const [documentType, setDocumentType] = useState<"proposal" | "final" | "regular">("regular");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -50,6 +51,11 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
   };
 
   const handleSubmit = async () => {
+    if (!session) {
+      toast.error("You must be logged in to upload documents");
+      return;
+    }
+    
     if (!selectedFile) {
       toast.error("Please select a file to upload");
       return;
@@ -62,11 +68,6 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
 
     if (!projectId) {
       toast.error("No project selected");
-      return;
-    }
-
-    if (!user) {
-      toast.error("You must be logged in to upload documents");
       return;
     }
 
@@ -91,7 +92,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
       const savedDoc = await saveDocumentToDB(
         projectId,
         documentName.trim(),
-        dbDocumentType as any,  // Type cast as the API expects specific enum values
+        dbDocumentType as any,
         fileUrl
       );
 
@@ -112,6 +113,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
       setDocumentName("");
       setDocumentType("regular");
       setSelectedFile(null);
+      setDialogOpen(false);
       toast.success("Document uploaded successfully");
     } catch (error) {
       console.error("Document upload error:", error);
@@ -122,9 +124,19 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
   };
 
   return (
-    <Dialog>
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-2" 
+          onClick={() => {
+            if (!session) {
+              toast.error("You must be logged in to upload documents");
+              return false;
+            }
+            return true;
+          }}
+        >
           <File className="h-4 w-4" />
           Share Document
         </Button>
@@ -211,15 +223,13 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
           <DialogClose asChild>
             <Button variant="outline" disabled={isUploading}>Cancel</Button>
           </DialogClose>
-          <DialogClose asChild>
-            <Button 
-              onClick={handleSubmit} 
-              type="button"
-              disabled={isUploading || !selectedFile}
-            >
-              {isUploading ? "Uploading..." : "Share Document"}
-            </Button>
-          </DialogClose>
+          <Button 
+            onClick={handleSubmit} 
+            type="button"
+            disabled={isUploading || !selectedFile}
+          >
+            {isUploading ? "Uploading..." : "Share Document"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

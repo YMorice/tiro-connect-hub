@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -7,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null; // Add session to the context type
+  session: Session | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (
@@ -22,7 +21,7 @@ interface AuthContextType {
   updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
-// Mock users for demonstration - we'll keep these until we fully integrate with Supabase
+// Mock users for demonstration - we'll keep these for fallback purposes
 const mockUser: User = {
   id: "1",
   email: "entrepreneur@example.com",
@@ -67,7 +66,7 @@ const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User |
     if (userError) {
       console.error('Error fetching user data:', userError);
       
-      // Fall back to mock users for demonstration
+      // Only use mock users if they match the exact email
       if (supabaseUser.email === "entrepreneur@example.com") {
         console.log("Using mock entrepreneur user");
         return mockUser;
@@ -79,15 +78,11 @@ const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User |
         return mockAdminUser;
       }
       
-      // If no mock user matches, create a basic user object from auth data
-      console.log("Creating user from auth metadata:", supabaseUser.user_metadata);
+      // Try to create a user object from available auth data
       return {
         id: supabaseUser.id,
         email: supabaseUser.email || "",
-        name: supabaseUser.user_metadata?.name || 
-              (supabaseUser.user_metadata?.first_name && supabaseUser.user_metadata?.last_name) ? 
-              `${supabaseUser.user_metadata.first_name} ${supabaseUser.user_metadata.last_name}` : 
-              "New User",
+        name: supabaseUser.user_metadata?.name || "New User",
         role: (supabaseUser.user_metadata?.role as "student" | "entrepreneur" | "admin") || "entrepreneur",
         createdAt: new Date(supabaseUser.created_at || Date.now())
       };
@@ -102,7 +97,7 @@ const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User |
       name: userData.name || "New User",
       role: userData.role || "entrepreneur",
       createdAt: new Date(userData.created_at || Date.now()),
-      // We would fetch additional data based on role if needed
+      // Additional data based on role can be fetched in a separate query if needed
     };
   } catch (error) {
     console.error('Error transforming user:', error);
@@ -124,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener FIRST - this is crucial for correct auth flow
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        console.log("Auth state changed:", event);
+        console.log("Auth state changed:", event, "Session:", currentSession ? "exists" : "none");
         
         setSession(currentSession);
         
@@ -137,13 +132,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const appUser = await transformSupabaseUser(currentSession.user);
             console.log("Setting user from auth change:", appUser);
             setUser(appUser);
+            setLoading(false);
           }, 0);
         } else {
           console.log("Auth change: No user");
           setUser(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
     
@@ -181,11 +176,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // For demo purposes, we'll temporarily keep the mock login method
-  // In a real implementation, you would use only Supabase
   const login = async (email: string, password: string) => {
     setLoading(true);
-
     console.log("Attempting login for:", email);
     
     try {
@@ -197,7 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error("Supabase login error:", error);
         
-        // For demo, fall back to mock users if Supabase login fails
+        // Only use mock users if they match the exact email
         if (email === "entrepreneur@example.com") {
           console.log("Using mock entrepreneur login");
           setUser(mockUser);
@@ -219,7 +211,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         toast.error(error.message || "Invalid credentials");
-        setLoading(false);
         return;
       }
       
@@ -249,7 +240,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log("Registering with data:", { email, name, surname, role, ...userData });
       
-      // Register with Supabase - we'll require email confirmation for new accounts
+      // Register with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -277,22 +268,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         console.log("Registration successful:", data);
         
-        // Check if email confirmation is required
+        // Note: If email confirmation is required, the session might be null
         if (data.session) {
           toast.success("Account created successfully! You are now logged in.");
           
-          // Note: In real implementation, this would be handled by database triggers
-          // This is just for the demo until we fully integrate with Supabase
-          const newUser: User = {
-            id: data.user?.id || "temp-id",
-            email,
-            name,
-            role,
-            createdAt: new Date(),
-            ...userData,
-          };
-          setUser(newUser);
+          // Session and user will be set by the onAuthStateChange handler
+          // But we can manually set them for immediate feedback
           setSession(data.session);
+          
+          setTimeout(async () => {
+            const appUser = await transformSupabaseUser(data.user);
+            setUser(appUser);
+          }, 0);
         } else {
           // No session means email confirmation is required
           toast.success("Account created successfully! Please check your email to verify your account.");
@@ -309,17 +296,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     console.log("Logging out");
     
-    // Sign out from Supabase
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) {
-      console.error("Logout error:", error);
-      toast.error(error.message);
-    } else {
+    try {
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        toast.error(error.message);
+        return;
+      }
+      
       console.log("Logout successful");
       setUser(null);
       setSession(null);
       toast.success("Logged out successfully");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout");
     }
   };
 
@@ -385,7 +378,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         user,
-        session, // Add session to the context
+        session,
         loading,
         login,
         register,

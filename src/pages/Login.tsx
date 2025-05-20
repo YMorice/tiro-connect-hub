@@ -46,7 +46,9 @@ const Login = () => {
     try {
       console.log("Login form submitted:", values.email);
       await login(values.email, values.password);
-      // The redirection will happen in the useEffect when user state changes
+      
+      // We won't navigate here - the useEffect will handle redirection
+      // when the auth state changes after successful login
     } catch (error) {
       console.error("Login error in form handler:", error);
       // Error is handled by auth context with toast
