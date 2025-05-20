@@ -260,7 +260,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: string,
     surname: string,
     role: "student" | "entrepreneur" | "admin",
-    userData?: Record<string, any>
+    userData: Record<string, any> = {}
   ) => {
     setLoading(true);
 
@@ -276,15 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name,
             surname,
             role,
-            // Add specific fields for students or entrepreneurs
-            ...(role === 'student' ? {
-              bio: userData?.bio || "No biography provided.",
-              specialty: userData?.specialty || "No formation specified.",
-              skills: userData?.skills ? (Array.isArray(userData.skills) ? userData.skills.join(',') : userData.skills) : ''
-            } : {
-              companyName: userData?.companyName || "Company name not provided",
-              siret: userData?.siret || "00000000000000"
-            })
+            ...userData,
           },
           emailRedirectTo: window.location.origin + '/login'
         },
@@ -292,8 +284,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error("Registration error:", error);
-        toast.error(error.message);
-        return;
+        toast.error("Registration failed: " + error.message);
+        throw error;
       } 
       
       console.log("Registration successful:", data);
@@ -316,7 +308,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }, 0);
       } else {
         // No session means email confirmation is required
-        toast.success("Account created successfully! Please check your email to verify your account.");
+        toast.success("Registration successful! Please check your email.");
       }
     } catch (error: any) {
       console.error("Registration error:", error);

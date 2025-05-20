@@ -38,7 +38,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-              
+                
                 <Route
                   path="/dashboard"
                   element={
@@ -47,7 +47,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-              
+                
                 <Route
                   path="/projects"
                   element={
@@ -56,7 +56,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-              
+                
                 {/* --- FIXED-PATH PROJECT ROUTES FIRST --- */}
                 <Route
                   path="/projects/pack-selection"
@@ -66,7 +66,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-              
+                
                 <Route
                   path="/projects/new"
                   element={
@@ -75,7 +75,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-              
+                
                 {/* --- DYNAMIC ROUTE LAST --- */}
                 <Route
                   path="/projects/:id"
@@ -85,7 +85,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-              
+                
                 <Route
                   path="/messages"
                   element={
@@ -94,7 +94,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-              
+                
                 <Route
                   path="/profile"
                   element={
@@ -112,7 +112,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-              
+                
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </MessageProvider>

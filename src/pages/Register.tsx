@@ -370,25 +370,33 @@ const Register = () => {
       // Get surname from values
       const surname = values.lastName || "User";
         
-      // Register the user with the constructed profile data
+      // Prepare user data for registration
       const userData = {
-        bio: values.bio,
+        about: values.bio,
         specialty: values.specialty,
-        portfolioUrl: values.portfolioUrl,
-        phoneNumber: values.phoneNumber,
-        isFreelance: values.isFreelance,
+        portfolioLink: values.portfolioUrl,
+        phone: values.phoneNumber,
         siret: values.siret,
         address: values.address,
         iban: values.iban,
         companyName: values.companyName,
         companyRole: values.companyRole,
-        companyAddress: values.companyAddress,
-        skills: values.skills,
-        avatar: values.avatar,
+        skills: values.skills ? (Array.isArray(values.skills) ? values.skills.join(',') : values.skills) : undefined,
+        // Include additional fields that might be needed for project creation
+        projectName: values.skipProject ? undefined : "New Project",
+        projectDescription: values.skipProject ? undefined : "Project description",
+        projectDeadline: values.skipProject ? undefined : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       };
       
-      // Pass name, surname, role, and userData as separate parameters
-      await authRegister(values.email, values.password, name, surname, values.role, userData);
+      // Register user with all necessary data
+      await authRegister(
+        values.email, 
+        values.password, 
+        name, 
+        surname, 
+        values.role, 
+        userData
+      );
       
       // Move to thank you step if we're not already on it
       if (step !== 5) {
