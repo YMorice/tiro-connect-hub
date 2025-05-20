@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -98,6 +97,7 @@ const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User |
       name: userData.name || "New User",
       role: userData.role || "entrepreneur",
       createdAt: new Date(userData.created_at || Date.now()),
+      bio: userData.bio,
       // Optionally fetch additional fields based on role
       ...(userData.role === "student" ? { skills: await fetchUserSkills(userData.id_users) } : {})
     };
@@ -121,7 +121,7 @@ const fetchUserSkills = async (userId: string): Promise<string[]> => {
       return [];
     }
     
-    return data.skills ? data.skills.split(',').map((s: string) => s.trim()) : [];
+    return data.skills ? (typeof data.skills === 'string' ? data.skills.split(',').map((s: string) => s.trim()) : data.skills) : [];
   } catch (error) {
     console.error('Error fetching user skills:', error);
     return [];
@@ -279,7 +279,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Add specific fields for students or entrepreneurs
             ...(role === 'student' ? {
               bio: userData?.bio || "No biography provided.",
-              specialty: userData?.specialty || "No formation specified."
+              specialty: userData?.specialty || "No formation specified.",
+              skills: userData?.skills ? (Array.isArray(userData.skills) ? userData.skills.join(',') : userData.skills) : ''
             } : {
               companyName: userData?.companyName || "Company name not provided",
               siret: userData?.siret || "00000000000000"
@@ -292,29 +293,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error("Registration error:", error);
         toast.error(error.message);
-      } else {
-        console.log("Registration successful:", data);
+        return;
+      } 
+      
+      console.log("Registration successful:", data);
+      
+      // Note: If email confirmation is required, the session might be null
+      if (data.session) {
+        toast.success("Account created successfully! You are now logged in.");
         
-        // Note: If email confirmation is required, the session might be null
-        if (data.session) {
-          toast.success("Account created successfully! You are now logged in.");
-          
-          // Session and user will be set by the onAuthStateChange handler
-          // But we can manually set them for immediate feedback
-          setSession(data.session);
-          
-          setTimeout(async () => {
+        // Session and user will be set by the onAuthStateChange handler
+        // But we can manually set them for immediate feedback
+        setSession(data.session);
+        
+        setTimeout(async () => {
+          try {
             const appUser = await transformSupabaseUser(data.user);
             setUser(appUser);
-          }, 0);
-        } else {
-          // No session means email confirmation is required
-          toast.success("Account created successfully! Please check your email to verify your account.");
-        }
+          } catch (error) {
+            console.error("Error setting user after registration:", error);
+          }
+        }, 0);
+      } else {
+        // No session means email confirmation is required
+        toast.success("Account created successfully! Please check your email to verify your account.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
-      toast.error("Failed to create account");
+      toast.error(error?.message || "Failed to create account. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -389,6 +395,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .from('users')
           .update({
             name: data.name,
+            bio: data.bio,
             // Add other fields to update as needed
           })
           .eq('id_users', user.id);
