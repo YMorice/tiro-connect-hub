@@ -97,7 +97,7 @@ const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User |
       name: userData.name || "New User",
       role: userData.role || "entrepreneur",
       createdAt: new Date(userData.created_at || Date.now()),
-      bio: userData.bio,
+      bio: userData.bio || undefined,
       // Optionally fetch additional fields based on role
       ...(userData.role === "student" ? { skills: await fetchUserSkills(userData.id_users) } : {})
     };
