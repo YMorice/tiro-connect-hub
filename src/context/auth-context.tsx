@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -97,11 +98,33 @@ const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User |
       name: userData.name || "New User",
       role: userData.role || "entrepreneur",
       createdAt: new Date(userData.created_at || Date.now()),
-      // Additional data based on role can be fetched in a separate query if needed
+      // Optionally fetch additional fields based on role
+      ...(userData.role === "student" ? { skills: await fetchUserSkills(userData.id_users) } : {})
     };
   } catch (error) {
     console.error('Error transforming user:', error);
     return null;
+  }
+};
+
+// Helper function to fetch user skills
+const fetchUserSkills = async (userId: string): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('students')
+      .select('skills')
+      .eq('id_user', userId)
+      .single();
+    
+    if (error || !data) {
+      console.error('Error fetching user skills:', error);
+      return [];
+    }
+    
+    return data.skills ? data.skills.split(',').map((s: string) => s.trim()) : [];
+  } catch (error) {
+    console.error('Error fetching user skills:', error);
+    return [];
   }
 };
 
@@ -118,25 +141,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Set up auth state listener FIRST - this is crucial for correct auth flow
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
         console.log("Auth state changed:", event, "Session:", currentSession ? "exists" : "none");
         
-        setSession(currentSession);
-        
-        if (currentSession?.user) {
-          console.log("User from auth change:", currentSession.user.id);
+        if (currentSession) {
+          setSession(currentSession);
           
           // Important: Only synchronous state updates in the callback
           // Use setTimeout to avoid potential deadlocks with Supabase client
           setTimeout(async () => {
-            const appUser = await transformSupabaseUser(currentSession.user);
-            console.log("Setting user from auth change:", appUser);
-            setUser(appUser);
-            setLoading(false);
+            try {
+              const appUser = await transformSupabaseUser(currentSession.user);
+              console.log("Setting user from auth change:", appUser);
+              setUser(appUser);
+            } catch (error) {
+              console.error("Error transforming user:", error);
+            } finally {
+              setLoading(false);
+            }
           }, 0);
         } else {
           console.log("Auth change: No user");
           setUser(null);
+          setSession(null);
           setLoading(false);
         }
       }
@@ -150,9 +177,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         console.log("Initial session:", initialSession ? "Found" : "Not found");
         
-        setSession(initialSession);
-        
-        if (initialSession?.user) {
+        if (initialSession) {
+          setSession(initialSession);
+          
           console.log("User found in session, transforming user data");
           const appUser = await transformSupabaseUser(initialSession.user);
           console.log("Transformed user:", appUser);
@@ -295,8 +322,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     console.log("Logging out");
+    setLoading(true);
     
     try {
+      if (!session) {
+        console.error("Cannot logout: No active session");
+        toast.error("No active session found");
+        setUser(null);
+        setSession(null);
+        setLoading(false);
+        return;
+      }
+      
       // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
@@ -313,17 +350,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Failed to logout");
+    } finally {
+      setLoading(false);
     }
   };
 
   const updateProfile = async (data: Partial<User>) => {
-    if (!user) {
-      console.error("Cannot update profile: no user logged in");
-      return;
-    }
-
     setLoading(true);
+    
     try {
+      if (!user || !session) {
+        console.error("Cannot update profile: no user logged in or session found");
+        toast.error("No active session found");
+        setLoading(false);
+        return;
+      }
+
       console.log("Updating profile:", data);
       
       // Update user metadata in Supabase

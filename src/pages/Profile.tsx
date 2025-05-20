@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -57,11 +56,12 @@ const AVAILABLE_SKILLS = [
 ];
 
 const Profile = () => {
-  const { user, updateProfile, logout } = useAuth();
+  const { user, updateProfile, logout, session } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(user?.avatar);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -78,20 +78,47 @@ const Profile = () => {
     if (user?.avatar) {
       setAvatarUrl(user.avatar);
     }
-  }, [user]);
 
-  const handleSaveProfile = (data: { name: string; email: string; bio: string }) => {
-    if (!user) return;
+    // Reset form values when user data changes
+    form.reset({
+      name: user?.name || "",
+      email: user?.email || "",
+      bio: user?.bio || "",
+    });
+  }, [user, form]);
 
-    const updatedUser: Partial<User> = {
-      ...data,
-      skills: user.role === "student" ? selectedSkills : undefined,
-      avatar: avatarUrl,
-    };
+  // Check for session and redirect if not available
+  useEffect(() => {
+    if (!session) {
+      console.log("No session detected in Profile page, redirecting to login");
+      navigate("/login");
+    }
+  }, [session, navigate]);
 
-    updateProfile(updatedUser);
-    setIsEditing(false);
-    toast.success("Profile updated successfully");
+  const handleSaveProfile = async (data: { name: string; email: string; bio: string }) => {
+    if (!user || !session) {
+      toast.error("No active session found. Please log in again.");
+      navigate("/login");
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const updatedUser: Partial<User> = {
+        ...data,
+        skills: user.role === "student" ? selectedSkills : undefined,
+        avatar: avatarUrl,
+      };
+
+      await updateProfile(updatedUser);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFileSelect = (file: File) => {
@@ -101,10 +128,23 @@ const Profile = () => {
     toast.success("Profile picture selected");
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-    toast.success("Logged out successfully");
+  const handleLogout = async () => {
+    if (!session) {
+      toast.error("No active session found");
+      navigate("/login");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("Failed to log out. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle skill toggle for checkbox selection
@@ -116,8 +156,18 @@ const Profile = () => {
     );
   };
 
-  if (!user) {
-    return <div>Loading...</div>;
+  if (!user || !session) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center items-center h-[60vh]">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Session expired</h1>
+            <p className="mb-4">Your session has expired or you are not logged in.</p>
+            <Button onClick={() => navigate("/login")}>Go to Login</Button>
+          </div>
+        </div>
+      </AppLayout>
+    );
   }
 
   return (
@@ -125,8 +175,12 @@ const Profile = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Profile</h1>
-          <Button variant="outline" onClick={handleLogout}>
-            Logout
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            disabled={isLoading}
+          >
+            {isLoading ? "Processing..." : "Logout"}
           </Button>
         </div>
 
@@ -232,10 +286,16 @@ const Profile = () => {
                       type="button"
                       variant="outline"
                       onClick={() => setIsEditing(false)}
+                      disabled={isLoading}
                     >
                       Cancel
                     </Button>
-                    <Button type="submit">Save Changes</Button>
+                    <Button 
+                      type="submit"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Saving..." : "Save Changes"}
+                    </Button>
                   </div>
                 </form>
               </Form>
@@ -291,7 +351,12 @@ const Profile = () => {
                   </div>
                 )}
                 <div className="flex justify-end">
-                  <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+                  <Button 
+                    onClick={() => setIsEditing(true)}
+                    disabled={isLoading}
+                  >
+                    Edit Profile
+                  </Button>
                 </div>
               </div>
             )}
