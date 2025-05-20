@@ -1,15 +1,15 @@
 
 import React, { useEffect } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/context/auth-context";
+import { toast } from "@/components/ui/sonner";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -21,7 +21,6 @@ type FormValues = z.infer<typeof formSchema>;
 const Login = () => {
   const { login, loading, user, session } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -78,6 +77,7 @@ const Login = () => {
                         <Input 
                           placeholder="example@email.com" 
                           {...field} 
+                          autoComplete="email"
                         />
                       </FormControl>
                       <FormMessage />
@@ -95,6 +95,7 @@ const Login = () => {
                           type="password" 
                           placeholder="******" 
                           {...field} 
+                          autoComplete="current-password"
                         />
                       </FormControl>
                       <FormMessage />

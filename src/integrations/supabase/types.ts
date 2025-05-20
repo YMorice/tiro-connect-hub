@@ -103,21 +103,21 @@ export type Database = {
       entrepreneurs: {
         Row: {
           company_name: string
-          company_SIRET: string
+          company_siret: string
           created_at: string
           id_user: string
           role: string | null
         }
         Insert: {
           company_name: string
-          company_SIRET: string
+          company_siret: string
           created_at?: string
           id_user?: string
           role?: string | null
         }
         Update: {
           company_name?: string
-          company_SIRET?: string
+          company_siret?: string
           created_at?: string
           id_user?: string
           role?: string | null
@@ -261,7 +261,7 @@ export type Database = {
           iban: string | null
           id_user: string
           portfolio_link: string | null
-          SIRET: string | null
+          siret: string | null
           skills: string | null
         }
         Insert: {
@@ -271,7 +271,7 @@ export type Database = {
           iban?: string | null
           id_user?: string
           portfolio_link?: string | null
-          SIRET?: string | null
+          siret?: string | null
           skills?: string | null
         }
         Update: {
@@ -281,7 +281,7 @@ export type Database = {
           iban?: string | null
           id_user?: string
           portfolio_link?: string | null
-          SIRET?: string | null
+          siret?: string | null
           skills?: string | null
         }
         Relationships: [
