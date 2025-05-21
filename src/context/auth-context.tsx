@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -55,6 +56,7 @@ const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User |
   
   try {
     console.log("Fetching user data for ID:", supabaseUser.id);
+    console.log("User metadata:", supabaseUser.user_metadata);
     
     // Fetch the user's profile from our public.users table
     const { data: userData, error: userError } = await supabase
@@ -309,30 +311,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log("Registering with data:", { email, name, surname, role, ...userData });
       
-      // Format the user metadata correctly to ensure it matches the database schema
-      const metadata = {
+      // Create a single metadata object with ALL user data
+      const metadata: Record<string, any> = {
         name,
         surname,
-        role, // This is still needed in metadata even if not in users table directly
+        role,
+        about: userData.bio || userData.about,
+        specialty: userData.specialty,
+        portfolioLink: userData.portfolioUrl || userData.portfolioLink,
+        phone: userData.phoneNumber || userData.phone,
+        address: userData.address,
+        companyName: userData.companyName,
+        companyRole: userData.companyRole,
+        siret: userData.siret,
+        iban: userData.iban,
+        isFreelance: userData.isFreelance,
+        projectName: userData.projectName,
+        projectDescription: userData.projectDescription,
+        projectDeadline: userData.projectDeadline
       };
       
-      // Add the rest of the user data, ensuring skills are properly formatted
-      for (const [key, value] of Object.entries(userData)) {
-        if (key === 'skills') {
-          // Handle skills specifically to ensure they're stored in the correct format
-          if (value) {
-            if (Array.isArray(value)) {
-              metadata[key] = value.join(',');
-            } else if (typeof value === 'string') {
-              metadata[key] = value;
-            }
-          }
-        } else {
-          metadata[key] = value;
+      // Add skills as a properly formatted string if present
+      if (userData.skills) {
+        if (Array.isArray(userData.skills)) {
+          metadata.skills = userData.skills.join(',');
+        } else if (typeof userData.skills === 'string') {
+          metadata.skills = userData.skills;
         }
       }
       
-      console.log("Formatted metadata for registration:", metadata);
+      // Remove any undefined or null values from metadata
+      Object.keys(metadata).forEach(key => {
+        if (metadata[key] === undefined || metadata[key] === null) {
+          delete metadata[key];
+        }
+      });
+      
+      console.log("Final metadata for registration:", metadata);
       
       // Register with Supabase with properly formatted metadata
       const { data, error } = await supabase.auth.signUp({
@@ -351,6 +366,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } 
       
       console.log("Registration successful:", data);
+      console.log("User data:", data.user);
+      console.log("User metadata:", data.user?.user_metadata);
+      
+      // Check if the database trigger created the profile records
+      if (data.user) {
+        const { data: userRecord, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id_users', data.user.id)
+          .maybeSingle();
+          
+        console.log("User record in database:", userRecord || "None found");
+        if (userError) {
+          console.error("Error checking user record:", userError);
+        }
+        
+        // For students, check if student record was created
+        if (role === 'student') {
+          const { data: studentRecord, error: studentError } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id_user', data.user.id)
+            .maybeSingle();
+            
+          console.log("Student record in database:", studentRecord || "None found");
+          if (studentError) {
+            console.error("Error checking student record:", studentError);
+          }
+        }
+        
+        // For entrepreneurs, check if entrepreneur record was created
+        if (role === 'entrepreneur') {
+          const { data: entrepreneurRecord, error: entrepreneurError } = await supabase
+            .from('entrepreneurs')
+            .select('*')
+            .eq('id_user', data.user.id)
+            .maybeSingle();
+            
+          console.log("Entrepreneur record in database:", entrepreneurRecord || "None found");
+          if (entrepreneurError) {
+            console.error("Error checking entrepreneur record:", entrepreneurError);
+          }
+        }
+      }
       
       // Note: If email confirmation is required, the session might be null
       if (data.session) {
@@ -370,7 +429,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }, 0);
       } else {
         // No session means email confirmation is required
-        toast.success("Registration successful! Please check your email.");
+        toast.success("Registration successful! Please check your email to confirm your account.");
       }
     } catch (error: any) {
       console.error("Registration error in form handler:", error);
