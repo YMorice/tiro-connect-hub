@@ -1,56 +1,58 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase, type ProjectPack } from "@/integrations/supabase/client";
+import { ProjectPack, supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/auth-context";
+import AppLayout from "@/components/AppLayout";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/sonner";
 
 const PackSelection = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [selectedPack, setSelectedPack] = React.useState<ProjectPack | null>(null);
+  const [packs, setPacks] = useState<ProjectPack[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: packs, isLoading, error } = useQuery({
-    queryKey: ['project-packs'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('project_packs')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      return data as ProjectPack[];
-    }
-  });
+  useEffect(() => {
+    const fetchPacks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('project_packs')
+          .select('*')
+          .eq('active', true)
+          .order('price', { ascending: true });
+        
+        if (error) {
+          throw error;
+        }
+        
+        setPacks(data || []);
+      } catch (error) {
+        console.error("Error fetching packs:", error);
+        toast.error("Failed to load project packs");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleSelectPack = (pack: ProjectPack) => {
-    setSelectedPack(pack);
+    fetchPacks();
+  }, []);
+
+  const handleSelectPack = (packId: string) => {
+    // Store the selected pack ID in local storage temporarily
+    localStorage.setItem("selectedPackId", packId);
+    navigate("/projects/new");
   };
 
-  const handleContinue = () => {
-    if (selectedPack) {
-      navigate("/projects/new", { state: { selectedPack } });
-    }
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
       <AppLayout>
-        <div className="container max-w-5xl mx-auto py-10">
-          <div className="text-center">Loading packs...</div>
-        </div>
-      </AppLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <AppLayout>
-        <div className="container max-w-5xl mx-auto py-10">
-          <div className="text-center text-red-500">
-            Error loading packs: {(error as Error).message}
+        <div className="container max-w-6xl py-8">
+          <h1 className="text-3xl font-bold mb-8">Loading project packs...</h1>
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         </div>
       </AppLayout>
@@ -59,48 +61,41 @@ const PackSelection = () => {
 
   return (
     <AppLayout>
-      <div className="container max-w-5xl mx-auto py-10">
-        <h1 className="text-3xl font-bold mb-2">Choose a Project Pack</h1>
+      <div className="container max-w-6xl py-8">
+        <h1 className="text-3xl font-bold mb-4">Choose a Project Pack</h1>
         <p className="text-muted-foreground mb-8">
-          Select the type of design work you need for your project
+          Select the package that best suits your project needs.
         </p>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {packs?.map((pack) => (
-            <Card 
-              key={pack.id}
-              className={`cursor-pointer transition-all ${
-                selectedPack?.id === pack.id 
-                  ? "border-2 border-tiro-purple shadow-lg" 
-                  : "hover:shadow-md"
-              }`}
-              onClick={() => handleSelectPack(pack)}
-            >
+        <div className="grid md:grid-cols-3 gap-6">
+          {packs.map((pack) => (
+            <Card key={pack.id_pack} className="flex flex-col">
               <CardHeader>
-                <CardTitle className="flex items-start justify-between">
-                  <span>{pack.name}</span>
-                  {selectedPack?.id === pack.id && (
-                    <Check className="text-tiro-purple h-5 w-5" />
-                  )}
-                </CardTitle>
+                <CardTitle>{pack.name}</CardTitle>
+                <CardDescription>{pack.description}</CardDescription>
               </CardHeader>
-              <CardContent>
-                <CardDescription className="text-sm min-h-[60px]">
-                  {pack.description}
-                </CardDescription>
+              <CardContent className="flex-grow">
+                <p className="text-3xl font-bold mb-4">€{pack.price.toFixed(2)}</p>
+                <h3 className="font-semibold mb-2">Features:</h3>
+                <ul className="space-y-2">
+                  {pack.features?.map((feature, index) => (
+                    <li key={index} className="flex items-start">
+                      <Badge variant="outline" className="mr-2">✓</Badge>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
               </CardContent>
+              <CardFooter>
+                <Button 
+                  className="w-full" 
+                  onClick={() => handleSelectPack(pack.id_pack)}
+                >
+                  Select This Pack
+                </Button>
+              </CardFooter>
             </Card>
           ))}
-        </div>
-
-        <div className="mt-10 flex justify-end">
-          <Button
-            onClick={handleContinue}
-            disabled={!selectedPack}
-            className="bg-tiro-purple hover:bg-tiro-purple/90"
-          >
-            Continue <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
         </div>
       </div>
     </AppLayout>

@@ -1,169 +1,171 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
 import { toast } from "@/components/ui/sonner";
 
-// Upload a document file to Supabase storage
-export const uploadDocumentFile = async (
-  file: File,
-  projectId: string
-): Promise<string | null> => {
+/**
+ * Upload a file to Supabase Storage
+ * @param file The file to upload
+ * @param projectId The project ID to associate with the file
+ * @returns The URL of the uploaded file
+ */
+export const uploadFile = async (file: File, projectId: string): Promise<string | null> => {
   try {
-    console.log('Uploading file to documents bucket:', file.name);
-    
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${projectId}/${uuidv4()}.${fileExt}`;
-    
+    if (!file) {
+      toast.error("No file selected");
+      return null;
+    }
+
+    // Create a unique file path using projectId/timestamp-filename
+    const timestamp = new Date().getTime();
+    const filePath = `${projectId}/${timestamp}-${file.name}`;
+
+    // Upload file to 'documents' bucket
     const { data, error } = await supabase.storage
       .from('documents')
-      .upload(fileName, file);
-      
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
     if (error) {
-      console.error('File upload error:', error);
+      console.error('Error uploading file:', error);
       toast.error(`Error uploading file: ${error.message}`);
       return null;
     }
-    
-    console.log('File uploaded successfully:', data);
-    
-    // Get the public URL for the file
+
+    // Generate a public URL for the file
     const { data: { publicUrl } } = supabase.storage
       .from('documents')
-      .getPublicUrl(fileName);
-      
+      .getPublicUrl(data.path);
+
     return publicUrl;
   } catch (error) {
-    console.error('File upload error:', error);
+    console.error('Upload error:', error);
     toast.error('Failed to upload file');
     return null;
   }
 };
 
-// Save document metadata to the database
-export const saveDocumentToDB = async (
-  projectId: string, 
-  documentName: string,
-  documentType: 'proposal' | 'final_proposal',
-  fileUrl: string
+/**
+ * Add a document to a project
+ * @param projectId The project ID
+ * @param name Document name
+ * @param type Document type ('proposal' or 'final_proposal')
+ * @param link Document URL
+ * @returns The created document data
+ */
+export const addDocumentToProject = async (
+  projectId: string,
+  name: string,
+  type: 'proposal' | 'final_proposal',
+  link: string
 ) => {
   try {
-    console.log('Saving document metadata to DB:', {
-      projectId,
-      documentName,
-      documentType,
-      fileUrl
-    });
-    
     const { data, error } = await supabase
       .from('documents')
       .insert({
         id_project: projectId,
-        name: documentName,
-        type: documentType,
-        link: fileUrl
+        name,
+        type,
+        link
       })
-      .select()
+      .select('*')
       .single();
-      
+
     if (error) {
-      console.error('Save document error:', error);
-      toast.error(`Error saving document: ${error.message}`);
+      console.error('Error adding document:', error);
+      toast.error(`Failed to add document: ${error.message}`);
       return null;
     }
-    
-    console.log('Document metadata saved successfully:', data);
+
     return data;
   } catch (error) {
-    console.error('Save document error:', error);
-    toast.error('Failed to save document');
+    console.error('Error adding document:', error);
+    toast.error('Failed to add document');
     return null;
   }
 };
 
-// Get all documents for a project
+/**
+ * Get documents for a project
+ * @param projectId The project ID
+ * @returns Array of documents
+ */
 export const getProjectDocuments = async (projectId: string) => {
   try {
-    console.log('Fetching documents for project:', projectId);
-    
     const { data, error } = await supabase
       .from('documents')
       .select('*')
       .eq('id_project', projectId)
       .order('created_at', { ascending: false });
-      
+
     if (error) {
-      console.error('Fetch documents error:', error);
-      toast.error(`Error fetching documents: ${error.message}`);
+      console.error('Error fetching documents:', error);
+      toast.error(`Failed to fetch documents: ${error.message}`);
       return [];
     }
-    
-    console.log('Documents fetched successfully:', data);
-    return data;
+
+    return data || [];
   } catch (error) {
-    console.error('Fetch documents error:', error);
+    console.error('Error fetching documents:', error);
     toast.error('Failed to fetch documents');
     return [];
   }
 };
 
-// Delete a document
+/**
+ * Delete a document
+ * @param documentId The document ID to delete
+ * @returns Success boolean
+ */
 export const deleteDocument = async (documentId: string) => {
   try {
-    console.log('Deleting document:', documentId);
-    
-    // First get the document to get its file URL
+    // First get the document to find its storage location
     const { data: document, error: fetchError } = await supabase
       .from('documents')
       .select('*')
       .eq('id_document', documentId)
       .single();
-      
+
     if (fetchError) {
       console.error('Error fetching document:', fetchError);
-      toast.error(`Error fetching document: ${fetchError.message}`);
+      toast.error(`Failed to fetch document: ${fetchError.message}`);
       return false;
     }
-    
-    // Delete from database
+
+    // Delete from the database
     const { error: deleteError } = await supabase
       .from('documents')
       .delete()
       .eq('id_document', documentId);
-      
+
     if (deleteError) {
       console.error('Error deleting document:', deleteError);
-      toast.error(`Error deleting document: ${deleteError.message}`);
+      toast.error(`Failed to delete document: ${deleteError.message}`);
       return false;
     }
-    
-    // If we have a file URL, extract the path and delete from storage
-    if (document.link) {
-      try {
-        // Extract the file path from the URL
-        const url = new URL(document.link);
-        const pathParts = url.pathname.split('/');
-        const filePath = pathParts.slice(pathParts.indexOf('documents') + 1).join('/');
-        
-        if (filePath) {
-          console.log('Deleting file from storage:', filePath);
-          
-          const { error: storageError } = await supabase.storage
-            .from('documents')
-            .remove([filePath]);
-            
-          if (storageError) {
-            console.error('Error deleting file from storage:', storageError);
-          }
+
+    // Try to delete from storage if it's a storage URL
+    // Extract the path from the document.link if it's a storage URL
+    if (document && document.link.includes('supabase.co')) {
+      const path = document.link.split('/').slice(-2).join('/');
+      
+      if (path) {
+        const { error: storageError } = await supabase.storage
+          .from('documents')
+          .remove([path]);
+
+        if (storageError) {
+          console.warn('Error deleting file from storage:', storageError);
+          // We don't fail the entire operation if storage delete fails
         }
-      } catch (storageError) {
-        console.error('Error processing file deletion:', storageError);
       }
     }
-    
-    console.log('Document deleted successfully');
+
+    toast.success('Document deleted successfully');
     return true;
   } catch (error) {
-    console.error('Delete document error:', error);
+    console.error('Error deleting document:', error);
     toast.error('Failed to delete document');
     return false;
   }
