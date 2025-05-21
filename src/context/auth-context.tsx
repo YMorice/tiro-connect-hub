@@ -125,7 +125,8 @@ const fetchUserSkills = async (userId: string): Promise<string[]> => {
     if (!data.skills) {
       return [];
     } else if (typeof data.skills === 'string') {
-      return data.skills.split(',').map((s: string) => s.trim());
+      // Cast to string explicitly to satisfy TypeScript
+      return (data.skills as string).split(',').map(s => s.trim());
     } else if (Array.isArray(data.skills)) {
       return data.skills;
     }
