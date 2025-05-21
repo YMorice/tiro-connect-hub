@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -277,17 +278,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log("Registering with data:", { email, name, surname, role, ...userData });
       
+      // Format the user metadata correctly to ensure it matches the database schema
+      const metadata = {
+        name,
+        surname,
+        role, // This should match the user_role enum type in the database
+        ...userData,
+      };
+      
+      console.log("Formatted metadata:", metadata);
+      
       // Register with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            name,
-            surname,
-            role,
-            ...userData,
-          },
+          data: metadata,
           emailRedirectTo: window.location.origin + '/login'
         },
       });
