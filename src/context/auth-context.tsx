@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -17,7 +16,7 @@ interface AuthContextType {
     surname: string, 
     role: "student" | "entrepreneur" | "admin", 
     userData?: Record<string, any>
-  ) => Promise<void>;
+  ) => Promise<{ success: boolean, error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
 }
@@ -307,38 +306,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userData: Record<string, any> = {}
   ) => {
     setLoading(true);
+    console.log("=== REGISTRATION STARTED ===");
+    console.log("Email:", email);
+    console.log("Name:", name);
+    console.log("Surname:", surname);
+    console.log("Role:", role);
+    console.log("User data:", userData);
 
     try {
-      console.log("Registering with data:", { email, name, surname, role, ...userData });
-      
-      // Create a single metadata object with ALL user data
+      // Create a clean metadata object with all user data
       const metadata: Record<string, any> = {
         name,
         surname,
         role,
-        about: userData.bio || userData.about,
-        specialty: userData.specialty,
-        portfolioLink: userData.portfolioUrl || userData.portfolioLink,
-        phone: userData.phoneNumber || userData.phone,
-        address: userData.address,
-        companyName: userData.companyName,
-        companyRole: userData.companyRole,
-        siret: userData.siret,
-        iban: userData.iban,
-        isFreelance: userData.isFreelance,
-        projectName: userData.projectName,
-        projectDescription: userData.projectDescription,
-        projectDeadline: userData.projectDeadline
       };
       
-      // Add skills as a properly formatted string if present
-      if (userData.skills) {
-        if (Array.isArray(userData.skills)) {
-          metadata.skills = userData.skills.join(',');
-        } else if (typeof userData.skills === 'string') {
-          metadata.skills = userData.skills;
+      // Add all userData properties to metadata
+      Object.keys(userData).forEach(key => {
+        // Handle skills specially to ensure they're properly formatted
+        if (key === 'skills') {
+          if (Array.isArray(userData.skills)) {
+            metadata.skills = userData.skills.join(',');
+          } else if (typeof userData.skills === 'string') {
+            metadata.skills = userData.skills;
+          }
+        } else {
+          metadata[key] = userData[key];
         }
-      }
+      });
       
       // Remove any undefined or null values from metadata
       Object.keys(metadata).forEach(key => {
@@ -349,95 +344,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log("Final metadata for registration:", metadata);
       
-      try {
-        // Register with Supabase with properly formatted metadata
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: metadata,
-            emailRedirectTo: `${window.location.origin}/login`
-          },
-        });
+      // Call Supabase Auth signUp directly
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+          emailRedirectTo: `${window.location.origin}/login`
+        }
+      });
 
-        if (error) {
-          console.error("Registration error:", error);
-          toast.error("Registration failed: " + error.message);
-          throw error;
-        }
-        
-        console.log("Registration successful:", data);
-        console.log("User data:", data.user);
-        console.log("User metadata:", data.user?.user_metadata);
-        
-        // Check if the database trigger created the profile records
-        if (data.user) {
-          const { data: userRecord, error: userError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id_users', data.user.id)
-            .maybeSingle();
-            
-          console.log("User record in database:", userRecord || "None found");
-          if (userError) {
-            console.error("Error checking user record:", userError);
-          }
-          
-          // For students, check if student record was created
-          if (role === 'student') {
-            const { data: studentRecord, error: studentError } = await supabase
-              .from('students')
-              .select('*')
-              .eq('id_user', data.user.id)
-              .maybeSingle();
-              
-            console.log("Student record in database:", studentRecord || "None found");
-            if (studentError) {
-              console.error("Error checking student record:", studentError);
-            }
-          }
-          
-          // For entrepreneurs, check if entrepreneur record was created
-          if (role === 'entrepreneur') {
-            const { data: entrepreneurRecord, error: entrepreneurError } = await supabase
-              .from('entrepreneurs')
-              .select('*')
-              .eq('id_user', data.user.id)
-              .maybeSingle();
-              
-            console.log("Entrepreneur record in database:", entrepreneurRecord || "None found");
-            if (entrepreneurError) {
-              console.error("Error checking entrepreneur record:", entrepreneurError);
-            }
-          }
-        }
-        
-        // Note: If email confirmation is required, the session might be null
-        if (data.session) {
-          toast.success("Account created successfully! You are now logged in.");
-          setSession(data.session);
-          
-          setTimeout(async () => {
-            try {
-              const appUser = await transformSupabaseUser(data.user);
-              setUser(appUser);
-            } catch (error) {
-              console.error("Error setting user after registration:", error);
-            }
-          }, 0);
-        } else {
-          // No session means email confirmation is required
-          toast.success("Registration successful! Please check your email to confirm your account.");
-        }
-      } catch (innerError) {
-        console.error("Inner registration error:", innerError);
-        toast.error("Registration failed. Please try again.");
+      if (error) {
+        console.error("Registration error:", error);
+        toast.error("Registration failed: " + error.message);
+        setLoading(false);
+        return { success: false, error: error.message };
       }
+      
+      console.log("Registration successful:", data);
+      console.log("User data:", data.user);
+      console.log("User metadata:", data.user?.user_metadata);
+      
+      // Check if email confirmation is required
+      if (!data.session) {
+        toast.success("Registration successful! Please check your email to confirm your account.");
+        setLoading(false);
+        return { success: true };
+      }
+      
+      // If session exists, user is logged in immediately
+      console.log("Setting session after registration:", data.session);
+      setSession(data.session);
+      
+      // Transform the user data
+      setTimeout(async () => {
+        try {
+          if (data.user) {
+            const appUser = await transformSupabaseUser(data.user);
+            console.log("Setting user after registration:", appUser);
+            setUser(appUser);
+          }
+        } catch (error) {
+          console.error("Error setting user after registration:", error);
+        } finally {
+          setLoading(false);
+        }
+      }, 0);
+      
+      toast.success("Account created successfully! You are now logged in.");
+      return { success: true };
     } catch (error: any) {
-      console.error("Registration error in form handler:", error);
-      toast.error(error?.message || "Failed to create account. Please try again.");
-    } finally {
+      console.error("Registration error:", error);
+      toast.error("Failed to create account: " + (error?.message || "Unknown error"));
       setLoading(false);
+      return { success: false, error: error?.message || "Unknown error" };
     }
   };
 

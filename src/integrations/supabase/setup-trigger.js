@@ -78,7 +78,7 @@ BEGIN
       NEW.raw_user_meta_data->>'iban',
       NEW.raw_user_meta_data->>'projectName',
       NEW.raw_user_meta_data->>'projectDescription',
-      (NEW.raw_user_meta_data->>'projectDeadline')::DATE,
+      (NEW.raw_user_meta_data->>'projectDeadline')::date,
       NEW.raw_user_meta_data->>'phone',
       NEW.raw_user_meta_data->>'address'
     );

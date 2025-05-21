@@ -133,6 +133,7 @@ const Register = () => {
   const [step, setStep] = useState(1);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [registrationCompleted, setRegistrationCompleted] = useState(false);
   
   const [formValues, setFormValues] = useState<FormValues>({
     email: "",
@@ -346,20 +347,23 @@ const Register = () => {
     await finalSubmit(finalFormValues);
   };
 
-  const onSkipProject = () => {
-    setFormValues(current => ({ ...current, skipProject: true }));
-    setStep(5);
+  const onSkipProject = async () => {
+    const updatedValues = { ...formValues, skipProject: true };
+    setFormValues(updatedValues);
+    await finalSubmit(updatedValues);
   };
 
-  const onAddProject = () => {
-    // Register the user first
-    finalSubmit(formValues).then(() => {
-      // Then navigate to new project page
-      navigate("/projects/new");
+  const onAddProject = async () => {
+    // Register the user first with project info
+    await finalSubmit(formValues).then(() => {
+      // Then navigate to new project page if successful
+      if (registrationCompleted) {
+        navigate("/projects/new");
+      }
     });
   };
 
-  // Final submit function
+  // Final submit function - now properly handling the registration
   const finalSubmit = async (values: FormValues) => {
     try {
       // Create a name from first and last name
@@ -385,12 +389,12 @@ const Register = () => {
         specialty: values.specialty,
         portfolioLink: values.portfolioUrl,
         phone: values.phoneNumber,
-        address: values.address,
+        address: values.address || values.companyAddress,
         iban: values.iban,
         companyName: values.companyName,
         companyRole: values.companyRole,
         siret: values.siret,
-        skills: values.skills ? (Array.isArray(values.skills) ? values.skills.join(',') : values.skills) : undefined,
+        skills: values.skills || selectedSkills,
         // Include additional fields that might be needed for project creation
         projectName: values.skipProject ? undefined : "New Project",
         projectDescription: values.skipProject ? undefined : "Project description",
@@ -400,7 +404,7 @@ const Register = () => {
       console.log("User metadata for registration:", userData);
       
       // Register user with all necessary data
-      await authRegister(
+      const result = await authRegister(
         values.email, 
         values.password, 
         name, 
@@ -409,13 +413,18 @@ const Register = () => {
         userData
       );
       
-      // Move to thank you step if we're not already on it
-      if (step !== 5) {
-        setStep(5);
+      if (result.success) {
+        setRegistrationCompleted(true);
+        // Move to thank you step if we're not already on it
+        if (step !== 5) {
+          setStep(5);
+        }
+      } else {
+        toast.error(result.error || "Registration failed. Please try again.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
-      // Error is handled by auth context with toast
+      toast.error(error?.message || "Registration failed. Please try again.");
     }
   };
 
