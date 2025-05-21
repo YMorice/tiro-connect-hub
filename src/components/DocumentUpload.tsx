@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Upload, File } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
-import { uploadDocumentFile, saveDocumentToDB } from "@/services/document-service";
+import { uploadFile, addDocumentToProject } from "@/services/document-service";
 import { useAuth } from "@/context/auth-context";
 
 interface DocumentUploadProps {
@@ -80,7 +80,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
         : documentType === "final" ? "final_proposal" : "proposal";
 
       // Upload the file to Supabase storage
-      const fileUrl = await uploadDocumentFile(selectedFile, projectId);
+      const fileUrl = await uploadFile(selectedFile, projectId);
       
       if (!fileUrl) {
         toast.error("Failed to upload file");
@@ -89,7 +89,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
       }
 
       // Save document metadata to the database
-      const savedDoc = await saveDocumentToDB(
+      const savedDoc = await addDocumentToProject(
         projectId,
         documentName.trim(),
         dbDocumentType as any,

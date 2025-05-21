@@ -170,3 +170,25 @@ export const deleteDocument = async (documentId: string) => {
     return false;
   }
 };
+
+// Add the missing functions that DocumentUpload.tsx is trying to use
+/**
+ * Upload a document file to storage
+ * This function wraps the uploadFile function for more semantic naming in the UI
+ */
+export const uploadDocumentFile = async (file: File, projectId: string): Promise<string | null> => {
+  return uploadFile(file, projectId);
+};
+
+/**
+ * Save document metadata to the database
+ * This function wraps the addDocumentToProject function for more semantic naming in the UI
+ */
+export const saveDocumentToDB = async (
+  projectId: string,
+  name: string,
+  type: 'proposal' | 'final_proposal',
+  link: string
+) => {
+  return addDocumentToProject(projectId, name, type, link);
+};

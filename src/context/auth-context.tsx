@@ -121,7 +121,16 @@ const fetchUserSkills = async (userId: string): Promise<string[]> => {
       return [];
     }
     
-    return data.skills ? (typeof data.skills === 'string' ? data.skills.split(',').map((s: string) => s.trim()) : data.skills) : [];
+    // Fix the type error - handle case where skills could be null, string, or array
+    if (!data.skills) {
+      return [];
+    } else if (typeof data.skills === 'string') {
+      return data.skills.split(',').map((s: string) => s.trim());
+    } else if (Array.isArray(data.skills)) {
+      return data.skills;
+    }
+    
+    return [];
   } catch (error) {
     console.error('Error fetching user skills:', error);
     return [];
