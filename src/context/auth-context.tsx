@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -91,16 +90,48 @@ const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User |
     
     console.log("User data found:", userData);
     
+    // Since role is no longer in the users table, we need to get it from user_metadata
+    // or try to determine it by checking related tables
+    let userRole: "student" | "entrepreneur" | "admin" = "entrepreneur"; // Default role
+    
+    // First try to get role from metadata
+    if (supabaseUser.user_metadata?.role) {
+      userRole = supabaseUser.user_metadata.role as "student" | "entrepreneur" | "admin";
+    } else {
+      // Try to determine role by checking if user exists in students or entrepreneurs table
+      const { data: studentData } = await supabase
+        .from('students')
+        .select('id_student')
+        .eq('id_user', userData.id_users)
+        .maybeSingle();
+        
+      if (studentData) {
+        userRole = "student";
+      } else {
+        const { data: entrepreneurData } = await supabase
+          .from('entrepreneurs')
+          .select('id_entrepreneur')
+          .eq('id_user', userData.id_users)
+          .maybeSingle();
+          
+        if (entrepreneurData) {
+          userRole = "entrepreneur";
+        }
+      }
+    }
+    
+    console.log("Determined user role:", userRole);
+    
     // Map Supabase user data to our app's User type
     return {
       id: userData.id_users,
       email: userData.email,
       name: userData.name || "New User",
-      role: userData.role || "entrepreneur",
+      role: userRole,
       createdAt: new Date(userData.created_at || Date.now()),
       bio: userData.bio || undefined,
       // Optionally fetch additional fields based on role
-      ...(userData.role === "student" ? { skills: await fetchUserSkills(userData.id_users) } : {})
+      ...(userRole === "student" ? { skills: await fetchUserSkills(userData.id_users) } : {})
     };
   } catch (error) {
     console.error('Error transforming user:', error);
@@ -282,7 +313,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const metadata = {
         name,
         surname,
-        role, // This should match the user_role enum type in the database
+        role, // This is still needed in metadata even if not in users table directly
       };
       
       // Add the rest of the user data, ensuring skills are properly formatted
@@ -343,7 +374,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error: any) {
       console.error("Registration error in form handler:", error);
-      // Error is handled by auth context with toast
+      toast.error(error?.message || "Failed to create account. Please try again.");
     } finally {
       setLoading(false);
     }

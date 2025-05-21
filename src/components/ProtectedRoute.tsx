@@ -25,6 +25,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // If a specific role is required, check that the user has it
   if (requiredRole && user.role !== requiredRole) {
+    console.log(`Access denied: User role ${user.role} does not match required role ${requiredRole}`);
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
 
