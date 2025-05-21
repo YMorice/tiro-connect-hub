@@ -283,12 +283,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name,
         surname,
         role, // This should match the user_role enum type in the database
-        ...userData,
       };
       
-      console.log("Formatted metadata:", metadata);
+      // Add the rest of the user data, ensuring skills are properly formatted
+      for (const [key, value] of Object.entries(userData)) {
+        if (key === 'skills') {
+          // Handle skills specifically to ensure they're stored in the correct format
+          if (value) {
+            if (Array.isArray(value)) {
+              metadata[key] = value.join(',');
+            } else if (typeof value === 'string') {
+              metadata[key] = value;
+            }
+          }
+        } else {
+          metadata[key] = value;
+        }
+      }
       
-      // Register with Supabase
+      console.log("Formatted metadata for registration:", metadata);
+      
+      // Register with Supabase with properly formatted metadata
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -327,8 +342,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toast.success("Registration successful! Please check your email.");
       }
     } catch (error: any) {
-      console.error("Registration error:", error);
-      toast.error(error?.message || "Failed to create account. Please try again.");
+      console.error("Registration error in form handler:", error);
+      // Error is handled by auth context with toast
     } finally {
       setLoading(false);
     }
