@@ -20,6 +20,9 @@ AS $$
 DECLARE
   role_value public.user_role;
 BEGIN
+  -- Log the trigger execution for debugging
+  RAISE NOTICE 'Trigger fired for user ID: %', NEW.id;
+  
   -- Parse the role from user metadata
   role_value := (NEW.raw_user_meta_data->>'role')::public.user_role;
 

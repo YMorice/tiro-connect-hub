@@ -370,23 +370,34 @@ const Register = () => {
       // Get surname from values
       const surname = values.lastName || "User";
         
+      // Log the data that will be sent to Supabase
+      console.log("Submitting registration data:", {
+        email: values.email,
+        password: values.password,
+        name,
+        surname,
+        role: values.role,
+      });
+
       // Prepare user data for registration
       const userData = {
         about: values.bio,
         specialty: values.specialty,
         portfolioLink: values.portfolioUrl,
         phone: values.phoneNumber,
-        siret: values.siret,
         address: values.address,
         iban: values.iban,
         companyName: values.companyName,
         companyRole: values.companyRole,
+        siret: values.siret,
         skills: values.skills ? (Array.isArray(values.skills) ? values.skills.join(',') : values.skills) : undefined,
         // Include additional fields that might be needed for project creation
         projectName: values.skipProject ? undefined : "New Project",
         projectDescription: values.skipProject ? undefined : "Project description",
         projectDeadline: values.skipProject ? undefined : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       };
+      
+      console.log("User metadata for registration:", userData);
       
       // Register user with all necessary data
       await authRegister(

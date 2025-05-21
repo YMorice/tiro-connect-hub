@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -355,7 +354,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
         options: {
           data: metadata,
-          emailRedirectTo: window.location.origin + '/login'
+          emailRedirectTo: `${window.location.origin}/login`
         },
       });
 
@@ -416,7 +415,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toast.success("Account created successfully! You are now logged in.");
         
         // Session and user will be set by the onAuthStateChange handler
-        // But we can manually set them for immediate feedback
         setSession(data.session);
         
         setTimeout(async () => {
