@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -348,86 +349,89 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log("Final metadata for registration:", metadata);
       
-      // Register with Supabase with properly formatted metadata
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: metadata,
-          emailRedirectTo: `${window.location.origin}/login`
-        },
-      });
+      try {
+        // Register with Supabase with properly formatted metadata
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: metadata,
+            emailRedirectTo: `${window.location.origin}/login`
+          },
+        });
 
-      if (error) {
-        console.error("Registration error:", error);
-        toast.error("Registration failed: " + error.message);
-        throw error;
-      } 
-      
-      console.log("Registration successful:", data);
-      console.log("User data:", data.user);
-      console.log("User metadata:", data.user?.user_metadata);
-      
-      // Check if the database trigger created the profile records
-      if (data.user) {
-        const { data: userRecord, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id_users', data.user.id)
-          .maybeSingle();
+        if (error) {
+          console.error("Registration error:", error);
+          toast.error("Registration failed: " + error.message);
+          throw error;
+        }
+        
+        console.log("Registration successful:", data);
+        console.log("User data:", data.user);
+        console.log("User metadata:", data.user?.user_metadata);
+        
+        // Check if the database trigger created the profile records
+        if (data.user) {
+          const { data: userRecord, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id_users', data.user.id)
+            .maybeSingle();
+            
+          console.log("User record in database:", userRecord || "None found");
+          if (userError) {
+            console.error("Error checking user record:", userError);
+          }
           
-        console.log("User record in database:", userRecord || "None found");
-        if (userError) {
-          console.error("Error checking user record:", userError);
-        }
-        
-        // For students, check if student record was created
-        if (role === 'student') {
-          const { data: studentRecord, error: studentError } = await supabase
-            .from('students')
-            .select('*')
-            .eq('id_user', data.user.id)
-            .maybeSingle();
-            
-          console.log("Student record in database:", studentRecord || "None found");
-          if (studentError) {
-            console.error("Error checking student record:", studentError);
+          // For students, check if student record was created
+          if (role === 'student') {
+            const { data: studentRecord, error: studentError } = await supabase
+              .from('students')
+              .select('*')
+              .eq('id_user', data.user.id)
+              .maybeSingle();
+              
+            console.log("Student record in database:", studentRecord || "None found");
+            if (studentError) {
+              console.error("Error checking student record:", studentError);
+            }
+          }
+          
+          // For entrepreneurs, check if entrepreneur record was created
+          if (role === 'entrepreneur') {
+            const { data: entrepreneurRecord, error: entrepreneurError } = await supabase
+              .from('entrepreneurs')
+              .select('*')
+              .eq('id_user', data.user.id)
+              .maybeSingle();
+              
+            console.log("Entrepreneur record in database:", entrepreneurRecord || "None found");
+            if (entrepreneurError) {
+              console.error("Error checking entrepreneur record:", entrepreneurError);
+            }
           }
         }
         
-        // For entrepreneurs, check if entrepreneur record was created
-        if (role === 'entrepreneur') {
-          const { data: entrepreneurRecord, error: entrepreneurError } = await supabase
-            .from('entrepreneurs')
-            .select('*')
-            .eq('id_user', data.user.id)
-            .maybeSingle();
-            
-          console.log("Entrepreneur record in database:", entrepreneurRecord || "None found");
-          if (entrepreneurError) {
-            console.error("Error checking entrepreneur record:", entrepreneurError);
-          }
+        // Note: If email confirmation is required, the session might be null
+        if (data.session) {
+          toast.success("Account created successfully! You are now logged in.");
+          setSession(data.session);
+          
+          setTimeout(async () => {
+            try {
+              const appUser = await transformSupabaseUser(data.user);
+              setUser(appUser);
+            } catch (error) {
+              console.error("Error setting user after registration:", error);
+            }
+          }, 0);
+        } else {
+          // No session means email confirmation is required
+          toast.success("Registration successful! Please check your email to confirm your account.");
         }
-      }
-      
-      // Note: If email confirmation is required, the session might be null
-      if (data.session) {
-        toast.success("Account created successfully! You are now logged in.");
-        
-        // Session and user will be set by the onAuthStateChange handler
-        setSession(data.session);
-        
-        setTimeout(async () => {
-          try {
-            const appUser = await transformSupabaseUser(data.user);
-            setUser(appUser);
-          } catch (error) {
-            console.error("Error setting user after registration:", error);
-          }
-        }, 0);
-      } else {
-        // No session means email confirmation is required
-        toast.success("Registration successful! Please check your email to confirm your account.");
+      } catch (innerError) {
+        console.error("Inner registration error:", innerError);
+        toast.error("Registration failed. Please try again.");
       }
     } catch (error: any) {
       console.error("Registration error in form handler:", error);
