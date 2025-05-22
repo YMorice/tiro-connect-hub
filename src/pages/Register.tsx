@@ -63,6 +63,7 @@ const step2SchemaStudent = z.object({
   bio: z.string().min(10, "Please provide at least 10 characters about yourself"),
   // Modified to accept any URL without requiring https:// prefix and making it required
   portfolioUrl: z.string().min(1, "Portfolio URL is required"),
+  formation: z.string().min(1, "Please provide your education or training information"),
 });
 
 const step2SchemaEntrepreneur = z.object({
@@ -115,6 +116,7 @@ type FormValues = {
   skills?: string[];
   avatar?: string;
   skipProject?: boolean;
+  formation?: string; // Add formation field
 };
 
 const Register = () => {
@@ -152,6 +154,7 @@ const Register = () => {
       specialty: "",
       bio: "",
       portfolioUrl: "",
+      formation: "", // Add the formation field default value
     },
   });
 
@@ -258,6 +261,7 @@ const Register = () => {
       specialty: values.specialty,
       bio: values.bio,
       portfolioUrl: values.portfolioUrl,
+      formation: values.formation, // Add formation to form values
       skills: selectedSkills
     }));
     
@@ -376,6 +380,7 @@ const Register = () => {
         about: values.bio,
         specialty: values.specialty,
         portfolioLink: values.portfolioUrl,
+        formation: values.formation, // Add formation to userData
         phone: values.phoneNumber,
         address: values.address || values.companyAddress,
         iban: values.iban,
@@ -608,6 +613,24 @@ const Register = () => {
                     <FormControl>
                       <Textarea 
                         placeholder="Tell us about your skills, experience, and interests..." 
+                        className="min-h-[100px]"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={step2StudentForm.control}
+                name="formation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Education or Training</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Describe your educational background or professional training..." 
                         className="min-h-[100px]"
                         {...field} 
                       />

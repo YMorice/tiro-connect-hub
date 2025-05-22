@@ -14,6 +14,7 @@ import { UseFormReturn } from "react-hook-form";
 import { RegistrationFormValues } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
+import { Textarea } from "@/components/ui/textarea";
 
 interface BasicInfoStepProps {
   form: UseFormReturn<RegistrationFormValues>;
@@ -90,6 +91,26 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ form }) => {
           </FormItem>
         )}
       />
+
+      {form.watch("role") === "student" && (
+        <FormField
+          control={form.control}
+          name="formation"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Education or Training</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Describe your educational background or professional training..."
+                  className="min-h-[100px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       <FormField
         control={form.control}

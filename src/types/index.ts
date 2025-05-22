@@ -83,9 +83,10 @@ export interface RegistrationFormValues {
   password: string;
   role: "student" | "entrepreneur";
   bio?: string;
+  formation?: string; // Added formation field
   skills?: string[];
   avatar?: string;
-  acceptTerms?: boolean; // Add the acceptTerms property
+  acceptTerms?: boolean;
 }
 
 // Add these types if they don't exist already
