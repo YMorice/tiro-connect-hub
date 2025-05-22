@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -10,43 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Project, User } from "@/types";
 import { toast } from "@/components/ui/sonner";
 import { Check, X, UserPlus, MessageSquare, CreditCard } from "lucide-react";
-
-// Mock student users for demonstration
-const mockStudents: User[] = [
-  {
-    id: "2",
-    email: "student@example.com",
-    name: "Jane Student",
-    role: "student",
-    bio: "Design student with a passion for UI/UX",
-    skills: ["UI/UX Design", "Figma", "Adobe XD"],
-    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: "4",
-    email: "student2@example.com",
-    name: "Mike Student",
-    role: "student",
-    bio: "Web developer with 2 years of experience",
-    skills: ["React", "Node.js", "MongoDB"],
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: "5",
-    email: "student3@example.com",
-    name: "Sarah Student",
-    role: "student",
-    bio: "Graphic designer specializing in branding",
-    skills: ["Photoshop", "Illustrator", "Branding"],
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-  },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 const Admin = () => {
   const { user } = useAuth();
   const { projects, updateProject } = useProjects();
   const navigate = useNavigate();
   const [studentsToAssign, setStudentsToAssign] = useState<{ [projectId: string]: User[] }>({});
+  const [students, setStudents] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   
   // Redirect if not admin
   useEffect(() => {
@@ -55,6 +28,59 @@ const Admin = () => {
       toast.error("You don't have permission to access this page");
     }
   }, [user, navigate]);
+
+  // Fetch students from database
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setLoading(true);
+        
+        const { data: studentsData, error } = await supabase
+          .from('students')
+          .select(`
+            id_student,
+            biography,
+            skills,
+            specialty,
+            formation,
+            users (
+              id_users,
+              email,
+              name,
+              surname,
+              role,
+              created_at
+            )
+          `);
+          
+        if (error) {
+          throw error;
+        }
+        
+        // Transform the data to match the User type
+        const formattedStudents: User[] = studentsData.map(student => ({
+          id: student.id_student,
+          email: student.users.email,
+          name: `${student.users.name} ${student.users.surname}`,
+          role: "student" as const,
+          bio: student.biography || undefined,
+          skills: student.skills || undefined,
+          createdAt: new Date(student.users.created_at),
+        }));
+        
+        setStudents(formattedStudents);
+      } catch (error) {
+        console.error('Error fetching students:', error);
+        toast.error("Failed to load student profiles");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (user && user.role === "admin") {
+      fetchStudents();
+    }
+  }, [user]);
 
   // Group projects by status
   const draftProjects = projects.filter(p => p.status === "draft");
@@ -99,28 +125,75 @@ const Admin = () => {
   };
 
   // Propose students for a project
-  const proposeStudents = (project: Project) => {
+  const proposeStudents = async (project: Project) => {
     const selectedStudents = studentsToAssign[project.id] || [];
     if (selectedStudents.length === 0) {
       toast.error("Please select at least one student to propose");
       return;
     }
 
-    // Update project with proposed students and change status to "open"
-    updateProject(project.id, { 
-      status: "open",
-      // In a real app, you would store the proposed students in a separate table
-      // For this mock, we'll just add a note in the description
-      description: `${project.description}\n\nProposed students: ${selectedStudents.map(s => s.name).join(", ")}`
-    });
+    try {
+      // Update project status to "open" in Supabase
+      const { error } = await supabase
+        .from('projects')
+        .update({ status: 'open' })
+        .eq('id_project', project.id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Create project assignments for selected students
+      const assignments = selectedStudents.map(student => ({
+        id_project: project.id,
+        id_student: student.id,
+        status: 'proposed',
+        role: 'developer'
+      }));
+      
+      const { error: assignmentError } = await supabase
+        .from('project_assignments')
+        .insert(assignments);
+        
+      if (assignmentError) {
+        throw assignmentError;
+      }
+      
+      // Update project in local state
+      updateProject(project.id, { 
+        status: "open",
+        // In a real app, you would store the proposed students in a separate table
+        // For this mock, we'll just add a note in the description
+        description: `${project.description}\n\nProposed students: ${selectedStudents.map(s => s.name).join(", ")}`
+      });
 
-    toast.success(`Proposed ${selectedStudents.length} students for project "${project.title}"`);
+      toast.success(`Proposed ${selectedStudents.length} students for project "${project.title}"`);
+    } catch (error) {
+      console.error('Error proposing students:', error);
+      toast.error("Failed to propose students");
+    }
   };
 
   // Confirm payment for a project
-  const confirmPayment = (project: Project) => {
-    updateProject(project.id, { status: "in_progress" });
-    toast.success(`Payment confirmed for project "${project.title}"`);
+  const confirmPayment = async (project: Project) => {
+    try {
+      // Update project status to "in_progress" in Supabase
+      const { error } = await supabase
+        .from('projects')
+        .update({ status: 'in_progress' })
+        .eq('id_project', project.id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Update project in local state
+      updateProject(project.id, { status: "in_progress" });
+      toast.success(`Payment confirmed for project "${project.title}"`);
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      toast.error("Failed to confirm payment");
+    }
   };
 
   // View project conversation
@@ -166,44 +239,58 @@ const Admin = () => {
                   <CardContent>
                     <div className="space-y-4">
                       <h3 className="font-medium">Select students to propose:</h3>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Skills</TableHead>
-                            <TableHead>Experience</TableHead>
-                            <TableHead>Select</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {mockStudents.map(student => (
-                            <TableRow key={student.id}>
-                              <TableCell className="font-medium">{student.name}</TableCell>
-                              <TableCell>{student.skills?.join(", ") || "N/A"}</TableCell>
-                              <TableCell>{student.bio}</TableCell>
-                              <TableCell>
-                                <Button 
-                                  variant={isStudentSelected(project.id, student.id) ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => toggleStudentForProject(project.id, student)}
-                                >
-                                  {isStudentSelected(project.id, student.id) ? (
-                                    <>
-                                      <Check className="h-4 w-4 mr-1" />
-                                      Selected
-                                    </>
-                                  ) : (
-                                    <>
-                                      <UserPlus className="h-4 w-4 mr-1" />
-                                      Select
-                                    </>
-                                  )}
-                                </Button>
-                              </TableCell>
+                      {loading ? (
+                        <div className="flex justify-center py-6">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tiro-purple"></div>
+                        </div>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Skills</TableHead>
+                              <TableHead>Experience</TableHead>
+                              <TableHead>Select</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {students.length > 0 ? (
+                              students.map(student => (
+                                <TableRow key={student.id}>
+                                  <TableCell className="font-medium">{student.name}</TableCell>
+                                  <TableCell>{student.skills?.join(", ") || "N/A"}</TableCell>
+                                  <TableCell>{student.bio || "N/A"}</TableCell>
+                                  <TableCell>
+                                    <Button 
+                                      variant={isStudentSelected(project.id, student.id) ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => toggleStudentForProject(project.id, student)}
+                                    >
+                                      {isStudentSelected(project.id, student.id) ? (
+                                        <>
+                                          <Check className="h-4 w-4 mr-1" />
+                                          Selected
+                                        </>
+                                      ) : (
+                                        <>
+                                          <UserPlus className="h-4 w-4 mr-1" />
+                                          Select
+                                        </>
+                                      )}
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={4} className="text-center py-4">
+                                  No student profiles found
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      )}
                       <div className="flex justify-end">
                         <Button onClick={() => proposeStudents(project)}>
                           Propose Selected Students

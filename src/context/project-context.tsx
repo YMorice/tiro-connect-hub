@@ -3,10 +3,12 @@ import React, { createContext, useContext, useState } from "react";
 import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "./auth-context";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectContextType {
   projects: Project[];
   loading: boolean;
+  setProjects: (projects: Project[]) => void;
   createProject: (data: Partial<Project>) => void;
   updateProject: (id: string, data: Partial<Project>) => void;
   deleteProject: (id: string) => void;
@@ -111,7 +113,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     toast.success("Project created successfully");
   };
 
-  const updateProject = (id: string, data: Partial<Project>) => {
+  const updateProject = async (id: string, data: Partial<Project>) => {
+    // First update the local state
     setProjects(
       projects.map((project) => {
         if (project.id === id) {
@@ -120,7 +123,31 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return project;
       })
     );
-    toast.success("Project updated");
+    
+    // Then attempt to update the database if it's a database-stored project
+    try {
+      // Check if this is a UUID (database) project
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        const { error } = await supabase
+          .from('projects')
+          .update({
+            title: data.title,
+            description: data.description,
+            status: data.status,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id_project', id);
+          
+        if (error) {
+          throw error;
+        }
+      }
+      
+      toast.success("Project updated");
+    } catch (error) {
+      console.error("Error updating project:", error);
+      toast.error("Failed to update project in database");
+    }
   };
 
   const deleteProject = (id: string) => {
@@ -254,6 +281,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       value={{
         projects,
         loading,
+        setProjects,
         createProject,
         updateProject,
         deleteProject,

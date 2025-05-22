@@ -16,6 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Trash2 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/sonner";
+import { uploadFile, addDocumentToProject } from "@/services/document-service";
 
 interface ProjectPack {
   id: string;
@@ -41,6 +44,7 @@ const NewProject = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Get the selected pack from location state
   const locationState = location.state as LocationState | undefined;
@@ -62,35 +66,68 @@ const NewProject = () => {
     },
   });
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = async (values: FormValues) => {
     if (!user) return;
     
-    const newProject = {
-      title: values.title,
-      description: values.description,
-      ownerId: user.id,
-      status: "draft" as const, // Explicitly type this as a valid status constant
-      packId: values.packId,
-    };
+    setIsSubmitting(true);
     
-    createProject(newProject);
-    
-    // Handle file uploads if any were selected
-    if (selectedFiles.length > 0) {
-      // Get the newly created project ID from the context after creation
-      // This is a simplified approach - in a real app, you might want to get the actual ID returned from createProject
-      const projectsContext = useProjects();
-      const projects = projectsContext.projects;
-      const newProjectId = projects[projects.length - 1].id;
+    try {
+      // Save the project to Supabase
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          title: values.title,
+          description: values.description,
+          id_entrepreneur: user.id,
+          id_pack: values.packId,
+          status: 'draft'
+        })
+        .select('id_project')
+        .single();
+        
+      if (projectError) {
+        throw projectError;
+      }
       
-      // Add documents
-      selectedFiles.forEach(file => {
-        addDocument(newProjectId, {}, file);
+      const projectId = projectData.id_project;
+      
+      // Handle file uploads if any were selected
+      if (selectedFiles.length > 0) {
+        for (const file of selectedFiles) {
+          // Upload file to storage
+          const fileUrl = await uploadFile(file, projectId);
+          
+          if (fileUrl) {
+            // Add document metadata to database
+            await addDocumentToProject(
+              projectId,
+              file.name,
+              'proposal', // default type
+              fileUrl
+            );
+          }
+        }
+      }
+      
+      // Call the createProject function from context for client-side state management
+      createProject({
+        title: values.title,
+        description: values.description,
+        ownerId: user.id,
+        status: "draft",
+        packId: values.packId,
       });
+      
+      toast.success("Project created successfully");
+      
+      // Navigate to projects page after successful creation
+      navigate("/projects");
+    } catch (error) {
+      console.error("Error creating project:", error);
+      toast.error("Failed to create project");
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // Navigate to projects page after successful creation
-    navigate("/projects");
   };
 
   if (!selectedPack) {
@@ -226,14 +263,23 @@ const NewProject = () => {
                     type="button" 
                     variant="outline"
                     onClick={() => navigate("/projects")}
+                    disabled={isSubmitting}
                   >
                     Cancel
                   </Button>
                   <Button 
                     type="submit"
                     className="bg-tiro-purple hover:bg-tiro-purple/90"
+                    disabled={isSubmitting}
                   >
-                    Create Project
+                    {isSubmitting ? (
+                      <>
+                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
+                        Creating...
+                      </>
+                    ) : (
+                      "Create Project"
+                    )}
                   </Button>
                 </div>
               </form>
