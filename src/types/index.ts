@@ -1,3 +1,4 @@
+
 export type UserRole = "student" | "entrepreneur" | "admin";
 
 export interface User {
@@ -84,6 +85,7 @@ export interface RegistrationFormValues {
   bio?: string;
   skills?: string[];
   avatar?: string;
+  acceptTerms: boolean;
 }
 
 // Add these types if they don't exist already

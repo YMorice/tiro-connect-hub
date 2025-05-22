@@ -51,9 +51,10 @@ const step1Schema = z.object({
   confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["student", "entrepreneur"] as const),
   confidenceCode: z.string().optional(),
-  acceptTerms: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the terms of use" }),
-  }),
+  acceptTerms: z.boolean()
+    .refine(val => val === true, {
+      message: "You must accept the terms of use",
+    }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -441,137 +442,7 @@ const Register = () => {
         return (
           <Form {...step1Form}>
             <form onSubmit={step1Form.handleSubmit(onSubmitStep1)} className="space-y-4">
-              <FormField
-                control={step1Form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>I am a:</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        className="flex flex-col space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="student" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Student - I want to work on web projects
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="entrepreneur" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Entrepreneur - I need web design services
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step1Form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="example@email.com" 
-                        {...field} 
-                        type="email"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step1Form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="******" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={step1Form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="******" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {step1Form.watch("role") === "student" && (
-                <FormField
-                  control={step1Form.control}
-                  name="confidenceCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confidence Code</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Enter your student confidence code" 
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <FormField
-                control={step1Form.control}
-                name="acceptTerms"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        id="acceptTerms"
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel htmlFor="acceptTerms" className="text-sm font-normal">
-                        I accept the{" "}
-                        <Link to="/terms" className="text-tiro-purple hover:underline">
-                          terms of use
-                        </Link>
-                      </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
+              <BasicInfoStep form={step1Form} />
 
               <Button 
                 type="submit" 
