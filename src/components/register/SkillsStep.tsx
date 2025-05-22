@@ -13,28 +13,19 @@ interface SkillsStepProps {
 
 // Predefined list of skills for checkboxes
 const AVAILABLE_SKILLS = [
-  "UI/UX Design", 
-  "Figma",
+  "After Effects",
+  "Illustrator", 
+  "InDesign", 
+  "Photoshop",
+  "Premiere Pro", 
   "Adobe XD", 
-  "HTML", 
-  "CSS",
-  "JavaScript", 
-  "React", 
-  "Vue.js", 
-  "TypeScript", 
-  "Node.js",
-  "Python",
-  "Django",
-  "Ruby on Rails",
-  "PHP",
-  "WordPress",
-  "Mobile Development",
-  "React Native",
-  "iOS Development",
-  "Android Development",
-  "UX Research",
-  "SEO",
-  "Digital Marketing"
+  "Canva", 
+  "CorelDRAW", 
+  "DaVinci Resolve",
+  "Figma",
+  "Final Cut Pro",
+  "Framer",
+  "Sketch"
 ];
 
 const SkillsStep: React.FC<SkillsStepProps> = ({ selectedSkills, setSelectedSkills }) => {
