@@ -87,33 +87,33 @@ export type Database = {
           content: string
           created_at: string
           id_message: string
+          project_id: string
           read: boolean | null
-          receiver_id: string
           sender_id: string
         }
         Insert: {
           content: string
           created_at?: string
           id_message?: string
+          project_id: string
           read?: boolean | null
-          receiver_id: string
           sender_id: string
         }
         Update: {
           content?: string
           created_at?: string
           id_message?: string
+          project_id?: string
           read?: boolean | null
-          receiver_id?: string
           sender_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "messages_receiver_id_fkey"
-            columns: ["receiver_id"]
+            foreignKeyName: "messages_project_id_fkey"
+            columns: ["project_id"]
             isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id_users"]
+            referencedRelation: "projects"
+            referencedColumns: ["id_project"]
           },
           {
             foreignKeyName: "messages_sender_id_fkey"

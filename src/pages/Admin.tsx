@@ -1,8 +1,9 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
 import { useProjects } from "@/context/project-context";
+import { useMessages } from "@/context/message-context";
 import AppLayout from "@/components/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Admin = () => {
   const { user } = useAuth();
   const { projects, updateProject } = useProjects();
+  const { sendMessage } = useMessages();
   const navigate = useNavigate();
   const [studentsToAssign, setStudentsToAssign] = useState<{ [projectId: string]: User[] }>({});
   const [students, setStudents] = useState<User[]>([]);
@@ -159,12 +161,15 @@ const Admin = () => {
         throw assignmentError;
       }
       
+      // Send a message to each proposed student
+      for (const student of selectedStudents) {
+        // Using the new project-based messaging
+        await sendMessage(student.id, `You've been proposed for project: ${project.title}`, project.id);
+      }
+      
       // Update project in local state
       updateProject(project.id, { 
         status: "open",
-        // In a real app, you would store the proposed students in a separate table
-        // For this mock, we'll just add a note in the description
-        description: `${project.description}\n\nProposed students: ${selectedStudents.map(s => s.name).join(", ")}`
       });
 
       toast.success(`Proposed ${selectedStudents.length} students for project "${project.title}"`);
@@ -185,6 +190,23 @@ const Admin = () => {
         
       if (error) {
         throw error;
+      }
+      
+      // Get assigned students for this project
+      const { data: assignments } = await supabase
+        .from('project_assignments')
+        .select('id_student')
+        .eq('id_project', project.id);
+        
+      if (assignments && assignments.length > 0) {
+        // Send notification message to all assigned students
+        for (const assignment of assignments) {
+          await sendMessage(
+            assignment.id_student,
+            `Payment confirmed for project "${project.title}". You can now start working on it.`,
+            project.id
+          );
+        }
       }
       
       // Update project in local state
