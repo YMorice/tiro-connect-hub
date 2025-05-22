@@ -55,8 +55,6 @@ export type Database = {
           company_siret: string | null
           id_entrepreneur: string
           id_user: string
-          phone: string | null
-          siret: string | null
         }
         Insert: {
           address?: string | null
@@ -65,8 +63,6 @@ export type Database = {
           company_siret?: string | null
           id_entrepreneur?: string
           id_user: string
-          phone?: string | null
-          siret?: string | null
         }
         Update: {
           address?: string | null
@@ -75,8 +71,6 @@ export type Database = {
           company_siret?: string | null
           id_entrepreneur?: string
           id_user?: string
-          phone?: string | null
-          siret?: string | null
         }
         Relationships: [
           {
@@ -258,7 +252,6 @@ export type Database = {
           iban: string | null
           id_student: string
           id_user: string
-          phone: string | null
           portfolio_link: string | null
           siret: string | null
           skills: string[] | null
@@ -271,7 +264,6 @@ export type Database = {
           iban?: string | null
           id_student?: string
           id_user: string
-          phone?: string | null
           portfolio_link?: string | null
           siret?: string | null
           skills?: string[] | null
@@ -284,7 +276,6 @@ export type Database = {
           iban?: string | null
           id_student?: string
           id_user?: string
-          phone?: string | null
           portfolio_link?: string | null
           siret?: string | null
           skills?: string[] | null
@@ -307,6 +298,7 @@ export type Database = {
           email: string
           id_users: string
           name: string
+          Phone: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           surname: string
           updated_at: string
@@ -317,6 +309,7 @@ export type Database = {
           email: string
           id_users: string
           name: string
+          Phone?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           surname: string
           updated_at?: string
@@ -327,6 +320,7 @@ export type Database = {
           email?: string
           id_users?: string
           name?: string
+          Phone?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           surname?: string
           updated_at?: string

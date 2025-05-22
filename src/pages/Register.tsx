@@ -49,20 +49,13 @@ const step1Schema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["student", "entrepreneur"] as const),
-  confidenceCode: z.string().optional(),
   acceptTerms: z.boolean().refine(val => val === true, {
     message: "You must accept the Terms of Use",
   }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
-}).refine(
-  (data) => data.role !== "student" || (data.confidenceCode && data.confidenceCode.length > 0),
-  {
-    message: "Confidence code is required for students",
-    path: ["confidenceCode"],
-  }
-);
+});
 
 // Step 2 schema - Role-specific information (part 1)
 const step2SchemaStudent = z.object({
@@ -105,7 +98,6 @@ type FormValues = {
   password: string;
   confirmPassword: string;
   role: "student" | "entrepreneur";
-  confidenceCode?: string;
   acceptTerms: boolean;
   specialty?: string;
   bio?: string;
@@ -149,7 +141,6 @@ const Register = () => {
       password: "",
       confirmPassword: "",
       role: "entrepreneur" as const,
-      confidenceCode: "",
       acceptTerms: false,
     },
   });
@@ -210,7 +201,6 @@ const Register = () => {
       password: formValues.password,
       confirmPassword: formValues.confirmPassword,
       role: formValues.role,
-      confidenceCode: formValues.confidenceCode || "",
       acceptTerms: formValues.acceptTerms || false,
     });
   }, []);
@@ -240,7 +230,6 @@ const Register = () => {
       password: values.password,
       confirmPassword: values.confirmPassword,
       role: values.role,
-      confidenceCode: values.confidenceCode || "",
       acceptTerms: values.acceptTerms
     }));
     
@@ -527,25 +516,6 @@ const Register = () => {
                   </FormItem>
                 )}
               />
-
-              {step1Form.watch("role") === "student" && (
-                <FormField
-                  control={step1Form.control}
-                  name="confidenceCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confidence Code</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Enter your student confidence code" 
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
 
               <FormField
                 control={step1Form.control}
