@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -459,6 +460,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (updateError) {
         console.error("Profile update error (auth):", updateError);
         toast.error(updateError.message);
+        setLoading(false);
         return;
       }
 
@@ -466,19 +468,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (user.id) {
         console.log("Updating user in database:", user.id);
         
+        const updateData: Record<string, any> = {};
+        
+        // Only add fields that are actually provided
+        if (data.name !== undefined) updateData.name = data.name;
+        if (data.bio !== undefined) updateData.bio = data.bio;
+        
+        console.log("Update data for database:", updateData);
+        
         const { error: dbError } = await supabase
           .from('users')
-          .update({
-            name: data.name,
-            bio: data.bio,
-            // Add other fields to update as needed
-          })
+          .update(updateData)
           .eq('id_users', user.id);
 
         if (dbError) {
           console.error("Profile update error (db):", dbError);
           toast.error(dbError.message);
+          setLoading(false);
           return;
+        }
+        
+        // If user is a student, update skills in the students table
+        if (user.role === 'student' && data.skills) {
+          console.log("Updating student skills:", data.skills);
+          
+          const { error: studentError } = await supabase
+            .from('students')
+            .update({
+              skills: data.skills
+            })
+            .eq('id_user', user.id);
+            
+          if (studentError) {
+            console.error("Student skills update error:", studentError);
+            toast.error(studentError.message);
+            setLoading(false);
+            return;
+          }
         }
       }
 

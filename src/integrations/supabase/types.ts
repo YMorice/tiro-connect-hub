@@ -50,41 +50,32 @@ export type Database = {
       entrepreneurs: {
         Row: {
           address: string | null
-          companyname: string | null
-          companyrole: string | null
-          iban: string | null
+          company_name: string | null
+          company_role: string | null
+          company_siret: string | null
           id_entrepreneur: string
           id_user: string
           phone: string | null
-          projectdeadline: string | null
-          projectdescription: string | null
-          projectname: string | null
           siret: string | null
         }
         Insert: {
           address?: string | null
-          companyname?: string | null
-          companyrole?: string | null
-          iban?: string | null
+          company_name?: string | null
+          company_role?: string | null
+          company_siret?: string | null
           id_entrepreneur?: string
           id_user: string
           phone?: string | null
-          projectdeadline?: string | null
-          projectdescription?: string | null
-          projectname?: string | null
           siret?: string | null
         }
         Update: {
           address?: string | null
-          companyname?: string | null
-          companyrole?: string | null
-          iban?: string | null
+          company_name?: string | null
+          company_role?: string | null
+          company_siret?: string | null
           id_entrepreneur?: string
           id_user?: string
           phone?: string | null
-          projectdeadline?: string | null
-          projectdescription?: string | null
-          projectname?: string | null
           siret?: string | null
         }
         Relationships: [
@@ -262,28 +253,40 @@ export type Database = {
       students: {
         Row: {
           address: string | null
+          biography: string | null
+          formation: string | null
+          iban: string | null
           id_student: string
           id_user: string
           phone: string | null
-          portfoliolink: string | null
+          portfolio_link: string | null
+          siret: string | null
           skills: string[] | null
           specialty: string | null
         }
         Insert: {
           address?: string | null
+          biography?: string | null
+          formation?: string | null
+          iban?: string | null
           id_student?: string
           id_user: string
           phone?: string | null
-          portfoliolink?: string | null
+          portfolio_link?: string | null
+          siret?: string | null
           skills?: string[] | null
           specialty?: string | null
         }
         Update: {
           address?: string | null
+          biography?: string | null
+          formation?: string | null
+          iban?: string | null
           id_student?: string
           id_user?: string
           phone?: string | null
-          portfoliolink?: string | null
+          portfolio_link?: string | null
+          siret?: string | null
           skills?: string[] | null
           specialty?: string | null
         }
@@ -304,6 +307,7 @@ export type Database = {
           email: string
           id_users: string
           name: string
+          role: Database["public"]["Enums"]["user_role"] | null
           surname: string
           updated_at: string
         }
@@ -313,6 +317,7 @@ export type Database = {
           email: string
           id_users: string
           name: string
+          role?: Database["public"]["Enums"]["user_role"] | null
           surname: string
           updated_at?: string
         }
@@ -322,6 +327,7 @@ export type Database = {
           email?: string
           id_users?: string
           name?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
           surname?: string
           updated_at?: string
         }

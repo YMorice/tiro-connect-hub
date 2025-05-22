@@ -105,6 +105,12 @@ const Profile = () => {
     setIsLoading(true);
     
     try {
+      console.log("Submitting profile update with data:", {
+        ...data,
+        skills: selectedSkills,
+        avatar: avatarUrl,
+      });
+      
       const updatedUser: Partial<User> = {
         ...data,
         skills: user.role === "student" ? selectedSkills : undefined,
