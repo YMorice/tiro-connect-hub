@@ -16,7 +16,6 @@ import { toast } from "@/components/ui/sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload from "@/components/FileUpload";
-import BasicInfoStep from "@/components/register/BasicInfoStep";
 
 // List of available skills for checkboxes
 const AVAILABLE_SKILLS = [
@@ -51,10 +50,6 @@ const step1Schema = z.object({
   confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["student", "entrepreneur"] as const),
   confidenceCode: z.string().optional(),
-  acceptTerms: z.boolean()
-    .refine(val => val === true, {
-      message: "You must accept the terms of use",
-    }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -124,7 +119,6 @@ type FormValues = {
   skills?: string[];
   avatar?: string;
   skipProject?: boolean;
-  acceptTerms: boolean;
 };
 
 const Register = () => {
@@ -140,7 +134,6 @@ const Register = () => {
     password: "",
     confirmPassword: "",
     role: "entrepreneur",
-    acceptTerms: false,
   });
   
   // Step 1 form
@@ -152,7 +145,6 @@ const Register = () => {
       confirmPassword: "",
       role: "entrepreneur" as const,
       confidenceCode: "",
-      acceptTerms: false,
     },
   });
 
@@ -213,7 +205,6 @@ const Register = () => {
       confirmPassword: formValues.confirmPassword,
       role: formValues.role,
       confidenceCode: formValues.confidenceCode || "",
-      acceptTerms: formValues.acceptTerms,
     });
   }, []);
 
@@ -242,8 +233,7 @@ const Register = () => {
       password: values.password,
       confirmPassword: values.confirmPassword,
       role: values.role,
-      confidenceCode: values.confidenceCode || "",
-      acceptTerms: values.acceptTerms,
+      confidenceCode: values.confidenceCode || ""
     }));
     
     // Reset step 2 forms based on role
@@ -442,7 +432,112 @@ const Register = () => {
         return (
           <Form {...step1Form}>
             <form onSubmit={step1Form.handleSubmit(onSubmitStep1)} className="space-y-4">
-              <BasicInfoStep form={step1Form} />
+              <FormField
+                control={step1Form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>I am a:</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="student" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Student - I want to work on web projects
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="entrepreneur" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Entrepreneur - I need web design services
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={step1Form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="example@email.com" 
+                        {...field} 
+                        type="email"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={step1Form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="******" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={step1Form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="******" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {step1Form.watch("role") === "student" && (
+                <FormField
+                  control={step1Form.control}
+                  name="confidenceCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confidence Code</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Enter your student confidence code" 
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <Button 
                 type="submit" 
