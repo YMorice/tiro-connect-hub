@@ -90,10 +90,13 @@ const PackSelection = () => {
               <CardContent className="flex-grow">
                 {pack.price !== null && pack.price !== undefined ? (
                   <p className="text-3xl font-bold mb-4">
-                    {pack.price > 0 ? (
-                      <>from {pack.price.toFixed(2)} €</>
+                    {pack.price === 0 ? (
+                      ""
                     ) : (
-                      "Free"
+                      <>
+                        {pack.from === true && "from "}
+                        {pack.price.toFixed(2)} €
+                      </>
                     )}
                   </p>
                 ) : (

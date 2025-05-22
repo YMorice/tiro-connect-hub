@@ -172,6 +172,7 @@ export type Database = {
           created_at: string
           description: string
           features: string[] | null
+          from: boolean | null
           id_pack: string
           name: string
           price: number
@@ -181,6 +182,7 @@ export type Database = {
           created_at?: string
           description: string
           features?: string[] | null
+          from?: boolean | null
           id_pack?: string
           name: string
           price: number
@@ -190,6 +192,7 @@ export type Database = {
           created_at?: string
           description?: string
           features?: string[] | null
+          from?: boolean | null
           id_pack?: string
           name?: string
           price?: number
