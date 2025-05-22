@@ -32,6 +32,7 @@ const Projects = () => {
       
       try {
         setLoading(true);
+        console.log("Fetching projects for user:", user);
         
         let query = supabase
           .from('projects')
@@ -47,12 +48,31 @@ const Projects = () => {
           `);
           
         if (user.role === "entrepreneur") {
-          // Entrepreneurs only see their own projects
-          query = query.eq('id_entrepreneur', user.id);
+          // First get entrepreneur ID from user ID
+          const { data: entrepreneurData, error: entrepreneurError } = await supabase
+            .from('entrepreneurs')
+            .select('id_entrepreneur')
+            .eq('id_user', user.id)
+            .single();
+            
+          if (entrepreneurError) {
+            console.error("Error fetching entrepreneur ID:", entrepreneurError);
+            toast.error("Failed to fetch your entrepreneur profile");
+            setLoading(false);
+            return;
+          }
+          
+          if (entrepreneurData) {
+            // Now fetch projects with entrepreneur ID
+            query = query.eq('id_entrepreneur', entrepreneurData.id_entrepreneur);
+          }
         } else if (user.role === "student") {
           // Students see projects that are assigned to them or open
           // This needs to be enhanced with proper project assignments
           query = query.or(`status.eq.open,id_project.in.(${getAssignedProjectIds()})`);
+        } else if (user.role === "admin") {
+          // Admin sees all projects
+          // No need to filter query
         }
         
         const { data, error } = await query;
@@ -60,6 +80,8 @@ const Projects = () => {
         if (error) {
           throw error;
         }
+        
+        console.log("Fetched projects:", data);
         
         if (data) {
           // Convert to the format expected by the UI
@@ -76,6 +98,7 @@ const Projects = () => {
             packId: dbProject.id_pack
           }));
           
+          console.log("Formatted projects:", formattedProjects);
           setProjects(formattedProjects);
         }
       } catch (error) {
@@ -226,7 +249,7 @@ const Projects = () => {
                 </p>
                 {user?.role === "entrepreneur" && !searchTerm && statusFilter === "all" && (
                   <Button className="mt-4" asChild>
-                    <Link to="/projects/new">Create Project</Link>
+                    <Link to="/projects/pack-selection">Create Project</Link>
                   </Button>
                 )}
               </div>

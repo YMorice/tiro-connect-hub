@@ -100,7 +100,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       id: String(projects.length + 1),
       title: data.title || "Untitled Project",
       description: data.description || "",
-      ownerId: user.id,
+      ownerId: data.ownerId || user.id,
       status: "draft",
       tasks: [],
       documents: [],

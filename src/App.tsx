@@ -22,6 +22,7 @@ import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import CreateAdminAccount from "./pages/CreateAdminAccount";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/admin-setup" element={<CreateAdminAccount />} />
                 
                 <Route
                   path="/dashboard"
