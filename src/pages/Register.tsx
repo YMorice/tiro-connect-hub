@@ -16,6 +16,7 @@ import { toast } from "@/components/ui/sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload from "@/components/FileUpload";
+import BasicInfoStep from "@/components/register/BasicInfoStep";
 
 // List of available skills for checkboxes
 const AVAILABLE_SKILLS = [
@@ -50,6 +51,9 @@ const step1Schema = z.object({
   confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["student", "entrepreneur"] as const),
   confidenceCode: z.string().optional(),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: "You must accept the terms of use" }),
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -119,6 +123,7 @@ type FormValues = {
   skills?: string[];
   avatar?: string;
   skipProject?: boolean;
+  acceptTerms: boolean;
 };
 
 const Register = () => {
@@ -134,6 +139,7 @@ const Register = () => {
     password: "",
     confirmPassword: "",
     role: "entrepreneur",
+    acceptTerms: false,
   });
   
   // Step 1 form
@@ -145,6 +151,7 @@ const Register = () => {
       confirmPassword: "",
       role: "entrepreneur" as const,
       confidenceCode: "",
+      acceptTerms: false,
     },
   });
 
@@ -205,6 +212,7 @@ const Register = () => {
       confirmPassword: formValues.confirmPassword,
       role: formValues.role,
       confidenceCode: formValues.confidenceCode || "",
+      acceptTerms: formValues.acceptTerms,
     });
   }, []);
 
@@ -233,7 +241,8 @@ const Register = () => {
       password: values.password,
       confirmPassword: values.confirmPassword,
       role: values.role,
-      confidenceCode: values.confidenceCode || ""
+      confidenceCode: values.confidenceCode || "",
+      acceptTerms: values.acceptTerms,
     }));
     
     // Reset step 2 forms based on role
@@ -538,6 +547,31 @@ const Register = () => {
                   )}
                 />
               )}
+
+              <FormField
+                control={step1Form.control}
+                name="acceptTerms"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        id="acceptTerms"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel htmlFor="acceptTerms" className="text-sm font-normal">
+                        I accept the{" "}
+                        <Link to="/terms" className="text-tiro-purple hover:underline">
+                          terms of use
+                        </Link>
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
 
               <Button 
                 type="submit" 
