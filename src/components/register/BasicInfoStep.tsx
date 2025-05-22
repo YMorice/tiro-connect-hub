@@ -100,9 +100,8 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ form }) => {
             <FormItem>
               <FormLabel>Education or Training</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Describe your educational background or professional training..."
-                  className="min-h-[100px]"
+                <Input
+                  placeholder="Your education or training"
                   {...field}
                 />
               </FormControl>
