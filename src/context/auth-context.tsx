@@ -124,6 +124,23 @@ const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User |
     
     console.log("Determined user role:", userRole);
     
+    // Get bio from appropriate table based on role
+    let userBio: string | undefined;
+    
+    if (userRole === "student") {
+      const { data: studentData } = await supabase
+        .from('students')
+        .select('biography')
+        .eq('id_user', userData.id_users)
+        .maybeSingle();
+      
+      userBio = studentData?.biography;
+    } else if (userRole === "entrepreneur") {
+      // If entrepreneurs have a bio field in their table, you'd fetch it similarly
+      // For now, we'll use the user metadata if available
+      userBio = supabaseUser.user_metadata?.bio;
+    }
+    
     // Map Supabase user data to our app's User type
     return {
       id: userData.id_users,
@@ -131,7 +148,7 @@ const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User |
       name: userData.name || "New User",
       role: userRole,
       createdAt: new Date(userData.created_at || Date.now()),
-      bio: userData.bio || undefined,
+      bio: userBio,
       // Optionally fetch additional fields based on role
       ...(userRole === "student" ? { skills: await fetchUserSkills(userData.id_users) } : {})
     };
