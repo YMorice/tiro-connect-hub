@@ -50,6 +50,9 @@ const step1Schema = z.object({
   confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["student", "entrepreneur"] as const),
   confidenceCode: z.string().optional(),
+  acceptTerms: z.boolean().refine(val => val === true, {
+    message: "You must accept the Terms of Use",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -103,6 +106,7 @@ type FormValues = {
   confirmPassword: string;
   role: "student" | "entrepreneur";
   confidenceCode?: string;
+  acceptTerms: boolean;
   specialty?: string;
   bio?: string;
   portfolioUrl?: string;
@@ -134,6 +138,7 @@ const Register = () => {
     password: "",
     confirmPassword: "",
     role: "entrepreneur",
+    acceptTerms: false,
   });
   
   // Step 1 form
@@ -145,6 +150,7 @@ const Register = () => {
       confirmPassword: "",
       role: "entrepreneur" as const,
       confidenceCode: "",
+      acceptTerms: false,
     },
   });
 
@@ -205,6 +211,7 @@ const Register = () => {
       confirmPassword: formValues.confirmPassword,
       role: formValues.role,
       confidenceCode: formValues.confidenceCode || "",
+      acceptTerms: formValues.acceptTerms || false,
     });
   }, []);
 
@@ -233,7 +240,8 @@ const Register = () => {
       password: values.password,
       confirmPassword: values.confirmPassword,
       role: values.role,
-      confidenceCode: values.confidenceCode || ""
+      confidenceCode: values.confidenceCode || "",
+      acceptTerms: values.acceptTerms
     }));
     
     // Reset step 2 forms based on role
@@ -538,6 +546,31 @@ const Register = () => {
                   )}
                 />
               )}
+
+              <FormField
+                control={step1Form.control}
+                name="acceptTerms"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        id="terms"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel htmlFor="terms" className="font-normal">
+                        I accept the{" "}
+                        <Link to="/terms" className="text-tiro-purple hover:underline">
+                          Terms of Use
+                        </Link>
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
 
               <Button 
                 type="submit" 
