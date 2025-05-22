@@ -43,7 +43,20 @@ const PackSelection = () => {
   const handleSelectPack = (packId: string) => {
     // Store the selected pack ID in local storage temporarily
     localStorage.setItem("selectedPackId", packId);
-    navigate("/projects/new");
+    
+    // Find the selected pack to pass as state
+    const selectedPack = packs.find(pack => pack.id_pack === packId);
+    
+    // Navigate to new project page with the selected pack info
+    navigate("/projects/new", { 
+      state: { 
+        selectedPack: {
+          id: packId,
+          name: selectedPack?.name || "",
+          description: selectedPack?.description || ""
+        }
+      } 
+    });
   };
 
   if (loading) {
@@ -75,7 +88,17 @@ const PackSelection = () => {
                 <CardDescription>{pack.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
-                <p className="text-3xl font-bold mb-4">€{pack.price.toFixed(2)}</p>
+                {pack.price !== null && pack.price !== undefined ? (
+                  <p className="text-3xl font-bold mb-4">
+                    {pack.price > 0 ? (
+                      <>from {pack.price.toFixed(2)} €</>
+                    ) : (
+                      "Free"
+                    )}
+                  </p>
+                ) : (
+                  <p className="text-3xl font-bold mb-4">Contact us for pricing</p>
+                )}
                 <h3 className="font-semibold mb-2">Features:</h3>
                 <ul className="space-y-2">
                   {pack.features?.map((feature, index) => (
