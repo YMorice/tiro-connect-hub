@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
 import { useAuth } from "@/context/auth-context";
@@ -45,10 +45,33 @@ const NewProject = () => {
   const location = useLocation();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
   
   // Get the selected pack from location state
   const locationState = location.state as LocationState | undefined;
   const selectedPack = locationState?.selectedPack;
+  
+  // Fetch entrepreneur ID when component mounts
+  useEffect(() => {
+    const fetchEntrepreneurId = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('entrepreneurs')
+          .select('id_entrepreneur')
+          .eq('id_user', user.id)
+          .single();
+          
+        if (data) {
+          setEntrepreneurId(data.id_entrepreneur);
+        } else if (error) {
+          console.error("Error fetching entrepreneur ID:", error);
+          toast.error("Failed to fetch your entrepreneur profile");
+        }
+      }
+    };
+    
+    fetchEntrepreneurId();
+  }, [user]);
   
   // Redirect to pack selection if no pack is selected
   React.useEffect(() => {
@@ -67,7 +90,10 @@ const NewProject = () => {
   });
 
   const onSubmit = async (values: FormValues) => {
-    if (!user) return;
+    if (!user || !entrepreneurId) {
+      toast.error("You need to be logged in as an entrepreneur to create a project");
+      return;
+    }
     
     setIsSubmitting(true);
     
@@ -78,7 +104,7 @@ const NewProject = () => {
         .insert({
           title: values.title,
           description: values.description,
-          id_entrepreneur: user.id,
+          id_entrepreneur: entrepreneurId, // Use entrepreneur ID instead of user ID
           id_pack: values.packId,
           status: 'draft'
         })
@@ -113,7 +139,7 @@ const NewProject = () => {
       createProject({
         title: values.title,
         description: values.description,
-        ownerId: user.id,
+        ownerId: entrepreneurId,
         status: "draft",
         packId: values.packId,
       });
@@ -270,7 +296,7 @@ const NewProject = () => {
                   <Button 
                     type="submit"
                     className="bg-tiro-purple hover:bg-tiro-purple/90"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !entrepreneurId}
                   >
                     {isSubmitting ? (
                       <>
