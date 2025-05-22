@@ -65,7 +65,8 @@ const step1Schema = z.object({
 const step2SchemaStudent = z.object({
   specialty: z.string().min(1, "Please select a specialty"),
   bio: z.string().min(10, "Please provide at least 10 characters about yourself"),
-  portfolioUrl: z.string().url("Please enter a valid URL").or(z.string().length(0)),
+  // Modified to accept any URL without requiring https:// prefix and making it required
+  portfolioUrl: z.string().min(1, "Portfolio URL is required"),
 });
 
 const step2SchemaEntrepreneur = z.object({
@@ -90,17 +91,10 @@ const step3SchemaEntrepreneur = z.object({
 
 // Step 4 schema - Additional information
 const step4SchemaStudent = z.object({
-  isFreelance: z.boolean(),
   siret: z.string().optional(),
   address: z.string().min(5, "Please enter a valid address"),
   iban: z.string().min(15, "Please enter a valid IBAN"),
-}).refine(
-  (data) => !data.isFreelance || (data.siret && data.siret.length >= 14),
-  {
-    message: "SIRET number is required for freelancers",
-    path: ["siret"],
-  }
-);
+});
 
 // Combined type for all form values
 type FormValues = {
@@ -197,7 +191,6 @@ const Register = () => {
   const step4StudentForm = useForm<z.infer<typeof step4SchemaStudent>>({
     resolver: zodResolver(step4SchemaStudent),
     defaultValues: {
-      isFreelance: false,
       siret: "",
       address: "",
       iban: "",
@@ -312,7 +305,6 @@ const Register = () => {
     
     // Reset step 4 student form
     step4StudentForm.reset({
-      isFreelance: false,
       siret: "",
       address: "",
       iban: "",
@@ -337,7 +329,6 @@ const Register = () => {
   const onSubmitStep4Student = async (values: z.infer<typeof step4SchemaStudent>) => {
     const finalFormValues = { 
       ...formValues, 
-      isFreelance: values.isFreelance,
       siret: values.siret,
       address: values.address,
       iban: values.iban
@@ -628,10 +619,10 @@ const Register = () => {
                 name="portfolioUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Portfolio URL (optional)</FormLabel>
+                    <FormLabel>Portfolio URL</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="https://yourportfolio.com" 
+                        placeholder="yourportfolio.com" 
                         {...field}
                       />
                     </FormControl>
@@ -966,44 +957,20 @@ const Register = () => {
             <form onSubmit={step4StudentForm.handleSubmit(onSubmitStep4Student)} className="space-y-4">
               <FormField
                 control={step4StudentForm.control}
-                name="isFreelance"
+                name="siret"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">
-                        Are you a freelancer?
-                      </FormLabel>
-                    </div>
+                  <FormItem>
+                    <FormLabel>SIRET Number (optional)</FormLabel>
                     <FormControl>
-                      <input
-                        type="checkbox"
-                        checked={field.value}
-                        onChange={field.onChange}
-                        className="h-4 w-4 text-tiro-purple focus:ring-tiro-purple"
+                      <Input 
+                        placeholder="12345678901234" 
+                        {...field} 
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {step4StudentForm.watch("isFreelance") && (
-                <FormField
-                  control={step4StudentForm.control}
-                  name="siret"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SIRET Number</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="12345678901234" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
 
               <FormField
                 control={step4StudentForm.control}
