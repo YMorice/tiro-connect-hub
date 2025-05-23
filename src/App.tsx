@@ -22,6 +22,7 @@ import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import StudentSelection from "./pages/StudentSelection";
 import CreateAdminAccount from "./pages/CreateAdminAccount";
 
 const queryClient = new QueryClient();
@@ -111,6 +112,15 @@ const App = () => (
                   element={
                     <ProtectedRoute requiredRole="admin">
                       <Admin />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                <Route
+                  path="/admin/student-selection"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <StudentSelection />
                     </ProtectedRoute>
                   }
                 />
