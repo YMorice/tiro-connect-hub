@@ -19,6 +19,7 @@ interface MessageContextType {
   markAsRead: (messageId: string) => void;
   getConversation: (userId: string) => Message[];
   reviewDocument: (messageId: string, isApproved: boolean, comment?: string) => void;
+  getProjectMessages: (projectId: string) => Message[];
 }
 
 // Mock messages for demonstration
@@ -331,6 +332,13 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     ).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   };
 
+  // New method to get messages for a specific project
+  const getProjectMessages = (projectId: string): Message[] => {
+    return messages
+      .filter(message => message.projectId === projectId)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  };
+
   return (
     <MessageContext.Provider value={{ 
       messages, 
@@ -339,7 +347,8 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       sendDocumentMessage,
       markAsRead, 
       getConversation,
-      reviewDocument
+      reviewDocument,
+      getProjectMessages
     }}>
       {children}
     </MessageContext.Provider>

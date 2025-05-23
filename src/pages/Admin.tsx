@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -6,7 +7,6 @@ import { useMessages } from "@/context/message-context";
 import AppLayout from "@/components/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Project } from "@/types";
 import { toast } from "@/components/ui/sonner";
@@ -63,9 +63,17 @@ const Admin = () => {
       if (assignments && assignments.length > 0) {
         // Send notification message to all assigned students
         for (const assignment of assignments) {
+          // Send message to notify students
           await sendMessage(
             assignment.id_student,
             `Payment confirmed for project "${project.title}". You can now start working on it.`,
+            project.id
+          );
+          
+          // Also send a message to the project group chat
+          await sendMessage(
+            "",  // Empty recipient means it's a group message
+            `Admin has confirmed payment. Student has been added to this conversation. Project status is now "In Progress".`,
             project.id
           );
         }
