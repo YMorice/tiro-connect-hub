@@ -698,7 +698,7 @@ const ProjectDetail = () => {
                   </div>
                 )}
 
-                {/* Add document form - Modified to remove URL input */}
+                {/* Add document form */}
                 {(isOwner || isAssignee) && (
                   <form onSubmit={handleDocumentSubmit} className="space-y-4">
                     <div className="p-4 border rounded-md bg-gray-50">
@@ -730,7 +730,8 @@ const ProjectDetail = () => {
                   </form>
                 )}
               </CardContent>
-            </TabsContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="communication">
             <Card>
