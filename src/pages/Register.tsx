@@ -128,6 +128,7 @@ const Register = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [registrationCompleted, setRegistrationCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formSubmitting, setFormSubmitting] = useState(false);
   
   const [formValues, setFormValues] = useState<FormValues>({
     email: "",
@@ -375,24 +376,31 @@ const Register = () => {
   };
 
   const onSkipProject = async () => {
+    setFormSubmitting(true);
     const updatedValues = { ...formValues, skipProject: true };
     setFormValues(updatedValues);
     await finalSubmit(updatedValues);
+    setFormSubmitting(false);
   };
 
   const onAddProject = async () => {
-    // Register the user first with project info
-    await finalSubmit(formValues).then(() => {
+    setFormSubmitting(true);
+    try {
+      // Register the user first with project info
+      await finalSubmit(formValues);
       // Then navigate to new project page if successful
       if (registrationCompleted) {
         navigate("/projects/new");
       }
-    });
+    } finally {
+      setFormSubmitting(false);
+    }
   };
 
   // Final submit function - now including profile picture URL
   const finalSubmit = async (values: FormValues) => {
     try {
+      setFormSubmitting(true);
       // Create a name from first and last name
       const name = values.firstName && values.lastName 
         ? `${values.firstName} ${values.lastName}` 
@@ -450,10 +458,12 @@ const Register = () => {
         }
       } else {
         toast.error(result.error || "Registration failed. Please try again.");
+        setFormSubmitting(false);
       }
     } catch (error: any) {
       console.error("Registration error:", error);
       toast.error(error?.message || "Registration failed. Please try again.");
+      setFormSubmitting(false);
     }
   };
 
@@ -586,9 +596,9 @@ const Register = () => {
               <Button 
                 type="submit" 
                 className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                disabled={loading}
+                disabled={formSubmitting}
               >
-                {loading ? "Processing..." : "Next"}
+                {formSubmitting ? "Processing..." : "Next"}
               </Button>
             </form>
           </Form>
@@ -719,15 +729,16 @@ const Register = () => {
                   type="button" 
                   variant="outline" 
                   onClick={goBack}
+                  disabled={formSubmitting}
                 >
                   Back
                 </Button>
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                  disabled={loading}
+                  disabled={formSubmitting}
                 >
-                  Next
+                  {formSubmitting ? "Processing..." : "Next"}
                 </Button>
               </div>
             </form>
@@ -791,15 +802,16 @@ const Register = () => {
                   type="button" 
                   variant="outline" 
                   onClick={goBack}
+                  disabled={formSubmitting}
                 >
                   Back
                 </Button>
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                  disabled={loading}
+                  disabled={formSubmitting}
                 >
-                  Next
+                  {formSubmitting ? "Processing..." : "Next"}
                 </Button>
               </div>
             </form>
@@ -887,15 +899,16 @@ const Register = () => {
                   type="button" 
                   variant="outline" 
                   onClick={goBack}
+                  disabled={formSubmitting || isLoading}
                 >
                   Back
                 </Button>
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                  disabled={loading}
+                  disabled={formSubmitting || isLoading}
                 >
-                  Next
+                  {formSubmitting ? "Processing..." : "Next"}
                 </Button>
               </div>
             </form>
@@ -997,15 +1010,16 @@ const Register = () => {
                   type="button" 
                   variant="outline" 
                   onClick={goBack}
+                  disabled={formSubmitting || isLoading}
                 >
                   Back
                 </Button>
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                  disabled={loading}
+                  disabled={formSubmitting || isLoading}
                 >
-                  Next
+                  {formSubmitting ? "Processing..." : "Next"}
                 </Button>
               </div>
             </form>
@@ -1072,15 +1086,16 @@ const Register = () => {
                   type="button" 
                   variant="outline" 
                   onClick={goBack}
+                  disabled={formSubmitting}
                 >
                   Back
                 </Button>
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                  disabled={loading}
+                  disabled={formSubmitting}
                 >
-                  Complete Registration
+                  {formSubmitting ? "Processing..." : "Complete Registration"}
                 </Button>
               </div>
             </form>
@@ -1098,16 +1113,16 @@ const Register = () => {
               <Button 
                 variant="outline" 
                 onClick={onSkipProject}
-                disabled={loading}
+                disabled={formSubmitting}
               >
-                Skip for now
+                {formSubmitting ? "Processing..." : "Skip for now"}
               </Button>
               <Button 
                 onClick={onAddProject}
                 className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                disabled={loading}
+                disabled={formSubmitting}
               >
-                Add Project
+                {formSubmitting ? "Processing..." : "Add Project"}
               </Button>
             </div>
             
@@ -1116,7 +1131,7 @@ const Register = () => {
                 type="button" 
                 variant="link" 
                 onClick={goBack}
-                disabled={loading}
+                disabled={formSubmitting}
               >
                 Back
               </Button>

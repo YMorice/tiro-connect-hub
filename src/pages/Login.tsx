@@ -1,8 +1,8 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,6 +26,7 @@ const Login = () => {
     session
   } = useAuth();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -50,14 +51,22 @@ const Login = () => {
 
   const onSubmit = async (values: FormValues) => {
     try {
+      setIsSubmitting(true);
       console.log("Login form submitted:", values.email);
-      await login(values.email, values.password);
+      const { user, error } = await login(values.email, values.password);
+
+      if (error) {
+        toast.error(error);
+        setIsSubmitting(false);
+        return;
+      }
 
       // We won't navigate here - the useEffect will handle redirection
       // when the auth state changes after successful login
     } catch (error) {
       console.error("Login error in form handler:", error);
-      // Error is handled by auth context with toast
+      toast.error("Failed to sign in. Please check your credentials and try again.");
+      setIsSubmitting(false);
     }
   };
 
@@ -105,9 +114,9 @@ const Login = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 
-                  disabled={loading}
+                  disabled={isSubmitting}
                 >
-                  {loading ? "Signing in..." : "Sign In"}
+                  {isSubmitting ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </Form>
