@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ const Index = () => {
       <header className="border-b bg-white">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-tiro-purple">Tiro</h1>
+            <img src="/lovable-uploads/b20f2556-f276-4aea-993b-aead6d9fafd8.png" alt="Tiro Logo" className="h-8" />
           </div>
           <nav className="flex items-center gap-6">
             <Link to="/" className="text-sm font-medium">
@@ -29,7 +28,7 @@ const Index = () => {
               <Button
                 asChild
                 variant="default"
-                className="bg-tiro-purple hover:bg-tiro-purple/90"
+                className="bg-tiro-primary hover:bg-tiro-primary/90"
               >
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
@@ -40,7 +39,7 @@ const Index = () => {
                 </Button>
                 <Button
                   asChild
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  className="bg-tiro-primary hover:bg-tiro-primary/90"
                 >
                   <Link to="/register">Sign up</Link>
                 </Button>
@@ -51,17 +50,17 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-tiro-purple/5 to-tiro-blue/5 py-20">
+      <section className="bg-gradient-to-r from-tiro-primary/5 to-tiro-secondary/5 py-20">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center">
             <div className="lg:w-1/2 mb-10 lg:mb-0">
               <h1 className="text-5xl font-bold mb-6">
                 Connecting{" "}
-                <span className="bg-gradient-to-r from-tiro-purple to-tiro-blue bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-tiro-primary to-tiro-secondary bg-clip-text text-transparent">
                   Entrepreneurs
                 </span>{" "}
                 and{" "}
-                <span className="bg-gradient-to-r from-tiro-magenta to-tiro-purple bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-tiro-primary to-tiro-secondary bg-clip-text text-transparent">
                   Students
                 </span>
               </h1>
@@ -73,7 +72,7 @@ const Index = () => {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  className="bg-tiro-primary hover:bg-tiro-primary/90"
                 >
                   <Link to="/register">Get Started</Link>
                 </Button>
@@ -88,8 +87,8 @@ const Index = () => {
             </div>
             <div className="lg:w-1/2">
               <div className="relative">
-                <div className="absolute -top-10 -left-10 w-40 h-40 bg-tiro-purple/10 rounded-full filter blur-xl"></div>
-                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-tiro-blue/10 rounded-full filter blur-xl"></div>
+                <div className="absolute -top-10 -left-10 w-40 h-40 bg-tiro-primary/10 rounded-full filter blur-xl"></div>
+                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-tiro-secondary/10 rounded-full filter blur-xl"></div>
                 <div className="relative bg-white p-6 rounded-xl shadow-xl border">
                   <div className="p-4 border rounded-lg mb-4 bg-gray-50">
                     <h3 className="font-medium">Project: E-commerce Redesign</h3>
@@ -105,9 +104,9 @@ const Index = () => {
                       </Button>
                     </div>
                   </div>
-                  <div className="p-4 border rounded-lg mb-2 bg-tiro-purple/5">
+                  <div className="p-4 border rounded-lg mb-2 bg-tiro-primary/5">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-tiro-purple flex items-center justify-center text-white text-sm">
+                      <div className="w-8 h-8 rounded-full bg-tiro-primary flex items-center justify-center text-white text-sm">
                         S
                       </div>
                       <div>
@@ -140,8 +139,8 @@ const Index = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="border rounded-xl p-6 bg-white shadow-sm">
-              <div className="w-12 h-12 bg-tiro-purple/10 rounded-lg flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-tiro-purple">
+              <div className="w-12 h-12 bg-tiro-primary/10 rounded-lg flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-tiro-primary">
                   <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
@@ -153,8 +152,8 @@ const Index = () => {
             </div>
 
             <div className="border rounded-xl p-6 bg-white shadow-sm">
-              <div className="w-12 h-12 bg-tiro-blue/10 rounded-lg flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-tiro-blue">
+              <div className="w-12 h-12 bg-tiro-primary/10 rounded-lg flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-tiro-primary">
                   <path d="m3 8 4-4 4 4"></path>
                   <path d="M7 4v16"></path>
                   <path d="m21 16-4 4-4-4"></path>
@@ -168,8 +167,8 @@ const Index = () => {
             </div>
 
             <div className="border rounded-xl p-6 bg-white shadow-sm">
-              <div className="w-12 h-12 bg-tiro-magenta/10 rounded-lg flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-tiro-magenta">
+              <div className="w-12 h-12 bg-tiro-primary/10 rounded-lg flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-tiro-primary">
                   <path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z"></path>
                   <path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"></path>
                 </svg>
@@ -207,8 +206,8 @@ const Index = () => {
             </div>
 
             <div className="border rounded-xl p-6 bg-white shadow-sm">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-600">
+              <div className="w-12 h-12 bg-tiro-primary/10 rounded-lg flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-tiro-primary">
                   <path d="M12 2v20"></path>
                   <path d="m17 5-5-3-5 3"></path>
                   <path d="m17 19-5 3-5-3"></path>
@@ -240,7 +239,7 @@ const Index = () => {
             <div>
               <div className="space-y-12">
                 <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-tiro-purple text-white rounded-full flex items-center justify-center font-bold shrink-0">
+                  <div className="w-8 h-8 bg-tiro-primary text-white rounded-full flex items-center justify-center font-bold shrink-0">
                     1
                   </div>
                   <div>
@@ -252,7 +251,7 @@ const Index = () => {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-tiro-purple text-white rounded-full flex items-center justify-center font-bold shrink-0">
+                  <div className="w-8 h-8 bg-tiro-primary text-white rounded-full flex items-center justify-center font-bold shrink-0">
                     2
                   </div>
                   <div>
@@ -264,7 +263,7 @@ const Index = () => {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-tiro-purple text-white rounded-full flex items-center justify-center font-bold shrink-0">
+                  <div className="w-8 h-8 bg-tiro-primary text-white rounded-full flex items-center justify-center font-bold shrink-0">
                     3
                   </div>
                   <div>
@@ -276,7 +275,7 @@ const Index = () => {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-tiro-purple text-white rounded-full flex items-center justify-center font-bold shrink-0">
+                  <div className="w-8 h-8 bg-tiro-primary text-white rounded-full flex items-center justify-center font-bold shrink-0">
                     4
                   </div>
                   <div>
@@ -290,11 +289,11 @@ const Index = () => {
             </div>
 
             <div className="relative">
-              <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-tiro-purple/5 rounded-full filter blur-3xl"></div>
+              <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-tiro-primary/5 rounded-full filter blur-3xl"></div>
               <div className="border p-6 bg-white rounded-xl shadow-lg">
                 <div className="flex justify-between items-center mb-4 pb-4 border-b">
                   <h3 className="font-medium">Create New Project</h3>
-                  <div className="w-8 h-8 rounded-full bg-tiro-purple flex items-center justify-center text-white text-sm">
+                  <div className="w-8 h-8 rounded-full bg-tiro-primary flex items-center justify-center text-white text-sm">
                     E
                   </div>
                 </div>
@@ -310,13 +309,13 @@ const Index = () => {
                   <div>
                     <label className="block text-sm font-medium mb-1">Skills Required</label>
                     <div className="flex flex-wrap gap-2 mt-2">
-                      <span className="px-2 py-1 bg-tiro-purple/10 text-tiro-purple text-xs rounded">UI Design</span>
-                      <span className="px-2 py-1 bg-tiro-blue/10 text-tiro-blue text-xs rounded">HTML/CSS</span>
-                      <span className="px-2 py-1 bg-tiro-magenta/10 text-tiro-magenta text-xs rounded">Responsive</span>
+                      <span className="px-2 py-1 bg-tiro-primary/10 text-tiro-primary text-xs rounded">UI Design</span>
+                      <span className="px-2 py-1 bg-tiro-primary/10 text-tiro-primary text-xs rounded">HTML/CSS</span>
+                      <span className="px-2 py-1 bg-tiro-primary/10 text-tiro-primary text-xs rounded">Responsive</span>
                     </div>
                   </div>
                   <div className="pt-4">
-                    <div className="bg-tiro-purple text-white text-center py-2 rounded cursor-pointer">
+                    <div className="bg-tiro-primary text-white text-center py-2 rounded cursor-pointer">
                       Publish Project
                     </div>
                   </div>
@@ -330,7 +329,7 @@ const Index = () => {
       {/* CTA Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 max-w-4xl">
-          <div className="bg-gradient-to-r from-tiro-purple to-tiro-blue rounded-2xl p-10 text-center text-white">
+          <div className="bg-gradient-to-r from-tiro-primary to-tiro-secondary rounded-2xl p-10 text-center text-white">
             <h2 className="text-3xl font-bold mb-4">Ready to Connect?</h2>
             <p className="text-lg mb-8 max-w-lg mx-auto">
               Join Tiro today to connect with talented students or find exciting web design projects.
@@ -340,7 +339,7 @@ const Index = () => {
                 asChild
                 size="lg"
                 variant="secondary"
-                className="bg-white text-tiro-purple border-none"
+                className="bg-white text-tiro-primary border-none"
               >
                 <Link to="/register">Sign Up Now</Link>
               </Button>
@@ -362,7 +361,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-lg font-bold text-tiro-purple mb-4">Tiro</h3>
+              <h3 className="text-lg font-bold text-tiro-primary mb-4">Tiro</h3>
               <p className="text-muted-foreground">
                 Connecting entrepreneurs with talented student web designers
                 to create impactful digital experiences.
@@ -371,11 +370,11 @@ const Index = () => {
             <div>
               <h3 className="text-md font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2">
-                <li><Link to="/" className="text-muted-foreground hover:text-tiro-purple">Home</Link></li>
-                <li><Link to="#features" className="text-muted-foreground hover:text-tiro-purple">Features</Link></li>
-                <li><Link to="#how-it-works" className="text-muted-foreground hover:text-tiro-purple">How It Works</Link></li>
-                <li><Link to="/login" className="text-muted-foreground hover:text-tiro-purple">Log In</Link></li>
-                <li><Link to="/register" className="text-muted-foreground hover:text-tiro-purple">Sign Up</Link></li>
+                <li><Link to="/" className="text-muted-foreground hover:text-tiro-primary">Home</Link></li>
+                <li><Link to="#features" className="text-muted-foreground hover:text-tiro-primary">Features</Link></li>
+                <li><Link to="#how-it-works" className="text-muted-foreground hover:text-tiro-primary">How It Works</Link></li>
+                <li><Link to="/login" className="text-muted-foreground hover:text-tiro-primary">Log In</Link></li>
+                <li><Link to="/register" className="text-muted-foreground hover:text-tiro-primary">Sign Up</Link></li>
               </ul>
             </div>
             <div>

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -66,7 +65,9 @@ const Login = () => {
       <div className="w-full max-w-md">
         <Card className="shadow-lg">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-3xl font-bold text-tiro-primary">Tiro</CardTitle>
+            <div className="flex justify-center mb-2">
+              <img src="/lovable-uploads/b20f2556-f276-4aea-993b-aead6d9fafd8.png" alt="Tiro Logo" className="h-10" />
+            </div>
             <CardDescription>
               Sign in to your account
             </CardDescription>
@@ -113,7 +114,7 @@ const Login = () => {
           <CardFooter className="flex flex-col space-y-2">
             <div className="text-sm text-center">
               <span className="text-muted-foreground">New to Tiro? </span>
-              <Link to="/register" className="text-tiro-secondary hover:underline">
+              <Link to="/register" className="text-tiro-primary hover:underline">
                 Create an account
               </Link>
             </div>

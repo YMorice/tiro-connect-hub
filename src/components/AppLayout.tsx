@@ -80,9 +80,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       >
         <div className="flex items-center justify-center h-16 border-b border-sidebar-border">
           {sidebarOpen ? (
-            <h1 className="text-2xl font-bold text-tiro-primary">Tiro</h1>
+            <img src="/lovable-uploads/b20f2556-f276-4aea-993b-aead6d9fafd8.png" alt="Tiro Logo" className="h-8" />
           ) : (
-            <h1 className="text-xl font-bold text-tiro-primary">T</h1>
+            <img src="/lovable-uploads/b20f2556-f276-4aea-993b-aead6d9fafd8.png" alt="Tiro Logo" className="h-6" />
           )}
         </div>
 
