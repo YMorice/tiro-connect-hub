@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -209,6 +208,7 @@ const Profile = () => {
           name: formData.name,
           surname: formData.surname,
           phone: formData.phone,
+          pp_link: avatarUrl // Store the profile picture URL in pp_link column
         })
         .eq('id_users', user.id);
         
@@ -274,37 +274,15 @@ const Profile = () => {
     setIsLoading(true);
     
     try {
-      // Upload the file to Supabase Storage
+      // Upload the file to Supabase Storage "pp" bucket
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}_${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-      
-      // Check if avatars bucket exists, create if not
-      try {
-        const { data: bucketData, error: bucketError } = await supabase
-          .storage
-          .getBucket('avatars');
-          
-        if (bucketError && bucketError.message.includes('not found')) {
-          // Create bucket if it doesn't exist
-          const { error: createBucketError } = await supabase
-            .storage
-            .createBucket('avatars', {
-              public: true,
-              fileSizeLimit: 1024 * 1024 * 2, // 2MB
-            });
-            
-          if (createBucketError) throw createBucketError;
-        }
-      } catch (bucketError: any) {
-        console.log("Error with bucket check:", bucketError);
-        // Continue even if there's an error checking bucket
-      }
+      const filePath = `${fileName}`;
       
       // Upload the file
       const { error: uploadError } = await supabase
         .storage
-        .from('avatars')
+        .from('pp')
         .upload(filePath, file, {
           contentType: file.type,
           upsert: true,
@@ -315,11 +293,20 @@ const Profile = () => {
       // Get the public URL
       const { data: urlData } = supabase
         .storage
-        .from('avatars')
+        .from('pp')
         .getPublicUrl(filePath);
         
       const avatarUrlFromStorage = urlData.publicUrl;
       setAvatarUrl(avatarUrlFromStorage);
+      
+      // Update the pp_link in the users table
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ pp_link: avatarUrlFromStorage })
+        .eq('id_users', user.id);
+        
+      if (updateError) throw updateError;
+      
       toast.success("Profile picture uploaded");
       
     } catch (error: any) {

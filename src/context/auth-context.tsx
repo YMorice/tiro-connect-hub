@@ -1,563 +1,342 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { User as SupabaseUser, Session } from "@supabase/supabase-js";
-import { User } from "../types";
-import { toast } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  Session,
+  User as SupabaseUser,
+} from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { User, UserRole } from '@/types';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (
-    email: string, 
-    password: string, 
-    name: string,
-    surname: string, 
-    role: "student" | "entrepreneur" | "admin", 
-    userData?: Record<string, any>
-  ) => Promise<{ success: boolean, error?: string }>;
+  register: (email: string, password: string, name: string, surname: string, role: UserRole, userData?: any) => Promise<{ user: SupabaseUser | null; error: any }>;
+  login: (email: string, password: string) => Promise<{ user: SupabaseUser | null; error: any }>;
   logout: () => Promise<void>;
-  updateProfile: (data: Partial<User>) => Promise<void>;
+  updateProfile: (userData: Partial<User>) => Promise<void>;
 }
-
-// Mock users for demonstration - we'll keep these for fallback purposes
-const mockUser: User = {
-  id: "1",
-  email: "entrepreneur@example.com",
-  name: "John Entrepreneur",
-  role: "entrepreneur",
-  bio: "I'm a startup founder looking for talented students to help with my projects.",
-  createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
-};
-
-const mockStudentUser: User = {
-  id: "2",
-  email: "student@example.com",
-  name: "Jane Student",
-  role: "student",
-  bio: "Design student with a passion for UI/UX",
-  skills: ["UI/UX Design", "Figma", "Adobe XD"],
-  createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 days ago
-};
-
-const mockAdminUser: User = {
-  id: "3",
-  email: "admin@example.com",
-  name: "Admin User",
-  role: "admin",
-  createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), // 60 days ago
-};
-
-// Helper function to transform Supabase user to our app's user format
-const transformSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User | null> => {
-  if (!supabaseUser) return null;
-  
-  try {
-    console.log("Fetching user data for ID:", supabaseUser.id);
-    console.log("User metadata:", supabaseUser.user_metadata);
-    
-    // Fetch the user's profile from our public.users table
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id_users', supabaseUser.id)
-      .single();
-    
-    if (userError) {
-      console.error('Error fetching user data:', userError);
-      
-      // Only use mock users if they match the exact email
-      if (supabaseUser.email === "entrepreneur@example.com") {
-        console.log("Using mock entrepreneur user");
-        return mockUser;
-      } else if (supabaseUser.email === "student@example.com") {
-        console.log("Using mock student user");
-        return mockStudentUser;
-      } else if (supabaseUser.email === "admin@example.com") {
-        console.log("Using mock admin user");
-        return mockAdminUser;
-      }
-      
-      // Try to create a user object from available auth data
-      return {
-        id: supabaseUser.id,
-        email: supabaseUser.email || "",
-        name: supabaseUser.user_metadata?.name || "New User",
-        role: (supabaseUser.user_metadata?.role as "student" | "entrepreneur" | "admin") || "entrepreneur",
-        createdAt: new Date(supabaseUser.created_at || Date.now())
-      };
-    }
-    
-    console.log("User data found:", userData);
-    
-    // Since role is no longer in the users table, we need to get it from user_metadata
-    // or try to determine it by checking related tables
-    let userRole: "student" | "entrepreneur" | "admin" = "entrepreneur"; // Default role
-    
-    // First try to get role from metadata
-    if (supabaseUser.user_metadata?.role) {
-      userRole = supabaseUser.user_metadata.role as "student" | "entrepreneur" | "admin";
-    } else {
-      // Try to determine role by checking if user exists in students or entrepreneurs table
-      const { data: studentData } = await supabase
-        .from('students')
-        .select('id_student')
-        .eq('id_user', userData.id_users)
-        .maybeSingle();
-        
-      if (studentData) {
-        userRole = "student";
-      } else {
-        const { data: entrepreneurData } = await supabase
-          .from('entrepreneurs')
-          .select('id_entrepreneur')
-          .eq('id_user', userData.id_users)
-          .maybeSingle();
-          
-        if (entrepreneurData) {
-          userRole = "entrepreneur";
-        }
-      }
-    }
-    
-    console.log("Determined user role:", userRole);
-    
-    // Get bio from appropriate table based on role
-    let userBio: string | undefined;
-    
-    if (userRole === "student") {
-      const { data: studentData } = await supabase
-        .from('students')
-        .select('biography')
-        .eq('id_user', userData.id_users)
-        .maybeSingle();
-      
-      userBio = studentData?.biography;
-    } else if (userRole === "entrepreneur") {
-      // If entrepreneurs have a bio field in their table, you'd fetch it similarly
-      // For now, we'll use the user metadata if available
-      userBio = supabaseUser.user_metadata?.bio;
-    }
-    
-    // Map Supabase user data to our app's User type
-    return {
-      id: userData.id_users,
-      email: userData.email,
-      name: userData.name || "New User",
-      role: userRole,
-      createdAt: new Date(userData.created_at || Date.now()),
-      bio: userBio,
-      // Optionally fetch additional fields based on role
-      ...(userRole === "student" ? { skills: await fetchUserSkills(userData.id_users) } : {})
-    };
-  } catch (error) {
-    console.error('Error transforming user:', error);
-    return null;
-  }
-};
-
-// Helper function to fetch user skills
-const fetchUserSkills = async (userId: string): Promise<string[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('students')
-      .select('skills')
-      .eq('id_user', userId)
-      .single();
-    
-    if (error || !data) {
-      console.error('Error fetching user skills:', error);
-      return [];
-    }
-    
-    // Fix the type error - handle case where skills could be null, string, or array
-    if (!data.skills) {
-      return [];
-    } else if (typeof data.skills === 'string') {
-      // Cast to string explicitly to satisfy TypeScript
-      return (data.skills as string).split(',').map(s => s.trim());
-    } else if (Array.isArray(data.skills)) {
-      return data.skills;
-    }
-    
-    return [];
-  } catch (error) {
-    console.error('Error fetching user skills:', error);
-    return [];
-  }
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // Initialize auth state
   useEffect(() => {
-    console.log("Initializing auth state");
-    
-    // Set up auth state listener FIRST - this is crucial for correct auth flow
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        console.log("Auth state changed:", event, "Session:", currentSession ? "exists" : "none");
-        
-        if (currentSession) {
-          setSession(currentSession);
-          
-          // Important: Only synchronous state updates in the callback
-          // Use setTimeout to avoid potential deadlocks with Supabase client
-          setTimeout(async () => {
-            try {
-              const appUser = await transformSupabaseUser(currentSession.user);
-              console.log("Setting user from auth change:", appUser);
-              setUser(appUser);
-            } catch (error) {
-              console.error("Error transforming user:", error);
-            } finally {
-              setLoading(false);
-            }
-          }, 0);
-        } else {
-          console.log("Auth change: No user");
-          setUser(null);
-          setSession(null);
-          setLoading(false);
-        }
+    const loadSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      setSession(session);
+
+      if (session) {
+        await fetchUser(session);
       }
-    );
-    
-    // THEN check for existing session
-    const initializeAuth = async () => {
-      console.log("Checking for existing session");
-      
-      try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        console.log("Initial session:", initialSession ? "Found" : "Not found");
-        
-        if (initialSession) {
-          setSession(initialSession);
-          
-          console.log("User found in session, transforming user data");
-          const appUser = await transformSupabaseUser(initialSession.user);
-          console.log("Transformed user:", appUser);
-          setUser(appUser);
-        } else {
-          console.log("No user in session");
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-      } finally {
-        setLoading(false);
-      }
+      setLoading(false);
     };
 
-    initializeAuth();
+    loadSession();
+
+    // Listen for changes on auth state (login, signout, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+
+        if (session) {
+          await fetchUser(session);
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      }
+    );
 
     return () => {
-      console.log("Cleaning up auth subscription");
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    console.log("Attempting login for:", email);
-    
+  const fetchUser = async (session: Session) => {
     try {
+      setLoading(true);
+      const { data: userProfile, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id_users', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        throw error;
+      }
+
+      if (userProfile) {
+        const user: User = {
+          id: session.user.id,
+          email: session.user.email || '',
+          name: userProfile.name || '',
+          role: userProfile.role || 'student',
+          avatar: userProfile.pp_link || '',
+          bio: userProfile.about || '',
+          skills: userProfile.skills || [],
+          specialty: userProfile.specialty || '',
+          createdAt: new Date(session.user.created_at),
+          isOnline: true,
+        };
+        setUser(user);
+      }
+    } catch (error) {
+      console.error('Error fetching or setting user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (email: string, password: string, name: string, surname: string, role: UserRole, userData: any = {}) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            surname,
+            role,
+            about: userData.about,
+            specialty: userData.specialty,
+            portfolioLink: userData.portfolioLink,
+            formation: userData.formation,
+            phone: userData.phone,
+            address: userData.address,
+            iban: userData.iban,
+            companyName: userData.companyName,
+            companyRole: userData.companyRole,
+            siret: userData.siret,
+            skills: userData.skills,
+            pp_link: userData.pp_link,
+          },
+        },
+      });
+
+      if (error) {
+        console.error('Registration error:', error);
+        return { user: null, error: error.message };
+      }
+
+      if (data.user) {
+        // Insert user details into the 'users' table
+        const { error: userTableError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id_users: data.user.id,
+              name,
+              surname,
+              email,
+              role,
+              about: userData.about,
+              specialty: userData.specialty,
+              portfolioLink: userData.portfolioLink,
+              formation: userData.formation,
+              phone: userData.phone,
+              address: userData.address,
+              iban: userData.iban,
+              companyName: userData.companyName,
+              companyRole: userData.companyRole,
+              siret: userData.siret,
+              skills: userData.skills,
+              pp_link: userData.pp_link,
+            },
+          ]);
+
+        if (userTableError) {
+          console.error('Error inserting user data:', userTableError);
+          return { user: null, error: userTableError.message };
+        }
+
+        // Insert role-specific details
+        if (role === 'student') {
+          const { error: studentError } = await supabase
+            .from('students')
+            .insert([
+              {
+                id_user: data.user.id,
+                biography: userData.about,
+                specialty: userData.specialty,
+                portfolio_link: userData.portfolioLink,
+                formation: userData.formation,
+              },
+            ]);
+
+          if (studentError) {
+            console.error('Error inserting student data:', studentError);
+            return { user: null, error: studentError.message };
+          }
+        } else if (role === 'entrepreneur') {
+          const { error: entrepreneurError } = await supabase
+            .from('entrepreneurs')
+            .insert([
+              {
+                id_user: data.user.id,
+                company_name: userData.companyName,
+                company_role: userData.companyRole,
+              },
+            ]);
+
+          if (entrepreneurError) {
+            console.error('Error inserting entrepreneur data:', entrepreneurError);
+            return { user: null, error: entrepreneurError.message };
+          }
+        }
+
+        // If there's project info, create the project
+        if (userData.projectName && userData.projectDescription && userData.projectDeadline) {
+          const { data: projectData, error: projectError } = await supabase
+            .from('projects')
+            .insert([
+              {
+                name: userData.projectName,
+                description: userData.projectDescription,
+                deadline: userData.projectDeadline,
+                id_entrepreneur: data.user.id,
+                state: 'open',
+              },
+            ])
+            .select()
+
+          if (projectError) {
+            console.error('Error creating project:', projectError);
+            return { user: null, error: projectError.message };
+          }
+
+          console.log("Project created successfully:", projectData);
+        }
+
+        // Update state and context
+        await fetchUser(data.session);
+        return { user: data.user, error: null };
+      } else {
+        return { user: null, error: 'Failed to create user.' };
+      }
+    } catch (err: any) {
+      console.error('Registration failed:', err);
+      return { user: null, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (email: string, password: string) => {
+    try {
+      setLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        console.error("Supabase login error:", error);
-        
-        // Only use mock users if they match the exact email
-        if (email === "entrepreneur@example.com") {
-          console.log("Using mock entrepreneur login");
-          setUser(mockUser);
-          setSession({} as Session); // Add a mock session
-          toast.success("Logged in successfully (mock user)");
-          return;
-        } else if (email === "student@example.com") {
-          console.log("Using mock student login");
-          setUser(mockStudentUser);
-          setSession({} as Session); // Add a mock session
-          toast.success("Logged in successfully (mock user)");
-          return;
-        } else if (email === "admin@example.com") {
-          console.log("Using mock admin login");
-          setUser(mockAdminUser);
-          setSession({} as Session); // Add a mock session
-          toast.success("Logged in successfully (mock user)");
-          return;
-        }
-        
-        toast.error(error.message || "Invalid credentials");
-        return;
+        console.error('Login error:', error);
+        return { user: null, error: error.message };
       }
-      
-      console.log("Login successful, session:", data.session ? "exists" : "missing");
-      
-      // The session will be set by onAuthStateChange
-      // The user will be transformed by onAuthStateChange
-      toast.success("Logged in successfully");
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Failed to login");
+
+      if (data.user && data.session) {
+        await fetchUser(data.session);
+        return { user: data.user, error: null };
+      } else {
+        return { user: null, error: 'Login failed.' };
+      }
+    } catch (err: any) {
+      console.error('Login failed:', err);
+      return { user: null, error: err.message };
     } finally {
       setLoading(false);
-    }
-  };
-
-  const register = async (
-    email: string,
-    password: string,
-    name: string,
-    surname: string,
-    role: "student" | "entrepreneur" | "admin",
-    userData: Record<string, any> = {}
-  ) => {
-    setLoading(true);
-    console.log("=== REGISTRATION STARTED ===");
-    console.log("Email:", email);
-    console.log("Name:", name);
-    console.log("Surname:", surname);
-    console.log("Role:", role);
-    console.log("User data:", userData);
-
-    try {
-      // Create a clean metadata object with all user data
-      const metadata: Record<string, any> = {
-        name,
-        surname,
-        role,
-      };
-      
-      // Add all userData properties to metadata
-      Object.keys(userData).forEach(key => {
-        // Handle skills specially to ensure they're properly formatted
-        if (key === 'skills') {
-          if (Array.isArray(userData.skills)) {
-            metadata.skills = userData.skills.join(',');
-          } else if (typeof userData.skills === 'string') {
-            metadata.skills = userData.skills;
-          }
-        } else {
-          metadata[key] = userData[key];
-        }
-      });
-      
-      // Remove any undefined or null values from metadata
-      Object.keys(metadata).forEach(key => {
-        if (metadata[key] === undefined || metadata[key] === null) {
-          delete metadata[key];
-        }
-      });
-      
-      console.log("Final metadata for registration:", metadata);
-      
-      // Call Supabase Auth signUp directly
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: metadata,
-          emailRedirectTo: `${window.location.origin}/login`
-        }
-      });
-
-      if (error) {
-        console.error("Registration error:", error);
-        toast.error("Registration failed: " + error.message);
-        setLoading(false);
-        return { success: false, error: error.message };
-      }
-      
-      console.log("Registration successful:", data);
-      console.log("User data:", data.user);
-      console.log("User metadata:", data.user?.user_metadata);
-      
-      // Check if email confirmation is required
-      if (!data.session) {
-        toast.success("Registration successful! Please check your email to confirm your account.");
-        setLoading(false);
-        return { success: true };
-      }
-      
-      // If session exists, user is logged in immediately
-      console.log("Setting session after registration:", data.session);
-      setSession(data.session);
-      
-      // Transform the user data
-      setTimeout(async () => {
-        try {
-          if (data.user) {
-            const appUser = await transformSupabaseUser(data.user);
-            console.log("Setting user after registration:", appUser);
-            setUser(appUser);
-          }
-        } catch (error) {
-          console.error("Error setting user after registration:", error);
-        } finally {
-          setLoading(false);
-        }
-      }, 0);
-      
-      toast.success("Account created successfully! You are now logged in.");
-      return { success: true };
-    } catch (error: any) {
-      console.error("Registration error:", error);
-      toast.error("Failed to create account: " + (error?.message || "Unknown error"));
-      setLoading(false);
-      return { success: false, error: error?.message || "Unknown error" };
     }
   };
 
   const logout = async () => {
-    console.log("Logging out");
-    setLoading(true);
-    
     try {
-      // Check if we have a mock session (for mock users)
-      const isMockUser = user && (!session || Object.keys(session).length === 0);
-      
-      if (isMockUser) {
-        console.log("Logging out mock user");
-        setUser(null);
-        setSession(null);
-        toast.success("Logged out successfully");
-        setLoading(false);
-        return;
-      }
-      
-      // For real Supabase users, attempt to sign out
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error("Logout error:", error);
-        toast.error(error.message);
-      } else {
-        console.log("Logout successful");
-        setUser(null);
-        setSession(null);
-        toast.success("Logged out successfully");
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast.error("Failed to logout");
-      
-      // Force logout in case of errors
+      setLoading(true);
+      await supabase.auth.signOut();
       setUser(null);
       setSession(null);
+      navigate('/login'); // Redirect to login page after logout
+    } catch (error: any) {
+      console.error('Logout error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const updateProfile = async (data: Partial<User>) => {
-    setLoading(true);
-    
-    try {
-      if (!user || !session) {
-        console.error("Cannot update profile: no user logged in or session found");
-        toast.error("No active session found");
-        setLoading(false);
-        return;
-      }
+  const updateProfile = async (userData: Partial<User>) => {
+    if (!session?.user) {
+      console.error('No active session found.');
+      return;
+    }
 
-      console.log("Updating profile:", data);
-      
-      // Update user metadata in Supabase
-      const { error: updateError } = await supabase.auth.updateUser({
+    try {
+      setLoading(true);
+
+      const { error } = await supabase.auth.updateUser({
         data: {
-          ...data,
+          name: userData.name,
+          avatar: userData.avatar,
+          // Add other fields you want to update in auth.user
         },
       });
 
-      if (updateError) {
-        console.error("Profile update error (auth):", updateError);
-        toast.error(updateError.message);
-        setLoading(false);
-        return;
+      if (error) {
+        console.error('Error updating user:', error);
+        throw error;
       }
 
-      // Update our public.users table
-      if (user.id) {
-        console.log("Updating user in database:", user.id);
-        
-        const updateData: Record<string, any> = {};
-        
-        // Only add fields that are actually provided
-        if (data.name !== undefined) updateData.name = data.name;
-        if (data.bio !== undefined) updateData.bio = data.bio;
-        
-        console.log("Update data for database:", updateData);
-        
-        const { error: dbError } = await supabase
-          .from('users')
-          .update(updateData)
-          .eq('id_users', user.id);
+      // Make sure the pp_link gets updated in the users table
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update({ 
+          name: userData.name,
+          pp_link: userData.avatar
+        })
+        .eq('id_users', session.user.id);
 
-        if (dbError) {
-          console.error("Profile update error (db):", dbError);
-          toast.error(dbError.message);
-          setLoading(false);
-          return;
-        }
-        
-        // If user is a student, update skills in the students table
-        if (user.role === 'student' && data.skills) {
-          console.log("Updating student skills:", data.skills);
-          
-          const { error: studentError } = await supabase
-            .from('students')
-            .update({
-              skills: data.skills
-            })
-            .eq('id_user', user.id);
-            
-          if (studentError) {
-            console.error("Student skills update error:", studentError);
-            toast.error(studentError.message);
-            setLoading(false);
-            return;
-          }
-        }
+      if (userUpdateError) {
+        console.error('Error updating user profile:', userUpdateError);
+        throw userUpdateError;
       }
 
-      // Update local state
-      setUser({
-        ...user,
-        ...data,
+      // Update the user object in the local state
+      setUser((prevUser) => {
+        if (prevUser) {
+          return { ...prevUser, ...userData };
+        }
+        return prevUser;
       });
-      
-      console.log("Profile updated successfully");
-      toast.success("Profile updated successfully");
-    } catch (error) {
-      console.error("Profile update error:", error);
-      toast.error("Failed to update profile");
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      throw new Error(error.message || 'Could not update profile');
     } finally {
       setLoading(false);
     }
   };
 
+  const value: AuthContextType = {
+    user,
+    session,
+    loading,
+    register,
+    login,
+    logout,
+    updateProfile,
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        login,
-        register,
-        logout,
-        updateProfile,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
@@ -566,7 +345,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };

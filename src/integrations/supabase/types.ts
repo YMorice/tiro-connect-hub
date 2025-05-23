@@ -386,6 +386,7 @@ export type Database = {
           id_users: string
           name: string
           phone: string | null
+          pp_link: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           surname: string
           updated_at: string
@@ -396,6 +397,7 @@ export type Database = {
           id_users: string
           name: string
           phone?: string | null
+          pp_link?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           surname: string
           updated_at?: string
@@ -406,6 +408,7 @@ export type Database = {
           id_users?: string
           name?: string
           phone?: string | null
+          pp_link?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           surname?: string
           updated_at?: string

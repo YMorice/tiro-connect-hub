@@ -4,6 +4,8 @@ import { UseFormReturn } from "react-hook-form";
 import { RegistrationFormValues } from "@/types";
 import FileUpload from "@/components/FileUpload";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/sonner";
 
 interface ProfilePictureStepProps {
   form: UseFormReturn<RegistrationFormValues>;
@@ -17,9 +19,48 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
   setAvatarUrl, 
   formData 
 }) => {
-  const handleFileSelect = (file: File) => {
-    const url = URL.createObjectURL(file);
-    setAvatarUrl(url);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileSelect = async (file: File) => {
+    setIsUploading(true);
+    
+    try {
+      // Generate a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `${fileName}`;
+      
+      // Upload the file to the pp bucket
+      const { error: uploadError } = await supabase
+        .storage
+        .from('pp')
+        .upload(filePath, file, {
+          contentType: file.type,
+          upsert: true,
+        });
+        
+      if (uploadError) throw uploadError;
+      
+      // Get the public URL
+      const { data: urlData } = supabase
+        .storage
+        .from('pp')
+        .getPublicUrl(filePath);
+        
+      const avatarUrlFromStorage = urlData.publicUrl;
+      setAvatarUrl(avatarUrlFromStorage);
+      toast.success("Profile picture uploaded successfully");
+      
+    } catch (error: any) {
+      console.error("Error uploading profile picture:", error);
+      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
+      
+      // Still create a temporary URL for preview
+      const tempUrl = URL.createObjectURL(file);
+      setAvatarUrl(tempUrl);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -39,7 +80,7 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
         <FileUpload 
           onFileSelect={handleFileSelect} 
           accept="image/*"
-          buttonText="Upload Profile Picture"
+          buttonText={isUploading ? "Uploading..." : "Upload Profile Picture"}
         />
       </div>
     </div>

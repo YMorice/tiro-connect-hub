@@ -16,6 +16,7 @@ import { toast } from "@/components/ui/sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload from "@/components/FileUpload";
+import { supabase } from "@/lib/supabase";
 
 // List of available skills for checkboxes
 const AVAILABLE_SKILLS = [
@@ -126,6 +127,7 @@ const Register = () => {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [registrationCompleted, setRegistrationCompleted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   const [formValues, setFormValues] = useState<FormValues>({
     email: "",
@@ -208,12 +210,45 @@ const Register = () => {
     });
   }, []);
 
-  // Handle avatar upload
-  const handleFileSelect = (file: File) => {
-    // Create a temporary URL for the selected image
-    const url = URL.createObjectURL(file);
-    setAvatarUrl(url);
-    toast.success("Profile picture selected");
+  // Handle avatar upload for registration
+  const handleFileSelect = async (file: File) => {
+    try {
+      setIsLoading(true);
+      // Generate a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `${fileName}`;
+      
+      // Upload the file to the pp bucket
+      const { error: uploadError } = await supabase
+        .storage
+        .from('pp')
+        .upload(filePath, file, {
+          contentType: file.type,
+          upsert: true,
+        });
+        
+      if (uploadError) throw uploadError;
+      
+      // Get the public URL
+      const { data: urlData } = supabase
+        .storage
+        .from('pp')
+        .getPublicUrl(filePath);
+        
+      const profilePictureUrl = urlData.publicUrl;
+      setAvatarUrl(profilePictureUrl);
+      toast.success("Profile picture uploaded successfully");
+    } catch (error: any) {
+      console.error("Error uploading profile picture:", error);
+      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
+      
+      // Still create a temporary URL for preview
+      const tempUrl = URL.createObjectURL(file);
+      setAvatarUrl(tempUrl);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle skill toggle for checkbox selection
@@ -355,7 +390,7 @@ const Register = () => {
     });
   };
 
-  // Final submit function - now properly handling the registration
+  // Final submit function - now including profile picture URL
   const finalSubmit = async (values: FormValues) => {
     try {
       // Create a name from first and last name
@@ -388,6 +423,7 @@ const Register = () => {
         companyRole: values.companyRole,
         siret: values.siret,
         skills: values.skills || selectedSkills,
+        pp_link: avatarUrl, // Add the profile picture URL to the user data
         // Include additional fields that might be needed for project creation
         projectName: values.skipProject ? undefined : "New Project",
         projectDescription: values.skipProject ? undefined : "Project description",
