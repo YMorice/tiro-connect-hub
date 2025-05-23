@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User } from "../types";
@@ -424,31 +423,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     
     try {
-      if (!session) {
-        console.error("Cannot logout: No active session");
-        toast.error("No active session found");
+      // Check if we have a mock session (for mock users)
+      const isMockUser = user && (!session || Object.keys(session).length === 0);
+      
+      if (isMockUser) {
+        console.log("Logging out mock user");
         setUser(null);
         setSession(null);
+        toast.success("Logged out successfully");
         setLoading(false);
         return;
       }
       
-      // Sign out from Supabase
+      // For real Supabase users, attempt to sign out
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error("Logout error:", error);
         toast.error(error.message);
-        return;
+      } else {
+        console.log("Logout successful");
+        setUser(null);
+        setSession(null);
+        toast.success("Logged out successfully");
       }
-      
-      console.log("Logout successful");
-      setUser(null);
-      setSession(null);
-      toast.success("Logged out successfully");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Failed to logout");
+      
+      // Force logout in case of errors
+      setUser(null);
+      setSession(null);
     } finally {
       setLoading(false);
     }

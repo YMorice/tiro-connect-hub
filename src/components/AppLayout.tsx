@@ -9,17 +9,19 @@ import {
   UserRound,
   Menu,
   X,
-  Shield
+  Shield,
+  LogOut
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/sonner";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -57,6 +59,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     ] : [])
   ];
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("Error logging out. Please try again.");
+    }
+  };
+
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar Toggle Button for Mobile */}
@@ -80,9 +92,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       >
         <div className="flex items-center justify-center h-16 border-b border-sidebar-border">
           {sidebarOpen ? (
-            <img src="/lovable-uploads/b20f2556-f276-4aea-993b-aead6d9fafd8.png" alt="Tiro Logo" className="h-8" />
+            <img src="/lovable-uploads/9652b78a-5ef3-4f37-b36c-3afe824ddfbe.png" alt="Tiro Logo" className="h-8" />
           ) : (
-            <img src="/lovable-uploads/b20f2556-f276-4aea-993b-aead6d9fafd8.png" alt="Tiro Logo" className="h-6" />
+            <img src="/lovable-uploads/9652b78a-5ef3-4f37-b36c-3afe824ddfbe.png" alt="Tiro Logo" className="h-6" />
           )}
         </div>
 
@@ -95,7 +107,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 className={cn(
                   "flex items-center p-3 rounded-lg transition-all",
                   isActive(item.href)
-                    ? "bg-tiro-primary text-tiro-white"
+                    ? "bg-tiro-primary text-white"
                     : "hover:bg-sidebar-accent text-sidebar-foreground"
                 )}
               >
@@ -107,15 +119,38 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
 
         <div className="p-4 border-t border-sidebar-border">
-          <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-tiro-primary text-tiro-white flex items-center justify-center">
-              {user?.name?.charAt(0) || "U"}
-            </div>
-            {sidebarOpen && (
-              <div className="ml-3">
-                <p className="font-medium text-sidebar-foreground">{user?.name || "User"}</p>
-                <p className="text-xs text-muted-foreground capitalize">{user?.role || "user"}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-8 h-8 rounded-full bg-tiro-primary text-white flex items-center justify-center">
+                {user?.name?.charAt(0) || "U"}
               </div>
+              {sidebarOpen && (
+                <div className="ml-3">
+                  <p className="font-medium text-sidebar-foreground">{user?.name || "User"}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{user?.role || "user"}</p>
+                </div>
+              )}
+            </div>
+
+            {sidebarOpen ? (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={handleLogout}
+                title="Logout"
+              >
+                <LogOut size={20} />
+              </Button>
+            ) : (
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={handleLogout}
+                className="mt-2"
+                title="Logout"
+              >
+                <LogOut size={20} />
+              </Button>
             )}
           </div>
         </div>

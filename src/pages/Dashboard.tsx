@@ -25,23 +25,47 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 
+interface DbProject {
+  id_project: string;
+  title: string;
+  description: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  id_entrepreneur: string;
+  id_pack: string;
+}
+
+interface DbMessage {
+  id_message: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+  project_id: string;
+  sender_id: string;
+}
+
 const Dashboard = () => {
   const { user } = useAuth();
-  const { projects } = useProjects();
+  const { setProjects } = useProjects();
   const { messages } = useMessages();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [dbProjects, setDbProjects] = useState<DbProject[]>([]);
+  const [dbMessages, setDbMessages] = useState<DbMessage[]>([]);
+  const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
+  const [studentId, setStudentId] = useState<string | null>(null);
   
   // Fetch data from the database when the component mounts
   useEffect(() => {
     if (!user) return;
     
-    // Fetch data from the database
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log("Fetching data for user:", user);
         
-        // Fetch projects for the current user
+        // Get role-specific IDs first
         if (user.role === 'entrepreneur') {
           // Get entrepreneur ID from user ID
           const { data: entrepreneurData, error: entrepreneurError } = await supabase
@@ -52,10 +76,10 @@ const Dashboard = () => {
             
           if (entrepreneurError) {
             console.error("Error fetching entrepreneur ID:", entrepreneurError);
-            return;
-          }
-          
-          if (entrepreneurData) {
+          } else if (entrepreneurData) {
+            console.log("Entrepreneur data:", entrepreneurData);
+            setEntrepreneurId(entrepreneurData.id_entrepreneur);
+            
             // Now fetch projects with entrepreneur ID
             const { data: projectData, error: projectError } = await supabase
               .from('projects')
@@ -73,18 +97,113 @@ const Dashboard = () => {
               
             if (projectError) {
               console.error("Error fetching projects:", projectError);
-              return;
+            } else {
+              console.log("Fetched projects:", projectData);
+              setDbProjects(projectData || []);
+            }
+          }
+        } else if (user.role === 'student') {
+          // Get student ID from user ID
+          const { data: studentData, error: studentError } = await supabase
+            .from('students')
+            .select('id_student')
+            .eq('id_user', user.id)
+            .single();
+            
+          if (studentError) {
+            console.error("Error fetching student ID:", studentError);
+          } else if (studentData) {
+            console.log("Student data:", studentData);
+            setStudentId(studentData.id_student);
+            
+            // Fetch project assignments for this student
+            const { data: assignmentData, error: assignmentError } = await supabase
+              .from('project_assignments')
+              .select(`
+                id_assignment,
+                id_project,
+                id_student,
+                status,
+                created_at
+              `)
+              .eq('id_student', studentData.id_student);
+              
+            if (assignmentError) {
+              console.error("Error fetching project assignments:", assignmentError);
+            } else if (assignmentData && assignmentData.length > 0) {
+              console.log("Fetched project assignments:", assignmentData);
+              
+              // Fetch the actual projects
+              const projectIds = assignmentData.map(a => a.id_project);
+              const { data: projectData, error: projectError } = await supabase
+                .from('projects')
+                .select(`
+                  id_project,
+                  title,
+                  description,
+                  status,
+                  created_at,
+                  updated_at,
+                  id_entrepreneur,
+                  id_pack
+                `)
+                .in('id_project', projectIds);
+                
+              if (projectError) {
+                console.error("Error fetching assigned projects:", projectError);
+              } else {
+                console.log("Fetched assigned projects:", projectData);
+                setDbProjects(projectData || []);
+              }
             }
             
-            console.log("Fetched projects:", projectData);
+            // Also fetch open projects for student to apply to
+            const { data: openProjects, error: openProjectsError } = await supabase
+              .from('projects')
+              .select(`
+                id_project,
+                title,
+                description,
+                status,
+                created_at,
+                updated_at,
+                id_entrepreneur,
+                id_pack
+              `)
+              .eq('status', 'open');
+              
+            if (openProjectsError) {
+              console.error("Error fetching open projects:", openProjectsError);
+            } else {
+              console.log("Fetched open projects:", openProjects);
+              // Add open projects to state if not already in assigned projects
+              const assignedProjectIds = new Set(dbProjects.map(p => p.id_project));
+              const newOpenProjects = (openProjects || []).filter(p => !assignedProjectIds.has(p.id_project));
+              setDbProjects(prev => [...prev, ...newOpenProjects]);
+            }
           }
         }
         
-        // Fetch documents for the user's projects
-        // This will be implemented in the project context
-        
-        // Fetch messages for the user
-        // This will be implemented in the message context
+        // Fetch messages for all users
+        const { data: messagesData, error: messagesError } = await supabase
+          .from('messages')
+          .select(`
+            id_message,
+            content,
+            read,
+            created_at,
+            project_id,
+            sender_id
+          `)
+          .order('created_at', { ascending: false })
+          .limit(10);
+          
+        if (messagesError) {
+          console.error("Error fetching messages:", messagesError);
+        } else {
+          console.log("Fetched messages:", messagesData);
+          setDbMessages(messagesData || []);
+        }
         
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -95,43 +214,16 @@ const Dashboard = () => {
     };
     
     fetchData();
-  }, [user]);
+  }, [user, setProjects]);
 
-  // Filter projects based on user role
-  const userProjects = projects.filter((project) => 
-    user?.role === "entrepreneur" 
-      ? project.ownerId === user.id 
-      : project.assigneeId === user.id
-  );
+  // Calculate statistics based on fetched projects
+  const totalProjects = dbProjects.length;
+  const completedProjects = dbProjects.filter(p => p.status === 'completed').length;
+  const unreadMessages = dbMessages.filter(m => !m.read).length;
+  
+  const openProjects = dbProjects.filter(p => p.status === 'open');
 
-  // Get open project proposals (for students)
-  const projectProposals = projects.filter(
-    (project) => project.status === "open" && !project.assigneeId
-  );
-
-  // Get unread messages
-  const unreadMessages = messages.filter(
-    (message) => message.recipient === user?.id && !message.read
-  );
-
-  // Calculate project statistics
-  const totalProjects = userProjects.length;
-  const completedProjects = userProjects.filter(
-    (project) => project.status === "completed"
-  ).length;
-
-  // Calculate earnings (for students)
-  const totalEarnings = userProjects
-    .filter((project) => project.status === "completed")
-    .reduce((sum, project) => sum + (project.price || 0), 0);
-
-  // Get recent documents
-  const recentDocuments = userProjects
-    .flatMap((project) => project.documents)
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, 3);
-
-  // Mock some reviews for display
+  // Mock some reviews for display (we'll keep these for now)
   const mockReviews = [
     {
       id: "1",
@@ -153,7 +245,7 @@ const Dashboard = () => {
     },
   ];
 
-  // Mock online users
+  // Mock online users (we'll keep these for now)
   const onlineUsers = [
     { id: "1", name: "John Entrepreneur", isOnline: true },
     { id: "3", name: "Alice Designer", isOnline: false },
@@ -163,7 +255,7 @@ const Dashboard = () => {
     <AppLayout>
       {loading ? (
         <div className="flex justify-center items-center h-80">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-tiro-purple"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-tiro-primary"></div>
         </div>
       ) : (
         <div className="space-y-6">
@@ -172,7 +264,7 @@ const Dashboard = () => {
             {user?.role === "entrepreneur" && (
               <Button
                 onClick={() => navigate("/projects/new")}
-                className="bg-tiro-purple hover:bg-tiro-purple/90"
+                className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
               >
                 Create New Project
               </Button>
@@ -189,7 +281,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {user?.role === "entrepreneur" ? totalProjects : projectProposals.length}
+                  {user?.role === "entrepreneur" ? totalProjects : openProjects.length}
                 </div>
               </CardContent>
             </Card>
@@ -214,12 +306,13 @@ const Dashboard = () => {
                   {user?.role === "student" ? (
                     <>
                       <BadgeDollarSign className="inline mr-1 h-6 w-6 text-green-600" />
-                      {totalEarnings}
+                      {/* Mock earnings for now */}
+                      {dbProjects.filter(p => p.status === 'completed').length * 500}
                     </>
                   ) : (
                     <>
                       <MessageSquare className="inline mr-1 h-6 w-6 text-blue-600" />
-                      {unreadMessages.length}
+                      {unreadMessages}
                     </>
                   )}
                 </div>
@@ -237,7 +330,7 @@ const Dashboard = () => {
                   <CardDescription>Available projects you can apply for</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {projectProposals.length > 0 ? (
+                  {openProjects.length > 0 ? (
                     <div className="space-y-4">
                       <Table>
                         <TableHeader>
@@ -248,12 +341,12 @@ const Dashboard = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {projectProposals.slice(0, 3).map((project) => (
-                            <TableRow key={project.id}>
+                          {openProjects.slice(0, 3).map((project) => (
+                            <TableRow key={project.id_project}>
                               <TableCell className="font-medium">{project.title}</TableCell>
                               <TableCell>
-                                {project.description.substring(0, 50)}
-                                {project.description.length > 50 && "..."}
+                                {project.description?.substring(0, 50)}
+                                {project.description?.length > 50 && "..."}
                               </TableCell>
                               <TableCell>
                                 <Button
@@ -261,14 +354,14 @@ const Dashboard = () => {
                                   size="sm"
                                   asChild
                                 >
-                                  <Link to={`/projects/${project.id}`}>View Details</Link>
+                                  <Link to={`/projects/${project.id_project}`}>View Details</Link>
                                 </Button>
                               </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
-                      {projectProposals.length > 3 && (
+                      {openProjects.length > 3 && (
                         <div className="mt-4 text-center">
                           <Button variant="outline" asChild>
                             <Link to="/projects">View All Proposals</Link>
@@ -333,21 +426,20 @@ const Dashboard = () => {
                 <CardDescription>Status of your current projects</CardDescription>
               </CardHeader>
               <CardContent>
-                {userProjects.length > 0 ? (
+                {dbProjects.length > 0 ? (
                   <div className="space-y-4">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Project</TableHead>
                           <TableHead>Status</TableHead>
-                          <TableHead>Assignee</TableHead>
-                          <TableHead>Progress</TableHead>
+                          <TableHead>Created</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {userProjects.slice(0, 5).map((project) => (
-                          <TableRow key={project.id}>
+                        {dbProjects.slice(0, 5).map((project) => (
+                          <TableRow key={project.id_project}>
                             <TableCell className="font-medium">{project.title}</TableCell>
                             <TableCell>
                               <span
@@ -367,31 +459,18 @@ const Dashboard = () => {
                               </span>
                             </TableCell>
                             <TableCell>
-                              {project.assigneeId ? "Assigned" : "Unassigned"}
-                            </TableCell>
-                            <TableCell>
-                              {project.tasks.length > 0
-                                ? `${
-                                    Math.round(
-                                      (project.tasks.filter(
-                                        (task) => task.status === "done"
-                                      ).length /
-                                      project.tasks.length) *
-                                      100
-                                    )
-                                  }%`
-                                : "No tasks"}
+                              {new Date(project.created_at).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
                               <Button variant="outline" size="sm" asChild>
-                                <Link to={`/projects/${project.id}`}>View</Link>
+                                <Link to={`/projects/${project.id_project}`}>View</Link>
                               </Button>
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
-                    {userProjects.length > 5 && (
+                    {dbProjects.length > 5 && (
                       <div className="mt-4 text-center">
                         <Button variant="outline" asChild>
                           <Link to="/projects">View All Projects</Link>
@@ -415,7 +494,7 @@ const Dashboard = () => {
                 <CardDescription>Your conversations</CardDescription>
               </CardHeader>
               <CardContent>
-                {unreadMessages.length > 0 || onlineUsers.length > 0 ? (
+                {dbMessages.length > 0 || onlineUsers.length > 0 ? (
                   <div className="space-y-4">
                     {onlineUsers.map((contact) => (
                       <div
@@ -457,42 +536,14 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Recent Documents */}
+            {/* Recent Documents - Could populate from database in the future */}
             <Card>
               <CardHeader>
                 <CardTitle>Recent Documents</CardTitle>
                 <CardDescription>Latest files from your projects</CardDescription>
               </CardHeader>
               <CardContent>
-                {recentDocuments.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentDocuments.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
-                      >
-                        <div className="flex items-center">
-                          <div className="mr-3 p-2 bg-gray-100 rounded">
-                            <FileText size={20} />
-                          </div>
-                          <div>
-                            <p className="font-medium">{doc.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(doc.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                            View
-                          </a>
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No documents available.</p>
-                )}
+                <p className="text-muted-foreground">No documents available.</p>
               </CardContent>
             </Card>
           </div>
