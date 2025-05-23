@@ -36,6 +36,7 @@ import FileUpload from "@/components/FileUpload";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Message, User } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChatMessageProps {
   message: Message;
@@ -136,7 +137,7 @@ const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { projects, updateProject, addTask, updateTask, deleteTask, addDocument, deleteDocument } = useProjects();
   const { user } = useAuth();
-  const { messages, sendMessage } = useMessages();
+  const { messages, sendMessage, getProjectMessages } = useMessages();
   const navigate = useNavigate();
 
   const project = projects.find((p) => p.id === id);
@@ -148,14 +149,79 @@ const ProjectDetail = () => {
   const [message, setMessage] = useState("");
   const [projectMessages, setProjectMessages] = useState<Message[]>([]);
   const [paymentShown, setPaymentShown] = useState<boolean>(false);
+  const [proposedStudents, setProposedStudents] = useState<User[]>([]);
 
   useEffect(() => {
     if (id) {
-      // Filter messages for this project
-      const filtered = messages.filter(msg => msg.projectId === id);
+      // Get all messages for this project
+      const filtered = getProjectMessages(id);
       setProjectMessages(filtered);
+      
+      // Fetch proposed students if project is open
+      if (project?.status === "open" && user?.role === "entrepreneur") {
+        fetchProposedStudents();
+      }
     }
-  }, [messages, id]);
+  }, [messages, id, project?.status, user?.role]);
+
+  // Fetch proposed students for this project
+  const fetchProposedStudents = async () => {
+    try {
+      // Get all proposed students for this project
+      const { data: proposedData, error: proposedError } = await supabase
+        .from('proposed_student')
+        .select('student_id')
+        .eq('project_id', id);
+        
+      if (proposedError) throw proposedError;
+      
+      if (proposedData && proposedData.length > 0) {
+        // Get student details for each proposed student
+        const studentIds = proposedData.map(p => p.student_id);
+        
+        // First get user IDs from student IDs
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('id_user, skills, specialty')
+          .in('id_student', studentIds);
+          
+        if (studentError) throw studentError;
+        
+        if (studentData && studentData.length > 0) {
+          // Now get user details
+          const userIds = studentData.map(s => s.id_user);
+          
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('id_users, name, email, role')
+            .in('id_users', userIds);
+            
+          if (userError) throw userError;
+          
+          if (userData) {
+            // Combine the data to create User objects
+            const proposedStudentsList = userData.map(user => {
+              const studentInfo = studentData.find(s => s.id_user === user.id_users);
+              return {
+                id: user.id_users,
+                name: user.name,
+                email: user.email,
+                role: user.role as "student",
+                skills: studentInfo?.skills || [],
+                specialty: studentInfo?.specialty || "",
+                createdAt: new Date(),
+                isOnline: false
+              };
+            });
+            
+            setProposedStudents(proposedStudentsList);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching proposed students:", error);
+    }
+  };
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -228,28 +294,35 @@ const ProjectDetail = () => {
   };
 
   const getTabsBasedOnStatus = () => {
-    // Default tabs configuration
-    let tabsConfig = [
-      { id: "documents", label: "Documents" },
-      { id: "communication", label: "Communication" }
-    ];
+    // Configure tabs based on project status
+    let tabsConfig = [];
     
-    // For draft projects, show profile propositions instead of tasks
-    if (project.status === "draft" && isOwner) {
+    if (project.status === "draft") {
       tabsConfig = [
-        { id: "profiles", label: "Student Profiles" },
-        ...tabsConfig
+        { id: "documents", label: "Documents" },
+        { id: "communication", label: "Communication" }
       ];
-    }
-    // For open projects, don't show tasks tab (payment is needed first)
+    } 
     else if (project.status === "open") {
-      // No additional tabs needed here, use default without tasks
+      // For open projects, show student proposals to entrepreneurs
+      if (isOwner) {
+        tabsConfig = [
+          { id: "student-proposals", label: "Student Proposals" },
+          { id: "documents", label: "Documents" },
+          { id: "communication", label: "Communication" }
+        ];
+      } else {
+        tabsConfig = [
+          { id: "documents", label: "Documents" },
+          { id: "communication", label: "Communication" }
+        ];
+      }
     }
-    // For in_progress, review, or completed projects, show tasks
-    else {
+    else if (["in_progress", "review", "completed"].includes(project.status)) {
       tabsConfig = [
         { id: "tasks", label: "Tasks" },
-        ...tabsConfig
+        { id: "documents", label: "Documents" },
+        { id: "communication", label: "Communication" }
       ];
     }
     
@@ -258,6 +331,39 @@ const ProjectDetail = () => {
 
   const tabsConfig = getTabsBasedOnStatus();
   const defaultTab = tabsConfig[0].id;
+  
+  const handleSelectStudent = async (studentId: string) => {
+    try {
+      // Update the project assignee and status in database
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          status: 'in_progress',
+          // We would add the student ID here, but need a way to get the student ID from user ID
+          // This will be handled in the updateProject function below
+        })
+        .eq('id_project', project.id);
+        
+      if (error) throw error;
+      
+      // Update in local state
+      updateProject(project.id, { 
+        assigneeId: studentId, 
+        status: "in_progress" 
+      });
+      
+      // Send message to the selected student
+      sendMessage(studentId, 
+        `Congratulations! You have been selected for the project: ${project.title}. You can start working on it as soon as payment is confirmed.`,
+        project.id
+      );
+      
+      toast.success("Student selected successfully");
+    } catch (error) {
+      console.error("Error selecting student:", error);
+      toast.error("Failed to select student");
+    }
+  };
 
   return (
     <AppLayout>
@@ -379,25 +485,64 @@ const ProjectDetail = () => {
             ))}
           </TabsList>
           
-          {project.status === "draft" && isOwner && (
-            <TabsContent value="profiles">
+          {project.status === "open" && isOwner && (
+            <TabsContent value="student-proposals">
               <Card>
                 <CardHeader>
-                  <CardTitle>Student Profiles</CardTitle>
+                  <CardTitle>Student Proposals</CardTitle>
                   <CardDescription>
                     Select a student to work on your project
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {mockProfiles.map(profile => (
-                      <ProfileProposition
-                        key={profile.id}
-                        profile={profile}
-                        onSelect={() => handleSelectProfile(profile.id)}
-                      />
-                    ))}
-                  </div>
+                  {proposedStudents.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {proposedStudents.map(student => (
+                        <div key={student.id} className="p-4 border rounded-lg mb-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            <Avatar>
+                              <AvatarImage src={student.avatar} />
+                              <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{student.name}</p>
+                              <p className="text-xs text-muted-foreground">{student.email}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="mb-3">
+                            <p className="text-sm font-medium mb-1">Specialty:</p>
+                            <p className="text-sm">{student.specialty || "Not specified"}</p>
+                          </div>
+                          
+                          <div className="mb-4">
+                            <p className="text-sm font-medium mb-1">Skills:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {student.skills?.map(skill => (
+                                <span 
+                                  key={skill} 
+                                  className="bg-gray-100 px-2 py-1 text-xs rounded"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <Button 
+                            onClick={() => handleSelectStudent(student.id)} 
+                            className="w-full"
+                          >
+                            Select Student
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-10 text-muted-foreground">
+                      No students have been proposed for this project yet.
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -585,8 +730,7 @@ const ProjectDetail = () => {
                   </form>
                 )}
               </CardContent>
-            </Card>
-          </TabsContent>
+            </TabsContent>
 
           <TabsContent value="communication">
             <Card>

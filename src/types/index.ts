@@ -8,7 +8,7 @@ export interface User {
   avatar?: string;
   bio?: string;
   skills?: string[];
-  specialty?: string; // Added specialty field
+  specialty?: string;
   createdAt: Date;
   isOnline?: boolean;
 }
@@ -26,6 +26,7 @@ export interface Project {
   price?: number; // Added to track project earnings
   createdAt: Date;
   updatedAt: Date;
+  proposedStudents?: User[];
 }
 
 export interface Task {
@@ -108,5 +109,12 @@ export interface DatabaseDocument {
   name: string | null;
   type: 'proposal' | 'final_proposal' | null;
   link: string | null;
+  created_at: string;
+}
+
+// Added for proposed students
+export interface DatabaseProposedStudent {
+  project_id: string;
+  student_id: string;
   created_at: string;
 }
