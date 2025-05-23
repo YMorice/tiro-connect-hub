@@ -56,14 +56,15 @@ const Login = () => {
       const { user, error } = await login(values.email, values.password);
 
       if (error) {
-        toast.error(error);
+        console.error("Login error:", error);
+        toast.error(typeof error === 'string' ? error : "Failed to sign in. Please check your credentials and try again.");
         setIsSubmitting(false);
         return;
       }
 
       // We won't navigate here - the useEffect will handle redirection
       // when the auth state changes after successful login
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error in form handler:", error);
       toast.error("Failed to sign in. Please check your credentials and try again.");
       setIsSubmitting(false);

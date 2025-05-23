@@ -81,7 +81,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('Error fetching user profile:', error);
-        throw error;
+        // Don't throw error, just log it and continue
+        setLoading(false);
+        return;
       }
 
       if (userProfile) {
@@ -271,24 +273,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      
+      // Wrap the signInWithPassword call in a try/catch block to handle network errors
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      if (error) {
-        console.error('Login error:', error);
-        toast.error(`Login failed: ${error.message}`);
-        return { user: null, error: error.message };
-      }
+        if (error) {
+          console.error('Login error:', error);
+          toast.error(`Login failed: ${error.message}`);
+          return { user: null, error: error.message };
+        }
 
-      if (data.user && data.session) {
-        await fetchUser(data.session);
-        toast.success("Logged in successfully!");
-        return { user: data.user, error: null };
-      } else {
-        toast.error("Login failed.");
-        return { user: null, error: 'Login failed.' };
+        if (data.user && data.session) {
+          await fetchUser(data.session);
+          toast.success("Logged in successfully!");
+          return { user: data.user, error: null };
+        } else {
+          toast.error("Login failed.");
+          return { user: null, error: 'Login failed.' };
+        }
+      } catch (networkError: any) {
+        console.error('Network error during login:', networkError);
+        toast.error("Network error. Please check your connection and try again.");
+        return { user: null, error: "Network error. Please check your connection." };
       }
     } catch (err: any) {
       console.error('Login failed:', err);
