@@ -62,7 +62,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-tiro-gray1">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md">
         <Card className="shadow-lg">
           <CardHeader className="space-y-1 text-center">
@@ -102,7 +102,7 @@ const Login = () => {
                 />
                 <Button 
                   type="submit" 
-                  className="w-full bg-tiro-primary hover:bg-tiro-primary/90" 
+                  className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-tiro-white" 
                   disabled={loading}
                 >
                   {loading ? "Signing in..." : "Sign In"}

@@ -58,7 +58,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       {/* Sidebar Toggle Button for Mobile */}
       <div className="lg:hidden absolute top-4 left-4 z-50">
         <Button
@@ -74,15 +74,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex flex-col transition-all duration-300 bg-white shadow-lg lg:relative",
+          "fixed inset-y-0 left-0 z-40 flex flex-col transition-all duration-300 bg-sidebar border-r border-sidebar-border shadow-lg lg:relative",
           sidebarOpen ? "w-64" : "w-0 lg:w-20 overflow-hidden"
         )}
       >
-        <div className="flex items-center justify-center h-16 border-b">
+        <div className="flex items-center justify-center h-16 border-b border-sidebar-border">
           {sidebarOpen ? (
-            <h1 className="text-2xl font-bold text-tiro-purple">Tiro</h1>
+            <h1 className="text-2xl font-bold text-tiro-primary">Tiro</h1>
           ) : (
-            <h1 className="text-xl font-bold text-tiro-purple">T</h1>
+            <h1 className="text-xl font-bold text-tiro-primary">T</h1>
           )}
         </div>
 
@@ -95,8 +95,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 className={cn(
                   "flex items-center p-3 rounded-lg transition-all",
                   isActive(item.href)
-                    ? "bg-tiro-purple text-white"
-                    : "hover:bg-gray-100"
+                    ? "bg-tiro-primary text-tiro-white"
+                    : "hover:bg-sidebar-accent text-sidebar-foreground"
                 )}
               >
                 <item.icon size={20} />
@@ -106,15 +106,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </nav>
         </div>
 
-        <div className="p-4 border-t">
+        <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-tiro-purple text-white flex items-center justify-center">
-              {user?.name.charAt(0)}
+            <div className="w-8 h-8 rounded-full bg-tiro-primary text-tiro-white flex items-center justify-center">
+              {user?.name?.charAt(0) || "U"}
             </div>
             {sidebarOpen && (
               <div className="ml-3">
-                <p className="font-medium">{user?.name}</p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                <p className="font-medium text-sidebar-foreground">{user?.name || "User"}</p>
+                <p className="text-xs text-muted-foreground capitalize">{user?.role || "user"}</p>
               </div>
             )}
           </div>
