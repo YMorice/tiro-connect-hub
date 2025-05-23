@@ -243,10 +243,10 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
       
       if (documentType === "final" && projectId) {
-        // If it's a final deliverable, update the project status to review
+        // If it's a final deliverable, update the project status to review/STEP5
         const project = projects.find(p => p.id === projectId);
-        if (project && project.status === "in_progress") {
-          updateProject(projectId, { status: "review" });
+        if (project && (project.status === "STEP5" || project.status === "in_progress")) {
+          updateProject(projectId, { status: "STEP5" });
         }
       }
       
@@ -301,7 +301,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
           
           // If it's approved and there's a project, mark it as completed
           if (isApproved && message.projectId) {
-            updateProject(message.projectId, { status: "completed" });
+            updateProject(message.projectId, { status: "STEP6" });
             toast.success("Project marked as complete!");
           }
           

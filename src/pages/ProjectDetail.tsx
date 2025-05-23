@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
 import { useAuth } from "@/context/auth-context";
 import { useMessages } from "@/context/message-context";
+import { isProjectInStage, getDisplayName, convertStatus } from "@/utils/status-utils";
 import AppLayout from "@/components/AppLayout";
 import {
   Card,
@@ -157,8 +158,9 @@ const ProjectDetail = () => {
       const filtered = getProjectMessages(id);
       setProjectMessages(filtered);
       
-      // Fetch proposed students if project is open
-      if (project?.status === "open" && user?.role === "entrepreneur") {
+      // Fetch proposed students if project is open or in early stages
+      if (project && (isProjectInStage(project, "open") || isProjectInStage(project, "STEP2") || 
+          isProjectInStage(project, "STEP3")) && user?.role === "entrepreneur") {
         fetchProposedStudents();
       }
     }
@@ -237,7 +239,9 @@ const ProjectDetail = () => {
   const otherUserId = isOwner ? project.assigneeId : project.ownerId;
 
   const handleStatusChange = (status: string) => {
-    updateProject(project.id, { status: status as any });
+    // Make sure we're using the new status format
+    const newStatus = convertStatus(status, true);
+    updateProject(project.id, { status: newStatus as any });
   };
 
   const handleTaskSubmit = (e: React.FormEvent) => {
@@ -297,13 +301,14 @@ const ProjectDetail = () => {
     // Configure tabs based on project status
     let tabsConfig = [];
     
-    if (project.status === "draft") {
+    if (isProjectInStage(project, "draft") || isProjectInStage(project, "STEP1")) {
       tabsConfig = [
         { id: "documents", label: "Documents" },
         { id: "communication", label: "Communication" }
       ];
     } 
-    else if (project.status === "open") {
+    else if (isProjectInStage(project, "open") || isProjectInStage(project, "STEP2") || 
+             isProjectInStage(project, "STEP3") || isProjectInStage(project, "STEP4")) {
       // For open projects, show student proposals to entrepreneurs
       if (isOwner) {
         tabsConfig = [
@@ -318,7 +323,9 @@ const ProjectDetail = () => {
         ];
       }
     }
-    else if (["in_progress", "review", "completed"].includes(project.status)) {
+    else if (isProjectInStage(project, "in_progress") || isProjectInStage(project, "review") || 
+             isProjectInStage(project, "STEP5") || isProjectInStage(project, "completed") || 
+             isProjectInStage(project, "STEP6")) {
       tabsConfig = [
         { id: "tasks", label: "Tasks" },
         { id: "documents", label: "Documents" },
@@ -338,7 +345,7 @@ const ProjectDetail = () => {
       const { error } = await supabase
         .from('projects')
         .update({
-          status: 'in_progress',
+          status: 'STEP5', // Use new status format
           // We would add the student ID here, but need a way to get the student ID from user ID
           // This will be handled in the updateProject function below
         })
@@ -349,7 +356,7 @@ const ProjectDetail = () => {
       // Update in local state
       updateProject(project.id, { 
         assigneeId: studentId, 
-        status: "in_progress" 
+        status: "STEP5" 
       });
       
       // Send message to the selected student
@@ -374,18 +381,18 @@ const ProjectDetail = () => {
             <div className="flex items-center gap-2 mt-2">
               <span
                 className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                  project.status === "completed"
+                  isProjectInStage(project, "completed") || isProjectInStage(project, "STEP6")
                     ? "bg-green-100 text-green-800"
-                    : project.status === "in_progress"
+                    : isProjectInStage(project, "in_progress") || isProjectInStage(project, "STEP5")
                     ? "bg-blue-100 text-blue-800"
-                    : project.status === "open"
+                    : isProjectInStage(project, "open") || ["STEP2", "STEP3", "STEP4"].includes(project.status)
                     ? "bg-yellow-100 text-yellow-800"
-                    : project.status === "review"
+                    : isProjectInStage(project, "review")
                     ? "bg-purple-100 text-purple-800"
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
-                {project.status.replace("_", " ").toUpperCase()}
+                {getDisplayName(project.status)}
               </span>
               <span className="text-sm text-muted-foreground">
                 Created on {project.createdAt.toLocaleDateString()}
@@ -393,15 +400,16 @@ const ProjectDetail = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isOwner && project.status === "draft" && (
+            {isOwner && (isProjectInStage(project, "draft") || isProjectInStage(project, "STEP1")) && (
               <Button
-                onClick={() => handleStatusChange("open")}
+                onClick={() => handleStatusChange("STEP2")}
                 className="bg-tiro-blue hover:bg-tiro-blue/90"
               >
                 Publish Project
               </Button>
             )}
-            {isOwner && project.status === "open" && !paymentShown && (
+            {isOwner && (isProjectInStage(project, "open") || 
+              ["STEP2", "STEP3", "STEP4"].includes(project.status)) && !paymentShown && (
               <Button
                 onClick={handleProceedToPayment}
                 className="bg-tiro-purple hover:bg-tiro-purple/90 flex items-center gap-2"
@@ -410,7 +418,8 @@ const ProjectDetail = () => {
                 Pay to Launch Project
               </Button>
             )}
-            {isOwner && project.status === "open" && paymentShown && (
+            {isOwner && (isProjectInStage(project, "open") || 
+              ["STEP2", "STEP3", "STEP4"].includes(project.status)) && paymentShown && (
               <Button
                 onClick={handleDownloadInvoice}
                 variant="outline"
@@ -420,19 +429,20 @@ const ProjectDetail = () => {
                 Download Invoice
               </Button>
             )}
-            {isOwner && project.status === "review" && (
+            {isOwner && (isProjectInStage(project, "review") || isProjectInStage(project, "STEP5")) && (
               <Button
-                onClick={() => handleStatusChange("completed")}
+                onClick={() => handleStatusChange("STEP6")}
                 className="bg-green-600 hover:bg-green-700"
                 variant="default"
               >
                 Mark as Complete
               </Button>
             )}
-            {user?.role === "student" && project.status === "open" && !isAssignee && (
+            {user?.role === "student" && (isProjectInStage(project, "open") || 
+              ["STEP2", "STEP3", "STEP4"].includes(project.status)) && !isAssignee && (
               <Button
                 onClick={() => {
-                  updateProject(project.id, { assigneeId: user.id, status: "in_progress" });
+                  updateProject(project.id, { assigneeId: user.id, status: "STEP5" });
                   toast.success("You have successfully taken this project");
                 }}
                 className="bg-tiro-purple hover:bg-tiro-purple/90"
@@ -440,9 +450,9 @@ const ProjectDetail = () => {
                 Take Project
               </Button>
             )}
-            {isAssignee && project.status === "review" && (
+            {isAssignee && (isProjectInStage(project, "review") || isProjectInStage(project, "STEP5")) && (
               <Button
-                onClick={() => handleStatusChange("in_progress")}
+                onClick={() => handleStatusChange("STEP5")}
               >
                 Return to In Progress
               </Button>

@@ -1,4 +1,3 @@
-
 export type UserRole = "student" | "entrepreneur" | "admin";
 
 export interface User {
@@ -20,7 +19,7 @@ export interface Project {
   description: string;
   ownerId: string; // entrepreneur ID
   assigneeId?: string; // student ID
-  status: "STEP1" | "STEP2" | "STEP3" | "STEP4" | "STEP5" | "STEP6"; // Updated project status types
+  status: "STEP1" | "STEP2" | "STEP3" | "STEP4" | "STEP5" | "STEP6" | "draft" | "open" | "in_progress" | "review" | "completed"; // Support both old and new status types
   tasks: Task[];
   documents: Document[];
   packId?: string; // reference to the project pack
@@ -118,4 +117,40 @@ export interface DatabaseProposedStudent {
   project_id: string;
   student_id: string;
   created_at: string;
+}
+
+// Create a mapping between old and new status types
+export const statusMapping = {
+  // Old to new
+  "draft": "STEP1",
+  "open": "STEP2", 
+  "in_progress": "STEP5",
+  "review": "STEP5",  // Will be differentiated in UI
+  "completed": "STEP6",
+  
+  // New to old - for backwards compatibility
+  "STEP1": "draft",
+  "STEP2": "open",
+  "STEP3": "open", // Still conceptually "open" in the old system
+  "STEP4": "open", // Still conceptually "open" in the old system
+  "STEP5": "in_progress",
+  "STEP6": "completed"
+};
+
+// Helper function to get display name for status
+export function getStatusDisplayName(status: string): string {
+  switch(status) {
+    case "STEP1": return "New Project";
+    case "STEP2": return "Awaiting Student Acceptance";
+    case "STEP3": return "Awaiting Entrepreneur Selection";
+    case "STEP4": return "Awaiting Payment";
+    case "STEP5": return "In Progress";
+    case "STEP6": return "Completed";
+    case "draft": return "Draft";
+    case "open": return "Open";
+    case "in_progress": return "In Progress";
+    case "review": return "Under Review";
+    case "completed": return "Completed";
+    default: return status;
+  }
 }
