@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -120,9 +122,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-tiro-primary text-white flex items-center justify-center">
-                {user?.name?.charAt(0) || "U"}
-              </div>
+              <Avatar className="w-8 h-8">
+                {user?.avatar ? (
+                  <AvatarImage src={user.avatar} alt={user?.name || "User"} />
+                ) : (
+                  <AvatarFallback className="bg-tiro-primary text-white">
+                    {user?.name?.charAt(0) || "U"}
+                  </AvatarFallback>
+                )}
+              </Avatar>
               {sidebarOpen && (
                 <div className="ml-3">
                   <p className="font-medium text-sidebar-foreground">{user?.name || "User"}</p>
