@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -66,7 +67,7 @@ const Login = () => {
         <Card className="shadow-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
-              <img src="/lovable-uploads/b20f2556-f276-4aea-993b-aead6d9fafd8.png" alt="Tiro Logo" className="h-10" />
+              <img src="/lovable-uploads/9652b78a-5ef3-4f37-b36c-3afe824ddfbe.png" alt="Tiro Logo" className="h-10" />
             </div>
             <CardDescription>
               Sign in to your account
@@ -103,7 +104,7 @@ const Login = () => {
                 />
                 <Button 
                   type="submit" 
-                  className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-tiro-white" 
+                  className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 
                   disabled={loading}
                 >
                   {loading ? "Signing in..." : "Sign In"}
