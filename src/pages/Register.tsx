@@ -549,7 +549,7 @@ const Register = () => {
 
               <Button 
                 type="submit" 
-                className="w-full bg-tiro-purple hover:bg-tiro-purple/90"
+                className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                 disabled={loading}
               >
                 {loading ? "Processing..." : "Next"}
@@ -688,7 +688,7 @@ const Register = () => {
                 </Button>
                 <Button 
                   type="submit" 
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                   disabled={loading}
                 >
                   Next
@@ -760,7 +760,7 @@ const Register = () => {
                 </Button>
                 <Button 
                   type="submit" 
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                   disabled={loading}
                 >
                   Next
@@ -856,7 +856,7 @@ const Register = () => {
                 </Button>
                 <Button 
                   type="submit" 
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                   disabled={loading}
                 >
                   Next
@@ -966,7 +966,7 @@ const Register = () => {
                 </Button>
                 <Button 
                   type="submit" 
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                   disabled={loading}
                 >
                   Next
@@ -1041,7 +1041,7 @@ const Register = () => {
                 </Button>
                 <Button 
                   type="submit" 
-                  className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                   disabled={loading}
                 >
                   Complete Registration
@@ -1068,7 +1068,7 @@ const Register = () => {
               </Button>
               <Button 
                 onClick={onAddProject}
-                className="bg-tiro-purple hover:bg-tiro-purple/90"
+                className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                 disabled={loading}
               >
                 Add Project
@@ -1109,7 +1109,7 @@ const Register = () => {
             
             <Button 
               onClick={() => navigate("/dashboard")} 
-              className="mt-4 bg-tiro-purple hover:bg-tiro-purple/90 w-full"
+              className="mt-4 bg-tiro-primary hover:bg-tiro-primary/90 text-white w-full"
               disabled={loading}
             >
               Go to Dashboard

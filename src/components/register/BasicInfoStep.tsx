@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   FormField,
@@ -126,7 +125,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ form }) => {
             <div className="space-y-1 leading-none">
               <FormLabel htmlFor="terms" className="font-normal">
                 I accept the{" "}
-                <Link to="/terms" className="text-tiro-purple hover:underline">
+                <Link to="/terms" className="text-tiro-primary hover:underline">
                   Terms of Use
                 </Link>
               </FormLabel>
