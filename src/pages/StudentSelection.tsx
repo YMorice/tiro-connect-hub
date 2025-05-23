@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/components/ui/sonner";
 import { ArrowLeft, Search, Check, FilterX } from "lucide-react";
 import { User } from "@/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const StudentSelection = () => {
   const { user } = useAuth();
@@ -26,6 +27,8 @@ const StudentSelection = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [skillFilter, setSkillFilter] = useState("");
+  const [specialtyFilter, setSpecialtyFilter] = useState("");
+  const [specialties, setSpecialties] = useState<string[]>([]); 
   
   // Redirect if not admin
   useEffect(() => {
@@ -76,10 +79,18 @@ const StudentSelection = () => {
           role: "student" as const,
           bio: student.biography || undefined,
           skills: student.skills || undefined,
+          specialty: student.specialty || undefined,
           createdAt: new Date(student.users.created_at),
         }));
         
         setStudents(formattedStudents);
+        
+        // Extract unique specialties for filter dropdown
+        const uniqueSpecialties = Array.from(
+          new Set(studentsData.map(student => student.specialty).filter(Boolean))
+        ) as string[];
+        
+        setSpecialties(uniqueSpecialties);
       } catch (error) {
         console.error('Error fetching students:', error);
         toast.error("Failed to load student profiles");
@@ -93,7 +104,7 @@ const StudentSelection = () => {
     }
   }, [user, projectId]);
 
-  // Filter students based on search query and skill filter
+  // Filter students based on search query, skill filter, and specialty filter
   const filteredStudents = students.filter(student => {
     const matchesSearch = searchQuery.trim() === "" || 
       student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -103,7 +114,10 @@ const StudentSelection = () => {
       (student.skills && student.skills.some(skill => 
         skill.toLowerCase().includes(skillFilter.toLowerCase())));
     
-    return matchesSearch && matchesSkill;
+    const matchesSpecialty = specialtyFilter === "" || 
+      (student.specialty && student.specialty.toLowerCase() === specialtyFilter.toLowerCase());
+    
+    return matchesSearch && matchesSkill && matchesSpecialty;
   });
 
   // Toggle student selection
@@ -132,13 +146,27 @@ const StudentSelection = () => {
 
     try {
       // Update project status to "open" in Supabase
-      const { error } = await supabase
+      const { error: projectUpdateError } = await supabase
         .from('projects')
         .update({ status: 'open' })
         .eq('id_project', projectId);
         
-      if (error) {
-        throw error;
+      if (projectUpdateError) {
+        throw projectUpdateError;
+      }
+      
+      // Add entries to proposed_student table
+      const proposedEntries = selectedStudents.map(student => ({
+        student_id: student.id,
+        project_id: projectId
+      }));
+      
+      const { error: proposedError } = await supabase
+        .from('proposed_student')
+        .insert(proposedEntries);
+        
+      if (proposedError) {
+        throw proposedError;
       }
       
       // Create project assignments for selected students
@@ -157,19 +185,28 @@ const StudentSelection = () => {
         throw assignmentError;
       }
       
-      // Send a message to each proposed student
-      for (const student of selectedStudents) {
-        const { error: messageError } = await supabase
-          .from('messages')
-          .insert({
-            sender_id: user?.id,
-            project_id: projectId,
-            content: `You've been proposed for project: ${projectTitle || "New Project"}`
-          });
+      // Get project owner (entrepreneur) to send notification
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('id_entrepreneur')
+        .eq('id_project', projectId)
+        .single();
+        
+      if (projectError) {
+        throw projectError;
+      }
+      
+      // Send a message to project owner about proposed students
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user?.id,
+          project_id: projectId,
+          content: `${selectedStudents.length} students have been proposed for your project: "${projectTitle || "New Project"}"`
+        });
           
-        if (messageError) {
-          console.error('Error sending message:', messageError);
-        }
+      if (messageError) {
+        console.error('Error sending message:', messageError);
       }
       
       toast.success(`Proposed ${selectedStudents.length} students for the project`);
@@ -185,6 +222,7 @@ const StudentSelection = () => {
   const clearFilters = () => {
     setSearchQuery("");
     setSkillFilter("");
+    setSpecialtyFilter("");
   };
 
   // Navigate back to admin page
@@ -218,7 +256,7 @@ const StudentSelection = () => {
               variant="outline" 
               size="sm"
               onClick={clearFilters}
-              disabled={!searchQuery && !skillFilter}
+              disabled={!searchQuery && !skillFilter && !specialtyFilter}
               className="flex items-center"
             >
               <FilterX className="h-4 w-4 mr-1" />
@@ -240,7 +278,7 @@ const StudentSelection = () => {
             <CardTitle>Filters</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label htmlFor="search" className="text-sm font-medium">Search by name or bio</label>
                 <div className="relative">
@@ -264,6 +302,25 @@ const StudentSelection = () => {
                   value={skillFilter}
                   onChange={(e) => setSkillFilter(e.target.value)}
                 />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="specialty" className="text-sm font-medium">Filter by specialty</label>
+                <Select
+                  value={specialtyFilter}
+                  onValueChange={setSpecialtyFilter}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All specialties" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All specialties</SelectItem>
+                    {specialties.map((specialty) => (
+                      <SelectItem key={specialty} value={specialty.toLowerCase()}>
+                        {specialty}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>
@@ -294,6 +351,7 @@ const StudentSelection = () => {
                         <TableHead className="w-[50px]">Select</TableHead>
                         <TableHead>Name</TableHead>
                         <TableHead className="hidden sm:table-cell">Skills</TableHead>
+                        <TableHead className="hidden md:table-cell">Specialty</TableHead>
                         <TableHead className="hidden lg:table-cell">Bio</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -324,6 +382,9 @@ const StudentSelection = () => {
                                 )) || "No skills listed"}
                               </div>
                             </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              {student.specialty || "Not specified"}
+                            </TableCell>
                             <TableCell className="hidden lg:table-cell max-w-[300px] truncate">
                               {student.bio || "No bio available"}
                             </TableCell>
@@ -331,7 +392,7 @@ const StudentSelection = () => {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center py-4">
+                          <TableCell colSpan={5} className="text-center py-4">
                             {students.length > 0
                               ? "No students match the current filters"
                               : "No student profiles found"}

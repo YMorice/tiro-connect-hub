@@ -1,4 +1,3 @@
-
 export type UserRole = "student" | "entrepreneur" | "admin";
 
 export interface User {
@@ -9,8 +8,9 @@ export interface User {
   avatar?: string;
   bio?: string;
   skills?: string[];
+  specialty?: string; // Added specialty field
   createdAt: Date;
-  isOnline?: boolean; // Added to track online status
+  isOnline?: boolean;
 }
 
 export interface Project {
