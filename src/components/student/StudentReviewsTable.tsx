@@ -49,14 +49,39 @@ export const StudentReviewsTable = () => {
             
           if (!entrepreneurData) return;
           
-          query = supabase
+          const { data, error } = await supabase
             .from('reviews')
             .select(`
               *,
-              students!inner(id_student, id_user),
-              projects!inner(id_project, title)
+              students(id_student, id_user),
+              projects(id_project, title)
             `)
             .eq('entrepreneur_id', entrepreneurData.id_entrepreneur);
+            
+          if (error) throw error;
+          
+          // Transform data to include names
+          if (data) {
+            // Get user names from users table for each student
+            const reviewsWithNames = await Promise.all(
+              data.map(async (review) => {
+                // Fetch student name
+                const { data: studentUserData } = await supabase
+                  .from('users')
+                  .select('name')
+                  .eq('id_users', review.students.id_user)
+                  .single();
+                
+                return {
+                  ...review,
+                  student_name: studentUserData?.name || 'Unknown Student',
+                  project_title: review.projects?.title || 'Unknown Project'
+                };
+              })
+            );
+            
+            setReviews(reviewsWithNames);
+          }
         } else if (user.role === 'student') {
           // Students see reviews about them
           const { data: studentData } = await supabase
@@ -67,51 +92,72 @@ export const StudentReviewsTable = () => {
             
           if (!studentData) return;
           
-          query = supabase
+          const { data, error } = await supabase
             .from('reviews')
             .select(`
               *,
-              entrepreneurs!inner(id_entrepreneur, id_user),
-              projects!inner(id_project, title)
+              entrepreneurs(id_entrepreneur, id_user),
+              projects(id_project, title)
             `)
             .eq('student_id', studentData.id_student);
+            
+          if (error) throw error;
+          
+          // Transform data to include names
+          if (data) {
+            const reviewsWithNames = await Promise.all(
+              data.map(async (review) => {
+                // Fetch entrepreneur name
+                const { data: entrepreneurUserData } = await supabase
+                  .from('users')
+                  .select('name')
+                  .eq('id_users', review.entrepreneurs.id_user)
+                  .single();
+                
+                return {
+                  ...review,
+                  entrepreneur_name: entrepreneurUserData?.name || 'Unknown Entrepreneur',
+                  project_title: review.projects?.title || 'Unknown Project'
+                };
+              })
+            );
+            
+            setReviews(reviewsWithNames);
+          }
         } else {
           // Admin sees all reviews
-          query = supabase
+          const { data, error } = await supabase
             .from('reviews')
             .select(`
               *,
-              students!inner(id_student, id_user),
-              entrepreneurs!inner(id_entrepreneur, id_user),
-              projects!inner(id_project, title)
+              students(id_student, id_user),
+              entrepreneurs(id_entrepreneur, id_user),
+              projects(id_project, title)
             `);
-        }
-        
-        const { data, error } = await query;
-        
-        if (error) throw error;
-        
-        // Transform data to include names
-        if (data) {
-          // Get user names from users table for each student and entrepreneur
-          const reviewsWithNames = await Promise.all(
-            data.map(async (review) => {
-              // Fetch student name
-              const { data: studentUserData } = await supabase
-                .from('users')
-                .select('name')
-                .eq('id_users', review.students.id_user)
-                .single();
-              
-              return {
-                ...review,
-                student_name: studentUserData?.name || 'Unknown Student',
-                project_title: review.projects?.title || 'Unknown Project'
-              };
-            })
-          );
           
-          setReviews(reviewsWithNames);
+          if (error) throw error;
+          
+          // Transform data to include names
+          if (data) {
+            const reviewsWithNames = await Promise.all(
+              data.map(async (review) => {
+                // Fetch student name
+                const { data: studentUserData } = await supabase
+                  .from('users')
+                  .select('name')
+                  .eq('id_users', review.students.id_user)
+                  .single();
+                
+                return {
+                  ...review,
+                  student_name: studentUserData?.name || 'Unknown Student',
+                  project_title: review.projects?.title || 'Unknown Project'
+                };
+              })
+            );
+            
+            setReviews(reviewsWithNames);
+          }
         }
       } catch (error) {
         console.error("Error fetching reviews:", error);

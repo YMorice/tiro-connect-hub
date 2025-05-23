@@ -18,7 +18,8 @@ import {
   BadgeDollarSign, 
   FileText, 
   MessageSquare, 
-  User
+  User,
+  Star
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
@@ -335,35 +336,7 @@ const Dashboard = () => {
                   <CardDescription>Feedback from your completed projects</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {mockReviews.length > 0 ? (
-                    <div className="space-y-4">
-                      {mockReviews.map((review) => (
-                        <div
-                          key={review.id}
-                          className="border-b pb-4 last:border-0 last:pb-0"
-                        >
-                          <div className="flex items-center gap-1 mb-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < review.rating 
-                                    ? "text-yellow-400 fill-yellow-400" 
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            ))}
-                            <span className="ml-2 text-sm text-gray-500">
-                              {new Date(review.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <p className="text-sm">{review.comment}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">No reviews yet.</p>
-                  )}
+                  <StudentReviewsTable />
                 </CardContent>
               </Card>
             </>

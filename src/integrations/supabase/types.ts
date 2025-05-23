@@ -280,6 +280,58 @@ export type Database = {
           },
         ]
       }
+      reviews: {
+        Row: {
+          comment: string
+          created_at: string
+          entrepreneur_id: string
+          id: string
+          project_id: string
+          rating: number
+          student_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          entrepreneur_id: string
+          id?: string
+          project_id: string
+          rating: number
+          student_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          entrepreneur_id?: string
+          id?: string
+          project_id?: string
+          rating?: number
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_entrepreneur_id_fkey"
+            columns: ["entrepreneur_id"]
+            isOneToOne: false
+            referencedRelation: "entrepreneurs"
+            referencedColumns: ["id_entrepreneur"]
+          },
+          {
+            foreignKeyName: "reviews_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id_project"]
+          },
+          {
+            foreignKeyName: "reviews_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id_student"]
+          },
+        ]
+      }
       students: {
         Row: {
           address: string | null
