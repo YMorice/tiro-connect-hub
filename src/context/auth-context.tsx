@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   Session,
@@ -77,15 +78,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       if (userProfile) {
+        // We need to fetch additional data based on the user role
+        let bio: string | undefined = undefined;
+        let skills: string[] | undefined = undefined;
+        let specialty: string | undefined = undefined;
+        
+        if (userProfile.role === 'student') {
+          // Fetch student-specific data
+          const { data: studentData } = await supabase
+            .from('students')
+            .select('biography, skills, specialty')
+            .eq('id_user', session.user.id)
+            .single();
+            
+          if (studentData) {
+            bio = studentData.biography;
+            skills = studentData.skills;
+            specialty = studentData.specialty;
+          }
+        }
+
         const user: User = {
           id: session.user.id,
           email: session.user.email || '',
           name: userProfile.name || '',
           role: userProfile.role || 'student',
           avatar: userProfile.pp_link || '',
-          bio: userProfile.about || '',
-          skills: userProfile.skills || [],
-          specialty: userProfile.specialty || '',
+          bio: bio || '',
+          skills: skills || [],
+          specialty: specialty || '',
           createdAt: new Date(session.user.created_at),
           isOnline: true,
         };
@@ -200,16 +221,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (userData.projectName && userData.projectDescription && userData.projectDeadline) {
           const { data: projectData, error: projectError } = await supabase
             .from('projects')
-            .insert([
-              {
-                name: userData.projectName,
-                description: userData.projectDescription,
-                deadline: userData.projectDeadline,
-                id_entrepreneur: data.user.id,
-                state: 'open',
-              },
-            ])
-            .select()
+            .insert({
+              title: userData.projectName,
+              description: userData.projectDescription,
+              id_entrepreneur: data.user.id,
+              status: 'open',
+            })
+            .select();
 
           if (projectError) {
             console.error('Error creating project:', projectError);

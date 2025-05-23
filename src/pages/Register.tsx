@@ -16,7 +16,7 @@ import { toast } from "@/components/ui/sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload from "@/components/FileUpload";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 // List of available skills for checkboxes
 const AVAILABLE_SKILLS = [
@@ -442,7 +442,7 @@ const Register = () => {
         userData
       );
       
-      if (result.success) {
+      if (!result.error) {
         setRegistrationCompleted(true);
         // Move to thank you step if we're not already on it
         if (step !== 5) {
