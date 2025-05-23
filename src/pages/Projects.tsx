@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
-import { Project, getStatusDisplayName } from "@/types";
+import { Project } from "@/types";
 
 const Projects = () => {
   const { user } = useAuth();
@@ -128,28 +128,12 @@ const Projects = () => {
       project.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
       project.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Filter by status - handle both old and new status types
+    // Filter by status
     const statusMatch = 
-      statusFilter === "all" || 
-      project.status === statusFilter ||
-      (statusFilter === "completed" && project.status === "STEP6") ||
-      (statusFilter === "in_progress" && project.status === "STEP5") ||
-      (statusFilter === "open" && (project.status === "STEP2" || project.status === "STEP3" || project.status === "STEP4")) ||
-      (statusFilter === "review" && project.status === "STEP5") ||
-      (statusFilter === "draft" && project.status === "STEP1");
+      statusFilter === "all" || project.status === statusFilter;
     
     return searchFilter && statusMatch;
   });
-
-  // Get appropriate status badge color
-  const getStatusBadgeColor = (status: string) => {
-    if (status === "STEP1" || status === "draft") return "bg-gray-100 text-gray-800";
-    if (status === "STEP2" || status === "STEP3" || status === "STEP4" || status === "open") return "bg-yellow-100 text-yellow-800";
-    if (status === "STEP5" || status === "in_progress") return "bg-blue-100 text-blue-800";
-    if (status === "review") return "bg-purple-100 text-purple-800";
-    if (status === "STEP6" || status === "completed") return "bg-green-100 text-green-800";
-    return "bg-gray-100 text-gray-800";
-  };
 
   return (
     <AppLayout>
@@ -191,13 +175,6 @@ const Projects = () => {
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="review">Review</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
-                {/* Add new status filters */}
-                <SelectItem value="STEP1">New Project</SelectItem>
-                <SelectItem value="STEP2">Awaiting Student Acceptance</SelectItem>
-                <SelectItem value="STEP3">Awaiting Entrepreneur Selection</SelectItem>
-                <SelectItem value="STEP4">Awaiting Payment</SelectItem>
-                <SelectItem value="STEP5">In Progress</SelectItem>
-                <SelectItem value="STEP6">Completed</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -219,9 +196,19 @@ const Projects = () => {
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold text-xl">{project.title}</h3>
                           <span
-                            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${getStatusBadgeColor(project.status)}`}
+                            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                              project.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : project.status === "in_progress"
+                                ? "bg-blue-100 text-blue-800"
+                                : project.status === "open"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : project.status === "review"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
                           >
-                            {getStatusDisplayName(project.status)}
+                            {project.status.replace("_", " ").toUpperCase()}
                           </span>
                         </div>
                         <p className="text-muted-foreground">

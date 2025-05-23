@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState } from "react";
-import { Project, Task, Document, statusMapping } from "../types";
+import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "./auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -128,15 +128,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       // Check if this is a UUID (database) project
       if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-        // Convert status to database format if needed
-        const dbStatus = data.status;
-        
         const { error } = await supabase
           .from('projects')
           .update({
             title: data.title,
             description: data.description,
-            status: dbStatus,
+            status: data.status,
             updated_at: new Date().toISOString()
           })
           .eq('id_project', id);

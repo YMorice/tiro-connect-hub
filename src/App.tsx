@@ -3,13 +3,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/auth-context";
 import { ProjectProvider } from "@/context/project-context";
 import { MessageProvider } from "@/context/message-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Pages
+import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -36,8 +37,7 @@ const App = () => (
           <ProjectProvider>
             <MessageProvider>
               <Routes>
-                {/* Replace Index with a redirect to Login */}
-                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/admin-setup" element={<CreateAdminAccount />} />

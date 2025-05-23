@@ -1,8 +1,8 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +26,6 @@ const Login = () => {
     session
   } = useAuth();
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -51,23 +50,14 @@ const Login = () => {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      setIsSubmitting(true);
       console.log("Login form submitted:", values.email);
-      const { user, error } = await login(values.email, values.password);
-
-      if (error) {
-        console.error("Login error:", error);
-        toast.error(typeof error === 'string' ? error : "Failed to sign in. Please check your credentials and try again.");
-        setIsSubmitting(false);
-        return;
-      }
+      await login(values.email, values.password);
 
       // We won't navigate here - the useEffect will handle redirection
       // when the auth state changes after successful login
-    } catch (error: any) {
+    } catch (error) {
       console.error("Login error in form handler:", error);
-      toast.error("Failed to sign in. Please check your credentials and try again.");
-      setIsSubmitting(false);
+      // Error is handled by auth context with toast
     }
   };
 
@@ -115,9 +105,9 @@ const Login = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 
-                  disabled={isSubmitting}
+                  disabled={loading}
                 >
-                  {isSubmitting ? "Signing in..." : "Sign In"}
+                  {loading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </Form>

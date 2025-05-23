@@ -7,7 +7,6 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -33,19 +32,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const loadSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
-        setSession(session);
+      setSession(session);
 
-        if (session) {
-          await fetchUser(session);
-        }
-      } catch (error) {
-        console.error("Error loading session:", error);
-      } finally {
-        setLoading(false);
+      if (session) {
+        await fetchUser(session);
       }
+      setLoading(false);
     };
 
     loadSession();
@@ -53,7 +47,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Listen for changes on auth state (login, signout, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state changed:", event);
         setSession(session);
 
         if (session) {
@@ -81,9 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('Error fetching user profile:', error);
-        // Don't throw error, just log it and continue
-        setLoading(false);
-        return;
+        throw error;
       }
 
       if (userProfile) {
@@ -157,7 +148,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('Registration error:', error);
-        toast.error(`Registration failed: ${error.message}`);
         return { user: null, error: error.message };
       }
 
@@ -189,7 +179,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (userTableError) {
           console.error('Error inserting user data:', userTableError);
-          toast.error(`Error creating user profile: ${userTableError.message}`);
           return { user: null, error: userTableError.message };
         }
 
@@ -209,7 +198,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           if (studentError) {
             console.error('Error inserting student data:', studentError);
-            toast.error(`Error creating student profile: ${studentError.message}`);
             return { user: null, error: studentError.message };
           }
         } else if (role === 'entrepreneur') {
@@ -225,7 +213,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           if (entrepreneurError) {
             console.error('Error inserting entrepreneur data:', entrepreneurError);
-            toast.error(`Error creating entrepreneur profile: ${entrepreneurError.message}`);
             return { user: null, error: entrepreneurError.message };
           }
         }
@@ -238,13 +225,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               title: userData.projectName,
               description: userData.projectDescription,
               id_entrepreneur: data.user.id,
-              status: 'STEP1',
+              status: 'open',
             })
             .select();
 
           if (projectError) {
             console.error('Error creating project:', projectError);
-            toast.error(`Error creating project: ${projectError.message}`);
             return { user: null, error: projectError.message };
           }
 
@@ -252,18 +238,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         // Update state and context
-        if (data.session) {
-          await fetchUser(data.session);
-        }
-        toast.success("Registration successful!");
+        await fetchUser(data.session);
         return { user: data.user, error: null };
       } else {
-        toast.error("Failed to create user.");
         return { user: null, error: 'Failed to create user.' };
       }
     } catch (err: any) {
       console.error('Registration failed:', err);
-      toast.error(`Registration error: ${err.message || "Unknown error"}`);
       return { user: null, error: err.message };
     } finally {
       setLoading(false);
@@ -273,36 +254,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      
-      // Wrap the signInWithPassword call in a try/catch block to handle network errors
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) {
-          console.error('Login error:', error);
-          toast.error(`Login failed: ${error.message}`);
-          return { user: null, error: error.message };
-        }
+      if (error) {
+        console.error('Login error:', error);
+        return { user: null, error: error.message };
+      }
 
-        if (data.user && data.session) {
-          await fetchUser(data.session);
-          toast.success("Logged in successfully!");
-          return { user: data.user, error: null };
-        } else {
-          toast.error("Login failed.");
-          return { user: null, error: 'Login failed.' };
-        }
-      } catch (networkError: any) {
-        console.error('Network error during login:', networkError);
-        toast.error("Network error. Please check your connection and try again.");
-        return { user: null, error: "Network error. Please check your connection." };
+      if (data.user && data.session) {
+        await fetchUser(data.session);
+        return { user: data.user, error: null };
+      } else {
+        return { user: null, error: 'Login failed.' };
       }
     } catch (err: any) {
       console.error('Login failed:', err);
-      toast.error(`Login error: ${err.message || "Unknown error"}`);
       return { user: null, error: err.message };
     } finally {
       setLoading(false);
@@ -316,10 +285,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setSession(null);
       navigate('/login'); // Redirect to login page after logout
-      toast.success("Logged out successfully");
     } catch (error: any) {
       console.error('Logout error:', error);
-      toast.error(`Logout failed: ${error.message || "Unknown error"}`);
     } finally {
       setLoading(false);
     }
@@ -328,7 +295,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const updateProfile = async (userData: Partial<User>) => {
     if (!session?.user) {
       console.error('No active session found.');
-      toast.error("Authentication required");
       return;
     }
 
@@ -345,7 +311,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('Error updating user:', error);
-        toast.error(`Profile update failed: ${error.message}`);
         throw error;
       }
 
@@ -360,7 +325,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (userUpdateError) {
         console.error('Error updating user profile:', userUpdateError);
-        toast.error(`Profile update failed: ${userUpdateError.message}`);
         throw userUpdateError;
       }
 
@@ -371,11 +335,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         return prevUser;
       });
-      
-      toast.success("Profile updated successfully");
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast.error(`Profile update error: ${error.message || "Could not update profile"}`);
       throw new Error(error.message || 'Could not update profile');
     } finally {
       setLoading(false);
