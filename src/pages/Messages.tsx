@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Clock, Check, X, FileText, Download } from "lucide-react";
+import { Send, Clock, Check, X, FileText, Download, Menu } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { useMessages } from "@/context/message-context";
 import { toast } from "@/components/ui/sonner";
@@ -15,6 +15,8 @@ import { useProjects } from "@/context/project-context";
 import { User, Message } from "@/types";
 import DocumentUpload from "@/components/DocumentUpload";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface ChatMessageProps {
   message: Message;
@@ -26,12 +28,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => 
   if (message.documentUrl) {
     return (
       <div className={`flex w-full py-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-        <div className={`rounded-lg p-3 text-sm w-fit max-w-[75%] ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
+        <div className={`rounded-lg p-3 text-sm w-fit max-w-[85%] sm:max-w-[75%] ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            <div className="flex-1">
-              <p className="font-medium">{message.documentName || "Document"}</p>
-              <p>{message.content}</p>
+            <FileText className="h-4 w-4 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="font-medium truncate">{message.documentName || "Document"}</p>
+              <p className="break-words">{message.content}</p>
               <div className="mt-2">
                 <a 
                   href={message.documentUrl} 
@@ -56,7 +58,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => 
   // Regular message rendering
   return (
     <div className={`flex w-full py-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`rounded-lg p-3 text-sm w-fit max-w-[75%] ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
+      <div className={`rounded-lg p-3 text-sm w-fit max-w-[85%] sm:max-w-[75%] break-words ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
         {message.content}
         <div className="mt-1 text-xs opacity-70">
           {message.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -78,6 +80,8 @@ const Messages = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
+  const [sheetOpen, setSheetOpen] = useState(false);
   
   // Extract query parameters
   useEffect(() => {
@@ -181,54 +185,92 @@ const Messages = () => {
     toast.success("Document shared");
   };
 
+  const handleProjectSelect = (projectId: string) => {
+    setCurrentProject(projectId);
+    if (isMobile) {
+      setSheetOpen(false); // Close the sheet on mobile when a project is selected
+    }
+  };
+
   const accessibleProjects = getAccessibleProjects();
+
+  const ProjectsList = () => (
+    <div className="h-full">
+      <CardHeader className="p-4">
+        <CardTitle className="text-lg">Projects</CardTitle>
+        <CardDescription>Select a project to view messages</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <ScrollArea className="h-[300px] md:h-[calc(100vh-240px)] w-full">
+          <div className="p-2 space-y-1">
+            {accessibleProjects.length > 0 ? (
+              accessibleProjects.map((project) => (
+                <Button
+                  key={project.id}
+                  variant="ghost"
+                  className={`w-full justify-start text-left ${currentProject === project.id ? 'text-tiro-purple font-semibold' : ''}`}
+                  onClick={() => handleProjectSelect(project.id)}
+                >
+                  <span className="truncate">{project.title}</span>
+                </Button>
+              ))
+            ) : (
+              <div className="px-4 py-2 text-sm text-muted-foreground">
+                No projects available
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </div>
+  );
 
   return (
     <AppLayout>
-      <div className="container max-w-5xl mx-auto py-4 sm:py-10 px-2 sm:px-6">
+      <div className="container max-w-5xl mx-auto py-2 px-2 sm:py-6 sm:px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
-          {/* Project List */}
-          <div className="md:col-span-1 order-2 md:order-1">
+          {/* Mobile Project List as Slide-over */}
+          {isMobile && (
+            <div className="md:hidden mb-2">
+              <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="w-full flex justify-between items-center">
+                    <span>
+                      {currentProject 
+                        ? accessibleProjects.find(p => p.id === currentProject)?.title || "Select Project" 
+                        : "Select Project"}
+                    </span>
+                    <Menu className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[80%] sm:w-[380px] p-0">
+                  <Card className="h-full border-0">
+                    <ProjectsList />
+                  </Card>
+                </SheetContent>
+              </Sheet>
+            </div>
+          )}
+
+          {/* Desktop Project List */}
+          <div className="hidden md:block md:col-span-1">
             <Card className="h-full">
-              <CardHeader className="p-4">
-                <CardTitle className="text-lg">Projects</CardTitle>
-                <CardDescription>Select a project to view messages</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ScrollArea className="h-[300px] md:h-[400px] w-full">
-                  <div className="p-2 space-y-1">
-                    {accessibleProjects.length > 0 ? (
-                      accessibleProjects.map((project) => (
-                        <Button
-                          key={project.id}
-                          variant="ghost"
-                          className={`w-full justify-start ${currentProject === project.id ? 'text-tiro-purple font-semibold' : ''}`}
-                          onClick={() => setCurrentProject(project.id)}
-                        >
-                          <span className="truncate">{project.title}</span>
-                        </Button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-2 text-sm text-muted-foreground">
-                        No projects available
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </CardContent>
+              <ProjectsList />
             </Card>
           </div>
 
           {/* Messages */}
-          <div className="md:col-span-3 order-1 md:order-2">
+          <div className="md:col-span-3">
             <Card className="h-full">
-              <CardHeader className="p-4">
-                <CardTitle className="text-lg">Messages</CardTitle>
-                <CardDescription>
+              <CardHeader className="p-3 sm:p-4">
+                <CardTitle className="text-lg">
                   {currentProject && accessibleProjects.find(p => p.id === currentProject)?.title}
+                </CardTitle>
+                <CardDescription>
+                  {currentProject ? "Project conversation" : "Select a project to view messages"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="h-[500px] flex flex-col p-4">
+              <CardContent className="h-[calc(100vh-240px)] flex flex-col p-3 sm:p-4">
                 {currentProject ? (
                   <>
                     <ScrollArea className="flex-grow mb-4 pr-2">
@@ -282,7 +324,11 @@ const Messages = () => {
                 ) : (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
-                      <p className="text-muted-foreground">Select a project to view messages</p>
+                      <p className="text-muted-foreground">
+                        {isMobile 
+                          ? "Tap 'Select Project' above to choose a project"
+                          : "Select a project to view messages"}
+                      </p>
                       {accessibleProjects.length === 0 && (
                         <p className="mt-2 text-sm text-muted-foreground">
                           You don't have any projects yet

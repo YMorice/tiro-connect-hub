@@ -13,6 +13,7 @@ import { Project, User } from "@/types";
 import { toast } from "@/components/ui/sonner";
 import { Check, X, UserPlus, MessageSquare, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Admin = () => {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ const Admin = () => {
   const [studentsToAssign, setStudentsToAssign] = useState<{ [projectId: string]: User[] }>({});
   const [students, setStudents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
   
   // Redirect if not admin
   useEffect(() => {
@@ -270,8 +272,8 @@ const Admin = () => {
                           <TableHeader>
                             <TableRow>
                               <TableHead>Name</TableHead>
-                              <TableHead>Skills</TableHead>
-                              <TableHead>Experience</TableHead>
+                              <TableHead className="hidden sm:table-cell">Skills</TableHead>
+                              <TableHead className="hidden lg:table-cell">Experience</TableHead>
                               <TableHead>Select</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -280,13 +282,14 @@ const Admin = () => {
                               students.map(student => (
                                 <TableRow key={student.id}>
                                   <TableCell className="font-medium">{student.name}</TableCell>
-                                  <TableCell>{student.skills?.join(", ") || "N/A"}</TableCell>
-                                  <TableCell>{student.bio || "N/A"}</TableCell>
+                                  <TableCell className="hidden sm:table-cell">{student.skills?.join(", ") || "N/A"}</TableCell>
+                                  <TableCell className="hidden lg:table-cell">{student.bio || "N/A"}</TableCell>
                                   <TableCell>
                                     <Button 
                                       variant={isStudentSelected(project.id, student.id) ? "default" : "outline"}
                                       size="sm"
                                       onClick={() => toggleStudentForProject(project.id, student)}
+                                      className="w-full sm:w-auto"
                                     >
                                       {isStudentSelected(project.id, student.id) ? (
                                         <>
@@ -341,15 +344,19 @@ const Admin = () => {
                     <CardDescription>{project.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex justify-end space-x-2">
+                    <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
                       <Button 
                         variant="outline" 
                         onClick={() => viewConversation(project.id)}
+                        className="w-full sm:w-auto"
                       >
                         <MessageSquare className="h-4 w-4 mr-1" />
                         View Conversation
                       </Button>
-                      <Button onClick={() => confirmPayment(project)}>
+                      <Button 
+                        onClick={() => confirmPayment(project)}
+                        className="w-full sm:w-auto"
+                      >
                         <CreditCard className="h-4 w-4 mr-1" />
                         Confirm Payment
                       </Button>
@@ -380,6 +387,7 @@ const Admin = () => {
                       <Button 
                         variant="outline" 
                         onClick={() => viewConversation(project.id)}
+                        className="w-full sm:w-auto"
                       >
                         <MessageSquare className="h-4 w-4 mr-1" />
                         View Conversation
@@ -414,6 +422,7 @@ const Admin = () => {
                       <Button 
                         variant="outline" 
                         onClick={() => viewConversation(project.id)}
+                        className="w-full sm:w-auto"
                       >
                         <MessageSquare className="h-4 w-4 mr-1" />
                         View Conversation
