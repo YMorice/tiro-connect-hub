@@ -19,6 +19,9 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Poppins', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -63,12 +66,14 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
+				// New custom palette colors
 				tiro: {
-					purple: '#9b87f5',
-					blue: '#0ea5e9',
-					magenta: '#d946ef',
-					lightGray: '#f6f6f7',
-					darkGray: '#333333'
+					primary: '#E74C3C',
+					secondary: '#16A085',
+					white: '#F7FAFB',
+					gray1: '#ECF0F1',
+					gray2: '#CACECF',
+					black: '#121A21',
 				}
 			},
 			borderRadius: {
