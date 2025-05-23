@@ -18,43 +18,21 @@ import {
   BadgeDollarSign, 
   FileText, 
   MessageSquare, 
-  Star,
-  Circle,
   User
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
-
-interface DbProject {
-  id_project: string;
-  title: string;
-  description: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  id_entrepreneur: string;
-  id_pack: string;
-}
-
-interface DbMessage {
-  id_message: string;
-  content: string;
-  read: boolean;
-  created_at: string;
-  project_id: string;
-  sender_id: string;
-}
+import StudentReviewsTable from "@/components/student/StudentReviewsTable";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { setProjects } = useProjects();
-  const { messages } = useMessages();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [dbProjects, setDbProjects] = useState<DbProject[]>([]);
-  const [dbMessages, setDbMessages] = useState<DbMessage[]>([]);
-  const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
-  const [studentId, setStudentId] = useState<string | null>(null);
+  const [dbProjects, setDbProjects] = useState([]);
+  const [dbMessages, setDbMessages] = useState([]);
+  const [entrepreneurId, setEntrepreneurId] = useState(null);
+  const [studentId, setStudentId] = useState(null);
   
   // Fetch data from the database when the component mounts
   useEffect(() => {
@@ -193,7 +171,8 @@ const Dashboard = () => {
             read,
             created_at,
             project_id,
-            sender_id
+            sender_id,
+            users!sender_id(name)
           `)
           .order('created_at', { ascending: false })
           .limit(10);
@@ -222,34 +201,6 @@ const Dashboard = () => {
   const unreadMessages = dbMessages.filter(m => !m.read).length;
   
   const openProjects = dbProjects.filter(p => p.status === 'open');
-
-  // Mock some reviews for display (we'll keep these for now)
-  const mockReviews = [
-    {
-      id: "1",
-      projectId: "1",
-      reviewerId: "1",
-      studentId: "2",
-      rating: 5,
-      comment: "Excellent work! Delivered ahead of schedule.",
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    },
-    {
-      id: "2",
-      projectId: "2",
-      reviewerId: "1",
-      studentId: "2",
-      rating: 4,
-      comment: "Great design skills, would hire again.",
-      createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-    },
-  ];
-
-  // Mock online users (we'll keep these for now)
-  const onlineUsers = [
-    { id: "1", name: "John Entrepreneur", isOnline: true },
-    { id: "3", name: "Alice Designer", isOnline: false },
-  ];
 
   return (
     <AppLayout>
@@ -420,69 +371,82 @@ const Dashboard = () => {
 
           {/* Entrepreneur-specific content */}
           {user?.role === "entrepreneur" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Projects</CardTitle>
-                <CardDescription>Status of your current projects</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {dbProjects.length > 0 ? (
-                  <div className="space-y-4">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Project</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Created</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {dbProjects.slice(0, 5).map((project) => (
-                          <TableRow key={project.id_project}>
-                            <TableCell className="font-medium">{project.title}</TableCell>
-                            <TableCell>
-                              <span
-                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                  project.status === "completed"
-                                    ? "bg-green-100 text-green-800"
-                                    : project.status === "in_progress"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : project.status === "open"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : project.status === "review"
-                                    ? "bg-purple-100 text-purple-800"
-                                    : "bg-gray-100 text-gray-800"
-                                }`}
-                              >
-                                {project.status.replace("_", " ").toUpperCase()}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(project.created_at).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <Button variant="outline" size="sm" asChild>
-                                <Link to={`/projects/${project.id_project}`}>View</Link>
-                              </Button>
-                            </TableCell>
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Projects</CardTitle>
+                  <CardDescription>Status of your current projects</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {dbProjects.length > 0 ? (
+                    <div className="space-y-4">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Project</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead>Actions</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    {dbProjects.length > 5 && (
-                      <div className="mt-4 text-center">
-                        <Button variant="outline" asChild>
-                          <Link to="/projects">View All Projects</Link>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No projects found.</p>
-                )}
-              </CardContent>
-            </Card>
+                        </TableHeader>
+                        <TableBody>
+                          {dbProjects.slice(0, 5).map((project) => (
+                            <TableRow key={project.id_project}>
+                              <TableCell className="font-medium">{project.title}</TableCell>
+                              <TableCell>
+                                <span
+                                  className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                                    project.status === "completed"
+                                      ? "bg-green-100 text-green-800"
+                                      : project.status === "in_progress"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : project.status === "open"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : project.status === "review"
+                                      ? "bg-purple-100 text-purple-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {project.status.replace("_", " ").toUpperCase()}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                {new Date(project.created_at).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <Button variant="outline" size="sm" asChild>
+                                  <Link to={`/projects/${project.id_project}`}>View</Link>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {dbProjects.length > 5 && (
+                        <div className="mt-4 text-center">
+                          <Button variant="outline" asChild>
+                            <Link to="/projects">View All Projects</Link>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No projects found.</p>
+                  )}
+                </CardContent>
+              </Card>
+              
+              {/* Student Reviews Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Student Reviews</CardTitle>
+                  <CardDescription>Your reviews of students who worked on your projects</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <StudentReviewsTable />
+                </CardContent>
+              </Card>
+            </>
           )}
 
           {/* Common components for both roles */}
@@ -494,11 +458,11 @@ const Dashboard = () => {
                 <CardDescription>Your conversations</CardDescription>
               </CardHeader>
               <CardContent>
-                {dbMessages.length > 0 || onlineUsers.length > 0 ? (
+                {dbMessages.length > 0 ? (
                   <div className="space-y-4">
-                    {onlineUsers.map((contact) => (
+                    {dbMessages.slice(0, 5).map((message) => (
                       <div
-                        key={contact.id}
+                        key={message.id_message}
                         className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
                       >
                         <div className="flex items-center">
@@ -506,16 +470,11 @@ const Dashboard = () => {
                             <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                               <User size={20} />
                             </div>
-                            <span
-                              className={`absolute bottom-0 right-0 block h-3 w-3 rounded-full ring-2 ring-white ${
-                                contact.isOnline ? 'bg-green-500' : 'bg-red-500'
-                              }`}
-                            />
                           </div>
                           <div>
-                            <p className="font-medium">{contact.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {contact.isOnline ? "Online" : "Offline"}
+                            <p className="font-medium">{message.users?.name || "User"}</p>
+                            <p className="text-xs text-gray-500 truncate max-w-[180px]">
+                              {message.content}
                             </p>
                           </div>
                         </div>

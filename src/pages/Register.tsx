@@ -1127,7 +1127,9 @@ const Register = () => {
       <div className="w-full max-w-md">
         <Card className="shadow-lg">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-3xl font-bold text-tiro-purple">Tiro</CardTitle>
+            <div className="flex justify-center mb-2">
+              <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-10" />
+            </div>
             <CardDescription>
               {step === 5 ? "Registration Complete" : "Create your account"}
             </CardDescription>
@@ -1141,7 +1143,7 @@ const Register = () => {
             <CardFooter className="flex justify-center">
               <div className="text-sm text-center">
                 <span className="text-muted-foreground">Already have an account? </span>
-                <Link to="/login" className="text-tiro-purple hover:underline">
+                <Link to="/login" className="text-tiro-primary hover:underline">
                   Sign in
                 </Link>
               </div>

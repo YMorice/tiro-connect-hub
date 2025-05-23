@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -92,9 +91,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       >
         <div className="flex items-center justify-center h-16 border-b border-sidebar-border">
           {sidebarOpen ? (
-            <img src="/lovable-uploads/9652b78a-5ef3-4f37-b36c-3afe824ddfbe.png" alt="Tiro Logo" className="h-8" />
+            <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-8" />
           ) : (
-            <img src="/lovable-uploads/9652b78a-5ef3-4f37-b36c-3afe824ddfbe.png" alt="Tiro Logo" className="h-6" />
+            <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-6" />
           )}
         </div>
 

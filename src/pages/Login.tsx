@@ -67,7 +67,7 @@ const Login = () => {
         <Card className="shadow-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
-              <img src="/lovable-uploads/9652b78a-5ef3-4f37-b36c-3afe824ddfbe.png" alt="Tiro Logo" className="h-10" />
+              <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-10" />
             </div>
             <CardDescription>
               Sign in to your account
