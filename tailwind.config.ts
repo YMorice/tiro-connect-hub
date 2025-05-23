@@ -64,12 +64,11 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				tiro: {
-					red: '#E74C3C',
-					green: '#16A085',
-					white: '#F7FAFB',
-					gray1: '#ECF0F1',
-					gray2: '#CACECF',
-                    black: '#121A21'
+					purple: '#9b87f5',
+					blue: '#0ea5e9',
+					magenta: '#d946ef',
+					lightGray: '#f6f6f7',
+					darkGray: '#333333'
 				}
 			},
 			borderRadius: {
