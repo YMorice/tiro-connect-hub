@@ -19,7 +19,7 @@ interface ProjectContextType {
   deleteDocument: (projectId: string, documentId: string) => void;
 }
 
-// Mock projects for demonstration
+// Mock projects for demonstration with updated status values
 const mockProjects: Project[] = [
   {
     id: "1",
@@ -27,7 +27,7 @@ const mockProjects: Project[] = [
     description: "Complete overhaul of our online store with improved UX and mobile responsiveness.",
     ownerId: "1", // entrepreneur
     assigneeId: "2", // student
-    status: "in_progress",
+    status: "STEP5", // Updated from "in_progress"
     tasks: [
       {
         id: "101",
@@ -78,7 +78,7 @@ const mockProjects: Project[] = [
     title: "Mobile App UI Design",
     description: "Design the user interface for a new fitness tracking app.",
     ownerId: "1", // entrepreneur
-    status: "open",
+    status: "STEP1", // Updated from "open"
     tasks: [],
     documents: [],
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
@@ -101,7 +101,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       title: data.title || "Untitled Project",
       description: data.description || "",
       ownerId: data.ownerId || user.id,
-      status: "draft",
+      status: "STEP1", // Updated from "draft"
       tasks: [],
       documents: [],
       createdAt: new Date(),

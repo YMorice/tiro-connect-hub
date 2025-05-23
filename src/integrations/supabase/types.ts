@@ -247,6 +247,45 @@ export type Database = {
           },
         ]
       }
+      proposal_to_student: {
+        Row: {
+          accepted: boolean | null
+          created_at: string
+          id_project: string | null
+          id_proposal: string
+          id_student: string | null
+        }
+        Insert: {
+          accepted?: boolean | null
+          created_at?: string
+          id_project?: string | null
+          id_proposal?: string
+          id_student?: string | null
+        }
+        Update: {
+          accepted?: boolean | null
+          created_at?: string
+          id_project?: string | null
+          id_proposal?: string
+          id_student?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_to_student_id_project_fkey"
+            columns: ["id_project"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id_project"]
+          },
+          {
+            foreignKeyName: "proposal_to_student_id_student_fkey"
+            columns: ["id_student"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id_student"]
+          },
+        ]
+      }
       proposed_student: {
         Row: {
           created_at: string | null

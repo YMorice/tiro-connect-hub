@@ -1,3 +1,4 @@
+
 export type UserRole = "student" | "entrepreneur" | "admin";
 
 export interface User {
@@ -19,7 +20,7 @@ export interface Project {
   description: string;
   ownerId: string; // entrepreneur ID
   assigneeId?: string; // student ID
-  status: "draft" | "open" | "in_progress" | "review" | "completed";
+  status: "STEP1" | "STEP2" | "STEP3" | "STEP4" | "STEP5" | "STEP6"; // Updated project status types
   tasks: Task[];
   documents: Document[];
   packId?: string; // reference to the project pack
