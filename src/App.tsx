@@ -10,7 +10,6 @@ import { MessageProvider } from "@/context/message-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Pages
-import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -37,7 +36,7 @@ const App = () => (
           <ProjectProvider>
             <MessageProvider>
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<Login />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/admin-setup" element={<CreateAdminAccount />} />

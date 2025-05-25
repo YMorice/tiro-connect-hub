@@ -50,8 +50,8 @@ const Login = () => {
       if (result.error) {
         console.error("Login failed:", result.error);
       } else {
-        console.log("Login successful, redirecting...");
-        // The useEffect will handle the redirect
+        console.log("Login successful, waiting for redirect...");
+        // The useEffect will handle the redirect when user state is updated
       }
     } catch (error) {
       console.error("Login error in form handler:", error);
@@ -61,8 +61,20 @@ const Login = () => {
     }
   };
 
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tiro-primary mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Don't show login form if user is already authenticated
-  if (user && session && !loading) {
+  if (user && session) {
     return null; // Let the useEffect handle the redirect
   }
 
