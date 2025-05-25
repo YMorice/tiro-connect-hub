@@ -62,7 +62,6 @@ const step1Schema = z.object({
 const step2SchemaStudent = z.object({
   specialty: z.string().min(1, "Please select a specialty"),
   bio: z.string().min(10, "Please provide at least 10 characters about yourself"),
-  // Modified to accept any URL without requiring https:// prefix and making it required
   portfolioUrl: z.string().min(1, "Portfolio URL is required"),
   formation: z.string().min(1, "Please provide your education or training information"),
 });
@@ -117,7 +116,7 @@ type FormValues = {
   skills?: string[];
   avatar?: string;
   skipProject?: boolean;
-  formation?: string; // Add formation field
+  formation?: string;
 };
 
 const Register = () => {
@@ -223,12 +222,10 @@ const Register = () => {
   const handleFileSelect = async (file: File) => {
     try {
       setIsLoading(true);
-      // Generate a unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = `${fileName}`;
       
-      // Upload the file to the pp bucket
       const { error: uploadError } = await supabase
         .storage
         .from('pp')
@@ -239,7 +236,6 @@ const Register = () => {
         
       if (uploadError) throw uploadError;
       
-      // Get the public URL
       const { data: urlData } = supabase
         .storage
         .from('pp')
@@ -249,8 +245,6 @@ const Register = () => {
       setAvatarUrl(profilePictureUrl);
     } catch (error: any) {
       console.error("Error uploading profile picture:", error);
-      
-      // Still create a temporary URL for preview
       const tempUrl = URL.createObjectURL(file);
       setAvatarUrl(tempUrl);
     } finally {
@@ -397,52 +391,44 @@ const Register = () => {
     });
   };
 
-  // Final submit function - now including profile picture URL
+  // Final submit function - fixed to properly handle data
   const finalSubmit = async (values: FormValues) => {
-    if (isSubmitting) return; // Prevent double submission
+    if (isSubmitting) return;
     
     try {
       setIsSubmitting(true);
-      // Create a name from first and last name
+      
       const name = values.firstName && values.lastName 
         ? `${values.firstName} ${values.lastName}` 
         : "New User";
       
-      // Get surname from values
       const surname = values.lastName || "User";
         
-      // Log the data that will be sent to Supabase
       console.log("Submitting registration data:", {
         email: values.email,
-        password: values.password,
         name,
         surname,
         role: values.role,
       });
 
-      // Prepare user data for registration
+      // Prepare cleaned user data for registration
       const userData = {
-        about: values.bio,
-        specialty: values.specialty,
-        portfolioLink: values.portfolioUrl,
-        formation: values.formation, // Add formation to userData
-        phone: values.phoneNumber,
-        address: values.address || values.companyAddress,
-        iban: values.iban,
-        companyName: values.companyName,
-        companyRole: values.companyRole,
-        siret: values.siret,
-        skills: values.skills || selectedSkills,
-        pp_link: avatarUrl, // Add the profile picture URL to the user data
-        // Include additional fields that might be needed for project creation
-        projectName: values.skipProject ? undefined : "New Project",
-        projectDescription: values.skipProject ? undefined : "Project description",
-        projectDeadline: values.skipProject ? undefined : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        about: values.bio || null,
+        specialty: values.specialty || null,
+        portfolioUrl: values.portfolioUrl || null,
+        formation: values.formation || null,
+        phoneNumber: values.phoneNumber || null,
+        address: values.address || values.companyAddress || null,
+        iban: values.iban || null,
+        companyName: values.companyName || null,
+        companyRole: values.companyRole || null,
+        siret: values.siret || null,
+        skills: selectedSkills.length > 0 ? selectedSkills : [],
+        avatar: avatarUrl || null,
       };
       
       console.log("User metadata for registration:", userData);
       
-      // Register user with all necessary data
       const result = await authRegister(
         values.email, 
         values.password, 
@@ -454,13 +440,11 @@ const Register = () => {
       
       if (!result.error) {
         setRegistrationCompleted(true);
-        // Move to thank you step if we're not already on it
         if (step !== 5) {
           setStep(5);
         }
       } else {
         console.error("Registration failed:", result.error);
-        // Error is already shown via toast in auth context
       }
     } catch (error: any) {
       console.error("Registration error:", error);

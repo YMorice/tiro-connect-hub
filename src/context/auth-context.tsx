@@ -72,7 +72,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     loadSession();
 
-    // Listen for changes on auth state (login, signout, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
@@ -94,7 +93,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(null);
         }
         
-        // Always ensure loading is false after auth state change
         setLoading(false);
       }
     );
@@ -117,7 +115,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('Error fetching user profile:', error);
-        // If user profile doesn't exist, clear the session
         if (error.code === 'PGRST116') {
           console.log('User profile not found, signing out...');
           await supabase.auth.signOut();
@@ -127,13 +124,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       if (userProfile) {
-        // We need to fetch additional data based on the user role
         let bio: string | undefined = undefined;
         let skills: string[] | undefined = undefined;
         let specialty: string | undefined = undefined;
         
         if (userProfile.role === 'student') {
-          // Fetch student-specific data
           const { data: studentData } = await supabase
             .from('students')
             .select('biography, skills, specialty')
@@ -173,27 +168,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('Starting registration for:', email);
       
+      // Clean the userData object to avoid undefined values
+      const cleanUserData = {
+        name,
+        surname,
+        role,
+        about: userData.about || null,
+        specialty: userData.specialty || null,
+        portfolioLink: userData.portfolioUrl || null,
+        formation: userData.formation || null,
+        phone: userData.phoneNumber || null,
+        address: userData.address || userData.companyAddress || null,
+        iban: userData.iban || null,
+        companyName: userData.companyName || null,
+        companyRole: userData.companyRole || null,
+        siret: userData.siret || null,
+        skills: (userData.skills && userData.skills.length > 0) ? userData.skills.join(',') : null,
+        pp_link: userData.avatar || null,
+      };
+
+      console.log('Cleaned user metadata for registration:', cleanUserData);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            name,
-            surname,
-            role,
-            about: userData.about,
-            specialty: userData.specialty,
-            portfolioLink: userData.portfolioLink,
-            formation: userData.formation,
-            phone: userData.phone,
-            address: userData.address,
-            iban: userData.iban,
-            companyName: userData.companyName,
-            companyRole: userData.companyRole,
-            siret: userData.siret,
-            skills: userData.skills,
-            pp_link: userData.pp_link,
-          },
+          data: cleanUserData,
         },
       });
 
@@ -204,95 +204,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       if (data.user) {
-        // Insert user details into the 'users' table
-        const { error: userTableError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id_users: data.user.id,
-              name,
-              surname,
-              email,
-              role,
-              about: userData.about,
-              specialty: userData.specialty,
-              portfolioLink: userData.portfolioLink,
-              formation: userData.formation,
-              phone: userData.phone,
-              address: userData.address,
-              iban: userData.iban,
-              companyName: userData.companyName,
-              companyRole: userData.companyRole,
-              siret: userData.siret,
-              skills: userData.skills,
-              pp_link: userData.pp_link,
-            },
-          ]);
-
-        if (userTableError) {
-          console.error('Error inserting user data:', userTableError);
-          toast.error('Failed to create user profile');
-          return { user: null, error: userTableError.message };
-        }
-
-        // Insert role-specific details
-        if (role === 'student') {
-          const { error: studentError } = await supabase
-            .from('students')
-            .insert([
-              {
-                id_user: data.user.id,
-                biography: userData.about,
-                specialty: userData.specialty,
-                portfolio_link: userData.portfolioLink,
-                formation: userData.formation,
-              },
-            ]);
-
-          if (studentError) {
-            console.error('Error inserting student data:', studentError);
-            toast.error('Failed to create student profile');
-            return { user: null, error: studentError.message };
-          }
-        } else if (role === 'entrepreneur') {
-          const { error: entrepreneurError } = await supabase
-            .from('entrepreneurs')
-            .insert([
-              {
-                id_user: data.user.id,
-                company_name: userData.companyName,
-                company_role: userData.companyRole,
-              },
-            ]);
-
-          if (entrepreneurError) {
-            console.error('Error inserting entrepreneur data:', entrepreneurError);
-            toast.error('Failed to create entrepreneur profile');
-            return { user: null, error: entrepreneurError.message };
-          }
-        }
-
-        // If there's project info, create the project
-        if (userData.projectName && userData.projectDescription && userData.projectDeadline) {
-          const { data: projectData, error: projectError } = await supabase
-            .from('projects')
-            .insert({
-              title: userData.projectName,
-              description: userData.projectDescription,
-              id_entrepreneur: data.user.id,
-              status: 'open',
-            })
-            .select();
-
-          if (projectError) {
-            console.error('Error creating project:', projectError);
-            toast.error('Failed to create project');
-            return { user: null, error: projectError.message };
-          }
-
-          console.log("Project created successfully:", projectData);
-        }
-
         console.log('Registration successful for:', email);
         toast.success('Registration successful!');
         return { user: data.user, error: null };
@@ -343,7 +254,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
-      navigate('/'); // Redirect to login page after logout
+      navigate('/');
       toast.success('Logged out successfully');
     } catch (error: any) {
       console.error('Logout error:', error);
@@ -366,7 +277,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         data: {
           name: userData.name,
           avatar: userData.avatar,
-          // Add other fields you want to update in auth.user
         },
       });
 
@@ -375,7 +285,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw error;
       }
 
-      // Make sure the pp_link gets updated in the users table
       const { error: userUpdateError } = await supabase
         .from('users')
         .update({ 
@@ -389,7 +298,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw userUpdateError;
       }
 
-      // Update the user object in the local state
       setUser((prevUser) => {
         if (prevUser) {
           return { ...prevUser, ...userData };

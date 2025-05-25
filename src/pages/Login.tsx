@@ -30,16 +30,15 @@ const Login = () => {
     }
   });
 
-  // Redirect if user is already logged in - check for both user and session
+  // Only redirect if user is logged in AND not currently submitting a login
   useEffect(() => {
-    if (user && session && !loading) {
-      console.log("User and session found, redirecting to dashboard");
+    if (user && session && !loading && !isSubmitting) {
+      console.log("User authenticated, redirecting to dashboard");
       navigate("/dashboard", { replace: true });
     }
-  }, [user, session, navigate, loading]);
+  }, [user, session, navigate, loading, isSubmitting]);
 
   const onSubmit = async (values: FormValues) => {
-    // Prevent double submission
     if (isSubmitting) {
       console.log("Login already in progress, ignoring submission");
       return;
@@ -47,31 +46,39 @@ const Login = () => {
     
     try {
       setIsSubmitting(true);
-      console.log("Login form submitted:", values.email);
+      console.log("Starting login for:", values.email);
       
       const result = await login(values.email, values.password);
       
       if (result.error) {
         console.error("Login failed:", result.error);
-        // Reset the submitting state on error since login won't proceed
         setIsSubmitting(false);
-      } else {
-        console.log("Login successful - auth state will update automatically");
-        // Don't reset isSubmitting here - let the auth state change handle it
-        // The useEffect will redirect us when user/session state updates
       }
+      // On success, don't reset isSubmitting - let the useEffect handle redirect
     } catch (error) {
       console.error("Login error in form handler:", error);
       setIsSubmitting(false);
     }
   };
 
-  // Reset submitting state when user successfully logs in
+  // Reset submitting state when auth completes successfully
   useEffect(() => {
-    if (user && session) {
+    if (user && session && isSubmitting) {
       setIsSubmitting(false);
     }
-  }, [user, session]);
+  }, [user, session, isSubmitting]);
+
+  // Reset form if there's an error and we're not loading
+  useEffect(() => {
+    if (!loading && !user && !session && isSubmitting) {
+      // If we're not loading and have no user/session but still submitting, reset
+      const timer = setTimeout(() => {
+        setIsSubmitting(false);
+      }, 5000); // Reset after 5 seconds as fallback
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loading, user, session, isSubmitting]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -95,7 +102,12 @@ const Login = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="example@email.com" {...field} autoComplete="email" />
+                        <Input 
+                          placeholder="example@email.com" 
+                          {...field} 
+                          autoComplete="email" 
+                          disabled={isSubmitting}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -108,7 +120,13 @@ const Login = () => {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="******" {...field} autoComplete="current-password" />
+                        <Input 
+                          type="password" 
+                          placeholder="******" 
+                          {...field} 
+                          autoComplete="current-password" 
+                          disabled={isSubmitting}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -117,7 +135,7 @@ const Login = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 
-                  disabled={isSubmitting || loading}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? "Signing in..." : "Sign In"}
                 </Button>
