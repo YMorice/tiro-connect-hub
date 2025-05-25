@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -91,7 +92,7 @@ const Login = () => {
                           placeholder="example@email.com" 
                           {...field} 
                           autoComplete="email" 
-                          disabled={isSubmitting || loading}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -110,7 +111,7 @@ const Login = () => {
                           placeholder="******" 
                           {...field} 
                           autoComplete="current-password" 
-                          disabled={isSubmitting || loading}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -120,7 +121,7 @@ const Login = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 
-                  disabled={isSubmitting || loading}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? "Signing in..." : "Sign In"}
                 </Button>
