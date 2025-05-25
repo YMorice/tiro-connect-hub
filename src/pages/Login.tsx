@@ -52,11 +52,11 @@ const Login = () => {
       
       if (result.error) {
         console.error("Login failed:", result.error);
-        setIsSubmitting(false);
       }
       // On success, don't reset isSubmitting - let the useEffect handle redirect
     } catch (error) {
       console.error("Login error in form handler:", error);
+    } finally {
       setIsSubmitting(false);
     }
   };
