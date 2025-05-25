@@ -65,27 +65,46 @@ const Admin = () => {
     }
   };
 
-  // Navigate to student selection page (STEP1 -> STEP2)
-  const navigateToStudentSelection = async (project: Project) => {
+  // Navigate to student selection page (STEP1)
+  const navigateToStudentSelection = (project: Project) => {
+    navigate(`/admin/student-selection?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
+  };
+
+  // Send proposals to students (STEP1 -> STEP2)
+  const sendProposalsToStudents = async (project: Project) => {
     try {
-      // Update project to STEP2 in Supabase
-      const { error } = await supabase
-        .from('projects')
-        .update({ status: 'STEP2' })
-        .eq('id_project', project.id);
+      // Check if students have been proposed for this project
+      const { data: proposedStudents, error } = await supabase
+        .from('proposed_student')
+        .select('student_id')
+        .eq('project_id', project.id);
         
       if (error) {
         throw error;
       }
       
+      if (!proposedStudents || proposedStudents.length === 0) {
+        toast.error("Please select students first before sending proposals");
+        return;
+      }
+      
+      // Update project to STEP2 in Supabase
+      const { error: updateError } = await supabase
+        .from('projects')
+        .update({ status: 'STEP2' })
+        .eq('id_project', project.id);
+        
+      if (updateError) {
+        throw updateError;
+      }
+      
       // Update local state
       updateProject(project.id, { status: "STEP2" });
       
-      // Navigate to student selection
-      navigate(`/admin/student-selection?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
+      toast.success(`Proposals sent to ${proposedStudents.length} students`);
     } catch (error) {
-      console.error('Error updating project status:', error);
-      toast.error("Failed to update project status");
+      console.error('Error sending proposals:', error);
+      toast.error("Failed to send proposals to students");
     }
   };
 
@@ -273,15 +292,25 @@ const Admin = () => {
               View Conversation
             </Button>
             
-            {/* STEP1: Select students to propose */}
+            {/* STEP1: Select students and send proposals */}
             {project.status === "STEP1" && (
-              <Button
-                onClick={() => navigateToStudentSelection(project)}
-                className="w-full sm:w-auto"
-              >
-                <UserPlus className="h-4 w-4 mr-1" />
-                Send Proposals to Students
-              </Button>
+              <>
+                <Button
+                  onClick={() => navigateToStudentSelection(project)}
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                >
+                  <UserPlus className="h-4 w-4 mr-1" />
+                  Select Students
+                </Button>
+                <Button
+                  onClick={() => sendProposalsToStudents(project)}
+                  className="w-full sm:w-auto"
+                >
+                  <ArrowRight className="h-4 w-4 mr-1" />
+                  Send Proposals to Students
+                </Button>
+              </>
             )}
             
             {/* STEP2: View accepted students and propose to entrepreneur */}
