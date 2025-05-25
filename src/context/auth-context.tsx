@@ -33,6 +33,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let mounted = true;
+    let fetchingUser = false;
 
     const loadSession = async () => {
       try {
@@ -52,8 +53,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Initial session loaded:', session?.user?.id || 'no session');
         setSession(session);
 
-        if (session?.user) {
+        if (session?.user && !fetchingUser) {
+          fetchingUser = true;
           await fetchUser(session);
+          fetchingUser = false;
         } else {
           setUser(null);
         }
@@ -80,17 +83,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         setSession(session);
 
-        if (session?.user && event === 'SIGNED_IN') {
+        if (session?.user && event === 'SIGNED_IN' && !fetchingUser) {
           console.log('User signed in, fetching profile...');
+          fetchingUser = true;
           try {
             await fetchUser(session);
           } catch (error) {
             console.error('Error fetching user on auth change:', error);
             setUser(null);
+          } finally {
+            fetchingUser = false;
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out');
           setUser(null);
+          fetchingUser = false;
         }
         
         setLoading(false);
@@ -246,28 +253,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   
       if (data.user && data.session) {
         console.log('Login successful for:', email);
-        setSession(data.session);
-        
-        // Set a simple user object immediately to prevent undefined errors
-        const simpleUser: User = {
-          id: data.user.id,
-          email: data.user.email || '',
-          name: 'Loading...',
-          role: 'student',
-          avatar: '',
-          bio: '',
-          skills: [],
-          specialty: '',
-          createdAt: new Date(data.user.created_at),
-          isOnline: true,
-        };
-        setUser(simpleUser);
-        
-        // Then fetch the full profile in the background
-        setTimeout(() => {
-          fetchUser(data.session);
-        }, 0);
-  
         toast.success('Login successful!');
         return { user: data.user, error: null };
       } else {

@@ -49,14 +49,14 @@ const Login = () => {
       
       if (result.error) {
         console.error("Login failed:", result.error);
-        setIsSubmitting(false);
       } else {
-        console.log("Login successful, should redirect soon...");
-        // Keep isSubmitting true to prevent double submission
+        console.log("Login successful, redirecting...");
         // The useEffect will handle the redirect
       }
     } catch (error) {
       console.error("Login error in form handler:", error);
+    } finally {
+      // Always reset the submitting state
       setIsSubmitting(false);
     }
   };
