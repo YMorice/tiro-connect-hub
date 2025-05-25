@@ -115,10 +115,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('Error fetching user profile:', error);
-        if (error.code === 'PGRST116') {
-          console.log('User profile not found, signing out...');
-          await supabase.auth.signOut();
-          return;
+        if (error.code === 'PGRST116') {                           // row missing
+          console.log('User profile not found, creating minimal profile…');
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id_users: session.user.id,
+              email: session.user.email,
+              role: (session.user.user_metadata as any)?.role || 'student',
+            });
+          if (insertError) throw insertError;                     // fail hard
+          return await fetchUser(session);                        // retry
         }
         throw error;
       }
@@ -233,11 +240,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return { user: null, error: error.message };
       }
 
-      if (data.user && data.session) {
-        console.log('Login successful for:', email);
-        toast.success('Login successful!');
-        return { user: data.user, error: null };
-      } else {
+        if (data.user && data.session) {
+          console.log('Login successful for:', email);
+          setSession(data.session);          // NEW ─ push session in state
+          await fetchUser(data.session);     // NEW ─ hydrate user immediatel
+          toast.success('Login successful!');
+          return { user: data.user, error: null };
+        }
+        else {
         toast.error('Login failed');
         return { user: null, error: 'Login failed.' };
       }
