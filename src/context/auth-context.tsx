@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import {
   Session,
@@ -174,7 +173,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, [fetchUser]);
+  }, []);
 
   const register = async (email: string, password: string, name: string, surname: string, role: UserRole, userData: any = {}) => {
     try {
@@ -261,17 +260,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      setLoading(true);
-      await supabase.auth.signOut();
+      console.log('Starting logout process...');
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Logout error:', error);
+        toast.error('Logout failed');
+        return;
+      }
+
+      // Clear state immediately after successful logout
       setUser(null);
       setSession(null);
-      navigate('/');
+      
+      console.log('Logout successful, navigating to home...');
+      navigate('/', { replace: true });
       toast.success('Logged out successfully');
     } catch (error: any) {
       console.error('Logout error:', error);
       toast.error('Logout failed');
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,99 +24,105 @@ const Projects = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
-  // Fetch projects from database - optimized to reduce queries
+  // Fetch projects directly without RLS issues
   useEffect(() => {
     if (!user) return;
     
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        console.log("Fetching projects for user:", user.id);
+        console.log("Fetching projects for user:", user.id, "with role:", user.role);
         
         let projectData: any[] = [];
         
         if (user.role === "entrepreneur") {
-          // Get entrepreneur ID and projects in one optimized query
-          const { data: entrepreneurData } = await supabase
+          // Get entrepreneur ID first
+          const { data: entrepreneurData, error: entrepreneurError } = await supabase
             .from('entrepreneurs')
-            .select(`
-              id_entrepreneur,
-              projects (
-                id_project,
-                title,
-                description,
-                status,
-                created_at,
-                updated_at,
-                id_entrepreneur,
-                id_pack
-              )
-            `)
+            .select('id_entrepreneur')
             .eq('id_user', user.id)
             .single();
             
-          if (entrepreneurData?.projects) {
-            projectData = entrepreneurData.projects;
+          if (entrepreneurError) {
+            console.error('Error fetching entrepreneur data:', entrepreneurError);
+            setLoading(false);
+            return;
+          }
+          
+          if (entrepreneurData) {
+            // Fetch projects for this entrepreneur
+            const { data, error } = await supabase
+              .from('projects')
+              .select('*')
+              .eq('id_entrepreneur', entrepreneurData.id_entrepreneur);
+              
+            if (error) {
+              console.error('Error fetching entrepreneur projects:', error);
+            } else {
+              projectData = data || [];
+            }
           }
         } else if (user.role === "student") {
-          // Get assigned projects and open projects efficiently
-          const [assignedResult, openResult] = await Promise.all([
-            supabase
-              .from('project_assignments')
-              .select(`
-                projects (
-                  id_project,
-                  title,
-                  description,
-                  status,
-                  created_at,
-                  updated_at,
-                  id_entrepreneur,
-                  id_pack
-                )
-              `)
-              .eq('id_student', user.id),
+          // Get student ID first
+          const { data: studentData, error: studentError } = await supabase
+            .from('students')
+            .select('id_student')
+            .eq('id_user', user.id)
+            .single();
             
-            supabase
-              .from('projects')
-              .select(`
-                id_project,
-                title,
-                description,
-                status,
-                created_at,
-                updated_at,
-                id_entrepreneur,
-                id_pack
-              `)
-              .eq('status', 'open')
-          ]);
+          if (studentError) {
+            console.error('Error fetching student data:', studentError);
+            setLoading(false);
+            return;
+          }
           
-          // Combine assigned and open projects
-          const assignedProjects = assignedResult.data?.map(a => a.projects).filter(Boolean) || [];
-          const openProjects = openResult.data || [];
-          
-          // Remove duplicates
-          const assignedProjectIds = new Set(assignedProjects.map(p => p.id_project));
-          const uniqueOpenProjects = openProjects.filter(p => !assignedProjectIds.has(p.id_project));
-          
-          projectData = [...assignedProjects, ...uniqueOpenProjects];
+          if (studentData) {
+            // Get assigned projects and open projects in parallel
+            const [assignedResult, openResult] = await Promise.all([
+              supabase
+                .from('project_assignments')
+                .select(`
+                  id_project,
+                  projects (
+                    id_project,
+                    title,
+                    description,
+                    status,
+                    created_at,
+                    updated_at,
+                    id_entrepreneur,
+                    id_pack
+                  )
+                `)
+                .eq('id_student', studentData.id_student),
+              
+              supabase
+                .from('projects')
+                .select('*')
+                .eq('status', 'open')
+            ]);
+            
+            // Combine assigned and open projects
+            const assignedProjects = assignedResult.data?.map(a => a.projects).filter(Boolean) || [];
+            const openProjects = openResult.data || [];
+            
+            // Remove duplicates
+            const assignedProjectIds = new Set(assignedProjects.map(p => p.id_project));
+            const uniqueOpenProjects = openProjects.filter(p => !assignedProjectIds.has(p.id_project));
+            
+            projectData = [...assignedProjects, ...uniqueOpenProjects];
+          }
         } else if (user.role === "admin") {
           // Admin sees all projects
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from('projects')
-            .select(`
-              id_project,
-              title,
-              description,
-              status,
-              created_at,
-              updated_at,
-              id_entrepreneur,
-              id_pack
-            `);
+            .select('*');
           
-          projectData = data || [];
+          if (error) {
+            console.error('Error fetching admin projects:', error);
+          } else {
+            projectData = data || [];
+          }
         }
         
         console.log("Fetched projects:", projectData);
@@ -130,8 +135,8 @@ const Projects = () => {
             description: dbProject.description || "",
             status: dbProject.status as any || "draft",
             ownerId: dbProject.id_entrepreneur,
-            tasks: [],  // We'll need to fetch these separately if needed
-            documents: [],  // We'll need to fetch these separately if needed
+            tasks: [],
+            documents: [],
             createdAt: new Date(dbProject.created_at),
             updatedAt: new Date(dbProject.updated_at),
             packId: dbProject.id_pack
@@ -149,7 +154,7 @@ const Projects = () => {
     };
     
     fetchProjects();
-  }, [user?.id, user?.role, setProjects]); // Only depend on essential values
+  }, [user?.id, user?.role, setProjects]);
 
   // Filter projects - memoized to prevent unnecessary recalculations
   const filteredProjects = useMemo(() => {
