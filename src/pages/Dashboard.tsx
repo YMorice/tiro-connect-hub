@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { useProjects } from "@/context/project-context";
-import { useMessages } from "@/context/message-context";
 import { Link, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { 
@@ -16,105 +16,74 @@ import {
 } from "@/components/ui/table";
 import { 
   BadgeDollarSign, 
-  FileText, 
   MessageSquare, 
-  User,
-  Star
+  User
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import StudentReviewsTable from "@/components/student/StudentReviewsTable";
+
+interface DashboardData {
+  projects: any[];
+  messages: any[];
+  entrepreneurId: string | null;
+  studentId: string | null;
+}
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { setProjects } = useProjects();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [dbProjects, setDbProjects] = useState([]);
-  const [dbMessages, setDbMessages] = useState([]);
-  const [entrepreneurId, setEntrepreneurId] = useState(null);
-  const [studentId, setStudentId] = useState(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
+    projects: [],
+    messages: [],
+    entrepreneurId: null,
+    studentId: null
+  });
   
-  // Fetch data from the database when the component mounts
+  // Memoize computed values to prevent unnecessary recalculations
+  const stats = useMemo(() => {
+    const totalProjects = dashboardData.projects.length;
+    const completedProjects = dashboardData.projects.filter(p => p.status === 'completed').length;
+    const openProjects = dashboardData.projects.filter(p => p.status === 'open');
+    const unreadMessages = dashboardData.messages.filter(m => !m.read).length;
+    
+    return {
+      totalProjects,
+      completedProjects,
+      openProjects,
+      unreadMessages
+    };
+  }, [dashboardData]);
+  
+  // Fetch all dashboard data in a single useEffect to prevent cascading requests
   useEffect(() => {
     if (!user) return;
     
-    const fetchData = async () => {
+    const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        console.log("Fetching data for user:", user);
+        console.log("Fetching dashboard data for user:", user.id);
+        
+        const queries = [];
+        let entrepreneurId = null;
+        let studentId = null;
         
         // Get role-specific IDs first
         if (user.role === 'entrepreneur') {
-          // Get entrepreneur ID from user ID
-          const { data: entrepreneurData, error: entrepreneurError } = await supabase
+          const { data: entrepreneurData } = await supabase
             .from('entrepreneurs')
             .select('id_entrepreneur')
             .eq('id_user', user.id)
             .single();
             
-          if (entrepreneurError) {
-            console.error("Error fetching entrepreneur ID:", entrepreneurError);
-          } else if (entrepreneurData) {
-            console.log("Entrepreneur data:", entrepreneurData);
-            setEntrepreneurId(entrepreneurData.id_entrepreneur);
+          if (entrepreneurData) {
+            entrepreneurId = entrepreneurData.id_entrepreneur;
             
-            // Now fetch projects with entrepreneur ID
-            const { data: projectData, error: projectError } = await supabase
-              .from('projects')
-              .select(`
-                id_project,
-                title,
-                description,
-                status,
-                created_at,
-                updated_at,
-                id_entrepreneur,
-                id_pack
-              `)
-              .eq('id_entrepreneur', entrepreneurData.id_entrepreneur);
-              
-            if (projectError) {
-              console.error("Error fetching projects:", projectError);
-            } else {
-              console.log("Fetched projects:", projectData);
-              setDbProjects(projectData || []);
-            }
-          }
-        } else if (user.role === 'student') {
-          // Get student ID from user ID
-          const { data: studentData, error: studentError } = await supabase
-            .from('students')
-            .select('id_student')
-            .eq('id_user', user.id)
-            .single();
-            
-          if (studentError) {
-            console.error("Error fetching student ID:", studentError);
-          } else if (studentData) {
-            console.log("Student data:", studentData);
-            setStudentId(studentData.id_student);
-            
-            // Fetch project assignments for this student
-            const { data: assignmentData, error: assignmentError } = await supabase
-              .from('project_assignments')
-              .select(`
-                id_assignment,
-                id_project,
-                id_student,
-                status,
-                created_at
-              `)
-              .eq('id_student', studentData.id_student);
-              
-            if (assignmentError) {
-              console.error("Error fetching project assignments:", assignmentError);
-            } else if (assignmentData && assignmentData.length > 0) {
-              console.log("Fetched project assignments:", assignmentData);
-              
-              // Fetch the actual projects
-              const projectIds = assignmentData.map(a => a.id_project);
-              const { data: projectData, error: projectError } = await supabase
+            // Fetch entrepreneur's projects
+            queries.push(
+              supabase
                 .from('projects')
                 .select(`
                   id_project,
@@ -126,64 +95,116 @@ const Dashboard = () => {
                   id_entrepreneur,
                   id_pack
                 `)
-                .in('id_project', projectIds);
-                
-              if (projectError) {
-                console.error("Error fetching assigned projects:", projectError);
-              } else {
-                console.log("Fetched assigned projects:", projectData);
-                setDbProjects(projectData || []);
-              }
-            }
+                .eq('id_entrepreneur', entrepreneurData.id_entrepreneur)
+            );
+          }
+        } else if (user.role === 'student') {
+          const { data: studentData } = await supabase
+            .from('students')
+            .select('id_student')
+            .eq('id_user', user.id)
+            .single();
             
-            // Also fetch open projects for student to apply to
-            const { data: openProjects, error: openProjectsError } = await supabase
-              .from('projects')
-              .select(`
-                id_project,
-                title,
-                description,
-                status,
-                created_at,
-                updated_at,
-                id_entrepreneur,
-                id_pack
-              `)
-              .eq('status', 'open');
+          if (studentData) {
+            studentId = studentData.id_student;
+            
+            // Fetch assigned projects and open projects in parallel
+            queries.push(
+              supabase
+                .from('project_assignments')
+                .select(`
+                  id_project,
+                  projects(
+                    id_project,
+                    title,
+                    description,
+                    status,
+                    created_at,
+                    updated_at,
+                    id_entrepreneur,
+                    id_pack
+                  )
+                `)
+                .eq('id_student', studentData.id_student),
               
-            if (openProjectsError) {
-              console.error("Error fetching open projects:", openProjectsError);
-            } else {
-              console.log("Fetched open projects:", openProjects);
-              // Add open projects to state if not already in assigned projects
-              const assignedProjectIds = new Set(dbProjects.map(p => p.id_project));
-              const newOpenProjects = (openProjects || []).filter(p => !assignedProjectIds.has(p.id_project));
-              setDbProjects(prev => [...prev, ...newOpenProjects]);
-            }
+              supabase
+                .from('projects')
+                .select(`
+                  id_project,
+                  title,
+                  description,
+                  status,
+                  created_at,
+                  updated_at,
+                  id_entrepreneur,
+                  id_pack
+                `)
+                .eq('status', 'open')
+            );
           }
         }
         
         // Fetch messages for all users
-        const { data: messagesData, error: messagesError } = await supabase
-          .from('messages')
-          .select(`
-            id_message,
-            content,
-            read,
-            created_at,
-            project_id,
-            sender_id,
-            users!sender_id(name)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(10);
+        queries.push(
+          supabase
+            .from('messages')
+            .select(`
+              id_message,
+              content,
+              read,
+              created_at,
+              project_id,
+              sender_id,
+              users!sender_id(name)
+            `)
+            .order('created_at', { ascending: false })
+            .limit(10)
+        );
+        
+        // Execute all queries in parallel
+        const results = await Promise.allSettled(queries);
+        
+        let projects: any[] = [];
+        let messages: any[] = [];
+        
+        // Process results based on user role
+        if (user.role === 'entrepreneur') {
+          const projectsResult = results[0];
+          if (projectsResult.status === 'fulfilled' && projectsResult.value.data) {
+            projects = projectsResult.value.data;
+          }
           
-        if (messagesError) {
-          console.error("Error fetching messages:", messagesError);
-        } else {
-          console.log("Fetched messages:", messagesData);
-          setDbMessages(messagesData || []);
+          const messagesResult = results[1];
+          if (messagesResult.status === 'fulfilled' && messagesResult.value.data) {
+            messages = messagesResult.value.data;
+          }
+        } else if (user.role === 'student') {
+          // Combine assigned and open projects
+          const assignedResult = results[0];
+          const openResult = results[1];
+          const messagesResult = results[2];
+          
+          if (assignedResult.status === 'fulfilled' && assignedResult.value.data) {
+            projects = assignedResult.value.data.map((a: any) => a.projects).filter(Boolean);
+          }
+          
+          if (openResult.status === 'fulfilled' && openResult.value.data) {
+            const assignedProjectIds = new Set(projects.map(p => p.id_project));
+            const newOpenProjects = openResult.value.data.filter((p: any) => !assignedProjectIds.has(p.id_project));
+            projects = [...projects, ...newOpenProjects];
+          }
+          
+          if (messagesResult.status === 'fulfilled' && messagesResult.value.data) {
+            messages = messagesResult.value.data;
+          }
         }
+        
+        setDashboardData({
+          projects,
+          messages,
+          entrepreneurId,
+          studentId
+        });
         
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -193,15 +214,8 @@ const Dashboard = () => {
       }
     };
     
-    fetchData();
-  }, [user, setProjects]);
-
-  // Calculate statistics based on fetched projects
-  const totalProjects = dbProjects.length;
-  const completedProjects = dbProjects.filter(p => p.status === 'completed').length;
-  const unreadMessages = dbMessages.filter(m => !m.read).length;
-  
-  const openProjects = dbProjects.filter(p => p.status === 'open');
+    fetchDashboardData();
+  }, [user?.id, user?.role]); // Only depend on user ID and role
 
   return (
     <AppLayout>
@@ -233,7 +247,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {user?.role === "entrepreneur" ? totalProjects : openProjects.length}
+                  {user?.role === "entrepreneur" ? stats.totalProjects : stats.openProjects.length}
                 </div>
               </CardContent>
             </Card>
@@ -244,7 +258,7 @@ const Dashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{completedProjects}</div>
+                <div className="text-3xl font-bold">{stats.completedProjects}</div>
               </CardContent>
             </Card>
             <Card>
@@ -258,13 +272,12 @@ const Dashboard = () => {
                   {user?.role === "student" ? (
                     <>
                       <BadgeDollarSign className="inline mr-1 h-6 w-6 text-green-600" />
-                      {/* Mock earnings for now */}
-                      {dbProjects.filter(p => p.status === 'completed').length * 500}
+                      {stats.completedProjects * 500}
                     </>
                   ) : (
                     <>
                       <MessageSquare className="inline mr-1 h-6 w-6 text-blue-600" />
-                      {unreadMessages}
+                      {stats.unreadMessages}
                     </>
                   )}
                 </div>
@@ -282,7 +295,7 @@ const Dashboard = () => {
                   <CardDescription>Available projects you can apply for</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {openProjects.length > 0 ? (
+                  {stats.openProjects.length > 0 ? (
                     <div className="space-y-4">
                       <Table>
                         <TableHeader>
@@ -293,7 +306,7 @@ const Dashboard = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {openProjects.slice(0, 3).map((project) => (
+                          {stats.openProjects.slice(0, 3).map((project) => (
                             <TableRow key={project.id_project}>
                               <TableCell className="font-medium">{project.title}</TableCell>
                               <TableCell>
@@ -313,7 +326,7 @@ const Dashboard = () => {
                           ))}
                         </TableBody>
                       </Table>
-                      {openProjects.length > 3 && (
+                      {stats.openProjects.length > 3 && (
                         <div className="mt-4 text-center">
                           <Button variant="outline" asChild>
                             <Link to="/projects">View All Proposals</Link>
@@ -351,7 +364,7 @@ const Dashboard = () => {
                   <CardDescription>Status of your current projects</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {dbProjects.length > 0 ? (
+                  {dashboardData.projects.length > 0 ? (
                     <div className="space-y-4">
                       <Table>
                         <TableHeader>
@@ -363,7 +376,7 @@ const Dashboard = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {dbProjects.slice(0, 5).map((project) => (
+                          {dashboardData.projects.slice(0, 5).map((project) => (
                             <TableRow key={project.id_project}>
                               <TableCell className="font-medium">{project.title}</TableCell>
                               <TableCell>
@@ -395,7 +408,7 @@ const Dashboard = () => {
                           ))}
                         </TableBody>
                       </Table>
-                      {dbProjects.length > 5 && (
+                      {dashboardData.projects.length > 5 && (
                         <div className="mt-4 text-center">
                           <Button variant="outline" asChild>
                             <Link to="/projects">View All Projects</Link>
@@ -424,16 +437,16 @@ const Dashboard = () => {
 
           {/* Common components for both roles */}
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Recent Messages with online status */}
+            {/* Recent Messages */}
             <Card>
               <CardHeader>
                 <CardTitle>Recent Messages</CardTitle>
                 <CardDescription>Your conversations</CardDescription>
               </CardHeader>
               <CardContent>
-                {dbMessages.length > 0 ? (
+                {dashboardData.messages.length > 0 ? (
                   <div className="space-y-4">
-                    {dbMessages.slice(0, 5).map((message) => (
+                    {dashboardData.messages.slice(0, 5).map((message) => (
                       <div
                         key={message.id_message}
                         className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
@@ -468,7 +481,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Recent Documents - Could populate from database in the future */}
+            {/* Recent Documents */}
             <Card>
               <CardHeader>
                 <CardTitle>Recent Documents</CardTitle>

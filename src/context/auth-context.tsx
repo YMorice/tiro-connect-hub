@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import {
   Session,
   User as SupabaseUser,
@@ -31,86 +31,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    let mounted = true;
-    let fetchingUser = false;
-
-    const loadSession = async () => {
-      try {
-        console.log('Loading initial session...');
-        const { data: { session }, error } = await supabase.auth.getSession();
-
-        if (!mounted) return;
-
-        if (error) {
-          console.error('Error getting session:', error);
-          setSession(null);
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-
-        console.log('Initial session loaded:', session?.user?.id || 'no session');
-        setSession(session);
-
-        if (session?.user && !fetchingUser) {
-          fetchingUser = true;
-          await fetchUser(session);
-          fetchingUser = false;
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('Error in loadSession:', error);
-        if (mounted) {
-          setSession(null);
-          setUser(null);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-
-        console.log('Auth state changed:', event, session?.user?.id || 'no session');
-        
-        setSession(session);
-
-        if (session?.user && event === 'SIGNED_IN' && !fetchingUser) {
-          console.log('User signed in, fetching profile...');
-          fetchingUser = true;
-          try {
-            await fetchUser(session);
-          } catch (error) {
-            console.error('Error fetching user on auth change:', error);
-            setUser(null);
-          } finally {
-            fetchingUser = false;
-          }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
-          setUser(null);
-          fetchingUser = false;
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      mounted = false;
-      subscription?.unsubscribe();
-    };
-  }, []);
-
-  const fetchUser = async (session: Session) => {
+  const fetchUser = useCallback(async (session: Session) => {
     try {
       console.log('Fetching user profile for:', session.user.id);
       
@@ -148,13 +69,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         let specialty: string = '';
         
         if (userProfile.role === 'student') {
-          const { data: studentData, error: studentError } = await supabase
+          const { data: studentData } = await supabase
             .from('students')
             .select('biography, skills, specialty')
             .eq('id_user', session.user.id)
             .single();
             
-          if (!studentError && studentData) {
+          if (studentData) {
             bio = studentData.biography || '';
             skills = Array.isArray(studentData.skills) ? studentData.skills : [];
             specialty = studentData.specialty || '';
@@ -181,7 +102,79 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Error fetching or setting user data:', error);
       setUser(null);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadSession = async () => {
+      try {
+        console.log('Loading initial session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (error) {
+          console.error('Error getting session:', error);
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        console.log('Initial session loaded:', session?.user?.id || 'no session');
+        setSession(session);
+
+        if (session?.user) {
+          await fetchUser(session);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Error in loadSession:', error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+
+        console.log('Auth state changed:', event, session?.user?.id || 'no session');
+        
+        setSession(session);
+
+        if (session?.user && event === 'SIGNED_IN') {
+          console.log('User signed in, fetching profile...');
+          try {
+            await fetchUser(session);
+          } catch (error) {
+            console.error('Error fetching user on auth change:', error);
+            setUser(null);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
+          setUser(null);
+        }
+        
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
+  }, [fetchUser]);
 
   const register = async (email: string, password: string, name: string, surname: string, role: UserRole, userData: any = {}) => {
     try {

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
@@ -25,74 +25,113 @@ const Projects = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
-  // Fetch projects from database
+  // Fetch projects from database - optimized to reduce queries
   useEffect(() => {
+    if (!user) return;
+    
     const fetchProjects = async () => {
-      if (!user) return;
-      
       try {
         setLoading(true);
-        console.log("Fetching projects for user:", user);
+        console.log("Fetching projects for user:", user.id);
         
-        let query = supabase
-          .from('projects')
-          .select(`
-            id_project,
-            title,
-            description,
-            status,
-            created_at,
-            updated_at,
-            id_entrepreneur,
-            id_pack
-          `);
-          
+        let projectData: any[] = [];
+        
         if (user.role === "entrepreneur") {
-          // First get entrepreneur ID from user ID
-          const { data: entrepreneurData, error: entrepreneurError } = await supabase
+          // Get entrepreneur ID and projects in one optimized query
+          const { data: entrepreneurData } = await supabase
             .from('entrepreneurs')
-            .select('id_entrepreneur')
+            .select(`
+              id_entrepreneur,
+              projects (
+                id_project,
+                title,
+                description,
+                status,
+                created_at,
+                updated_at,
+                id_entrepreneur,
+                id_pack
+              )
+            `)
             .eq('id_user', user.id)
             .single();
             
-          if (entrepreneurError) {
-            console.error("Error fetching entrepreneur ID:", entrepreneurError);
-            toast.error("Failed to fetch your entrepreneur profile");
-            setLoading(false);
-            return;
-          }
-          
-          if (entrepreneurData) {
-            // Now fetch projects with entrepreneur ID
-            query = query.eq('id_entrepreneur', entrepreneurData.id_entrepreneur);
+          if (entrepreneurData?.projects) {
+            projectData = entrepreneurData.projects;
           }
         } else if (user.role === "student") {
-          // Students see projects that are assigned to them or open
-          // This needs to be enhanced with proper project assignments
-          query = query.or(`status.eq.open,id_project.in.(${getAssignedProjectIds()})`);
+          // Get assigned projects and open projects efficiently
+          const [assignedResult, openResult] = await Promise.all([
+            supabase
+              .from('project_assignments')
+              .select(`
+                projects (
+                  id_project,
+                  title,
+                  description,
+                  status,
+                  created_at,
+                  updated_at,
+                  id_entrepreneur,
+                  id_pack
+                )
+              `)
+              .eq('id_student', user.id),
+            
+            supabase
+              .from('projects')
+              .select(`
+                id_project,
+                title,
+                description,
+                status,
+                created_at,
+                updated_at,
+                id_entrepreneur,
+                id_pack
+              `)
+              .eq('status', 'open')
+          ]);
+          
+          // Combine assigned and open projects
+          const assignedProjects = assignedResult.data?.map(a => a.projects).filter(Boolean) || [];
+          const openProjects = openResult.data || [];
+          
+          // Remove duplicates
+          const assignedProjectIds = new Set(assignedProjects.map(p => p.id_project));
+          const uniqueOpenProjects = openProjects.filter(p => !assignedProjectIds.has(p.id_project));
+          
+          projectData = [...assignedProjects, ...uniqueOpenProjects];
         } else if (user.role === "admin") {
           // Admin sees all projects
-          // No need to filter query
+          const { data } = await supabase
+            .from('projects')
+            .select(`
+              id_project,
+              title,
+              description,
+              status,
+              created_at,
+              updated_at,
+              id_entrepreneur,
+              id_pack
+            `);
+          
+          projectData = data || [];
         }
         
-        const { data, error } = await query;
+        console.log("Fetched projects:", projectData);
         
-        if (error) {
-          throw error;
-        }
-        
-        console.log("Fetched projects:", data);
-        
-        if (data) {
+        if (projectData) {
           // Convert to the format expected by the UI
-          const formattedProjects: Project[] = data.map(dbProject => ({
+          const formattedProjects: Project[] = projectData.map(dbProject => ({
             id: dbProject.id_project,
             title: dbProject.title,
             description: dbProject.description || "",
             status: dbProject.status as any || "draft",
             ownerId: dbProject.id_entrepreneur,
-            tasks: [],  // We'll need to fetch these separately in a real implementation
-            documents: [],  // We'll need to fetch these separately in a real implementation
+            tasks: [],  // We'll need to fetch these separately if needed
+            documents: [],  // We'll need to fetch these separately if needed
             createdAt: new Date(dbProject.created_at),
             updatedAt: new Date(dbProject.updated_at),
             packId: dbProject.id_pack
@@ -109,31 +148,24 @@ const Projects = () => {
       }
     };
     
-    // Helper function to get projects assigned to the current student
-    const getAssignedProjectIds = () => {
-      // This would be implemented to fetch from project_assignments table
-      // For now, return a dummy query part
-      return "select id_project from project_assignments where id_student = '" + user?.id + "'";
-    };
-    
-    if (user) {
-      fetchProjects();
-    }
-  }, [user, setProjects]);
+    fetchProjects();
+  }, [user?.id, user?.role, setProjects]); // Only depend on essential values
 
-  // Filter projects based on user role, search term and status
-  const filteredProjects = projects.filter((project) => {
-    // Filter by search term
-    const searchFilter = 
-      project.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      project.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Filter by status
-    const statusMatch = 
-      statusFilter === "all" || project.status === statusFilter;
-    
-    return searchFilter && statusMatch;
-  });
+  // Filter projects - memoized to prevent unnecessary recalculations
+  const filteredProjects = useMemo(() => {
+    return projects.filter((project) => {
+      // Filter by search term
+      const searchFilter = 
+        project.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        project.description.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Filter by status
+      const statusMatch = 
+        statusFilter === "all" || project.status === statusFilter;
+      
+      return searchFilter && statusMatch;
+    });
+  }, [projects, searchTerm, statusFilter]);
 
   return (
     <AppLayout>
