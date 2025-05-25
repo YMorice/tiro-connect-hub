@@ -104,9 +104,9 @@ const NewProject = () => {
         .insert({
           title: values.title,
           description: values.description,
-          id_entrepreneur: entrepreneurId, // Use entrepreneur ID instead of user ID
+          id_entrepreneur: entrepreneurId,
           id_pack: values.packId,
-          status: 'draft'
+          status: 'STEP1'
         })
         .select('id_project')
         .single();
@@ -120,17 +120,22 @@ const NewProject = () => {
       // Handle file uploads if any were selected
       if (selectedFiles.length > 0) {
         for (const file of selectedFiles) {
-          // Upload file to storage
-          const fileUrl = await uploadFile(file, projectId);
-          
-          if (fileUrl) {
-            // Add document metadata to database
-            await addDocumentToProject(
-              projectId,
-              file.name,
-              'proposal', // default type
-              fileUrl
-            );
+          try {
+            // Upload file to storage
+            const fileUrl = await uploadFile(file, projectId);
+            
+            if (fileUrl) {
+              // Add document metadata to database
+              await addDocumentToProject(
+                projectId,
+                file.name,
+                'proposal',
+                fileUrl
+              );
+            }
+          } catch (error) {
+            console.error(`Error uploading file ${file.name}:`, error);
+            toast.error(`Failed to upload ${file.name}`);
           }
         }
       }
@@ -140,7 +145,7 @@ const NewProject = () => {
         title: values.title,
         description: values.description,
         ownerId: entrepreneurId,
-        status: "draft",
+        status: "STEP1",
         packId: values.packId,
       });
       
@@ -162,7 +167,7 @@ const NewProject = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto pb-8">
         <div className="mb-8">
           <Button
             variant="ghost"
@@ -284,7 +289,7 @@ const NewProject = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end space-x-4">
+                <div className="flex items-center justify-end space-x-4 pt-6 border-t">
                   <Button 
                     type="button" 
                     variant="outline"

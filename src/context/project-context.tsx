@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "./auth-context";
@@ -17,6 +17,7 @@ interface ProjectContextType {
   deleteTask: (projectId: string, taskId: string) => void;
   addDocument: (projectId: string, document: Partial<Document>, file?: File) => void;
   deleteDocument: (projectId: string, documentId: string) => void;
+  loadProjects: () => Promise<void>;
 }
 
 // Mock projects for demonstration with updated status values
@@ -27,7 +28,7 @@ const mockProjects: Project[] = [
     description: "Complete overhaul of our online store with improved UX and mobile responsiveness.",
     ownerId: "1", // entrepreneur
     assigneeId: "2", // student
-    status: "STEP5", // Updated from "in_progress"
+    status: "STEP5",
     tasks: [
       {
         id: "101",
@@ -78,7 +79,7 @@ const mockProjects: Project[] = [
     title: "Mobile App UI Design",
     description: "Design the user interface for a new fitness tracking app.",
     ownerId: "1", // entrepreneur
-    status: "STEP1", // Updated from "open"
+    status: "STEP1",
     tasks: [],
     documents: [],
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
@@ -93,6 +94,86 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [projects, setProjects] = useState<Project[]>(mockProjects);
   const [loading, setLoading] = useState(false);
 
+  const loadProjects = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // Get entrepreneur ID first
+      const { data: entrepreneurData } = await supabase
+        .from('entrepreneurs')
+        .select('id_entrepreneur')
+        .eq('id_user', user.id)
+        .single();
+
+      if (!entrepreneurData) {
+        setLoading(false);
+        return;
+      }
+
+      // Fetch projects for this entrepreneur
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id_entrepreneur', entrepreneurData.id_entrepreneur);
+
+      if (projectsError) {
+        console.error('Error fetching projects:', projectsError);
+        setLoading(false);
+        return;
+      }
+
+      // Convert database projects to our Project type and fetch documents for each
+      const convertedProjects: Project[] = await Promise.all(
+        (projectsData || []).map(async (dbProject) => {
+          // Fetch documents for this project
+          const { data: documentsData } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('id_project', dbProject.id_project);
+
+          const documents: Document[] = (documentsData || []).map(doc => ({
+            id: doc.id_document,
+            name: doc.name,
+            url: doc.link,
+            type: doc.type,
+            projectId: doc.id_project,
+            uploadedBy: entrepreneurData.id_entrepreneur,
+            createdAt: new Date(doc.created_at),
+          }));
+
+          return {
+            id: dbProject.id_project,
+            title: dbProject.title,
+            description: dbProject.description || "",
+            ownerId: dbProject.id_entrepreneur,
+            status: dbProject.status as any || "STEP1",
+            tasks: [], // TODO: Implement tasks loading if needed
+            documents,
+            packId: dbProject.id_pack || undefined,
+            createdAt: new Date(dbProject.created_at),
+            updatedAt: new Date(dbProject.updated_at),
+          };
+        })
+      );
+
+      // Combine with mock projects
+      setProjects([...mockProjects, ...convertedProjects]);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+      toast.error('Failed to load projects');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load projects when user changes
+  useEffect(() => {
+    if (user) {
+      loadProjects();
+    }
+  }, [user]);
+
   const createProject = (data: Partial<Project>) => {
     if (!user) return;
 
@@ -101,7 +182,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       title: data.title || "Untitled Project",
       description: data.description || "",
       ownerId: data.ownerId || user.id,
-      status: "STEP1", // Updated from "draft"
+      status: "STEP1",
       tasks: [],
       documents: [],
       createdAt: new Date(),
@@ -290,6 +371,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteTask,
         addDocument,
         deleteDocument,
+        loadProjects,
       }}
     >
       {children}
