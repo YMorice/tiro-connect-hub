@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   Session,
@@ -35,6 +36,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const loadSession = async () => {
       try {
+        console.log('Loading initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (!mounted) return;
@@ -47,6 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
 
+        console.log('Initial session loaded:', session?.user?.id || 'no session');
         setSession(session);
 
         if (session?.user) {
@@ -74,18 +77,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       async (event, session) => {
         if (!mounted) return;
 
-        console.log('Auth state changed:', event, session?.user?.id);
+        console.log('Auth state changed:', event, session?.user?.id || 'no session');
         
         setSession(session);
 
-        if (session?.user) {
+        if (session?.user && event === 'SIGNED_IN') {
+          console.log('User signed in, fetching profile...');
           try {
             await fetchUser(session);
           } catch (error) {
             console.error('Error fetching user on auth change:', error);
             setUser(null);
           }
-        } else {
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           setUser(null);
         }
         

@@ -40,7 +40,7 @@ const Login = () => {
 
   const onSubmit = async (values: FormValues) => {
     // Prevent double submission
-    if (isSubmitting || loading) {
+    if (isSubmitting) {
       console.log("Login already in progress, ignoring submission");
       return;
     }
@@ -53,11 +53,11 @@ const Login = () => {
       
       if (result.error) {
         console.error("Login failed:", result.error);
-        // Reset the submitting state on error
+        // Reset the submitting state on error since login won't proceed
         setIsSubmitting(false);
       } else {
-        console.log("Login successful");
-        // Don't reset isSubmitting here - let the redirect handle it
+        console.log("Login successful - auth state will update automatically");
+        // Don't reset isSubmitting here - let the auth state change handle it
         // The useEffect will redirect us when user/session state updates
       }
     } catch (error) {
@@ -66,20 +66,12 @@ const Login = () => {
     }
   };
 
-  // Reset submitting state when component unmounts or when there's an auth state change
+  // Reset submitting state when user successfully logs in
   useEffect(() => {
-    return () => {
-      setIsSubmitting(false);
-    };
-  }, []);
-
-  // Reset submitting state if we're not loading and we have an auth state
-  useEffect(() => {
-    if (!loading && (user || !user)) {
-      // Reset submitting state when auth state stabilizes
+    if (user && session) {
       setIsSubmitting(false);
     }
-  }, [loading, user]);
+  }, [user, session]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -127,7 +119,7 @@ const Login = () => {
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 
                   disabled={isSubmitting || loading}
                 >
-                  {isSubmitting || loading ? "Signing in..." : "Sign In"}
+                  {isSubmitting ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </Form>
