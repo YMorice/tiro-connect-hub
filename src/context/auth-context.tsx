@@ -7,6 +7,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/components/ui/sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -31,15 +32,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let mounted = true;
+
     const loadSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
 
-      setSession(session);
+        if (!mounted) return;
 
-      if (session) {
-        await fetchUser(session);
+        if (error) {
+          console.error('Error getting session:', error);
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        setSession(session);
+
+        if (session?.user) {
+          await fetchUser(session);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Error in loadSession:', error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     };
 
     loadSession();
@@ -47,25 +73,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Listen for changes on auth state (login, signout, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+
+        console.log('Auth state changed:', event, session?.user?.id);
+        
         setSession(session);
 
-        if (session) {
-          await fetchUser(session);
+        if (session?.user) {
+          // Don't set loading here to avoid blocking buttons
+          try {
+            await fetchUser(session);
+          } catch (error) {
+            console.error('Error fetching user on auth change:', error);
+            setUser(null);
+          }
         } else {
           setUser(null);
         }
+        
+        // Always ensure loading is false after auth state change
         setLoading(false);
       }
     );
 
     return () => {
+      mounted = false;
       subscription?.unsubscribe();
     };
   }, []);
 
   const fetchUser = async (session: Session) => {
     try {
-      setLoading(true);
+      console.log('Fetching user profile for:', session.user.id);
+      
       const { data: userProfile, error } = await supabase
         .from('users')
         .select('*')
@@ -74,6 +114,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('Error fetching user profile:', error);
+        // If user profile doesn't exist, clear the session
+        if (error.code === 'PGRST116') {
+          console.log('User profile not found, signing out...');
+          await supabase.auth.signOut();
+          return;
+        }
         throw error;
       }
 
@@ -110,18 +156,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           createdAt: new Date(session.user.created_at),
           isOnline: true,
         };
+        
+        console.log('User profile loaded successfully:', user.email);
         setUser(user);
       }
     } catch (error) {
       console.error('Error fetching or setting user data:', error);
-    } finally {
-      setLoading(false);
+      setUser(null);
     }
   };
 
   const register = async (email: string, password: string, name: string, surname: string, role: UserRole, userData: any = {}) => {
     try {
       setLoading(true);
+      console.log('Starting registration for:', email);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -148,6 +197,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('Registration error:', error);
+        toast.error(error.message || 'Registration failed');
         return { user: null, error: error.message };
       }
 
@@ -179,6 +229,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (userTableError) {
           console.error('Error inserting user data:', userTableError);
+          toast.error('Failed to create user profile');
           return { user: null, error: userTableError.message };
         }
 
@@ -198,6 +249,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           if (studentError) {
             console.error('Error inserting student data:', studentError);
+            toast.error('Failed to create student profile');
             return { user: null, error: studentError.message };
           }
         } else if (role === 'entrepreneur') {
@@ -213,6 +265,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           if (entrepreneurError) {
             console.error('Error inserting entrepreneur data:', entrepreneurError);
+            toast.error('Failed to create entrepreneur profile');
             return { user: null, error: entrepreneurError.message };
           }
         }
@@ -231,20 +284,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           if (projectError) {
             console.error('Error creating project:', projectError);
+            toast.error('Failed to create project');
             return { user: null, error: projectError.message };
           }
 
           console.log("Project created successfully:", projectData);
         }
 
-        // Update state and context
-        await fetchUser(data.session);
+        console.log('Registration successful for:', email);
+        toast.success('Registration successful!');
         return { user: data.user, error: null };
       } else {
+        toast.error('Failed to create user');
         return { user: null, error: 'Failed to create user.' };
       }
     } catch (err: any) {
       console.error('Registration failed:', err);
+      toast.error(err.message || 'Registration failed');
       return { user: null, error: err.message };
     } finally {
       setLoading(false);
@@ -254,6 +310,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
+      console.log('Starting login for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -261,17 +319,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('Login error:', error);
+        toast.error(error.message || 'Login failed');
         return { user: null, error: error.message };
       }
 
       if (data.user && data.session) {
-        await fetchUser(data.session);
+        console.log('Login successful for:', email);
+        toast.success('Login successful!');
         return { user: data.user, error: null };
       } else {
+        toast.error('Login failed');
         return { user: null, error: 'Login failed.' };
       }
     } catch (err: any) {
       console.error('Login failed:', err);
+      toast.error(err.message || 'Login failed');
       return { user: null, error: err.message };
     } finally {
       setLoading(false);
@@ -284,9 +346,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
-      navigate('/login'); // Redirect to login page after logout
+      navigate('/'); // Redirect to login page after logout
+      toast.success('Logged out successfully');
     } catch (error: any) {
       console.error('Logout error:', error);
+      toast.error('Logout failed');
     } finally {
       setLoading(false);
     }
@@ -295,7 +359,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const updateProfile = async (userData: Partial<User>) => {
     if (!session?.user) {
       console.error('No active session found.');
-      return;
+      throw new Error('No active session found');
     }
 
     try {
@@ -335,8 +399,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         return prevUser;
       });
+      
+      toast.success('Profile updated successfully');
     } catch (error: any) {
       console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
       throw new Error(error.message || 'Could not update profile');
     } finally {
       setLoading(false);

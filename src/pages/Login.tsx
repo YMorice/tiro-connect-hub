@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/context/auth-context";
-import { toast } from "@/components/ui/sonner";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -19,13 +18,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
-  const {
-    login,
-    loading,
-    user,
-    session
-  } = useAuth();
+  const { login, user, session } = useAuth();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -39,25 +34,30 @@ const Login = () => {
   useEffect(() => {
     if (user && session) {
       console.log("User and session found, redirecting to dashboard");
-      navigate("/dashboard", {
-        replace: true
-      });
-    } else if (session && !user) {
-      console.log("Session found but no user data, attempting to fix state");
-      // The auth context will handle this case with the onAuthStateChange
+      navigate("/dashboard", { replace: true });
     }
   }, [user, session, navigate]);
 
   const onSubmit = async (values: FormValues) => {
+    if (isSubmitting) return; // Prevent double submission
+    
     try {
+      setIsSubmitting(true);
       console.log("Login form submitted:", values.email);
-      await login(values.email, values.password);
-
-      // We won't navigate here - the useEffect will handle redirection
-      // when the auth state changes after successful login
+      
+      const result = await login(values.email, values.password);
+      
+      if (result.error) {
+        console.error("Login failed:", result.error);
+        // Error is already shown via toast in auth context
+      } else {
+        console.log("Login successful, waiting for redirect...");
+        // Redirect will happen via useEffect when user/session state updates
+      }
     } catch (error) {
       console.error("Login error in form handler:", error);
-      // Error is handled by auth context with toast
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -105,9 +105,9 @@ const Login = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 
-                  disabled={loading}
+                  disabled={isSubmitting}
                 >
-                  {loading ? "Signing in..." : "Sign In"}
+                  {isSubmitting ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </Form>
@@ -121,8 +121,6 @@ const Login = () => {
             </div>
           </CardFooter>
         </Card>
-        <div className="mt-4 text-center text-sm text-muted-foreground">
-        </div>
       </div>
     </div>
   );

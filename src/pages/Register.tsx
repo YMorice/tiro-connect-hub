@@ -121,13 +121,14 @@ type FormValues = {
 };
 
 const Register = () => {
-  const { register: authRegister, loading } = useAuth();
+  const { register: authRegister, user, session } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [registrationCompleted, setRegistrationCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formValues, setFormValues] = useState<FormValues>({
     email: "",
@@ -136,6 +137,14 @@ const Register = () => {
     role: "entrepreneur",
     acceptTerms: false,
   });
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user && session) {
+      console.log("User already logged in, redirecting to dashboard");
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, session, navigate]);
   
   // Step 1 form
   const step1Form = useForm<z.infer<typeof step1Schema>>({
@@ -238,10 +247,8 @@ const Register = () => {
         
       const profilePictureUrl = urlData.publicUrl;
       setAvatarUrl(profilePictureUrl);
-      toast.success("Profile picture uploaded successfully");
     } catch (error: any) {
       console.error("Error uploading profile picture:", error);
-      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
       
       // Still create a temporary URL for preview
       const tempUrl = URL.createObjectURL(file);
@@ -392,7 +399,10 @@ const Register = () => {
 
   // Final submit function - now including profile picture URL
   const finalSubmit = async (values: FormValues) => {
+    if (isSubmitting) return; // Prevent double submission
+    
     try {
+      setIsSubmitting(true);
       // Create a name from first and last name
       const name = values.firstName && values.lastName 
         ? `${values.firstName} ${values.lastName}` 
@@ -449,11 +459,13 @@ const Register = () => {
           setStep(5);
         }
       } else {
-        toast.error(result.error || "Registration failed. Please try again.");
+        console.error("Registration failed:", result.error);
+        // Error is already shown via toast in auth context
       }
     } catch (error: any) {
       console.error("Registration error:", error);
-      toast.error(error?.message || "Registration failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -586,9 +598,9 @@ const Register = () => {
               <Button 
                 type="submit" 
                 className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                disabled={loading}
+                disabled={isSubmitting}
               >
-                {loading ? "Processing..." : "Next"}
+                {isSubmitting ? "Processing..." : "Next"}
               </Button>
             </form>
           </Form>
@@ -725,7 +737,7 @@ const Register = () => {
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                  disabled={loading}
+                  disabled={isSubmitting}
                 >
                   Next
                 </Button>
@@ -797,7 +809,7 @@ const Register = () => {
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                  disabled={loading}
+                  disabled={isSubmitting}
                 >
                   Next
                 </Button>
@@ -893,7 +905,7 @@ const Register = () => {
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                  disabled={loading}
+                  disabled={isSubmitting}
                 >
                   Next
                 </Button>
@@ -1003,7 +1015,7 @@ const Register = () => {
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                  disabled={loading}
+                  disabled={isSubmitting}
                 >
                   Next
                 </Button>
@@ -1078,7 +1090,7 @@ const Register = () => {
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                  disabled={loading}
+                  disabled={isSubmitting}
                 >
                   Complete Registration
                 </Button>
@@ -1098,14 +1110,14 @@ const Register = () => {
               <Button 
                 variant="outline" 
                 onClick={onSkipProject}
-                disabled={loading}
+                disabled={isSubmitting}
               >
                 Skip for now
               </Button>
               <Button 
                 onClick={onAddProject}
                 className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                disabled={loading}
+                disabled={isSubmitting}
               >
                 Add Project
               </Button>
@@ -1116,7 +1128,7 @@ const Register = () => {
                 type="button" 
                 variant="link" 
                 onClick={goBack}
-                disabled={loading}
+                disabled={isSubmitting}
               >
                 Back
               </Button>
@@ -1146,7 +1158,7 @@ const Register = () => {
             <Button 
               onClick={() => navigate("/dashboard")} 
               className="mt-4 bg-tiro-primary hover:bg-tiro-primary/90 text-white w-full"
-              disabled={loading}
+              disabled={isSubmitting}
             >
               Go to Dashboard
             </Button>
