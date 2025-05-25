@@ -20,7 +20,7 @@ export interface Project {
   description: string;
   ownerId: string; // entrepreneur ID
   assigneeId?: string; // student ID
-  status: "STEP1" | "STEP2" | "STEP3" | "STEP4" | "STEP5" | "STEP6"; // Updated project status types
+  status: "draft" | "open" | "in_progress" | "review" | "completed" | "STEP1" | "STEP2" | "STEP3" | "STEP4" | "STEP5" | "STEP6"; // Updated to include all used status types
   tasks: Task[];
   documents: Document[];
   packId?: string; // reference to the project pack
