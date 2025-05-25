@@ -30,19 +30,16 @@ const Login = () => {
     }
   });
 
-  // Only redirect if user is logged in AND not currently submitting a login
+  // Redirect authenticated users to dashboard
   useEffect(() => {
-    if (user && session && !loading && !isSubmitting) {
+    if (user && session && !loading) {
       console.log("User authenticated, redirecting to dashboard");
       navigate("/dashboard", { replace: true });
     }
-  }, [user, session, navigate, loading, isSubmitting]);
+  }, [user, session, loading, navigate]);
 
   const onSubmit = async (values: FormValues) => {
-    if (isSubmitting) {
-      console.log("Login already in progress, ignoring submission");
-      return;
-    }
+    if (isSubmitting) return;
     
     try {
       setIsSubmitting(true);
@@ -52,33 +49,29 @@ const Login = () => {
       
       if (result.error) {
         console.error("Login failed:", result.error);
+        setIsSubmitting(false);
+      } else {
+        console.log("Login successful, waiting for redirect...");
+        // Don't reset isSubmitting here - let the useEffect handle redirect
+        // and reset will happen when component unmounts or user state changes
       }
-      // On success, don't reset isSubmitting - let the useEffect handle redirect
     } catch (error) {
       console.error("Login error in form handler:", error);
-    } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Reset submitting state when auth completes successfully
+  // Reset submitting state if there's an error after some time
   useEffect(() => {
-    if (user && session && isSubmitting) {
-      setIsSubmitting(false);
-    }
-  }, [user, session, isSubmitting]);
-
-  // Reset form if there's an error and we're not loading
-  useEffect(() => {
-    if (!loading && !user && !session && isSubmitting) {
-      // If we're not loading and have no user/session but still submitting, reset
+    if (isSubmitting && !user && !session && !loading) {
       const timer = setTimeout(() => {
+        console.log("Resetting isSubmitting state due to no auth progress");
         setIsSubmitting(false);
-      }, 5000); // Reset after 5 seconds as fallback
+      }, 3000);
       
       return () => clearTimeout(timer);
     }
-  }, [loading, user, session, isSubmitting]);
+  }, [isSubmitting, user, session, loading]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

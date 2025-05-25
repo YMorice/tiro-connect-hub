@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   Session,
@@ -247,8 +246,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (data.user && data.session) {
         console.log('Login successful for:', email);
-        setSession(data.session);
-        await fetchUser(data.session);
+        // Don't manually set session/user here - let onAuthStateChange handle it
         toast.success('Login successful!');
         return { user: data.user, error: null };
       } else {
