@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   Session,
@@ -122,7 +123,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               id_users: session.user.id,
               email: session.user.email || '',
               name: (session.user.user_metadata as any)?.name || 'User',
-              surname: (session.user.user_metadata as any)?.surname || '',
+              surname: (session.user.user_metadata as any)?.surname || 'User',
               role: (session.user.user_metadata as any)?.role || 'student',
             });
           if (insertError) {
@@ -135,21 +136,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       if (userProfile) {
-        let bio: string | undefined = undefined;
-        let skills: string[] | undefined = undefined;
-        let specialty: string | undefined = undefined;
+        let bio: string = '';
+        let skills: string[] = [];
+        let specialty: string = '';
         
         if (userProfile.role === 'student') {
-          const { data: studentData } = await supabase
+          const { data: studentData, error: studentError } = await supabase
             .from('students')
             .select('biography, skills, specialty')
             .eq('id_user', session.user.id)
             .single();
             
-          if (studentData) {
-            bio = studentData.biography;
-            skills = studentData.skills;
-            specialty = studentData.specialty;
+          if (!studentError && studentData) {
+            bio = studentData.biography || '';
+            skills = Array.isArray(studentData.skills) ? studentData.skills : [];
+            specialty = studentData.specialty || '';
           }
         }
 
@@ -159,9 +160,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           name: userProfile.name || '',
           role: userProfile.role || 'student',
           avatar: userProfile.pp_link || '',
-          bio: bio || '',
-          skills: skills || [],
-          specialty: specialty || '',
+          bio: bio,
+          skills: skills,
+          specialty: specialty,
           createdAt: new Date(session.user.created_at),
           isOnline: true,
         };
@@ -179,7 +180,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('Starting registration for:', email);
       
-      // Clean the userData object to avoid undefined values
       const cleanUserData = {
         name,
         surname,
@@ -246,12 +246,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   
       if (data.user && data.session) {
         console.log('Login successful for:', email);
-  
-        // ✅ MAJ immédiate du state session
         setSession(data.session);
-  
-        // ✅ Tentative de récupération du profil (création si absent)
-        await fetchUser(data.session);
+        
+        // Set a simple user object immediately to prevent undefined errors
+        const simpleUser: User = {
+          id: data.user.id,
+          email: data.user.email || '',
+          name: 'Loading...',
+          role: 'student',
+          avatar: '',
+          bio: '',
+          skills: [],
+          specialty: '',
+          createdAt: new Date(data.user.created_at),
+          isOnline: true,
+        };
+        setUser(simpleUser);
+        
+        // Then fetch the full profile in the background
+        setTimeout(() => {
+          fetchUser(data.session);
+        }, 0);
   
         toast.success('Login successful!');
         return { user: data.user, error: null };
@@ -265,7 +280,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return { user: null, error: err.message };
     }
   };
-
 
   const logout = async () => {
     try {

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -51,9 +50,9 @@ const Login = () => {
         console.error("Login failed:", result.error);
         setIsSubmitting(false);
       } else {
-        console.log("Login successful, waiting for redirect...");
-        // Don't reset isSubmitting here - let the useEffect handle redirect
-        // and reset will happen when component unmounts or user state changes
+        console.log("Login successful, should redirect soon...");
+        // Keep isSubmitting true to prevent double submission
+        // The useEffect will handle the redirect
       }
     } catch (error) {
       console.error("Login error in form handler:", error);
@@ -61,17 +60,10 @@ const Login = () => {
     }
   };
 
-  // Reset submitting state if there's an error after some time
-  useEffect(() => {
-    if (isSubmitting && !user && !session && !loading) {
-      const timer = setTimeout(() => {
-        console.log("Resetting isSubmitting state due to no auth progress");
-        setIsSubmitting(false);
-      }, 3000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isSubmitting, user, session, loading]);
+  // Don't show login form if user is already authenticated
+  if (user && session && !loading) {
+    return null; // Let the useEffect handle the redirect
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -99,7 +91,7 @@ const Login = () => {
                           placeholder="example@email.com" 
                           {...field} 
                           autoComplete="email" 
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || loading}
                         />
                       </FormControl>
                       <FormMessage />
@@ -118,7 +110,7 @@ const Login = () => {
                           placeholder="******" 
                           {...field} 
                           autoComplete="current-password" 
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || loading}
                         />
                       </FormControl>
                       <FormMessage />
@@ -128,7 +120,7 @@ const Login = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || loading}
                 >
                   {isSubmitting ? "Signing in..." : "Sign In"}
                 </Button>
