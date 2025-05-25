@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   Session,
@@ -80,7 +79,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSession(session);
 
         if (session?.user) {
-          // Don't set loading here to avoid blocking buttons
           try {
             await fetchUser(session);
           } catch (error) {
@@ -168,7 +166,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (email: string, password: string, name: string, surname: string, role: UserRole, userData: any = {}) => {
     try {
-      setLoading(true);
       console.log('Starting registration for:', email);
       
       const { data, error } = await supabase.auth.signUp({
@@ -302,14 +299,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Registration failed:', err);
       toast.error(err.message || 'Registration failed');
       return { user: null, error: err.message };
-    } finally {
-      setLoading(false);
     }
   };
 
   const login = async (email: string, password: string) => {
     try {
-      setLoading(true);
       console.log('Starting login for:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -335,8 +329,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Login failed:', err);
       toast.error(err.message || 'Login failed');
       return { user: null, error: err.message };
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -18,7 +18,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
-  const { login, user, session } = useAuth();
+  const { login, user, session, loading } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -32,14 +32,18 @@ const Login = () => {
 
   // Redirect if user is already logged in - check for both user and session
   useEffect(() => {
-    if (user && session) {
+    if (user && session && !loading) {
       console.log("User and session found, redirecting to dashboard");
       navigate("/dashboard", { replace: true });
     }
-  }, [user, session, navigate]);
+  }, [user, session, navigate, loading]);
 
   const onSubmit = async (values: FormValues) => {
-    if (isSubmitting) return; // Prevent double submission
+    // Prevent double submission
+    if (isSubmitting || loading) {
+      console.log("Login already in progress, ignoring submission");
+      return;
+    }
     
     try {
       setIsSubmitting(true);
@@ -49,17 +53,33 @@ const Login = () => {
       
       if (result.error) {
         console.error("Login failed:", result.error);
-        // Error is already shown via toast in auth context
+        // Reset the submitting state on error
+        setIsSubmitting(false);
       } else {
-        console.log("Login successful, waiting for redirect...");
-        // Redirect will happen via useEffect when user/session state updates
+        console.log("Login successful");
+        // Don't reset isSubmitting here - let the redirect handle it
+        // The useEffect will redirect us when user/session state updates
       }
     } catch (error) {
       console.error("Login error in form handler:", error);
-    } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Reset submitting state when component unmounts or when there's an auth state change
+  useEffect(() => {
+    return () => {
+      setIsSubmitting(false);
+    };
+  }, []);
+
+  // Reset submitting state if we're not loading and we have an auth state
+  useEffect(() => {
+    if (!loading && (user || !user)) {
+      // Reset submitting state when auth state stabilizes
+      setIsSubmitting(false);
+    }
+  }, [loading, user]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -105,9 +125,9 @@ const Login = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || loading}
                 >
-                  {isSubmitting ? "Signing in..." : "Sign In"}
+                  {isSubmitting || loading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
             </Form>
