@@ -232,21 +232,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       console.log('Starting login for:', email);
-      
+  
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
+  
       if (error) {
         console.error('Login error:', error);
         toast.error(error.message || 'Login failed');
         return { user: null, error: error.message };
       }
-
+  
       if (data.user && data.session) {
         console.log('Login successful for:', email);
-        // Don't manually set session/user here - let onAuthStateChange handle it
+  
+        // ✅ MAJ immédiate du state session
+        setSession(data.session);
+  
+        // ✅ Tentative de récupération du profil (création si absent)
+        await fetchUser(data.session);
+  
         toast.success('Login successful!');
         return { user: data.user, error: null };
       } else {
@@ -259,6 +265,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return { user: null, error: err.message };
     }
   };
+
 
   const logout = async () => {
     try {
