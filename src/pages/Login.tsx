@@ -61,7 +61,7 @@ const Login = () => {
     }
   };
 
-  // Show loading while checking authentication
+  // Show loading while checking authentication (but only for a reasonable time)
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">

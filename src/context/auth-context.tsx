@@ -50,15 +50,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'SIGNED_OUT') {
           setSession(null);
           setUser(null);
-          setLoading(false);
+          if (mounted) setLoading(false);
           return;
         }
         
         if (session?.user) {
           setSession(session);
           
-          // Fetch user profile data only once when user signs in
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // Fetch user profile data only for certain events
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
             try {
               console.log("User signed in, fetching profile...");
               console.log("Fetching user profile for:", session.user.id);
@@ -72,12 +72,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (userError) {
                 console.error('Error fetching user profile:', userError);
                 setUser(session.user);
-                setLoading(false);
+                if (mounted) setLoading(false);
                 return;
               }
 
               if (userProfile) {
-                // Fetch additional bio from students or entrepreneurs table based on role
+                // Fetch additional bio from students table based on role
                 let bio = '';
                 if (userProfile.role === 'student') {
                   const { data: studentData } = await supabase
@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
         }
         
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     );
 
@@ -137,7 +137,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
@@ -145,17 +144,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error("Sign in error:", error);
       toast.error(error.message || "Failed to sign in");
-      setLoading(false);
+      throw error;
     }
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         toast.error(error.message || "Failed to sign in");
-        setLoading(false);
         return { error };
       }
       toast.success("Welcome back!");
@@ -163,13 +160,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "Failed to sign in");
-      setLoading(false);
       return { error };
     }
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, userData: any) => {
-    setLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -183,13 +178,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error("Sign up error:", error);
       toast.error(error.message || "Failed to create account");
-      setLoading(false);
+      throw error;
     }
   }, []);
 
   const register = useCallback(async (email: string, password: string, userData: any) => {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -199,7 +193,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       if (error) {
         toast.error(error.message || "Failed to create account");
-        setLoading(false);
         return { error };
       }
       toast.success("Account created successfully!");
@@ -207,46 +200,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error("Register error:", error);
       toast.error(error.message || "Failed to create account");
-      setLoading(false);
       return { error };
     }
   }, []);
 
   const signOut = useCallback(async () => {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
       // Clear state immediately
       setSession(null);
       setUser(null);
-      setLoading(false);
       
       toast.success("Signed out successfully");
     } catch (error: any) {
       console.error("Sign out error:", error);
       toast.error(error.message || "Failed to sign out");
-      setLoading(false);
+      throw error;
     }
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
       // Clear state immediately
       setSession(null);
       setUser(null);
-      setLoading(false);
       
       toast.success("Logged out successfully");
     } catch (error: any) {
       console.error("Logout error:", error);
       toast.error(error.message || "Failed to log out");
-      setLoading(false);
+      throw error;
     }
   }, []);
 
