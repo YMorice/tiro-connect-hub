@@ -77,6 +77,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
 
               if (userProfile) {
+                // Fetch additional bio from students or entrepreneurs table based on role
+                let bio = '';
+                if (userProfile.role === 'student') {
+                  const { data: studentData } = await supabase
+                    .from('students')
+                    .select('biography')
+                    .eq('id_user', session.user.id)
+                    .single();
+                  bio = studentData?.biography || '';
+                }
+
                 const enhancedUser: ExtendedUser = {
                   ...session.user,
                   role: userProfile.role,
@@ -85,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   phone: userProfile.phone,
                   pp_link: userProfile.pp_link,
                   avatar: userProfile.pp_link,
-                  bio: userProfile.bio
+                  bio: bio
                 };
                 setUser(enhancedUser);
               } else {

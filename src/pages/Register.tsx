@@ -391,7 +391,7 @@ const Register = () => {
     });
   };
 
-  // Final submit function - fixed to properly handle data
+  // Final submit function - fixed to use correct authRegister signature
   const finalSubmit = async (values: FormValues) => {
     if (isSubmitting) return;
     
@@ -413,6 +413,9 @@ const Register = () => {
 
       // Prepare cleaned user data for registration
       const userData = {
+        name,
+        surname,
+        role: values.role,
         about: values.bio || null,
         specialty: values.specialty || null,
         portfolioUrl: values.portfolioUrl || null,
@@ -432,9 +435,6 @@ const Register = () => {
       const result = await authRegister(
         values.email, 
         values.password, 
-        name, 
-        surname, 
-        values.role, 
         userData
       );
       
