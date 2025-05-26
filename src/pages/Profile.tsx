@@ -87,6 +87,17 @@ const Profile = () => {
     },
   });
 
+  // Safely get user initials
+  const getUserInitials = () => {
+    if (user?.name) {
+      return user.name.charAt(0).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+
   // Fetch user's extended profile data from the database
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -396,9 +407,9 @@ const Profile = () => {
                   <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start mb-4">
                     <Avatar className="w-24 h-24">
                       {avatarUrl ? (
-                        <AvatarImage src={avatarUrl} alt={user.name} />
+                        <AvatarImage src={avatarUrl} alt={user?.name || "User"} />
                       ) : (
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
                       )}
                     </Avatar>
                     <FileUpload 
@@ -672,9 +683,9 @@ const Profile = () => {
                 <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start mb-4">
                   <Avatar className="w-24 h-24">
                     {avatarUrl ? (
-                      <AvatarImage src={avatarUrl} alt={user.name} />
+                      <AvatarImage src={avatarUrl} alt={user?.name || "User"} />
                     ) : (
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     )}
                   </Avatar>
                 </div>

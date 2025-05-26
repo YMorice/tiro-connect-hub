@@ -63,6 +63,14 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
     }
   };
 
+  // Safely get user initials
+  const getUserInitials = () => {
+    if (formData.name) {
+      return formData.name.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Add a Profile Picture</h3>
@@ -72,9 +80,9 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
       <div className="flex flex-col items-center gap-4">
         <Avatar className="w-24 h-24">
           {avatarUrl ? (
-            <AvatarImage src={avatarUrl} alt={formData.name} />
+            <AvatarImage src={avatarUrl} alt={formData.name || "User"} />
           ) : (
-            <AvatarFallback>{formData.name?.charAt(0) || "U"}</AvatarFallback>
+            <AvatarFallback>{getUserInitials()}</AvatarFallback>
           )}
         </Avatar>
         <FileUpload 

@@ -70,6 +70,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     }
   };
 
+  // Safely get user initials
+  const getUserInitials = () => {
+    if (user?.name) {
+      return user.name.charAt(0).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar Toggle Button for Mobile */}
@@ -127,7 +138,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   <AvatarImage src={user.avatar} alt={user?.name || "User"} />
                 ) : (
                   <AvatarFallback className="bg-tiro-primary text-white">
-                    {user?.name?.charAt(0) || "U"}
+                    {getUserInitials()}
                   </AvatarFallback>
                 )}
               </Avatar>
