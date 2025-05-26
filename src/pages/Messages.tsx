@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
@@ -7,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Clock, Check, X, FileText, Download, Menu } from "lucide-react";
+import { Send, Clock, Check, X, FileText, Download, Menu, Users, User } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { useMessages } from "@/context/message-context";
 import { toast } from "@/components/ui/sonner";
 import { useProjects } from "@/context/project-context";
-import { User, Message } from "@/types";
+import { Message } from "@/types";
 import DocumentUpload from "@/components/DocumentUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -69,14 +68,25 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => 
   );
 };
 
+interface ConversationItem {
+  id: string;
+  title: string;
+  type: 'project' | 'direct';
+  lastMessage?: Message;
+  unreadCount: number;
+  projectId?: string;
+  userId?: string;
+}
+
 const Messages = () => {
   const { user } = useAuth();
   const { messages, sendMessage, sendDocumentMessage, markAsRead } = useMessages();
   const { projects } = useProjects();
-  const [currentProject, setCurrentProject] = useState<string | null>(null);
+  const [currentConversation, setCurrentConversation] = useState<ConversationItem | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
-  const [projectAssignments, setProjectAssignments] = useState<{id_project: string, id_student: string}[]>([]);
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [users, setUsers] = useState<{[key: string]: {name: string, role: string}}>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -87,53 +97,148 @@ const Messages = () => {
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const projectId = queryParams.get('projectId');
+    const userId = queryParams.get('userId');
+    
     if (projectId) {
-      setCurrentProject(projectId);
-    } else if (projects && projects.length > 0) {
-      setCurrentProject(projects[0].id);
+      const project = projects.find(p => p.id === projectId);
+      if (project) {
+        setCurrentConversation({
+          id: projectId,
+          title: project.title,
+          type: 'project',
+          projectId,
+          lastMessage: undefined,
+          unreadCount: 0
+        });
+      }
+    } else if (userId) {
+      // Handle direct user conversation
+      setCurrentConversation({
+        id: userId,
+        title: users[userId]?.name || "User",
+        type: 'direct',
+        userId,
+        lastMessage: undefined,
+        unreadCount: 0
+      });
     }
-  }, [location.search, projects]);
+  }, [location.search, projects, users]);
 
-  // Fetch project assignments for the current user if they're a student
+  // Fetch user data for direct messages
   useEffect(() => {
-    const fetchAssignments = async () => {
-      if (!user || user.role !== 'student') return;
-      
+    const fetchUsers = async () => {
       try {
         const { data, error } = await supabase
-          .from('project_assignments')
-          .select('id_project, id_student')
-          .eq('id_student', user.id);
+          .from('users')
+          .select('id_users, name, role');
           
         if (error) throw error;
         
-        setProjectAssignments(data || []);
+        const usersMap = data.reduce((acc, user) => {
+          acc[user.id_users] = { name: user.name, role: user.role };
+          return acc;
+        }, {});
         
-        // If no project is selected but we have assignments, select the first one
-        if (!currentProject && data && data.length > 0) {
-          setCurrentProject(data[0].id_project);
-        }
+        setUsers(usersMap);
       } catch (error) {
-        console.error('Error fetching project assignments:', error);
+        console.error('Error fetching users:', error);
       }
     };
     
-    fetchAssignments();
-  }, [user, currentProject]);
+    fetchUsers();
+  }, []);
 
+  // Build conversations list
   useEffect(() => {
-    if (currentProject) {
-      const filtered = messages.filter(msg => msg.projectId === currentProject);
-      setFilteredMessages(filtered);
+    if (!user) return;
+
+    const conversationMap = new Map<string, ConversationItem>();
+    
+    // Add project conversations
+    const accessibleProjects = getAccessibleProjects();
+    accessibleProjects.forEach(project => {
+      const projectMessages = messages.filter(m => m.projectId === project.id);
+      const lastMessage = projectMessages[projectMessages.length - 1];
+      const unreadCount = projectMessages.filter(m => m.sender !== user.id && !m.read).length;
       
-      // Mark unread messages as read
-      filtered.forEach(message => {
-        if (message.sender !== user?.id && !message.read) {
-          markAsRead(message.id);
-        }
+      conversationMap.set(project.id, {
+        id: project.id,
+        title: project.title,
+        type: 'project',
+        projectId: project.id,
+        lastMessage,
+        unreadCount
       });
+    });
+    
+    // Add direct message conversations
+    const directMessages = messages.filter(m => !m.projectId);
+    directMessages.forEach(message => {
+      const otherUserId = message.sender === user.id ? message.recipient : message.sender;
+      if (!otherUserId) return;
+      
+      const existingConv = conversationMap.get(otherUserId);
+      if (!existingConv || !existingConv.lastMessage || 
+          new Date(message.createdAt) > new Date(existingConv.lastMessage.createdAt)) {
+        
+        const userMessages = directMessages.filter(m => 
+          (m.sender === user.id && m.recipient === otherUserId) ||
+          (m.sender === otherUserId && m.recipient === user.id)
+        );
+        const unreadCount = userMessages.filter(m => m.sender === otherUserId && !m.read).length;
+        
+        conversationMap.set(otherUserId, {
+          id: otherUserId,
+          title: users[otherUserId]?.name || "User",
+          type: 'direct',
+          userId: otherUserId,
+          lastMessage: message,
+          unreadCount
+        });
+      }
+    });
+    
+    const sortedConversations = Array.from(conversationMap.values())
+      .sort((a, b) => {
+        const aTime = a.lastMessage ? new Date(a.lastMessage.createdAt).getTime() : 0;
+        const bTime = b.lastMessage ? new Date(b.lastMessage.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
+    
+    setConversations(sortedConversations);
+    
+    // Auto-select first conversation if none selected
+    if (!currentConversation && sortedConversations.length > 0) {
+      setCurrentConversation(sortedConversations[0]);
     }
-  }, [messages, currentProject, user, markAsRead]);
+  }, [messages, projects, users, user]);
+
+  // Filter messages based on current conversation
+  useEffect(() => {
+    if (!currentConversation || !user) return;
+
+    let filtered: Message[] = [];
+    
+    if (currentConversation.type === 'project') {
+      filtered = messages.filter(msg => msg.projectId === currentConversation.projectId);
+    } else {
+      filtered = messages.filter(msg => 
+        !msg.projectId && (
+          (msg.sender === user.id && msg.recipient === currentConversation.userId) ||
+          (msg.sender === currentConversation.userId && msg.recipient === user.id)
+        )
+      );
+    }
+    
+    setFilteredMessages(filtered);
+    
+    // Mark unread messages as read
+    filtered.forEach(message => {
+      if (message.sender !== user.id && !message.read) {
+        markAsRead(message.id);
+      }
+    });
+  }, [messages, currentConversation, user, markAsRead]);
 
   useEffect(() => {
     // Scroll to bottom whenever messages change
@@ -145,26 +250,24 @@ const Messages = () => {
     if (!user) return [];
     
     if (user.role === 'admin') {
-      // Admins can see all projects
       return projects;
     } else if (user.role === 'entrepreneur') {
-      // Entrepreneurs can see their own projects
       return projects.filter(p => p.ownerId === user.id);
     } else if (user.role === 'student') {
-      // Students can see projects they're assigned to
-      const assignedProjectIds = projectAssignments.map(a => a.id_project);
-      return projects.filter(p => assignedProjectIds.includes(p.id));
+      return projects.filter(p => p.assigneeId === user.id || p.status === 'open');
     }
     
     return [];
   };
 
   const handleSendMessage = () => {
-    if (!user || !currentProject || !newMessage.trim()) return;
+    if (!user || !currentConversation || !newMessage.trim()) return;
 
-    // In a project context, we're not sending to a specific recipient anymore
-    // Instead, all participants of the project will see the message
-    sendMessage("", newMessage, currentProject);
+    if (currentConversation.type === 'project') {
+      sendMessage("", newMessage, currentConversation.projectId);
+    } else {
+      sendMessage(currentConversation.userId!, newMessage);
+    }
     setNewMessage("");
   };
 
@@ -173,50 +276,86 @@ const Messages = () => {
     documentName: string;
     documentType: "proposal" | "final" | "regular";
   }) => {
-    if (!user || !currentProject) return;
+    if (!user || !currentConversation) return;
     
-    sendDocumentMessage("", {
-      documentUrl: documentDetails.documentUrl,
-      documentName: documentDetails.documentName,
-      documentType: documentDetails.documentType,
-      projectId: currentProject,
-    });
+    if (currentConversation.type === 'project') {
+      sendDocumentMessage("", {
+        documentUrl: documentDetails.documentUrl,
+        documentName: documentDetails.documentName,
+        documentType: documentDetails.documentType,
+        projectId: currentConversation.projectId,
+      });
+    } else {
+      // For direct messages, send as regular document
+      sendDocumentMessage(currentConversation.userId!, {
+        documentUrl: documentDetails.documentUrl,
+        documentName: documentDetails.documentName,
+        documentType: "regular",
+      });
+    }
     
     toast.success("Document shared");
   };
 
-  const handleProjectSelect = (projectId: string) => {
-    setCurrentProject(projectId);
+  const handleConversationSelect = (conversation: ConversationItem) => {
+    setCurrentConversation(conversation);
     if (isMobile) {
-      setSheetOpen(false); // Close the sheet on mobile when a project is selected
+      setSheetOpen(false);
     }
   };
 
-  const accessibleProjects = getAccessibleProjects();
-
-  const ProjectsList = () => (
+  const ConversationsList = () => (
     <div className="h-full">
       <CardHeader className="p-4">
-        <CardTitle className="text-lg">Projects</CardTitle>
-        <CardDescription>Select a project to view messages</CardDescription>
+        <CardTitle className="text-lg">Conversations</CardTitle>
+        <CardDescription>Your messages and project discussions</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea className="h-[300px] md:h-[calc(100vh-240px)] w-full">
           <div className="p-2 space-y-1">
-            {accessibleProjects.length > 0 ? (
-              accessibleProjects.map((project) => (
+            {conversations.length > 0 ? (
+              conversations.map((conversation) => (
                 <Button
-                  key={project.id}
+                  key={conversation.id}
                   variant="ghost"
-                  className={`w-full justify-start text-left ${currentProject === project.id ? 'text-tiro-purple font-semibold' : ''}`}
-                  onClick={() => handleProjectSelect(project.id)}
+                  className={`w-full justify-start text-left p-3 h-auto ${
+                    currentConversation?.id === conversation.id ? 'bg-muted' : ''
+                  }`}
+                  onClick={() => handleConversationSelect(conversation)}
                 >
-                  <span className="truncate">{project.title}</span>
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="flex-shrink-0">
+                      {conversation.type === 'project' ? (
+                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <Users className="h-5 w-5 text-blue-600" />
+                        </div>
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                          <User className="h-5 w-5 text-gray-600" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium truncate">{conversation.title}</span>
+                        {conversation.unreadCount > 0 && (
+                          <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1 ml-2">
+                            {conversation.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                      {conversation.lastMessage && (
+                        <p className="text-sm text-muted-foreground truncate">
+                          {conversation.lastMessage.content}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </Button>
               ))
             ) : (
               <div className="px-4 py-2 text-sm text-muted-foreground">
-                No projects available
+                No conversations yet
               </div>
             )}
           </div>
@@ -227,35 +366,35 @@ const Messages = () => {
 
   return (
     <AppLayout>
-      <div className="container max-w-5xl mx-auto py-2 px-2 sm:py-6 sm:px-4">
+      <div className="container max-w-6xl mx-auto py-2 px-2 sm:py-6 sm:px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
-          {/* Mobile Project List as Slide-over */}
+          {/* Mobile Conversations List as Slide-over */}
           {isMobile && (
             <div className="md:hidden mb-2">
               <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                 <SheetTrigger asChild>
                   <Button variant="outline" className="w-full flex justify-between items-center">
                     <span>
-                      {currentProject 
-                        ? accessibleProjects.find(p => p.id === currentProject)?.title || "Select Project" 
-                        : "Select Project"}
+                      {currentConversation 
+                        ? currentConversation.title
+                        : "Select Conversation"}
                     </span>
                     <Menu className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[80%] sm:w-[380px] p-0">
                   <Card className="h-full border-0">
-                    <ProjectsList />
+                    <ConversationsList />
                   </Card>
                 </SheetContent>
               </Sheet>
             </div>
           )}
 
-          {/* Desktop Project List */}
+          {/* Desktop Conversations List */}
           <div className="hidden md:block md:col-span-1">
             <Card className="h-full">
-              <ProjectsList />
+              <ConversationsList />
             </Card>
           </div>
 
@@ -263,15 +402,29 @@ const Messages = () => {
           <div className="md:col-span-3">
             <Card className="h-full">
               <CardHeader className="p-3 sm:p-4">
-                <CardTitle className="text-lg">
-                  {currentProject && accessibleProjects.find(p => p.id === currentProject)?.title}
+                <CardTitle className="text-lg flex items-center gap-2">
+                  {currentConversation && (
+                    <>
+                      {currentConversation.type === 'project' ? (
+                        <Users className="h-5 w-5 text-blue-600" />
+                      ) : (
+                        <User className="h-5 w-5 text-gray-600" />
+                      )}
+                      {currentConversation.title}
+                    </>
+                  )}
                 </CardTitle>
                 <CardDescription>
-                  {currentProject ? "Project conversation" : "Select a project to view messages"}
+                  {currentConversation 
+                    ? currentConversation.type === 'project' 
+                      ? "Project discussion" 
+                      : "Direct message"
+                    : "Select a conversation to start messaging"
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-[calc(100vh-240px)] flex flex-col p-3 sm:p-4">
-                {currentProject ? (
+                {currentConversation ? (
                   <>
                     <ScrollArea className="flex-grow mb-4 pr-2">
                       <div className="space-y-2">
@@ -297,7 +450,7 @@ const Messages = () => {
                       <div className="flex justify-end">
                         <DocumentUpload
                           onDocumentSubmit={handleDocumentSubmit}
-                          projectId={currentProject}
+                          projectId={currentConversation.type === 'project' ? currentConversation.projectId : undefined}
                         />
                       </div>
                       
@@ -326,12 +479,12 @@ const Messages = () => {
                     <div className="text-center">
                       <p className="text-muted-foreground">
                         {isMobile 
-                          ? "Tap 'Select Project' above to choose a project"
-                          : "Select a project to view messages"}
+                          ? "Tap 'Select Conversation' above to choose a conversation"
+                          : "Select a conversation to start messaging"}
                       </p>
-                      {accessibleProjects.length === 0 && (
+                      {conversations.length === 0 && (
                         <p className="mt-2 text-sm text-muted-foreground">
-                          You don't have any projects yet
+                          You don't have any conversations yet
                         </p>
                       )}
                     </div>

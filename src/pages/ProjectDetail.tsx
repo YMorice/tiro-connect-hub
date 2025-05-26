@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
 import { useAuth } from "@/context/auth-context";
-import { useMessages } from "@/context/message-context";
 import AppLayout from "@/components/AppLayout";
 import {
   Card,
@@ -34,27 +33,9 @@ import { toast } from "@/components/ui/sonner";
 import { FileIcon, MessageCircle, Trash2, Download, CreditCard } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Message, User } from "@/types";
+import { User } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-
-interface ChatMessageProps {
-  message: Message;
-  isCurrentUser: boolean;
-}
-
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => {
-  return (
-    <div className={`flex w-full py-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`rounded-lg p-3 text-sm w-fit max-w-[75%] ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
-        {message.content}
-        <div className="mt-1 text-xs opacity-70">
-          {message.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Mock profiles for demonstration
 const mockProfiles: User[] = [
@@ -137,32 +118,24 @@ const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { projects, updateProject, addTask, updateTask, deleteTask, addDocument, deleteDocument } = useProjects();
   const { user } = useAuth();
-  const { messages, sendMessage, getProjectMessages } = useMessages();
   const navigate = useNavigate();
 
   const project = projects.find((p) => p.id === id);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [newTask, setNewTask] = useState({ title: "", description: "" });
   const [newDocumentName, setNewDocumentName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [message, setMessage] = useState("");
-  const [projectMessages, setProjectMessages] = useState<Message[]>([]);
   const [paymentShown, setPaymentShown] = useState<boolean>(false);
   const [proposedStudents, setProposedStudents] = useState<User[]>([]);
 
   useEffect(() => {
     if (id) {
-      // Get all messages for this project
-      const filtered = getProjectMessages(id);
-      setProjectMessages(filtered);
-      
       // Fetch proposed students if project is open
       if (project?.status === "open" && user?.role === "entrepreneur") {
         fetchProposedStudents();
       }
     }
-  }, [messages, id, project?.status, user?.role]);
+  }, [id, project?.status, user?.role]);
 
   // Fetch proposed students for this project
   const fetchProposedStudents = async () => {
@@ -223,18 +196,12 @@ const ProjectDetail = () => {
     }
   };
 
-  useEffect(() => {
-    // Scroll to bottom when messages change
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [projectMessages]);
-
   if (!project) {
     return <div>Project not found</div>;
   }
 
   const isOwner = user?.id === project.ownerId;
   const isAssignee = user?.id === project.assigneeId;
-  const otherUserId = isOwner ? project.assigneeId : project.ownerId;
 
   const handleStatusChange = (status: string) => {
     updateProject(project.id, { status: status as any });
@@ -270,14 +237,6 @@ const ProjectDetail = () => {
     }
   };
 
-  const handleMessageSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || !otherUserId) return;
-
-    sendMessage(otherUserId, message, project.id);
-    setMessage("");
-  };
-
   const handleSelectProfile = (profileId: string) => {
     updateProject(project.id, { assigneeId: profileId, status: "in_progress" });
     toast.success("Student assigned to project");
@@ -299,8 +258,7 @@ const ProjectDetail = () => {
     
     if (project.status === "draft") {
       tabsConfig = [
-        { id: "documents", label: "Documents" },
-        { id: "communication", label: "Communication" }
+        { id: "documents", label: "Documents" }
       ];
     } 
     else if (project.status === "open") {
@@ -308,21 +266,18 @@ const ProjectDetail = () => {
       if (isOwner) {
         tabsConfig = [
           { id: "student-proposals", label: "Student Proposals" },
-          { id: "documents", label: "Documents" },
-          { id: "communication", label: "Communication" }
+          { id: "documents", label: "Documents" }
         ];
       } else {
         tabsConfig = [
-          { id: "documents", label: "Documents" },
-          { id: "communication", label: "Communication" }
+          { id: "documents", label: "Documents" }
         ];
       }
     }
     else if (["in_progress", "review", "completed"].includes(project.status)) {
       tabsConfig = [
         { id: "tasks", label: "Tasks" },
-        { id: "documents", label: "Documents" },
-        { id: "communication", label: "Communication" }
+        { id: "documents", label: "Documents" }
       ];
     }
     
@@ -351,12 +306,6 @@ const ProjectDetail = () => {
         assigneeId: studentId, 
         status: "in_progress" 
       });
-      
-      // Send message to the selected student
-      sendMessage(studentId, 
-        `Congratulations! You have been selected for the project: ${project.title}. You can start working on it as soon as payment is confirmed.`,
-        project.id
-      );
       
       toast.success("Student selected successfully");
     } catch (error) {
@@ -393,6 +342,16 @@ const ProjectDetail = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Add button to go to messages */}
+            <Button
+              onClick={() => navigate(`/messages?projectId=${project.id}`)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <MessageCircle size={18} />
+              Messages
+            </Button>
+            
             {isOwner && project.status === "draft" && (
               <Button
                 onClick={() => handleStatusChange("open")}
@@ -728,79 +687,6 @@ const ProjectDetail = () => {
                     </div>
                     <Button type="submit">Add Document</Button>
                   </form>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="communication">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Communication</CardTitle>
-                <CardDescription>
-                  Messages related to this project
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {otherUserId ? (
-                  <div className="flex flex-col h-[500px]">
-                    <ScrollArea className="flex-grow mb-4 pr-2">
-                      <div className="space-y-2">
-                        {projectMessages.length > 0 ? (
-                          projectMessages.map((msg) => (
-                            <ChatMessage
-                              key={msg.id}
-                              message={msg}
-                              isCurrentUser={msg.sender === user?.id}
-                            />
-                          ))
-                        ) : (
-                          <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">
-                            No messages yet. Start the conversation!
-                          </div>
-                        )}
-                        <div ref={messagesEndRef} />
-                      </div>
-                    </ScrollArea>
-
-                    <form onSubmit={handleMessageSend} className="mt-auto">
-                      <div>
-                        <Textarea
-                          value={message}
-                          onChange={(e) => setMessage(e.target.value)}
-                          placeholder="Type your message here"
-                          className="min-h-[80px] resize-none"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleMessageSend(e);
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between mt-4">
-                        <Button 
-                          type="button" 
-                          variant="outline"
-                          onClick={() => navigate(`/messages?user=${otherUserId}`)}
-                          className="flex items-center gap-2"
-                        >
-                          <MessageCircle size={18} />
-                          View All Messages
-                        </Button>
-                        <Button type="submit" className="flex items-center gap-2">
-                          <MessageCircle size={18} />
-                          Send Message
-                        </Button>
-                      </div>
-                    </form>
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    {project.status === "open"
-                      ? "No student has taken this project yet"
-                      : "No user to message"}
-                  </div>
                 )}
               </CardContent>
             </Card>

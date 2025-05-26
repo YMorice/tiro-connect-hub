@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -357,82 +356,69 @@ const Dashboard = () => {
 
           {/* Entrepreneur-specific content */}
           {user?.role === "entrepreneur" && (
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Projects</CardTitle>
-                  <CardDescription>Status of your current projects</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {dashboardData.projects.length > 0 ? (
-                    <div className="space-y-4">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Project</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Created</TableHead>
-                            <TableHead>Actions</TableHead>
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Projects</CardTitle>
+                <CardDescription>Status of your current projects</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {dashboardData.projects.length > 0 ? (
+                  <div className="space-y-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Project</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {dashboardData.projects.slice(0, 5).map((project) => (
+                          <TableRow key={project.id_project}>
+                            <TableCell className="font-medium">{project.title}</TableCell>
+                            <TableCell>
+                              <span
+                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                                  project.status === "completed"
+                                    ? "bg-green-100 text-green-800"
+                                    : project.status === "in_progress"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : project.status === "open"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : project.status === "review"
+                                    ? "bg-purple-100 text-purple-800"
+                                    : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {project.status.replace("_", " ").toUpperCase()}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(project.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="outline" size="sm" asChild>
+                                <Link to={`/projects/${project.id_project}`}>View</Link>
+                              </Button>
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {dashboardData.projects.slice(0, 5).map((project) => (
-                            <TableRow key={project.id_project}>
-                              <TableCell className="font-medium">{project.title}</TableCell>
-                              <TableCell>
-                                <span
-                                  className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                    project.status === "completed"
-                                      ? "bg-green-100 text-green-800"
-                                      : project.status === "in_progress"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : project.status === "open"
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : project.status === "review"
-                                      ? "bg-purple-100 text-purple-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
-                                >
-                                  {project.status.replace("_", " ").toUpperCase()}
-                                </span>
-                              </TableCell>
-                              <TableCell>
-                                {new Date(project.created_at).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <Button variant="outline" size="sm" asChild>
-                                  <Link to={`/projects/${project.id_project}`}>View</Link>
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                      {dashboardData.projects.length > 5 && (
-                        <div className="mt-4 text-center">
-                          <Button variant="outline" asChild>
-                            <Link to="/projects">View All Projects</Link>
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">No projects found.</p>
-                  )}
-                </CardContent>
-              </Card>
-              
-              {/* Student Reviews Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Student Reviews</CardTitle>
-                  <CardDescription>Your reviews of students who worked on your projects</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <StudentReviewsTable />
-                </CardContent>
-              </Card>
-            </>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {dashboardData.projects.length > 5 && (
+                      <div className="mt-4 text-center">
+                        <Button variant="outline" asChild>
+                          <Link to="/projects">View All Projects</Link>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No projects found.</p>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {/* Common components for both roles */}
