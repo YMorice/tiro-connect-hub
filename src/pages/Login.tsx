@@ -130,6 +130,14 @@ const Login = () => {
                     </FormItem>
                   )} 
                 />
+                <div className="text-right">
+                  <Link 
+                    to="/reset-password" 
+                    className="text-sm text-tiro-primary hover:underline"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
                 <Button 
                   type="submit" 
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 

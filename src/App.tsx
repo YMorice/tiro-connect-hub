@@ -12,6 +12,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 // Pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="/" element={<Login />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/admin-setup" element={<CreateAdminAccount />} />
                 
                 <Route
