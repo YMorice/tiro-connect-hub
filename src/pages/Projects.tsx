@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from "react";
+
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
-import { useProjects } from "@/context/project-context";
 import { Link } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { Input } from "@/components/ui/input";
@@ -19,165 +19,161 @@ import { Project } from "@/types";
 
 const Projects = () => {
   const { user } = useAuth();
-  const { projects, setProjects } = useProjects();
+  const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
-  // Fetch projects directly without RLS issues
-  useEffect(() => {
-    if (!user) return;
+  const fetchProjects = useCallback(async () => {
+    if (!user?.id) return;
     
-    const fetchProjects = async () => {
-      try {
-        setLoading(true);
-        console.log("Fetching projects for user:", user.id, "with role:", user.role);
-        
-        let projectData: any[] = [];
-        
-        if (user.role === "entrepreneur") {
-          // Get entrepreneur ID first
-          const { data: entrepreneurData, error: entrepreneurError } = await supabase
-            .from('entrepreneurs')
-            .select('id_entrepreneur')
-            .eq('id_user', user.id)
-            .single();
-            
-          if (entrepreneurError) {
-            console.error('Error fetching entrepreneur data:', entrepreneurError);
-            setLoading(false);
-            return;
-          }
+    try {
+      setLoading(true);
+      console.log("Fetching projects for user:", user.id, "with role:", (user as any).role);
+      
+      let projectData: any[] = [];
+      
+      if ((user as any).role === "entrepreneur") {
+        // Single query to get entrepreneur data and projects
+        const { data, error } = await supabase
+          .from('entrepreneurs')
+          .select(`
+            id_entrepreneur,
+            projects (
+              id_project,
+              title,
+              description,
+              status,
+              created_at,
+              updated_at,
+              id_pack
+            )
+          `)
+          .eq('id_user', user.id)
+          .single();
           
-          if (entrepreneurData) {
-            // Fetch projects for this entrepreneur
-            const { data, error } = await supabase
+        if (error) {
+          console.error('Error fetching entrepreneur projects:', error);
+          return;
+        }
+        
+        projectData = data?.projects || [];
+      } else if ((user as any).role === "student") {
+        // Single query to get student data and assigned projects
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('id_student')
+          .eq('id_user', user.id)
+          .single();
+          
+        if (studentError) {
+          console.error('Error fetching student data:', studentError);
+          return;
+        }
+        
+        if (studentData) {
+          // Get both assigned and open projects in parallel
+          const [assignedResult, openResult] = await Promise.all([
+            supabase
+              .from('project_assignments')
+              .select(`
+                id_project,
+                projects (
+                  id_project,
+                  title,
+                  description,
+                  status,
+                  created_at,
+                  updated_at,
+                  id_entrepreneur,
+                  id_pack
+                )
+              `)
+              .eq('id_student', studentData.id_student),
+            
+            supabase
               .from('projects')
               .select('*')
-              .eq('id_entrepreneur', entrepreneurData.id_entrepreneur);
-              
-            if (error) {
-              console.error('Error fetching entrepreneur projects:', error);
-            } else {
-              projectData = data || [];
-            }
-          }
-        } else if (user.role === "student") {
-          // Get student ID first
-          const { data: studentData, error: studentError } = await supabase
-            .from('students')
-            .select('id_student')
-            .eq('id_user', user.id)
-            .single();
-            
-          if (studentError) {
-            console.error('Error fetching student data:', studentError);
-            setLoading(false);
-            return;
-          }
+              .eq('status', 'open')
+          ]);
           
-          if (studentData) {
-            // Get assigned projects and open projects in parallel
-            const [assignedResult, openResult] = await Promise.all([
-              supabase
-                .from('project_assignments')
-                .select(`
-                  id_project,
-                  projects (
-                    id_project,
-                    title,
-                    description,
-                    status,
-                    created_at,
-                    updated_at,
-                    id_entrepreneur,
-                    id_pack
-                  )
-                `)
-                .eq('id_student', studentData.id_student),
-              
-              supabase
-                .from('projects')
-                .select('*')
-                .eq('status', 'open')
-            ]);
-            
-            // Combine assigned and open projects
-            const assignedProjects = assignedResult.data?.map(a => a.projects).filter(Boolean) || [];
-            const openProjects = openResult.data || [];
-            
-            // Remove duplicates
-            const assignedProjectIds = new Set(assignedProjects.map(p => p.id_project));
-            const uniqueOpenProjects = openProjects.filter(p => !assignedProjectIds.has(p.id_project));
-            
-            projectData = [...assignedProjects, ...uniqueOpenProjects];
-          }
-        } else if (user.role === "admin") {
-          // Admin sees all projects
-          const { data, error } = await supabase
-            .from('projects')
-            .select('*');
+          const assignedProjects = assignedResult.data?.map(a => a.projects).filter(Boolean) || [];
+          const openProjects = openResult.data || [];
           
-          if (error) {
-            console.error('Error fetching admin projects:', error);
-          } else {
-            projectData = data || [];
-          }
+          // Remove duplicates
+          const assignedProjectIds = new Set(assignedProjects.map(p => p.id_project));
+          const uniqueOpenProjects = openProjects.filter(p => !assignedProjectIds.has(p.id_project));
+          
+          projectData = [...assignedProjects, ...uniqueOpenProjects];
+        }
+      } else if ((user as any).role === "admin") {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*');
+        
+        if (error) {
+          console.error('Error fetching admin projects:', error);
+          return;
         }
         
-        console.log("Fetched projects:", projectData);
-        
-        if (projectData) {
-          // Convert to the format expected by the UI
-          const formattedProjects: Project[] = projectData.map(dbProject => ({
-            id: dbProject.id_project,
-            title: dbProject.title,
-            description: dbProject.description || "",
-            status: dbProject.status as any || "draft",
-            ownerId: dbProject.id_entrepreneur,
-            tasks: [],
-            documents: [],
-            createdAt: new Date(dbProject.created_at),
-            updatedAt: new Date(dbProject.updated_at),
-            packId: dbProject.id_pack
-          }));
-          
-          console.log("Formatted projects:", formattedProjects);
-          setProjects(formattedProjects);
-        }
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-        toast.error("Failed to load projects");
-      } finally {
-        setLoading(false);
+        projectData = data || [];
       }
-    };
-    
-    fetchProjects();
-  }, [user?.id, user?.role, setProjects]);
+      
+      // Convert to UI format
+      const formattedProjects: Project[] = projectData.map(dbProject => ({
+        id: dbProject.id_project,
+        title: dbProject.title,
+        description: dbProject.description || "",
+        status: dbProject.status as any || "draft",
+        ownerId: dbProject.id_entrepreneur,
+        tasks: [],
+        documents: [],
+        createdAt: new Date(dbProject.created_at),
+        updatedAt: new Date(dbProject.updated_at),
+        packId: dbProject.id_pack
+      }));
+      
+      setProjects(formattedProjects);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      toast.error("Failed to load projects");
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, (user as any)?.role]);
 
-  // Filter projects - memoized to prevent unnecessary recalculations
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+
+  // Memoized filtered projects to prevent unnecessary recalculations
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
-      // Filter by search term
-      const searchFilter = 
+      const searchMatch = 
         project.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
         project.description.toLowerCase().includes(searchTerm.toLowerCase());
       
-      // Filter by status
       const statusMatch = 
         statusFilter === "all" || project.status === statusFilter;
       
-      return searchFilter && statusMatch;
+      return searchMatch && statusMatch;
     });
   }, [projects, searchTerm, statusFilter]);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
+  const handleStatusChange = useCallback((value: string) => {
+    setStatusFilter(value);
+  }, []);
 
   return (
     <AppLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Projects</h1>
-          {user?.role === "entrepreneur" && (
+          {(user as any)?.role === "entrepreneur" && (
             <Button
               asChild
               className="bg-tiro-purple hover:bg-tiro-purple/90"
@@ -193,14 +189,14 @@ const Projects = () => {
             <Input
               placeholder="Search projects..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="w-full"
             />
           </div>
           <div className="w-full sm:w-1/3">
             <Select
               value={statusFilter}
-              onValueChange={setStatusFilter}
+              onValueChange={handleStatusChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Filter by status" />
@@ -257,14 +253,6 @@ const Projects = () => {
                             <span className="text-muted-foreground">Created: </span>
                             <span>{project.createdAt.toLocaleDateString()}</span>
                           </div>
-                          <div className="text-sm">
-                            <span className="text-muted-foreground">Tasks: </span>
-                            <span>{project.tasks.length}</span>
-                          </div>
-                          <div className="text-sm">
-                            <span className="text-muted-foreground">Files: </span>
-                            <span>{project.documents.length}</span>
-                          </div>
                         </div>
                       </div>
                       <Button asChild>
@@ -280,11 +268,11 @@ const Projects = () => {
                 <p className="text-muted-foreground">
                   {searchTerm || statusFilter !== "all"
                     ? "Try changing your search filters"
-                    : user?.role === "entrepreneur"
+                    : (user as any)?.role === "entrepreneur"
                     ? "Create your first project to get started"
                     : "Browse open projects to start working"}
                 </p>
-                {user?.role === "entrepreneur" && !searchTerm && statusFilter === "all" && (
+                {(user as any)?.role === "entrepreneur" && !searchTerm && statusFilter === "all" && (
                   <Button className="mt-4" asChild>
                     <Link to="/projects/pack-selection">Create Project</Link>
                   </Button>
