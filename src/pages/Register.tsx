@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -1123,28 +1124,36 @@ const Register = () => {
       case 5:
         return (
           <div className="space-y-6 text-center">
-            <div className="mx-auto h-24 w-24 rounded-full bg-green-100 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            <div className="mx-auto h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2-2"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
               </svg>
             </div>
             
-            <h2 className="text-2xl font-bold">Thank You for Signing Up!</h2>
+            <h2 className="text-2xl font-bold">Check Your Email!</h2>
             
-            <p className="text-muted-foreground">
-              {formValues.role === "student" 
-                ? "Your student account has been created successfully. You can now browse available projects and start collaborating with entrepreneurs."
-                : "Your entrepreneur account has been created successfully. You can now create projects and find talented students to help with your web design needs."
-              }
-            </p>
+            <div className="space-y-3 text-muted-foreground">
+              <p>
+                We've sent a confirmation email to <strong className="text-foreground">{formValues.email}</strong>
+              </p>
+              <p>
+                Please click the confirmation link in the email to activate your account.
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
+                <p className="text-amber-800">
+                  <strong>Important:</strong> The email may take a few minutes to arrive. 
+                  Don't forget to check your spam folder if you don't see it in your inbox.
+                </p>
+              </div>
+            </div>
             
             <Button 
-              onClick={() => navigate("/dashboard")} 
+              onClick={() => navigate("/login")} 
               className="mt-4 bg-tiro-primary hover:bg-tiro-primary/90 text-white w-full"
               disabled={isSubmitting}
             >
-              Go to Dashboard
+              Go to Login
             </Button>
           </div>
         );
