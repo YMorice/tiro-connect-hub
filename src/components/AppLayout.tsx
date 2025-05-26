@@ -25,7 +25,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Default to closed on mobile
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -82,14 +82,22 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar Toggle Button for Mobile */}
-      <div className="lg:hidden absolute top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-4 left-4 z-50">
         <Button
           variant="outline"
           size="icon"
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="rounded-full"
+          className="rounded-full bg-background shadow-md"
         >
           {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </Button>
@@ -98,16 +106,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex flex-col transition-all duration-300 bg-sidebar border-r border-sidebar-border shadow-lg lg:relative",
-          sidebarOpen ? "w-64" : "w-0 lg:w-20 overflow-hidden"
+          "fixed inset-y-0 left-0 z-40 flex flex-col transition-transform duration-300 bg-sidebar border-r border-sidebar-border shadow-lg lg:relative lg:transform-none",
+          "w-64",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <div className="flex items-center justify-center h-16 border-b border-sidebar-border">
-          {sidebarOpen ? (
-            <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-8" />
-          ) : (
-            <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-6" />
-          )}
+        <div className="flex items-center justify-center h-16 border-b border-sidebar-border px-4">
+          <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-8" />
         </div>
 
         <div className="flex flex-col flex-1 overflow-y-auto">
@@ -116,6 +121,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <Link
                 key={item.href}
                 to={item.href}
+                onClick={() => setSidebarOpen(false)} // Close sidebar on navigation
                 className={cn(
                   "flex items-center p-3 rounded-lg transition-all",
                   isActive(item.href)
@@ -124,7 +130,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 )}
               >
                 <item.icon size={20} />
-                {sidebarOpen && <span className="ml-3">{item.label}</span>}
+                <span className="ml-3">{item.label}</span>
               </Link>
             ))}
           </nav>
@@ -132,8 +138,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Avatar className="w-8 h-8">
+            <div className="flex items-center min-w-0 flex-1">
+              <Avatar className="w-8 h-8 flex-shrink-0">
                 {user?.avatar ? (
                   <AvatarImage src={user.avatar} alt={user?.name || "User"} />
                 ) : (
@@ -142,41 +148,28 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   </AvatarFallback>
                 )}
               </Avatar>
-              {sidebarOpen && (
-                <div className="ml-3">
-                  <p className="font-medium text-sidebar-foreground">{user?.name || "User"}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{user?.role || "user"}</p>
-                </div>
-              )}
+              <div className="ml-3 min-w-0 flex-1">
+                <p className="font-medium text-sidebar-foreground truncate">{user?.name || "User"}</p>
+                <p className="text-xs text-muted-foreground capitalize">{user?.role || "user"}</p>
+              </div>
             </div>
 
-            {sidebarOpen ? (
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={handleLogout}
-                title="Logout"
-              >
-                <LogOut size={20} />
-              </Button>
-            ) : (
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={handleLogout}
-                className="mt-2"
-                title="Logout"
-              >
-                <LogOut size={20} />
-              </Button>
-            )}
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={handleLogout}
+              title="Logout"
+              className="flex-shrink-0 ml-2"
+            >
+              <LogOut size={20} />
+            </Button>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <div className="container py-6">
+      <main className="flex-1 overflow-auto lg:ml-0">
+        <div className="h-full">
           {children}
         </div>
       </main>

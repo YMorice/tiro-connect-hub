@@ -213,25 +213,25 @@ const Dashboard = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold">
+      <div className="space-y-6 px-4 sm:px-6 lg:px-8">
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-bold">
             Welcome back, {(user as any)?.name || user?.email}!
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm sm:text-base">
             Here's what's happening with your projects today.
           </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Stats Grid - Improved responsive layout */}
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {dashboardCards.map((card) => (
-            <Card key={card.title}>
+            <Card key={card.title} className="min-w-0">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium truncate">
                   {card.title}
                 </CardTitle>
-                <div className={`p-2 rounded-lg ${card.bgColor}`}>
+                <div className={`p-2 rounded-lg ${card.bgColor} flex-shrink-0`}>
                   <card.icon className={`h-4 w-4 ${card.color}`} />
                 </div>
               </CardHeader>
@@ -245,26 +245,26 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Recent Projects */}
+        {/* Recent Projects - Improved mobile layout */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Recent Projects</CardTitle>
-                <CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
+              <div className="space-y-1">
+                <CardTitle className="text-lg sm:text-xl">Recent Projects</CardTitle>
+                <CardDescription className="text-sm">
                   Your most recent project activity
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 {(user as any)?.role === "entrepreneur" && (
-                  <Button asChild size="sm">
+                  <Button asChild size="sm" className="w-full sm:w-auto">
                     <Link to="/projects/pack-selection">
                       <PlusCircle className="h-4 w-4 mr-2" />
                       New Project
                     </Link>
                   </Button>
                 )}
-                <Button asChild variant="outline" size="sm">
+                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                   <Link to="/projects">
                     <Eye className="h-4 w-4 mr-2" />
                     View All
@@ -279,11 +279,11 @@ const Dashboard = () => {
                 {recentProjects.map((project) => (
                   <div
                     key={project.id_project}
-                    className="flex items-center justify-between p-4 border rounded-lg"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg space-y-3 sm:space-y-0"
                   >
-                    <div>
-                      <h3 className="font-medium">{project.title}</h3>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium truncate">{project.title}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2 sm:line-clamp-1">
                         {project.description?.substring(0, 100)}...
                       </p>
                       <div className="flex items-center mt-2">
@@ -302,7 +302,7 @@ const Dashboard = () => {
                         </span>
                       </div>
                     </div>
-                    <Button asChild variant="outline" size="sm">
+                    <Button asChild variant="outline" size="sm" className="w-full sm:w-auto sm:ml-4">
                       <Link to={`/projects/${project.id_project}`}>
                         View
                       </Link>

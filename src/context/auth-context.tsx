@@ -37,6 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true;
+    let isInitialized = false;
     
     console.log("Loading initial session...");
     
@@ -50,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'SIGNED_OUT') {
           setSession(null);
           setUser(null);
-          if (mounted) setLoading(false);
+          if (mounted && isInitialized) setLoading(false);
           return;
         }
         
@@ -72,7 +73,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (userError) {
                 console.error('Error fetching user profile:', userError);
                 setUser(session.user);
-                if (mounted) setLoading(false);
+                if (mounted) {
+                  isInitialized = true;
+                  setLoading(false);
+                }
                 return;
               }
 
@@ -114,7 +118,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
         }
         
-        if (mounted) setLoading(false);
+        if (mounted) {
+          isInitialized = true;
+          setLoading(false);
+        }
       }
     );
 
@@ -126,6 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         // The onAuthStateChange will handle the profile fetch
       } else {
+        isInitialized = true;
         setLoading(false);
       }
     });
