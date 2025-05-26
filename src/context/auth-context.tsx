@@ -4,19 +4,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { toast } from "@/components/ui/sonner";
 
+interface ExtendedUser extends User {
+  role?: string;
+  name?: string;
+  surname?: string;
+  phone?: string;
+  pp_link?: string;
+  avatar?: string;
+  bio?: string;
+  skills?: string[];
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: ExtendedUser | null;
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: any) => Promise<void>;
   signOut: () => Promise<void>;
+  login: (email: string, password: string) => Promise<{ error?: any }>;
+  logout: () => Promise<void>;
+  register: (email: string, password: string, userData: any) => Promise<{ error?: any }>;
+  updateProfile: (userData: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ExtendedUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -62,15 +77,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
 
               if (userProfile) {
-                const enhancedUser = {
+                const enhancedUser: ExtendedUser = {
                   ...session.user,
                   role: userProfile.role,
                   name: userProfile.name,
                   surname: userProfile.surname,
                   phone: userProfile.phone,
-                  pp_link: userProfile.pp_link
+                  pp_link: userProfile.pp_link,
+                  avatar: userProfile.pp_link,
+                  bio: userProfile.bio
                 };
-                setUser(enhancedUser as User);
+                setUser(enhancedUser);
               } else {
                 setUser(session.user);
               }
@@ -121,6 +138,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(error.message || "Failed to sign in");
+        setLoading(false);
+        return { error };
+      }
+      toast.success("Welcome back!");
+      return {};
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast.error(error.message || "Failed to sign in");
+      setLoading(false);
+      return { error };
+    }
+  }, []);
+
   const signUp = useCallback(async (email: string, password: string, userData: any) => {
     setLoading(true);
     try {
@@ -137,6 +173,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Sign up error:", error);
       toast.error(error.message || "Failed to create account");
       setLoading(false);
+    }
+  }, []);
+
+  const register = useCallback(async (email: string, password: string, userData: any) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: userData
+        }
+      });
+      if (error) {
+        toast.error(error.message || "Failed to create account");
+        setLoading(false);
+        return { error };
+      }
+      toast.success("Account created successfully!");
+      return {};
+    } catch (error: any) {
+      console.error("Register error:", error);
+      toast.error(error.message || "Failed to create account");
+      setLoading(false);
+      return { error };
     }
   }, []);
 
@@ -159,6 +220,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const logout = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Clear state immediately
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+      
+      toast.success("Logged out successfully");
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      toast.error(error.message || "Failed to log out");
+      setLoading(false);
+    }
+  }, []);
+
+  const updateProfile = useCallback(async (userData: any) => {
+    if (!user) throw new Error("No user logged in");
+    
+    try {
+      // Update the user state optimistically
+      const updatedUser: ExtendedUser = {
+        ...user,
+        ...userData,
+        avatar: userData.avatar || user.avatar
+      };
+      setUser(updatedUser);
+      
+      toast.success("Profile updated successfully");
+    } catch (error: any) {
+      console.error("Update profile error:", error);
+      toast.error(error.message || "Failed to update profile");
+      throw error;
+    }
+  }, [user]);
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -167,6 +267,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signIn,
       signUp,
       signOut,
+      login,
+      logout,
+      register,
+      updateProfile,
     }}>
       {children}
     </AuthContext.Provider>

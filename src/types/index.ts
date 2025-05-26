@@ -12,6 +12,9 @@ export interface User {
   specialty?: string;
   createdAt: Date;
   isOnline?: boolean;
+  surname?: string;
+  phone?: string;
+  pp_link?: string;
 }
 
 export interface Project {
