@@ -82,38 +82,74 @@ export type Database = {
           },
         ]
       }
-      messages: {
+      message_groups: {
         Row: {
-          content: string
           created_at: string
-          id_message: string
-          project_id: string
-          read: boolean | null
-          sender_id: string
+          id_group: string
+          id_project: string | null
+          id_user: string | null
         }
         Insert: {
-          content: string
           created_at?: string
-          id_message?: string
-          project_id: string
-          read?: boolean | null
-          sender_id: string
+          id_group?: string
+          id_project?: string | null
+          id_user?: string | null
         }
         Update: {
-          content?: string
           created_at?: string
-          id_message?: string
-          project_id?: string
-          read?: boolean | null
-          sender_id?: string
+          id_group?: string
+          id_project?: string | null
+          id_user?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "messages_project_id_fkey"
-            columns: ["project_id"]
+            foreignKeyName: "message_groups_id_project_fkey"
+            columns: ["id_project"]
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id_project"]
+          },
+          {
+            foreignKeyName: "message_groups_id_user_fkey"
+            columns: ["id_user"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id_users"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          group_id: string | null
+          id_message: string
+          read: boolean | null
+          sender_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          group_id?: string | null
+          id_message?: string
+          read?: boolean | null
+          sender_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          group_id?: string | null
+          id_message?: string
+          read?: boolean | null
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "message_groups"
+            referencedColumns: ["id_group"]
           },
           {
             foreignKeyName: "messages_sender_id_fkey"

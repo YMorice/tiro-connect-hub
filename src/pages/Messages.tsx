@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
@@ -10,10 +11,8 @@ import { Send, Clock, Check, X, FileText, Download, Menu, Users, User } from "lu
 import { useAuth } from "@/context/auth-context";
 import { useMessages } from "@/context/message-context";
 import { toast } from "@/components/ui/sonner";
-import { useProjects } from "@/context/project-context";
 import { Message } from "@/types";
 import DocumentUpload from "@/components/DocumentUpload";
-import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -68,206 +67,62 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => 
   );
 };
 
-interface ConversationItem {
-  id: string;
-  title: string;
-  type: 'project' | 'direct';
-  lastMessage?: Message;
-  unreadCount: number;
-  projectId?: string;
-  userId?: string;
-}
-
 const Messages = () => {
   const { user } = useAuth();
-  const { messages, sendMessage, sendDocumentMessage, markAsRead } = useMessages();
-  const { projects } = useProjects();
-  const [currentConversation, setCurrentConversation] = useState<ConversationItem | null>(null);
+  const { messageGroups, sendMessage, sendDocumentMessage, markAsRead, getGroupMessages, loading } = useMessages();
+  const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
-  const [conversations, setConversations] = useState<ConversationItem[]>([]);
-  const [users, setUsers] = useState<{[key: string]: {name: string, role: string}}>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   
-  // Extract query parameters
+  // Extract query parameters for project-specific messaging
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const projectId = queryParams.get('projectId');
-    const userId = queryParams.get('userId');
     
-    if (projectId) {
-      const project = projects.find(p => p.id === projectId);
-      if (project) {
-        setCurrentConversation({
-          id: projectId,
-          title: project.title,
-          type: 'project',
-          projectId,
-          lastMessage: undefined,
-          unreadCount: 0
-        });
+    if (projectId && messageGroups.length > 0) {
+      const projectGroup = messageGroups.find(g => g.projectId === projectId);
+      if (projectGroup) {
+        setCurrentGroupId(projectGroup.id);
       }
-    } else if (userId) {
-      // Handle direct user conversation
-      setCurrentConversation({
-        id: userId,
-        title: users[userId]?.name || "User",
-        type: 'direct',
-        userId,
-        lastMessage: undefined,
-        unreadCount: 0
-      });
     }
-  }, [location.search, projects, users]);
+  }, [location.search, messageGroups]);
 
-  // Fetch user data for direct messages
+  // Auto-select first group if none selected
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('id_users, name, role');
-          
-        if (error) throw error;
-        
-        const usersMap = data.reduce((acc, user) => {
-          acc[user.id_users] = { name: user.name, role: user.role };
-          return acc;
-        }, {});
-        
-        setUsers(usersMap);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      }
-    };
-    
-    fetchUsers();
-  }, []);
-
-  // Build conversations list
-  useEffect(() => {
-    if (!user) return;
-
-    const conversationMap = new Map<string, ConversationItem>();
-    
-    // Add project conversations
-    const accessibleProjects = getAccessibleProjects();
-    accessibleProjects.forEach(project => {
-      const projectMessages = messages.filter(m => m.projectId === project.id);
-      const lastMessage = projectMessages[projectMessages.length - 1];
-      const unreadCount = projectMessages.filter(m => m.sender !== user.id && !m.read).length;
-      
-      conversationMap.set(project.id, {
-        id: project.id,
-        title: project.title,
-        type: 'project',
-        projectId: project.id,
-        lastMessage,
-        unreadCount
-      });
-    });
-    
-    // Add direct message conversations
-    const directMessages = messages.filter(m => !m.projectId);
-    directMessages.forEach(message => {
-      const otherUserId = message.sender === user.id ? message.recipient : message.sender;
-      if (!otherUserId) return;
-      
-      const existingConv = conversationMap.get(otherUserId);
-      if (!existingConv || !existingConv.lastMessage || 
-          new Date(message.createdAt) > new Date(existingConv.lastMessage.createdAt)) {
-        
-        const userMessages = directMessages.filter(m => 
-          (m.sender === user.id && m.recipient === otherUserId) ||
-          (m.sender === otherUserId && m.recipient === user.id)
-        );
-        const unreadCount = userMessages.filter(m => m.sender === otherUserId && !m.read).length;
-        
-        conversationMap.set(otherUserId, {
-          id: otherUserId,
-          title: users[otherUserId]?.name || "User",
-          type: 'direct',
-          userId: otherUserId,
-          lastMessage: message,
-          unreadCount
-        });
-      }
-    });
-    
-    const sortedConversations = Array.from(conversationMap.values())
-      .sort((a, b) => {
-        const aTime = a.lastMessage ? new Date(a.lastMessage.createdAt).getTime() : 0;
-        const bTime = b.lastMessage ? new Date(b.lastMessage.createdAt).getTime() : 0;
-        return bTime - aTime;
-      });
-    
-    setConversations(sortedConversations);
-    
-    // Auto-select first conversation if none selected
-    if (!currentConversation && sortedConversations.length > 0) {
-      setCurrentConversation(sortedConversations[0]);
+    if (!currentGroupId && messageGroups.length > 0) {
+      setCurrentGroupId(messageGroups[0].id);
     }
-  }, [messages, projects, users, user]);
+  }, [currentGroupId, messageGroups]);
 
-  // Filter messages based on current conversation
+  // Filter messages based on current group
   useEffect(() => {
-    if (!currentConversation || !user) return;
+    if (!currentGroupId || !user) return;
 
-    let filtered: Message[] = [];
-    
-    if (currentConversation.type === 'project') {
-      filtered = messages.filter(msg => msg.projectId === currentConversation.projectId);
-    } else {
-      filtered = messages.filter(msg => 
-        !msg.projectId && (
-          (msg.sender === user.id && msg.recipient === currentConversation.userId) ||
-          (msg.sender === currentConversation.userId && msg.recipient === user.id)
-        )
-      );
-    }
-    
-    setFilteredMessages(filtered);
+    const groupMessages = getGroupMessages(currentGroupId);
+    setFilteredMessages(groupMessages);
     
     // Mark unread messages as read
-    filtered.forEach(message => {
+    groupMessages.forEach(message => {
       if (message.sender !== user.id && !message.read) {
         markAsRead(message.id);
       }
     });
-  }, [messages, currentConversation, user, markAsRead]);
+  }, [currentGroupId, getGroupMessages, user, markAsRead]);
 
   useEffect(() => {
     // Scroll to bottom whenever messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [filteredMessages]);
 
-  // Get all projects the current user has access to
-  const getAccessibleProjects = () => {
-    if (!user) return [];
-    
-    if (user.role === 'admin') {
-      return projects;
-    } else if (user.role === 'entrepreneur') {
-      return projects.filter(p => p.ownerId === user.id);
-    } else if (user.role === 'student') {
-      return projects.filter(p => p.assigneeId === user.id || p.status === 'open');
-    }
-    
-    return [];
-  };
-
   const handleSendMessage = () => {
-    if (!user || !currentConversation || !newMessage.trim()) return;
+    if (!user || !currentGroupId || !newMessage.trim()) return;
 
-    if (currentConversation.type === 'project') {
-      sendMessage("", newMessage, currentConversation.projectId);
-    } else {
-      sendMessage(currentConversation.userId!, newMessage);
-    }
+    sendMessage(currentGroupId, newMessage);
     setNewMessage("");
   };
 
@@ -276,77 +131,58 @@ const Messages = () => {
     documentName: string;
     documentType: "proposal" | "final" | "regular";
   }) => {
-    if (!user || !currentConversation) return;
+    if (!user || !currentGroupId) return;
     
-    if (currentConversation.type === 'project') {
-      sendDocumentMessage("", {
-        documentUrl: documentDetails.documentUrl,
-        documentName: documentDetails.documentName,
-        documentType: documentDetails.documentType,
-        projectId: currentConversation.projectId,
-      });
-    } else {
-      // For direct messages, send as regular document
-      sendDocumentMessage(currentConversation.userId!, {
-        documentUrl: documentDetails.documentUrl,
-        documentName: documentDetails.documentName,
-        documentType: "regular",
-      });
-    }
-    
+    sendDocumentMessage(currentGroupId, documentDetails);
     toast.success("Document shared");
   };
 
-  const handleConversationSelect = (conversation: ConversationItem) => {
-    setCurrentConversation(conversation);
+  const handleGroupSelect = (groupId: string) => {
+    setCurrentGroupId(groupId);
     if (isMobile) {
       setSheetOpen(false);
     }
   };
 
-  const ConversationsList = () => (
+  const currentGroup = messageGroups.find(g => g.id === currentGroupId);
+
+  const GroupsList = () => (
     <div className="h-full">
       <CardHeader className="p-4">
-        <CardTitle className="text-lg">Conversations</CardTitle>
-        <CardDescription>Your messages and project discussions</CardDescription>
+        <CardTitle className="text-lg">Message Groups</CardTitle>
+        <CardDescription>Your project discussions</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea className="h-[300px] md:h-[calc(100vh-240px)] w-full">
           <div className="p-2 space-y-1">
-            {conversations.length > 0 ? (
-              conversations.map((conversation) => (
+            {messageGroups.length > 0 ? (
+              messageGroups.map((group) => (
                 <Button
-                  key={conversation.id}
+                  key={group.id}
                   variant="ghost"
                   className={`w-full justify-start text-left p-3 h-auto ${
-                    currentConversation?.id === conversation.id ? 'bg-muted' : ''
+                    currentGroupId === group.id ? 'bg-muted' : ''
                   }`}
-                  onClick={() => handleConversationSelect(conversation)}
+                  onClick={() => handleGroupSelect(group.id)}
                 >
                   <div className="flex items-center gap-3 w-full">
                     <div className="flex-shrink-0">
-                      {conversation.type === 'project' ? (
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-blue-600" />
-                        </div>
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                          <User className="h-5 w-5 text-gray-600" />
-                        </div>
-                      )}
+                      <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Users className="h-5 w-5 text-blue-600" />
+                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium truncate">{conversation.title}</span>
-                        {conversation.unreadCount > 0 && (
+                        <span className="font-medium truncate">{group.projectTitle}</span>
+                        {group.unreadCount > 0 && (
                           <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1 ml-2">
-                            {conversation.unreadCount}
+                            {group.unreadCount}
                           </span>
                         )}
                       </div>
-                      {conversation.lastMessage && (
+                      {group.lastMessage && (
                         <p className="text-sm text-muted-foreground truncate">
-                          {conversation.lastMessage.content}
+                          {group.lastMessage.content}
                         </p>
                       )}
                     </div>
@@ -355,7 +191,7 @@ const Messages = () => {
               ))
             ) : (
               <div className="px-4 py-2 text-sm text-muted-foreground">
-                No conversations yet
+                {loading ? "Loading groups..." : "No message groups yet"}
               </div>
             )}
           </div>
@@ -368,33 +204,33 @@ const Messages = () => {
     <AppLayout>
       <div className="container max-w-6xl mx-auto py-2 px-2 sm:py-6 sm:px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
-          {/* Mobile Conversations List as Slide-over */}
+          {/* Mobile Groups List as Slide-over */}
           {isMobile && (
             <div className="md:hidden mb-2">
               <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                 <SheetTrigger asChild>
                   <Button variant="outline" className="w-full flex justify-between items-center">
                     <span>
-                      {currentConversation 
-                        ? currentConversation.title
-                        : "Select Conversation"}
+                      {currentGroup 
+                        ? currentGroup.projectTitle
+                        : "Select Group"}
                     </span>
                     <Menu className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[80%] sm:w-[380px] p-0">
                   <Card className="h-full border-0">
-                    <ConversationsList />
+                    <GroupsList />
                   </Card>
                 </SheetContent>
               </Sheet>
             </div>
           )}
 
-          {/* Desktop Conversations List */}
+          {/* Desktop Groups List */}
           <div className="hidden md:block md:col-span-1">
             <Card className="h-full">
-              <ConversationsList />
+              <GroupsList />
             </Card>
           </div>
 
@@ -403,28 +239,22 @@ const Messages = () => {
             <Card className="h-full">
               <CardHeader className="p-3 sm:p-4">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  {currentConversation && (
+                  {currentGroup && (
                     <>
-                      {currentConversation.type === 'project' ? (
-                        <Users className="h-5 w-5 text-blue-600" />
-                      ) : (
-                        <User className="h-5 w-5 text-gray-600" />
-                      )}
-                      {currentConversation.title}
+                      <Users className="h-5 w-5 text-blue-600" />
+                      {currentGroup.projectTitle}
                     </>
                   )}
                 </CardTitle>
                 <CardDescription>
-                  {currentConversation 
-                    ? currentConversation.type === 'project' 
-                      ? "Project discussion" 
-                      : "Direct message"
-                    : "Select a conversation to start messaging"
+                  {currentGroup 
+                    ? "Project group discussion" 
+                    : "Select a group to start messaging"
                   }
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-[calc(100vh-240px)] flex flex-col p-3 sm:p-4">
-                {currentConversation ? (
+                {currentGroup ? (
                   <>
                     <ScrollArea className="flex-grow mb-4 pr-2">
                       <div className="space-y-2">
@@ -450,7 +280,7 @@ const Messages = () => {
                       <div className="flex justify-end">
                         <DocumentUpload
                           onDocumentSubmit={handleDocumentSubmit}
-                          projectId={currentConversation.type === 'project' ? currentConversation.projectId : undefined}
+                          projectId={currentGroup.projectId}
                         />
                       </div>
                       
@@ -479,12 +309,12 @@ const Messages = () => {
                     <div className="text-center">
                       <p className="text-muted-foreground">
                         {isMobile 
-                          ? "Tap 'Select Conversation' above to choose a conversation"
-                          : "Select a conversation to start messaging"}
+                          ? "Tap 'Select Group' above to choose a group"
+                          : "Select a message group to start messaging"}
                       </p>
-                      {conversations.length === 0 && (
+                      {messageGroups.length === 0 && !loading && (
                         <p className="mt-2 text-sm text-muted-foreground">
-                          You don't have any conversations yet
+                          Message groups will appear when projects are created
                         </p>
                       )}
                     </div>

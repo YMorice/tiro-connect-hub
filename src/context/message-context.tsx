@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Message } from "../types";
 import { useAuth } from "./auth-context";
@@ -6,142 +7,149 @@ import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 
+interface MessageGroup {
+  id: string;
+  projectId?: string;
+  projectTitle?: string;
+  lastMessage?: Message;
+  unreadCount: number;
+}
+
 interface MessageContextType {
-  messages: Message[];
+  messageGroups: MessageGroup[];
   loading: boolean;
-  sendMessage: (recipient: string, content: string, projectId?: string) => void;
-  sendDocumentMessage: (recipient: string, documentDetails: {
+  sendMessage: (groupId: string, content: string) => void;
+  sendDocumentMessage: (groupId: string, documentDetails: {
     documentUrl: string;
     documentName: string;
     documentType: "proposal" | "final" | "regular";
-    projectId?: string;
   }) => void;
   markAsRead: (messageId: string) => void;
-  getConversation: (userId: string) => Message[];
+  getGroupMessages: (groupId: string) => Message[];
   reviewDocument: (messageId: string, isApproved: boolean, comment?: string) => void;
-  getProjectMessages: (projectId: string) => Message[];
 }
-
-// Mock messages for demonstration
-const mockMessages: Message[] = [
-  {
-    id: "1",
-    sender: "1", // entrepreneur 
-    recipient: "2", // student
-    content: "Hi, I'm interested in working with you on my e-commerce project.",
-    read: true,
-    projectId: "1",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-  },
-  {
-    id: "2",
-    sender: "2", // student
-    recipient: "1", // entrepreneur
-    content: "Thanks for reaching out! I'd be happy to discuss the details of your project.",
-    read: true,
-    projectId: "1",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 1000 * 60 * 30), // 3 days ago + 30 mins
-  },
-  {
-    id: "3",
-    sender: "1", // entrepreneur
-    recipient: "2", // student
-    content: "Great! I've attached the project brief for your review. Let me know if you have any questions.",
-    read: false,
-    projectId: "1",
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-  },
-];
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
 export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const { updateProject, addDocument } = useProjects();
+  const [messageGroups, setMessageGroups] = useState<MessageGroup[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchMessages = useCallback(async () => {
+  const fetchMessageGroups = useCallback(async () => {
     if (!user?.id) return;
 
     setLoading(true);
     
     try {
-      let projectIds: string[] = [];
-      
-      if ((user as any).role === 'admin') {
-        // Admin can access all projects
-        const { data: allProjects } = await supabase
-          .from('projects')
-          .select('id_project');
-          
-        projectIds = allProjects?.map(p => p.id_project) || [];
-      } else if ((user as any).role === 'entrepreneur') {
-        // Get entrepreneur projects
-        const { data: entrepreneurData } = await supabase
-          .from('entrepreneurs')
-          .select(`
-            id_entrepreneur,
-            projects (id_project)
-          `)
-          .eq('id_user', user.id)
-          .single();
-          
-        projectIds = entrepreneurData?.projects?.map(p => p.id_project) || [];
-      } else if ((user as any).role === 'student') {
-        // Get student assigned projects
-        const { data: studentData } = await supabase
-          .from('students')
-          .select(`
-            id_student,
-            project_assignments (id_project)
-          `)
-          .eq('id_user', user.id)
-          .single();
-          
-        projectIds = studentData?.project_assignments?.map(pa => pa.id_project) || [];
-      }
+      // Get message groups the user belongs to
+      const { data: groupsData, error: groupsError } = await supabase
+        .from('message_groups')
+        .select(`
+          id_group,
+          id_project,
+          projects (
+            title
+          )
+        `)
+        .or(`id_user.eq.${user.id},id_project.in.(${await getUserProjectIds()})`);
 
-      if (projectIds.length === 0) {
+      if (groupsError) throw groupsError;
+
+      // Get messages for these groups
+      const groupIds = groupsData?.map(g => g.id_group) || [];
+      
+      if (groupIds.length === 0) {
+        setMessageGroups([]);
         setMessages([]);
         return;
       }
 
-      // Get messages for all accessible projects
-      const { data, error } = await supabase
+      const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
         .select('*')
-        .in('project_id', projectIds)
+        .in('group_id', groupIds)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (messagesError) throw messagesError;
 
-      // Transform database messages to our app's Message type
-      const transformedMessages: Message[] = data.map(msg => ({
+      // Transform messages
+      const transformedMessages: Message[] = (messagesData || []).map(msg => ({
         id: msg.id_message,
-        sender: msg.sender_id,
-        recipient: "", // No direct recipient in project-based messaging
-        content: msg.content,
+        sender: msg.sender_id || "",
+        recipient: "", // Not used in group messaging
+        content: msg.content || "",
         read: msg.read || false,
-        projectId: msg.project_id,
+        projectId: "", // Will be set based on group
         createdAt: new Date(msg.created_at),
+        groupId: msg.group_id
       }));
 
+      // Transform groups with message data
+      const transformedGroups: MessageGroup[] = (groupsData || []).map(group => {
+        const groupMessages = transformedMessages.filter(m => m.groupId === group.id_group);
+        const lastMessage = groupMessages[groupMessages.length - 1];
+        const unreadCount = groupMessages.filter(m => m.sender !== user.id && !m.read).length;
+
+        return {
+          id: group.id_group,
+          projectId: group.id_project || undefined,
+          projectTitle: group.projects?.title || "Direct Messages",
+          lastMessage,
+          unreadCount
+        };
+      });
+
+      setMessageGroups(transformedGroups);
       setMessages(transformedMessages);
     } catch (error) {
-      console.error("Error fetching messages:", error);
+      console.error("Error fetching message groups:", error);
       toast.error("Failed to load messages");
     } finally {
       setLoading(false);
     }
-  }, [user?.id, (user as any)?.role]);
+  }, [user?.id]);
+
+  const getUserProjectIds = async (): Promise<string> => {
+    if (!user?.id) return "";
+    
+    try {
+      let projectIds: string[] = [];
+      
+      if ((user as any).role === 'admin') {
+        const { data } = await supabase.from('projects').select('id_project');
+        projectIds = data?.map(p => p.id_project) || [];
+      } else if ((user as any).role === 'entrepreneur') {
+        const { data } = await supabase
+          .from('entrepreneurs')
+          .select('projects(id_project)')
+          .eq('id_user', user.id)
+          .single();
+        projectIds = data?.projects?.map((p: any) => p.id_project) || [];
+      } else if ((user as any).role === 'student') {
+        const { data } = await supabase
+          .from('students')
+          .select('project_assignments(id_project)')
+          .eq('id_user', user.id)
+          .single();
+        projectIds = data?.project_assignments?.map((pa: any) => pa.id_project) || [];
+      }
+      
+      return projectIds.join(',');
+    } catch (error) {
+      console.error("Error getting user project IDs:", error);
+      return "";
+    }
+  };
 
   useEffect(() => {
-    fetchMessages();
-  }, [fetchMessages]);
+    fetchMessageGroups();
+  }, [fetchMessageGroups]);
 
-  const sendMessage = useCallback(async (recipient: string, content: string, projectId?: string) => {
-    if (!user || !projectId) return;
+  const sendMessage = useCallback(async (groupId: string, content: string) => {
+    if (!user) return;
 
     try {
       const messageId = uuidv4();
@@ -151,7 +159,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         .insert({
           id_message: messageId,
           content,
-          project_id: projectId,
+          group_id: groupId,
           sender_id: user.id,
           read: false
         });
@@ -164,11 +172,22 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         recipient: "",
         content,
         read: false,
-        projectId,
+        projectId: "",
         createdAt: new Date(),
+        groupId
       };
 
       setMessages(prevMessages => [...prevMessages, newMessage]);
+      
+      // Update the group's last message
+      setMessageGroups(prevGroups => 
+        prevGroups.map(group => 
+          group.id === groupId 
+            ? { ...group, lastMessage: newMessage }
+            : group
+        )
+      );
+      
       toast.success("Message sent");
     } catch (error) {
       console.error("Error sending message:", error);
@@ -176,15 +195,14 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [user]);
 
-  const sendDocumentMessage = useCallback(async (recipient: string, documentDetails: {
+  const sendDocumentMessage = useCallback(async (groupId: string, documentDetails: {
     documentUrl: string;
     documentName: string;
     documentType: "proposal" | "final" | "regular";
-    projectId?: string;
   }) => {
     if (!user) return;
 
-    const { documentUrl, documentName, documentType, projectId } = documentDetails;
+    const { documentUrl, documentName, documentType } = documentDetails;
     const content = documentType === "regular" 
       ? `Shared a document: ${documentName}`
       : documentType === "proposal" 
@@ -199,7 +217,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         .insert({
           id_message: messageId,
           content,
-          project_id: projectId,
+          group_id: groupId,
           sender_id: user.id,
           read: false
         });
@@ -212,8 +230,9 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         recipient: "",
         content,
         read: false,
-        projectId,
+        projectId: "",
         createdAt: new Date(),
+        groupId,
         documentUrl,
         documentName,
         documentType,
@@ -222,16 +241,18 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       setMessages(prevMessages => [...prevMessages, newMessage]);
       
-      if (projectId) {
-        addDocument(projectId, {
+      // Find the project ID for this group
+      const group = messageGroups.find(g => g.id === groupId);
+      if (group?.projectId) {
+        addDocument(group.projectId, {
           name: documentName,
           url: documentUrl,
           type: documentType === "regular" ? "pdf" : documentType === "proposal" ? "pdf" : "pdf"
         });
-      }
-      
-      if (documentType === "final" && projectId) {
-        updateProject(projectId, { status: "review" });
+        
+        if (documentType === "final") {
+          updateProject(group.projectId, { status: "review" });
+        }
       }
       
       toast.success(documentType === "regular" 
@@ -243,7 +264,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.error("Error sending document message:", error);
       toast.error("Failed to send document");
     }
-  }, [user, addDocument, updateProject]);
+  }, [user, addDocument, updateProject, messageGroups]);
 
   const markAsRead = useCallback(async (messageId: string) => {
     try {
@@ -280,8 +301,10 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
             documentStatus: status
           };
           
-          if (isApproved && message.projectId) {
-            updateProject(message.projectId, { status: "completed" });
+          // Find the group and project for this message
+          const group = messageGroups.find(g => g.id === message.groupId);
+          if (isApproved && group?.projectId) {
+            updateProject(group.projectId, { status: "completed" });
             toast.success("Project marked as complete!");
           }
           
@@ -295,37 +318,29 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       toast.success("Deliverable approved");
     } else {
       const replyContent = `I've reviewed your submission and it needs some adjustments: ${comment || "Please reach out to discuss further details."}`;
-      sendMessage(messages.find(m => m.id === messageId)?.sender || "", replyContent, messages.find(m => m.id === messageId)?.projectId);
+      const message = messages.find(m => m.id === messageId);
+      if (message?.groupId) {
+        sendMessage(message.groupId, replyContent);
+      }
       toast.info("Feedback sent to student");
     }
-  }, [user, updateProject, sendMessage, messages]);
+  }, [user, updateProject, sendMessage, messages, messageGroups]);
 
-  const getConversation = useCallback((userId: string): Message[] => {
-    if (!user) return [];
-
-    return messages.filter(
-      (message) =>
-        (message.sender === user.id && message.recipient === userId) ||
-        (message.sender === userId && message.recipient === user.id)
-    ).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-  }, [user, messages]);
-
-  const getProjectMessages = useCallback((projectId: string): Message[] => {
+  const getGroupMessages = useCallback((groupId: string): Message[] => {
     return messages
-      .filter(message => message.projectId === projectId)
+      .filter(message => message.groupId === groupId)
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }, [messages]);
 
   return (
     <MessageContext.Provider value={{ 
-      messages, 
+      messageGroups, 
       loading, 
       sendMessage, 
       sendDocumentMessage,
       markAsRead, 
-      getConversation,
-      reviewDocument,
-      getProjectMessages
+      getGroupMessages,
+      reviewDocument
     }}>
       {children}
     </MessageContext.Provider>

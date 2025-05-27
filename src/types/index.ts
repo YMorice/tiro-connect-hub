@@ -57,6 +57,7 @@ export interface Message {
   documentType?: "proposal" | "final" | "regular"; // Added to identify document type
   documentName?: string; // Added for document name
   documentStatus?: "pending" | "approved" | "rejected"; // Added for document approval status
+  groupId?: string; // Added for group-based messaging
 }
 
 export interface Document {
