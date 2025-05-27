@@ -35,92 +35,95 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchUserProfile = useCallback(async (userId: string) => {
+    try {
+      console.log("Fetching user profile for:", userId);
+      
+      const { data: userProfile, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id_users', userId)
+        .single();
+
+      if (userError) {
+        console.error('Error fetching user profile:', userError);
+        return null;
+      }
+
+      if (userProfile) {
+        // Only fetch bio for students to avoid unnecessary queries
+        let bio = '';
+        if (userProfile.role === 'student') {
+          const { data: studentData } = await supabase
+            .from('students')
+            .select('biography')
+            .eq('id_user', userId)
+            .single();
+          bio = studentData?.biography || '';
+        }
+
+        return {
+          role: userProfile.role,
+          name: userProfile.name,
+          surname: userProfile.surname,
+          phone: userProfile.phone,
+          pp_link: userProfile.pp_link,
+          avatar: userProfile.pp_link,
+          bio: bio
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
     let mounted = true;
-    let isInitialized = false;
     
     console.log("Loading initial session...");
     
-    // Set up auth state listener first
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
         
         console.log("Auth state changed:", event, session?.user?.id);
         
-        if (event === 'SIGNED_OUT') {
+        if (event === 'SIGNED_OUT' || !session) {
           setSession(null);
           setUser(null);
-          if (mounted && isInitialized) setLoading(false);
+          if (mounted) setLoading(false);
           return;
         }
         
-        if (session?.user) {
-          setSession(session);
-          
-          // Fetch user profile data only for certain events
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
-            try {
-              console.log("User signed in, fetching profile...");
-              console.log("Fetching user profile for:", session.user.id);
+        // Set session immediately for faster UI updates
+        setSession(session);
+        
+        if (session.user) {
+          // For initial session and sign in, fetch profile data
+          if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+            // Defer profile fetching to avoid blocking the auth flow
+            setTimeout(async () => {
+              if (!mounted) return;
               
-              const { data: userProfile, error: userError } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id_users', session.user.id)
-                .single();
-
-              if (userError) {
-                console.error('Error fetching user profile:', userError);
-                setUser(session.user);
-                if (mounted) {
-                  isInitialized = true;
-                  setLoading(false);
-                }
-                return;
-              }
-
-              if (userProfile) {
-                // Fetch additional bio from students table based on role
-                let bio = '';
-                if (userProfile.role === 'student') {
-                  const { data: studentData } = await supabase
-                    .from('students')
-                    .select('biography')
-                    .eq('id_user', session.user.id)
-                    .single();
-                  bio = studentData?.biography || '';
-                }
-
+              const profileData = await fetchUserProfile(session.user.id);
+              
+              if (mounted) {
                 const enhancedUser: ExtendedUser = {
                   ...session.user,
-                  role: userProfile.role,
-                  name: userProfile.name,
-                  surname: userProfile.surname,
-                  phone: userProfile.phone,
-                  pp_link: userProfile.pp_link,
-                  avatar: userProfile.pp_link,
-                  bio: bio
+                  ...profileData
                 };
                 setUser(enhancedUser);
-              } else {
-                setUser(session.user);
+                setLoading(false);
               }
-            } catch (error) {
-              console.error("Error in auth state change:", error);
-              setUser(session.user);
-            }
+            }, 0);
           } else {
-            setUser(session.user);
+            // For token refresh and other events, use basic user data
+            setUser(session.user as ExtendedUser);
+            if (mounted) setLoading(false);
           }
-        } else {
-          setSession(null);
-          setUser(null);
-        }
-        
-        if (mounted) {
-          isInitialized = true;
-          setLoading(false);
         }
       }
     );
@@ -129,20 +132,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       
-      if (session) {
-        setSession(session);
-        // The onAuthStateChange will handle the profile fetch
-      } else {
-        isInitialized = true;
+      if (!session) {
         setLoading(false);
       }
+      // If session exists, the onAuthStateChange will handle it
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserProfile]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     try {
@@ -217,7 +217,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Clear state immediately
       setSession(null);
       setUser(null);
       
@@ -234,7 +233,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Clear state immediately
       setSession(null);
       setUser(null);
       
@@ -250,7 +248,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) throw new Error("No user logged in");
     
     try {
-      // Update the user state optimistically
       const updatedUser: ExtendedUser = {
         ...user,
         ...userData,

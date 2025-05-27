@@ -51,18 +51,16 @@ const Login = () => {
         console.error("Login failed:", result.error);
       } else {
         console.log("Login successful, waiting for redirect...");
-        // The useEffect will handle the redirect when user state is updated
       }
     } catch (error) {
       console.error("Login error in form handler:", error);
     } finally {
-      // Always reset the submitting state
       setIsSubmitting(false);
     }
   };
 
-  // Show loading while checking authentication (but only for a reasonable time)
-  if (loading) {
+  // Show a minimal loading state only for the initial auth check
+  if (loading && !user && !session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -75,7 +73,7 @@ const Login = () => {
 
   // Don't show login form if user is already authenticated
   if (user && session) {
-    return null; // Let the useEffect handle the redirect
+    return null;
   }
 
   return (
