@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,19 @@ interface ProjectData {
   created_at: string;
 }
 
+// Simplified interfaces for database responses
+interface EntrepreneurResponse {
+  id_entrepreneur: string;
+  projects: ProjectData[];
+}
+
+interface StudentResponse {
+  id_student: string;
+  project_assignments: Array<{
+    projects: ProjectData;
+  }>;
+}
+
 const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
@@ -43,35 +55,45 @@ const Dashboard = () => {
         setLoading(true);
         
         if ((user as any).role === 'entrepreneur') {
-          // Single query to get entrepreneur data and related stats
-          const { data: entrepreneurData, error } = await supabase
+          // Fetch entrepreneur data with explicit typing
+          const { data: entrepreneurData, error: entrepreneurError } = await supabase
             .from('entrepreneurs')
-            .select(`
-              id_entrepreneur,
-              projects (
-                id_project,
-                title,
-                description,
-                status,
-                created_at
-              )
-            `)
+            .select('id_entrepreneur')
             .eq('id_user', user.id)
             .single();
             
-          if (error) {
-            console.error('Error fetching entrepreneur data:', error);
+          if (entrepreneurError) {
+            console.error('Error fetching entrepreneur data:', entrepreneurError);
             return;
           }
           
-          const projects = entrepreneurData?.projects || [];
+          // Fetch projects separately to avoid complex joins
+          const { data: projectsData, error: projectsError } = await supabase
+            .from('projects')
+            .select('id_project, title, description, status, created_at')
+            .eq('id_entrepreneur', entrepreneurData.id_entrepreneur);
+            
+          if (projectsError) {
+            console.error('Error fetching projects:', projectsError);
+            return;
+          }
           
-          // Get additional stats in parallel
+          const projects = projectsData || [];
+          const projectIds = projects.map(p => p.id_project);
+          
+          // Get additional stats in parallel with explicit typing
           const [messagesResult, reviewsResult] = await Promise.all([
             supabase
               .from('messages')
               .select('id_message', { count: 'exact' })
-              .in('project_id', projects.map((p: any) => p.id_project)),
+              .in('group_id', projectIds.length > 0 ? 
+                await supabase
+                  .from('message_groups')
+                  .select('id_group')
+                  .in('id_project', projectIds)
+                  .then(res => res.data?.map(g => g.id_group) || [])
+                : []
+              ),
             supabase
               .from('reviews')
               .select('id', { count: 'exact' })
@@ -87,42 +109,61 @@ const Dashboard = () => {
           
           // Set recent projects (limit to 5 most recent)
           const sortedProjects = projects
-            .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
             .slice(0, 5);
           setRecentProjects(sortedProjects);
           
         } else if ((user as any).role === 'student') {
-          // Get student data and assigned projects
-          const { data: studentData, error } = await supabase
+          // Fetch student data with explicit typing
+          const { data: studentData, error: studentError } = await supabase
             .from('students')
-            .select(`
-              id_student,
-              project_assignments (
-                projects (
-                  id_project,
-                  title,
-                  description,
-                  status,
-                  created_at
-                )
-              )
-            `)
+            .select('id_student')
             .eq('id_user', user.id)
             .single();
             
-          if (error) {
-            console.error('Error fetching student data:', error);
+          if (studentError) {
+            console.error('Error fetching student data:', studentError);
             return;
           }
           
-          const projects = studentData?.project_assignments?.map((pa: any) => pa.projects).filter(Boolean) || [];
+          // Fetch project assignments separately
+          const { data: assignmentsData, error: assignmentsError } = await supabase
+            .from('project_assignments')
+            .select('id_project')
+            .eq('id_student', studentData.id_student);
+            
+          if (assignmentsError) {
+            console.error('Error fetching assignments:', assignmentsError);
+            return;
+          }
+          
+          const projectIds = assignmentsData?.map(a => a.id_project) || [];
+          let projects: ProjectData[] = [];
+          
+          if (projectIds.length > 0) {
+            const { data: projectsData, error: projectsError } = await supabase
+              .from('projects')
+              .select('id_project, title, description, status, created_at')
+              .in('id_project', projectIds);
+              
+            if (!projectsError) {
+              projects = projectsData || [];
+            }
+          }
           
           // Get additional stats in parallel
           const [messagesResult, reviewsResult] = await Promise.all([
             supabase
               .from('messages')
               .select('id_message', { count: 'exact' })
-              .in('project_id', projects.map((p: any) => p.id_project)),
+              .in('group_id', projectIds.length > 0 ? 
+                await supabase
+                  .from('message_groups')
+                  .select('id_group')
+                  .in('id_project', projectIds)
+                  .then(res => res.data?.map(g => g.id_group) || [])
+                : []
+              ),
             supabase
               .from('reviews')
               .select('id', { count: 'exact' })
@@ -139,7 +180,7 @@ const Dashboard = () => {
           setRecentProjects(projects.slice(0, 5));
           
         } else if ((user as any).role === 'admin') {
-          // Get all stats for admin in parallel
+          // Get all stats for admin in parallel with explicit typing
           const [projectsResult, messagesResult, reviewsResult, studentsResult] = await Promise.all([
             supabase.from('projects').select('id_project', { count: 'exact' }),
             supabase.from('messages').select('id_message', { count: 'exact' }),
@@ -157,7 +198,7 @@ const Dashboard = () => {
           // Get recent projects for admin
           const { data: recentProjectsData } = await supabase
             .from('projects')
-            .select('*')
+            .select('id_project, title, description, status, created_at')
             .order('created_at', { ascending: false })
             .limit(5);
             
