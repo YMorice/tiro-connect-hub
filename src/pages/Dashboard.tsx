@@ -9,15 +9,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { Users, Briefcase, MessageSquare, Star, PlusCircle, Eye } from "lucide-react";
 
+interface DashboardStats {
+  projects: number;
+  messages: number;
+  reviews: number;
+  students: number;
+}
+
+interface ProjectData {
+  id_project: string;
+  title: string;
+  description?: string;
+  status?: string;
+  created_at: string;
+}
+
 const Dashboard = () => {
   const { user } = useAuth();
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     projects: 0,
     messages: 0,
     reviews: 0,
     students: 0,
   });
-  const [recentProjects, setRecentProjects] = useState<any[]>([]);
+  const [recentProjects, setRecentProjects] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,7 +71,7 @@ const Dashboard = () => {
             supabase
               .from('messages')
               .select('id_message', { count: 'exact' })
-              .in('project_id', projects.map(p => p.id_project)),
+              .in('project_id', projects.map((p: any) => p.id_project)),
             supabase
               .from('reviews')
               .select('id', { count: 'exact' })
@@ -72,7 +87,7 @@ const Dashboard = () => {
           
           // Set recent projects (limit to 5 most recent)
           const sortedProjects = projects
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
             .slice(0, 5);
           setRecentProjects(sortedProjects);
           
@@ -100,14 +115,14 @@ const Dashboard = () => {
             return;
           }
           
-          const projects = studentData?.project_assignments?.map(pa => pa.projects).filter(Boolean) || [];
+          const projects = studentData?.project_assignments?.map((pa: any) => pa.projects).filter(Boolean) || [];
           
           // Get additional stats in parallel
           const [messagesResult, reviewsResult] = await Promise.all([
             supabase
               .from('messages')
               .select('id_message', { count: 'exact' })
-              .in('project_id', projects.map(p => p.id_project)),
+              .in('project_id', projects.map((p: any) => p.id_project)),
             supabase
               .from('reviews')
               .select('id', { count: 'exact' })

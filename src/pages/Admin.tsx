@@ -25,7 +25,7 @@ const Admin = () => {
   
   // Redirect if not admin
   useEffect(() => {
-    if (user && user.role !== "admin") {
+    if (user && (user as any).role !== "admin") {
       navigate("/dashboard");
       toast.error("You don't have permission to access this page");
     }
@@ -126,19 +126,17 @@ const Admin = () => {
         throw error;
       }
       
-      // Get entrepreneur data
-      const { data: projectData } = await supabase
-        .from('projects')
-        .select('id_entrepreneur')
+      // Get the message group for this project and send a message
+      const { data: messageGroups } = await supabase
+        .from('message_groups')
+        .select('id_group')
         .eq('id_project', project.id)
-        .single();
+        .limit(1);
         
-      if (projectData) {
-        // Send message to entrepreneur
+      if (messageGroups && messageGroups.length > 0) {
         await sendMessage(
-          projectData.id_entrepreneur,
-          `Admin has proposed students for your project "${project.title}". Please review and select a student.`,
-          project.id
+          messageGroups[0].id_group,
+          `Admin has proposed students for your project "${project.title}". Please review and select a student.`
         );
       }
       
@@ -164,29 +162,23 @@ const Admin = () => {
         throw error;
       }
       
-      // Get assigned students for this project
-      const { data: assignments } = await supabase
-        .from('project_assignments')
-        .select('id_student')
-        .eq('id_project', project.id);
+      // Get the message group for this project and send notification
+      const { data: messageGroups } = await supabase
+        .from('message_groups')
+        .select('id_group')
+        .eq('id_project', project.id)
+        .limit(1);
         
-      if (assignments && assignments.length > 0) {
-        // Send notification message to all assigned students
-        for (const assignment of assignments) {
-          // Send message to notify students
-          await sendMessage(
-            assignment.id_student,
-            `Payment confirmed for project "${project.title}". You can now start working on it.`,
-            project.id
-          );
-          
-          // Also send a message to the project group chat
-          await sendMessage(
-            "",  // Empty recipient means it's a group message
-            `Admin has confirmed payment. Student has been added to this conversation. Project status is now "In Progress".`,
-            project.id
-          );
-        }
+      if (messageGroups && messageGroups.length > 0) {
+        await sendMessage(
+          messageGroups[0].id_group,
+          `Payment confirmed for project "${project.title}". You can now start working on it.`
+        );
+        
+        await sendMessage(
+          messageGroups[0].id_group,
+          `Admin has confirmed payment. Project status is now "In Progress".`
+        );
       }
       
       // Update project in local state
@@ -211,40 +203,17 @@ const Admin = () => {
         throw error;
       }
       
-      // Get assigned students and entrepreneur for this project
-      const { data: projectData } = await supabase
-        .from('projects')
-        .select('id_entrepreneur')
+      // Get the message group for this project and send completion notification
+      const { data: messageGroups } = await supabase
+        .from('message_groups')
+        .select('id_group')
         .eq('id_project', project.id)
-        .single();
-      
-      const { data: assignments } = await supabase
-        .from('project_assignments')
-        .select('id_student')
-        .eq('id_project', project.id);
+        .limit(1);
         
-      if (projectData && assignments && assignments.length > 0) {
-        // Send notification to entrepreneur
+      if (messageGroups && messageGroups.length > 0) {
         await sendMessage(
-          projectData.id_entrepreneur,
-          `Your project "${project.title}" has been marked as completed. Please leave a review for your student.`,
-          project.id
-        );
-        
-        // Send notification to student
-        for (const assignment of assignments) {
-          await sendMessage(
-            assignment.id_student,
-            `Project "${project.title}" has been marked as completed. Congratulations!`,
-            project.id
-          );
-        }
-        
-        // Group notification
-        await sendMessage(
-          "",  // Empty recipient means it's a group message
-          `Admin has marked this project as completed. Thank you for your work!`,
-          project.id
+          messageGroups[0].id_group,
+          `Project "${project.title}" has been marked as completed. Thank you for your work!`
         );
       }
       
@@ -262,7 +231,7 @@ const Admin = () => {
     navigate(`/messages?projectId=${projectId}`);
   };
 
-  if (!user || user.role !== "admin") {
+  if (!user || (user as any).role !== "admin") {
     return null; // Will redirect in the useEffect
   }
 
