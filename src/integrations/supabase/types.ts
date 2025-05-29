@@ -86,19 +86,19 @@ export type Database = {
         Row: {
           created_at: string
           id_group: string
-          id_project: string | null
+          id_project: string
           id_user: string
         }
         Insert: {
           created_at?: string
           id_group?: string
-          id_project?: string | null
+          id_project: string
           id_user: string
         }
         Update: {
           created_at?: string
           id_group?: string
-          id_project?: string | null
+          id_project?: string
           id_user?: string
         }
         Relationships: [

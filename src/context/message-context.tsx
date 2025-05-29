@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Message } from "../types";
 import { useAuth } from "./auth-context";
@@ -46,7 +45,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       console.log("Fetching message groups for user:", user.id);
       
-      // Get message groups the user belongs to - simplified query
+      // Get message groups the user belongs to - updated for new primary key structure
       const { data: userGroups, error: groupsError } = await supabase
         .from('message_groups')
         .select(`
