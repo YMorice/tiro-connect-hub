@@ -39,7 +39,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const NewProject = () => {
-  const { createProject, addDocument } = useProjects();
+  const { loadProjects } = useProjects(); // Only use loadProjects to refresh the list
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -106,7 +106,7 @@ const NewProject = () => {
       console.log("Creating project with values:", values);
       console.log("Entrepreneur ID:", entrepreneurId);
       
-      // Save the project to Supabase
+      // Save the project to Supabase - the trigger will handle message group creation
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert({
@@ -150,14 +150,8 @@ const NewProject = () => {
         }
       }
       
-      // Call the createProject function from context for client-side state management
-      createProject({
-        title: values.title,
-        description: values.description,
-        ownerId: entrepreneurId,
-        status: "STEP1",
-        packId: values.packId,
-      });
+      // Reload projects to get the latest data instead of manually calling createProject
+      await loadProjects();
       
       toast.success("Project created successfully");
       
