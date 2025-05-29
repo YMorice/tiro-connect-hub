@@ -17,6 +17,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { Project } from "@/types";
 
+// Helper function to convert database status to display status
+const convertDbStatusToDisplay = (dbStatus: string): string => {
+  const statusMap: { [key: string]: string } = {
+    'STEP1': 'New',
+    'STEP2': 'Proposals', 
+    'STEP3': 'Selection',
+    'STEP4': 'Payment',
+    'STEP5': 'Active',
+    'STEP6': 'In progress'
+  };
+  return statusMap[dbStatus] || dbStatus;
+};
+
 const Projects = () => {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -139,7 +152,7 @@ const Projects = () => {
         id: dbProject.id_project,
         title: dbProject.title,
         description: dbProject.description || "",
-        status: dbProject.status as any || "draft",
+        status: convertDbStatusToDisplay(dbProject.status || "STEP1") as any,
         ownerId: dbProject.id_entrepreneur,
         assigneeId: dbProject.selected_student,
         tasks: [],
@@ -219,12 +232,12 @@ const Projects = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="STEP1">New Project</SelectItem>
-                <SelectItem value="STEP2">Awaiting Student Acceptance</SelectItem>
-                <SelectItem value="STEP3">Awaiting Entrepreneur Selection</SelectItem>
-                <SelectItem value="STEP4">Awaiting Payment</SelectItem>
-                <SelectItem value="STEP5">In Progress</SelectItem>
-                <SelectItem value="STEP6">Completed</SelectItem>
+                <SelectItem value="New">New</SelectItem>
+                <SelectItem value="Proposals">Proposals</SelectItem>
+                <SelectItem value="Selection">Selection</SelectItem>
+                <SelectItem value="Payment">Payment</SelectItem>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="In progress">In Progress</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -247,13 +260,13 @@ const Projects = () => {
                           <h3 className="font-bold text-xl">{project.title}</h3>
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                              project.status === "STEP6"
+                              project.status === "In progress"
                                 ? "bg-green-100 text-green-800"
-                                : project.status === "STEP5"
+                                : project.status === "Active"
                                 ? "bg-blue-100 text-blue-800"
-                                : project.status === "STEP2"
+                                : project.status === "Proposals"
                                 ? "bg-yellow-100 text-yellow-800"
-                                : project.status === "STEP3" || project.status === "STEP4"
+                                : project.status === "Selection" || project.status === "Payment"
                                 ? "bg-purple-100 text-purple-800"
                                 : "bg-gray-100 text-gray-800"
                             }`}

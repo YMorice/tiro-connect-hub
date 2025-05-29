@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
@@ -19,6 +20,32 @@ interface ProjectContextType {
   loadProjects: () => Promise<void>;
 }
 
+// Helper function to convert database status to display status
+const convertDbStatusToDisplay = (dbStatus: string): string => {
+  const statusMap: { [key: string]: string } = {
+    'STEP1': 'New',
+    'STEP2': 'Proposals', 
+    'STEP3': 'Selection',
+    'STEP4': 'Payment',
+    'STEP5': 'Active',
+    'STEP6': 'In progress'
+  };
+  return statusMap[dbStatus] || dbStatus;
+};
+
+// Helper function to convert display status to database status
+const convertDisplayStatusToDb = (displayStatus: string): string => {
+  const statusMap: { [key: string]: string } = {
+    'New': 'STEP1',
+    'Proposals': 'STEP2',
+    'Selection': 'STEP3', 
+    'Payment': 'STEP4',
+    'Active': 'STEP5',
+    'In progress': 'STEP6'
+  };
+  return statusMap[displayStatus] || displayStatus;
+};
+
 // Mock projects for demonstration with updated status values
 const mockProjects: Project[] = [
   {
@@ -27,7 +54,7 @@ const mockProjects: Project[] = [
     description: "Complete overhaul of our online store with improved UX and mobile responsiveness.",
     ownerId: "1", // entrepreneur
     assigneeId: "2", // student
-    status: "STEP5",
+    status: "Active",
     tasks: [
       {
         id: "101",
@@ -78,7 +105,7 @@ const mockProjects: Project[] = [
     title: "Mobile App UI Design",
     description: "Design the user interface for a new fitness tracking app.",
     ownerId: "1", // entrepreneur
-    status: "STEP1",
+    status: "New",
     tasks: [],
     documents: [],
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
@@ -171,7 +198,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             description: dbProject.description || "",
             ownerId: dbProject.id_entrepreneur,
             assigneeId: dbProject.selected_student,
-            status: dbProject.status as any || "STEP1",
+            status: convertDbStatusToDisplay(dbProject.status || "STEP1") as any,
             tasks,
             documents,
             packId: dbProject.id_pack || undefined,
@@ -206,7 +233,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       title: data.title || "Untitled Project",
       description: data.description || "",
       ownerId: data.ownerId || user.id,
-      status: "STEP1",
+      status: "New",
       tasks: [],
       documents: [],
       createdAt: new Date(),
@@ -238,7 +265,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
           .update({
             title: data.title,
             description: data.description,
-            status: data.status,
+            status: data.status ? convertDisplayStatusToDb(data.status) : undefined,
             selected_student: data.assigneeId,
             updated_at: new Date().toISOString()
           })

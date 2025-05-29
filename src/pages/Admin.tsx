@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -23,6 +22,32 @@ interface Project {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Helper function to convert database status to display status
+const convertDbStatusToDisplay = (dbStatus: string): string => {
+  const statusMap: { [key: string]: string } = {
+    'STEP1': 'New',
+    'STEP2': 'Proposals', 
+    'STEP3': 'Selection',
+    'STEP4': 'Payment',
+    'STEP5': 'Active',
+    'STEP6': 'In progress'
+  };
+  return statusMap[dbStatus] || dbStatus;
+};
+
+// Helper function to convert display status to database status
+const convertDisplayStatusToDb = (displayStatus: string): string => {
+  const statusMap: { [key: string]: string } = {
+    'New': 'STEP1',
+    'Proposals': 'STEP2',
+    'Selection': 'STEP3', 
+    'Payment': 'STEP4',
+    'Active': 'STEP5',
+    'In progress': 'STEP6'
+  };
+  return statusMap[displayStatus] || displayStatus;
+};
 
 const Admin = () => {
   const { user } = useAuth();
@@ -77,7 +102,7 @@ const Admin = () => {
           id: project.id_project,
           title: project.title || "Untitled Project",
           description: project.description || "No description available",
-          status: project.status || "STEP1",
+          status: convertDbStatusToDisplay(project.status || "STEP1"),
           ownerId: project.id_entrepreneur,
           selectedStudent: project.selected_student,
           createdAt: new Date(project.created_at),
@@ -98,45 +123,37 @@ const Admin = () => {
   }, [user]);
 
   // Group projects by status
-  const step1Projects = projects.filter(p => p.status === "STEP1");
-  const step2Projects = projects.filter(p => p.status === "STEP2");
-  const step3Projects = projects.filter(p => p.status === "STEP3");
-  const step4Projects = projects.filter(p => p.status === "STEP4");
-  const step5Projects = projects.filter(p => p.status === "STEP5");
-  const step6Projects = projects.filter(p => p.status === "STEP6");
+  const newProjects = projects.filter(p => p.status === "New");
+  const proposalsProjects = projects.filter(p => p.status === "Proposals");
+  const selectionProjects = projects.filter(p => p.status === "Selection");
+  const paymentProjects = projects.filter(p => p.status === "Payment");
+  const activeProjects = projects.filter(p => p.status === "Active");
+  const inProgressProjects = projects.filter(p => p.status === "In progress");
 
   // Get project status label
   const getStatusLabel = (status: string) => {
-    switch(status) {
-      case "STEP1": return "New Project";
-      case "STEP2": return "Awaiting Student Acceptance";
-      case "STEP3": return "Awaiting Entrepreneur Selection";
-      case "STEP4": return "Awaiting Payment";
-      case "STEP5": return "In Progress";
-      case "STEP6": return "Completed";
-      default: return status;
-    }
+    return status;
   };
 
   // Get status badge color
   const getStatusBadgeColor = (status: string) => {
     switch(status) {
-      case "STEP1": return "bg-blue-500";
-      case "STEP2": return "bg-purple-500";
-      case "STEP3": return "bg-yellow-500";
-      case "STEP4": return "bg-orange-500";
-      case "STEP5": return "bg-green-500";
-      case "STEP6": return "bg-gray-500";
+      case "New": return "bg-blue-500";
+      case "Proposals": return "bg-purple-500";
+      case "Selection": return "bg-yellow-500";
+      case "Payment": return "bg-orange-500";
+      case "Active": return "bg-green-500";
+      case "In progress": return "bg-gray-500";
       default: return "bg-slate-500";
     }
   };
 
-  // Navigate to student selection page (STEP1)
+  // Navigate to student selection page (New)
   const navigateToStudentSelection = (project: Project) => {
     navigate(`/admin/student-selection?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
   };
 
-  // Send proposals to students (STEP1 -> STEP2)
+  // Send proposals to students (New -> Proposals)
   const sendProposalsToStudents = async (project: Project) => {
     try {
       // Check if students have been proposed for this project
@@ -154,10 +171,10 @@ const Admin = () => {
         return;
       }
       
-      // Update project to STEP2 in Supabase
+      // Update project to Proposals in Supabase
       const { error: updateError } = await supabase
         .from('projects')
-        .update({ status: 'STEP2' })
+        .update({ status: convertDisplayStatusToDb('Proposals') })
         .eq('id_project', project.id);
         
       if (updateError) {
@@ -166,7 +183,7 @@ const Admin = () => {
       
       // Update local state
       setProjects(prev => prev.map(p => 
-        p.id === project.id ? { ...p, status: "STEP2" } : p
+        p.id === project.id ? { ...p, status: "Proposals" } : p
       ));
       
       toast.success(`Proposals sent to ${proposalData.length} students`);
@@ -176,12 +193,12 @@ const Admin = () => {
     }
   };
 
-  // View students who accepted project (STEP2)
+  // View students who accepted project (Proposals)
   const viewAcceptedStudents = (project: Project) => {
     navigate(`/admin/accepted-students?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
   };
 
-  // Proceed to entrepreneur review (STEP2 -> STEP3)
+  // Proceed to entrepreneur review (Proposals -> Selection)
   const proposeToEntrepreneur = async (project: Project) => {
     try {
       // Check if any students have accepted
@@ -200,10 +217,10 @@ const Admin = () => {
         return;
       }
       
-      // Update project status to STEP3 in Supabase
+      // Update project status to Selection in Supabase
       const { error: updateError } = await supabase
         .from('projects')
-        .update({ status: 'STEP3' })
+        .update({ status: convertDisplayStatusToDb('Selection') })
         .eq('id_project', project.id);
         
       if (updateError) {
@@ -226,7 +243,7 @@ const Admin = () => {
       
       // Update local state
       setProjects(prev => prev.map(p => 
-        p.id === project.id ? { ...p, status: "STEP3" } : p
+        p.id === project.id ? { ...p, status: "Selection" } : p
       ));
       
       toast.success("Project moved to entrepreneur review");
@@ -236,13 +253,13 @@ const Admin = () => {
     }
   };
 
-  // Confirm payment for a project (STEP4 -> STEP5)
+  // Confirm payment for a project (Payment -> Active)
   const confirmPayment = async (project: Project) => {
     try {
-      // Update project status to STEP5 in Supabase
+      // Update project status to Active in Supabase
       const { error } = await supabase
         .from('projects')
-        .update({ status: 'STEP5' })
+        .update({ status: convertDisplayStatusToDb('Active') })
         .eq('id_project', project.id);
         
       if (error) {
@@ -270,7 +287,7 @@ const Admin = () => {
       
       // Update local state
       setProjects(prev => prev.map(p => 
-        p.id === project.id ? { ...p, status: "STEP5" } : p
+        p.id === project.id ? { ...p, status: "Active" } : p
       ));
       
       toast.success(`Payment confirmed for project "${project.title}"`);
@@ -280,13 +297,13 @@ const Admin = () => {
     }
   };
 
-  // Mark project as complete (STEP5 -> STEP6)
+  // Mark project as complete (Active -> In progress)
   const markAsComplete = async (project: Project) => {
     try {
-      // Update project status to STEP6 in Supabase
+      // Update project status to In progress in Supabase
       const { error } = await supabase
         .from('projects')
-        .update({ status: 'STEP6' })
+        .update({ status: convertDisplayStatusToDb('In progress') })
         .eq('id_project', project.id);
         
       if (error) {
@@ -309,7 +326,7 @@ const Admin = () => {
       
       // Update local state
       setProjects(prev => prev.map(p => 
-        p.id === project.id ? { ...p, status: "STEP6" } : p
+        p.id === project.id ? { ...p, status: "In progress" } : p
       ));
       
       toast.success(`Project "${project.title}" marked as complete`);
@@ -370,8 +387,8 @@ const Admin = () => {
               View Conversation
             </Button>
             
-            {/* STEP1: Select students and send proposals */}
-            {project.status === "STEP1" && (
+            {/* New: Select students and send proposals */}
+            {project.status === "New" && (
               <>
                 <Button
                   onClick={() => navigateToStudentSelection(project)}
@@ -391,8 +408,8 @@ const Admin = () => {
               </>
             )}
             
-            {/* STEP2: View accepted students and propose to entrepreneur */}
-            {project.status === "STEP2" && (
+            {/* Proposals: View accepted students and propose to entrepreneur */}
+            {project.status === "Proposals" && (
               <>
                 <Button
                   onClick={() => viewAcceptedStudents(project)}
@@ -412,8 +429,8 @@ const Admin = () => {
               </>
             )}
             
-            {/* STEP4: Confirm payment */}
-            {project.status === "STEP4" && (
+            {/* Payment: Confirm payment */}
+            {project.status === "Payment" && (
               <Button 
                 onClick={() => confirmPayment(project)}
                 className="w-full sm:w-auto"
@@ -423,8 +440,8 @@ const Admin = () => {
               </Button>
             )}
             
-            {/* STEP5: Mark as complete */}
-            {project.status === "STEP5" && (
+            {/* Active: Mark as complete */}
+            {project.status === "Active" && (
               <Button 
                 onClick={() => markAsComplete(project)}
                 className="w-full sm:w-auto"
@@ -450,91 +467,91 @@ const Admin = () => {
           )}
         </div>
 
-        <Tabs defaultValue="step1">
+        <Tabs defaultValue="new">
           <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
-            <TabsTrigger value="step1">New ({step1Projects.length})</TabsTrigger>
-            <TabsTrigger value="step2">Proposals ({step2Projects.length})</TabsTrigger>
-            <TabsTrigger value="step3">Selection ({step3Projects.length})</TabsTrigger>
-            <TabsTrigger value="step4">Payment ({step4Projects.length})</TabsTrigger>
-            <TabsTrigger value="step5">Active ({step5Projects.length})</TabsTrigger>
-            <TabsTrigger value="step6">Completed ({step6Projects.length})</TabsTrigger>
+            <TabsTrigger value="new">New ({newProjects.length})</TabsTrigger>
+            <TabsTrigger value="proposals">Proposals ({proposalsProjects.length})</TabsTrigger>
+            <TabsTrigger value="selection">Selection ({selectionProjects.length})</TabsTrigger>
+            <TabsTrigger value="payment">Payment ({paymentProjects.length})</TabsTrigger>
+            <TabsTrigger value="active">Active ({activeProjects.length})</TabsTrigger>
+            <TabsTrigger value="inprogress">In Progress ({inProgressProjects.length})</TabsTrigger>
           </TabsList>
 
-          {/* STEP1: New Projects Tab */}
-          <TabsContent value="step1" className="space-y-4">
-            {step1Projects.length === 0 ? (
+          {/* New Projects Tab */}
+          <TabsContent value="new" className="space-y-4">
+            {newProjects.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">
                   <p className="text-center text-muted-foreground">No new projects found</p>
                 </CardContent>
               </Card>
             ) : (
-              step1Projects.map(project => renderProjectCard(project))
+              newProjects.map(project => renderProjectCard(project))
             )}
           </TabsContent>
 
-          {/* STEP2: Proposals Tab */}
-          <TabsContent value="step2" className="space-y-4">
-            {step2Projects.length === 0 ? (
+          {/* Proposals Tab */}
+          <TabsContent value="proposals" className="space-y-4">
+            {proposalsProjects.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">
                   <p className="text-center text-muted-foreground">No projects in the proposal phase</p>
                 </CardContent>
               </Card>
             ) : (
-              step2Projects.map(project => renderProjectCard(project))
+              proposalsProjects.map(project => renderProjectCard(project))
             )}
           </TabsContent>
 
-          {/* STEP3: Entrepreneur Selection Tab */}
-          <TabsContent value="step3" className="space-y-4">
-            {step3Projects.length === 0 ? (
+          {/* Selection Tab */}
+          <TabsContent value="selection" className="space-y-4">
+            {selectionProjects.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">
                   <p className="text-center text-muted-foreground">No projects awaiting entrepreneur selection</p>
                 </CardContent>
               </Card>
             ) : (
-              step3Projects.map(project => renderProjectCard(project))
+              selectionProjects.map(project => renderProjectCard(project))
             )}
           </TabsContent>
 
-          {/* STEP4: Payment Confirmation Tab */}
-          <TabsContent value="step4" className="space-y-4">
-            {step4Projects.length === 0 ? (
+          {/* Payment Tab */}
+          <TabsContent value="payment" className="space-y-4">
+            {paymentProjects.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">
                   <p className="text-center text-muted-foreground">No projects awaiting payment confirmation</p>
                 </CardContent>
               </Card>
             ) : (
-              step4Projects.map(project => renderProjectCard(project))
+              paymentProjects.map(project => renderProjectCard(project))
             )}
           </TabsContent>
 
-          {/* STEP5: In Progress Projects Tab */}
-          <TabsContent value="step5" className="space-y-4">
-            {step5Projects.length === 0 ? (
+          {/* Active Projects Tab */}
+          <TabsContent value="active" className="space-y-4">
+            {activeProjects.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">
                   <p className="text-center text-muted-foreground">No active projects found</p>
                 </CardContent>
               </Card>
             ) : (
-              step5Projects.map(project => renderProjectCard(project))
+              activeProjects.map(project => renderProjectCard(project))
             )}
           </TabsContent>
 
-          {/* STEP6: Completed Projects Tab */}
-          <TabsContent value="step6" className="space-y-4">
-            {step6Projects.length === 0 ? (
+          {/* In Progress Projects Tab */}
+          <TabsContent value="inprogress" className="space-y-4">
+            {inProgressProjects.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">No completed projects found</p>
+                  <p className="text-center text-muted-foreground">No projects in progress found</p>
                 </CardContent>
               </Card>
             ) : (
-              step6Projects.map(project => renderProjectCard(project))
+              inProgressProjects.map(project => renderProjectCard(project))
             )}
           </TabsContent>
         </Tabs>
