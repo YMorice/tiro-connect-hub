@@ -55,15 +55,20 @@ const NewProject = () => {
   useEffect(() => {
     const fetchEntrepreneurId = async () => {
       if (user) {
-        const { data, error } = await supabase
-          .from('entrepreneurs')
-          .select('id_entrepreneur')
-          .eq('id_user', user.id)
-          .single();
-          
-        if (data) {
-          setEntrepreneurId(data.id_entrepreneur);
-        } else if (error) {
+        try {
+          const { data, error } = await supabase
+            .from('entrepreneurs')
+            .select('id_entrepreneur')
+            .eq('id_user', user.id)
+            .single();
+            
+          if (data) {
+            setEntrepreneurId(data.id_entrepreneur);
+          } else if (error) {
+            console.error("Error fetching entrepreneur ID:", error);
+            toast.error("Failed to fetch your entrepreneur profile");
+          }
+        } catch (error) {
           console.error("Error fetching entrepreneur ID:", error);
           toast.error("Failed to fetch your entrepreneur profile");
         }
@@ -98,6 +103,9 @@ const NewProject = () => {
     setIsSubmitting(true);
     
     try {
+      console.log("Creating project with values:", values);
+      console.log("Entrepreneur ID:", entrepreneurId);
+      
       // Save the project to Supabase
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
@@ -112,9 +120,11 @@ const NewProject = () => {
         .single();
         
       if (projectError) {
+        console.error("Project creation error:", projectError);
         throw projectError;
       }
       
+      console.log("Project created successfully:", projectData);
       const projectId = projectData.id_project;
       
       // Handle file uploads if any were selected
@@ -155,7 +165,7 @@ const NewProject = () => {
       navigate("/projects");
     } catch (error) {
       console.error("Error creating project:", error);
-      toast.error("Failed to create project");
+      toast.error(`Failed to create project: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -300,14 +310,14 @@ const NewProject = () => {
                   </Button>
                   <Button 
                     type="submit"
-                    className="bg-tiro-purple hover:bg-tiro-purple/90"
+                    className="bg-tiro-purple hover:bg-tiro-purple/90 min-w-[140px]"
                     disabled={isSubmitting || !entrepreneurId}
                   >
                     {isSubmitting ? (
-                      <>
+                      <div className="flex items-center">
                         <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
                         Creating...
-                      </>
+                      </div>
                     ) : (
                       "Create Project"
                     )}
