@@ -44,8 +44,10 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setLoading(true);
     
     try {
-      // Get message groups the user belongs to
-      const { data: groupsData, error: groupsError } = await supabase
+      console.log("Fetching message groups for user:", user.id);
+      
+      // Get message groups the user belongs to - simplified query
+      const { data: userGroups, error: groupsError } = await supabase
         .from('message_groups')
         .select(`
           id_group,
@@ -54,26 +56,37 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
             title
           )
         `)
-        .or(`id_user.eq.${user.id},id_project.in.(${await getUserProjectIds()})`);
+        .eq('id_user', user.id);
 
-      if (groupsError) throw groupsError;
+      if (groupsError) {
+        console.error('Error fetching user groups:', groupsError);
+        throw groupsError;
+      }
 
-      // Get messages for these groups
-      const groupIds = groupsData?.map(g => g.id_group) || [];
-      
-      if (groupIds.length === 0) {
+      console.log("User groups found:", userGroups);
+
+      if (!userGroups || userGroups.length === 0) {
         setMessageGroups([]);
         setMessages([]);
         return;
       }
 
+      // Get unique group IDs
+      const groupIds = [...new Set(userGroups.map(g => g.id_group))];
+      
+      // Get messages for these groups
       const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
         .select('*')
         .in('group_id', groupIds)
         .order('created_at', { ascending: true });
 
-      if (messagesError) throw messagesError;
+      if (messagesError) {
+        console.error('Error fetching messages:', messagesError);
+        throw messagesError;
+      }
+
+      console.log("Messages found:", messagesData?.length || 0);
 
       // Transform messages
       const transformedMessages: Message[] = (messagesData || []).map(msg => ({
@@ -87,21 +100,35 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         groupId: msg.group_id
       }));
 
+      // Create a map of group_id to project info for easy lookup
+      const groupProjectMap = new Map();
+      userGroups.forEach(group => {
+        if (!groupProjectMap.has(group.id_group)) {
+          groupProjectMap.set(group.id_group, {
+            projectId: group.id_project,
+            projectTitle: group.projects?.title || "Direct Messages"
+          });
+        }
+      });
+
       // Transform groups with message data
-      const transformedGroups: MessageGroup[] = (groupsData || []).map(group => {
-        const groupMessages = transformedMessages.filter(m => m.groupId === group.id_group);
+      const transformedGroups: MessageGroup[] = groupIds.map(groupId => {
+        const groupMessages = transformedMessages.filter(m => m.groupId === groupId);
         const lastMessage = groupMessages[groupMessages.length - 1];
         const unreadCount = groupMessages.filter(m => m.sender !== user.id && !m.read).length;
+        const projectInfo = groupProjectMap.get(groupId);
 
         return {
-          id: group.id_group,
-          projectId: group.id_project || undefined,
-          projectTitle: group.projects?.title || "Direct Messages",
+          id: groupId,
+          projectId: projectInfo?.projectId || undefined,
+          projectTitle: projectInfo?.projectTitle || "Direct Messages",
           lastMessage,
           unreadCount
         };
       });
 
+      console.log("Transformed groups:", transformedGroups.length);
+      
       setMessageGroups(transformedGroups);
       setMessages(transformedMessages);
     } catch (error) {
@@ -111,38 +138,6 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setLoading(false);
     }
   }, [user?.id]);
-
-  const getUserProjectIds = async (): Promise<string> => {
-    if (!user?.id) return "";
-    
-    try {
-      let projectIds: string[] = [];
-      
-      if ((user as any).role === 'admin') {
-        const { data } = await supabase.from('projects').select('id_project');
-        projectIds = data?.map(p => p.id_project) || [];
-      } else if ((user as any).role === 'entrepreneur') {
-        const { data } = await supabase
-          .from('entrepreneurs')
-          .select('projects(id_project)')
-          .eq('id_user', user.id)
-          .single();
-        projectIds = data?.projects?.map((p: any) => p.id_project) || [];
-      } else if ((user as any).role === 'student') {
-        const { data } = await supabase
-          .from('students')
-          .select('project_assignments(id_project)')
-          .eq('id_user', user.id)
-          .single();
-        projectIds = data?.project_assignments?.map((pa: any) => pa.id_project) || [];
-      }
-      
-      return projectIds.join(',');
-    } catch (error) {
-      console.error("Error getting user project IDs:", error);
-      return "";
-    }
-  };
 
   useEffect(() => {
     fetchMessageGroups();
