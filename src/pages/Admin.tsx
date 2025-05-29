@@ -42,10 +42,15 @@ const Admin = () => {
   // Load projects from Supabase
   useEffect(() => {
     const loadProjects = async () => {
-      if (!user || user.role !== "admin") return;
+      if (!user || user.role !== "admin") {
+        setLoading(false);
+        return;
+      }
       
       setLoading(true);
       try {
+        console.log("Fetching projects for admin user:", user.id);
+        
         const { data: projectsData, error } = await supabase
           .from('projects')
           .select(`
@@ -60,19 +65,23 @@ const Admin = () => {
           .order('created_at', { ascending: false });
           
         if (error) {
+          console.error('Error fetching projects:', error);
           throw error;
         }
         
+        console.log("Raw projects data:", projectsData);
+        
         const formattedProjects: Project[] = (projectsData || []).map(project => ({
           id: project.id_project,
-          title: project.title,
-          description: project.description || "",
+          title: project.title || "Untitled Project",
+          description: project.description || "No description available",
           status: project.status || "STEP1",
           ownerId: project.id_entrepreneur,
           createdAt: new Date(project.created_at),
           updatedAt: new Date(project.updated_at),
         }));
         
+        console.log("Formatted projects:", formattedProjects);
         setProjects(formattedProjects);
       } catch (error) {
         console.error('Error loading projects:', error);
@@ -312,6 +321,32 @@ const Admin = () => {
     navigate(`/messages?projectId=${projectId}`);
   };
 
+  // Get project status label
+  const getStatusLabel = (status: string) => {
+    switch(status) {
+      case "STEP1": return "New Project";
+      case "STEP2": return "Awaiting Student Acceptance";
+      case "STEP3": return "Awaiting Entrepreneur Selection";
+      case "STEP4": return "Awaiting Payment";
+      case "STEP5": return "In Progress";
+      case "STEP6": return "Completed";
+      default: return status;
+    }
+  };
+
+  // Get status badge color
+  const getStatusBadgeColor = (status: string) => {
+    switch(status) {
+      case "STEP1": return "bg-blue-500";
+      case "STEP2": return "bg-purple-500";
+      case "STEP3": return "bg-yellow-500";
+      case "STEP4": return "bg-orange-500";
+      case "STEP5": return "bg-green-500";
+      case "STEP6": return "bg-gray-500";
+      default: return "bg-slate-500";
+    }
+  };
+
   if (!user || user.role !== "admin") {
     return null; // Will redirect in the useEffect
   }
@@ -427,6 +462,9 @@ const Admin = () => {
         <div>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground">Manage projects through their lifecycle</p>
+          {projects.length === 0 && !loading && (
+            <p className="text-muted-foreground mt-2">No projects found in the system.</p>
+          )}
         </div>
 
         <Tabs defaultValue="step1">
