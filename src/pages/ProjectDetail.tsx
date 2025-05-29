@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
@@ -120,7 +121,8 @@ const ProjectDetail = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const project = projects.find((p) => p.id === id);
+  // Add defensive check for projects array and project existence
+  const project = projects && Array.isArray(projects) ? projects.find((p) => p.id === id) : null;
 
   const [newTask, setNewTask] = useState({ title: "", description: "" });
   const [newDocumentName, setNewDocumentName] = useState("");
@@ -129,9 +131,9 @@ const ProjectDetail = () => {
   const [proposedStudents, setProposedStudents] = useState<User[]>([]);
 
   useEffect(() => {
-    if (id) {
+    if (id && project) {
       // Fetch proposed students if project is open
-      if (project?.status === "open" && user?.role === "entrepreneur") {
+      if (project.status === "open" && user?.role === "entrepreneur") {
         fetchProposedStudents();
       }
     }
@@ -140,64 +142,120 @@ const ProjectDetail = () => {
   // Fetch proposed students for this project
   const fetchProposedStudents = async () => {
     try {
+      if (!id) {
+        console.error("No project ID available");
+        return;
+      }
+
+      console.log("Fetching proposed students for project:", id);
+      
       // Get all proposed students for this project
       const { data: proposedData, error: proposedError } = await supabase
         .from('proposed_student')
         .select('student_id')
         .eq('project_id', id);
         
-      if (proposedError) throw proposedError;
-      
-      if (proposedData && proposedData.length > 0) {
-        // Get student details for each proposed student
-        const studentIds = proposedData.map(p => p.student_id);
-        
-        // First get user IDs from student IDs
-        const { data: studentData, error: studentError } = await supabase
-          .from('students')
-          .select('id_user, skills, specialty')
-          .in('id_student', studentIds);
-          
-        if (studentError) throw studentError;
-        
-        if (studentData && studentData.length > 0) {
-          // Now get user details
-          const userIds = studentData.map(s => s.id_user);
-          
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id_users, name, email, role')
-            .in('id_users', userIds);
-            
-          if (userError) throw userError;
-          
-          if (userData) {
-            // Combine the data to create User objects
-            const proposedStudentsList = userData.map(user => {
-              const studentInfo = studentData.find(s => s.id_user === user.id_users);
-              return {
-                id: user.id_users,
-                name: user.name,
-                email: user.email,
-                role: user.role as "student",
-                skills: studentInfo?.skills || [],
-                specialty: studentInfo?.specialty || "",
-                createdAt: new Date(),
-                isOnline: false
-              };
-            });
-            
-            setProposedStudents(proposedStudentsList);
-          }
-        }
+      if (proposedError) {
+        console.error("Error fetching proposed students:", proposedError);
+        return;
       }
+      
+      // Add defensive checks
+      if (!proposedData || !Array.isArray(proposedData) || proposedData.length === 0) {
+        console.log("No proposed students found");
+        setProposedStudents([]);
+        return;
+      }
+      
+      // Get student details for each proposed student
+      const studentIds = proposedData.map(p => p.student_id).filter(Boolean);
+      
+      if (studentIds.length === 0) {
+        console.log("No valid student IDs found");
+        setProposedStudents([]);
+        return;
+      }
+      
+      // First get user IDs from student IDs
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select('id_user, skills, specialty')
+        .in('id_student', studentIds);
+        
+      if (studentError) {
+        console.error("Error fetching student data:", studentError);
+        return;
+      }
+      
+      if (!studentData || !Array.isArray(studentData) || studentData.length === 0) {
+        console.log("No student data found");
+        setProposedStudents([]);
+        return;
+      }
+      
+      // Now get user details
+      const userIds = studentData.map(s => s.id_user).filter(Boolean);
+      
+      if (userIds.length === 0) {
+        console.log("No valid user IDs found");
+        setProposedStudents([]);
+        return;
+      }
+      
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id_users, name, email, role')
+        .in('id_users', userIds);
+        
+      if (userError) {
+        console.error("Error fetching user data:", userError);
+        return;
+      }
+      
+      if (!userData || !Array.isArray(userData) || userData.length === 0) {
+        console.log("No user data found");
+        setProposedStudents([]);
+        return;
+      }
+      
+      // Combine the data to create User objects
+      const proposedStudentsList = userData.map(user => {
+        const studentInfo = studentData.find(s => s.id_user === user.id_users);
+        return {
+          id: user.id_users,
+          name: user.name || "Unknown",
+          email: user.email || "",
+          role: "student" as const,
+          skills: Array.isArray(studentInfo?.skills) ? studentInfo.skills : [],
+          specialty: studentInfo?.specialty || "",
+          createdAt: new Date(),
+          isOnline: false
+        };
+      }).filter(student => student.id && student.name); // Filter out invalid entries
+      
+      console.log("Successfully fetched proposed students:", proposedStudentsList);
+      setProposedStudents(proposedStudentsList);
     } catch (error) {
-      console.error("Error fetching proposed students:", error);
+      console.error("Error in fetchProposedStudents:", error);
+      setProposedStudents([]);
     }
   };
 
+  // Add loading state for when project is not found
   if (!project) {
-    return <div>Project not found</div>;
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Project not found</h2>
+            <p className="text-muted-foreground mb-4">The project you're looking for doesn't exist or you don't have access to it.</p>
+            <Button onClick={() => navigate('/projects')}>
+              Back to Projects
+            </Button>
+          </div>
+        </div>
+      </AppLayout>
+    );
   }
 
   const isOwner = user?.id === project.ownerId;
@@ -285,7 +343,7 @@ const ProjectDetail = () => {
   };
 
   const tabsConfig = getTabsBasedOnStatus();
-  const defaultTab = tabsConfig[0].id;
+  const defaultTab = tabsConfig.length > 0 ? tabsConfig[0].id : "documents";
   
   const handleSelectStudent = async (studentId: string) => {
     try {
@@ -437,121 +495,213 @@ const ProjectDetail = () => {
           </div>
         )}
 
-        <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="w-full grid" style={{ gridTemplateColumns: `repeat(${tabsConfig.length}, 1fr)` }}>
-            {tabsConfig.map(tab => (
-              <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
-            ))}
-          </TabsList>
-          
-          {project.status === "open" && isOwner && (
-            <TabsContent value="student-proposals">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Student Proposals</CardTitle>
-                  <CardDescription>
-                    Select a student to work on your project
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {proposedStudents.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {proposedStudents.map(student => (
-                        <div key={student.id} className="p-4 border rounded-lg mb-4">
-                          <div className="flex items-center gap-3 mb-3">
-                            <Avatar>
-                              <AvatarImage src={student.avatar} />
-                              <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{student.name}</p>
-                              <p className="text-xs text-muted-foreground">{student.email}</p>
+        {tabsConfig.length > 0 && (
+          <Tabs defaultValue={defaultTab} className="w-full">
+            <TabsList className="w-full grid" style={{ gridTemplateColumns: `repeat(${tabsConfig.length}, 1fr)` }}>
+              {tabsConfig.map(tab => (
+                <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
+              ))}
+            </TabsList>
+            
+            {project.status === "open" && isOwner && (
+              <TabsContent value="student-proposals">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Student Proposals</CardTitle>
+                    <CardDescription>
+                      Select a student to work on your project
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {proposedStudents.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {proposedStudents.map(student => (
+                          <div key={student.id} className="p-4 border rounded-lg mb-4">
+                            <div className="flex items-center gap-3 mb-3">
+                              <Avatar>
+                                <AvatarImage src={student.avatar} />
+                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">{student.name}</p>
+                                <p className="text-xs text-muted-foreground">{student.email}</p>
+                              </div>
                             </div>
-                          </div>
-                          
-                          <div className="mb-3">
-                            <p className="text-sm font-medium mb-1">Specialty:</p>
-                            <p className="text-sm">{student.specialty || "Not specified"}</p>
-                          </div>
-                          
-                          <div className="mb-4">
-                            <p className="text-sm font-medium mb-1">Skills:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {student.skills?.map(skill => (
-                                <span 
-                                  key={skill} 
-                                  className="bg-gray-100 px-2 py-1 text-xs rounded"
-                                >
-                                  {skill}
-                                </span>
-                              ))}
+                            
+                            <div className="mb-3">
+                              <p className="text-sm font-medium mb-1">Specialty:</p>
+                              <p className="text-sm">{student.specialty || "Not specified"}</p>
                             </div>
-                          </div>
-                          
-                          <Button 
-                            onClick={() => handleSelectStudent(student.id)} 
-                            className="w-full"
-                          >
-                            Select Student
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-10 text-muted-foreground">
-                      No students have been proposed for this project yet.
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          )}
-          
-          {["in_progress", "review", "completed"].includes(project.status) && (
-            <TabsContent value="tasks">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Project Tasks</CardTitle>
-                  <CardDescription>
-                    Manage and track all tasks related to this project
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {/* Task list */}
-                  {project.tasks.length > 0 ? (
-                    <div className="space-y-4 mb-6">
-                      {project.tasks.map((task) => (
-                        <div
-                          key={task.id}
-                          className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-                        >
-                          <div>
-                            <h3 className="font-medium">{task.title}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {task.description}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2 self-end md:self-center">
-                            <select
-                              value={task.status}
-                              onChange={(e) =>
-                                handleTaskStatusChange(
-                                  task.id,
-                                  e.target.value as any
-                                )
-                              }
-                              className="border rounded p-1 text-sm"
-                              disabled={!isOwner && !isAssignee}
+                            
+                            <div className="mb-4">
+                              <p className="text-sm font-medium mb-1">Skills:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {student.skills?.map(skill => (
+                                  <span 
+                                    key={skill} 
+                                    className="bg-gray-100 px-2 py-1 text-xs rounded"
+                                  >
+                                    {skill}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <Button 
+                              onClick={() => handleSelectStudent(student.id)} 
+                              className="w-full"
                             >
-                              <option value="todo">To Do</option>
-                              <option value="in_progress">In Progress</option>
-                              <option value="done">Done</option>
-                            </select>
+                              Select Student
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-10 text-muted-foreground">
+                        No students have been proposed for this project yet.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+            
+            {["in_progress", "review", "completed"].includes(project.status) && (
+              <TabsContent value="tasks">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Project Tasks</CardTitle>
+                    <CardDescription>
+                      Manage and track all tasks related to this project
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {/* Task list */}
+                    {project.tasks && project.tasks.length > 0 ? (
+                      <div className="space-y-4 mb-6">
+                        {project.tasks.map((task) => (
+                          <div
+                            key={task.id}
+                            className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+                          >
+                            <div>
+                              <h3 className="font-medium">{task.title}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {task.description}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 self-end md:self-center">
+                              <select
+                                value={task.status}
+                                onChange={(e) =>
+                                  handleTaskStatusChange(
+                                    task.id,
+                                    e.target.value as any
+                                  )
+                                }
+                                className="border rounded p-1 text-sm"
+                                disabled={!isOwner && !isAssignee}
+                              >
+                                <option value="todo">To Do</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="done">Done</option>
+                              </select>
+                              {(isOwner || isAssignee) && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => deleteTask(project.id, task.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground">
+                        No tasks added yet
+                      </div>
+                    )}
+
+                    {/* Add task form */}
+                    {(isOwner || isAssignee) && (
+                      <form onSubmit={handleTaskSubmit} className="space-y-4">
+                        <div>
+                          <Label htmlFor="taskTitle">Task Title</Label>
+                          <Input
+                            id="taskTitle"
+                            value={newTask.title}
+                            onChange={(e) =>
+                              setNewTask({ ...newTask, title: e.target.value })
+                            }
+                            placeholder="Enter task title"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="taskDescription">Description</Label>
+                          <Textarea
+                            id="taskDescription"
+                            value={newTask.description}
+                            onChange={(e) =>
+                              setNewTask({
+                                ...newTask,
+                                description: e.target.value,
+                              })
+                            }
+                            placeholder="Enter task description"
+                            className="min-h-[100px]"
+                          />
+                        </div>
+                        <Button type="submit">Add Task</Button>
+                      </form>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            <TabsContent value="documents">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Documents</CardTitle>
+                  <CardDescription>
+                    Share and manage all project-related files and documents
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Document list */}
+                  {project.documents && project.documents.length > 0 ? (
+                    <div className="space-y-2 mb-6">
+                      {project.documents.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="p-3 border rounded-lg flex justify-between items-center"
+                        >
+                          <div className="flex items-center gap-3">
+                            <FileIcon className="h-5 w-5 text-blue-500" />
+                            <div>
+                              <p className="font-medium">{doc.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Uploaded on {doc.createdAt.toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={doc.url} target="_blank" rel="noreferrer">
+                                View
+                              </a>
+                            </Button>
                             {(isOwner || isAssignee) && (
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => deleteTask(project.id, task.id)}
+                                onClick={() =>
+                                  deleteDocument(project.id, doc.id)
+                                }
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -562,136 +712,46 @@ const ProjectDetail = () => {
                     </div>
                   ) : (
                     <div className="text-center py-4 text-muted-foreground">
-                      No tasks added yet
+                      No documents added yet
                     </div>
                   )}
 
-                  {/* Add task form */}
+                  {/* Add document form */}
                   {(isOwner || isAssignee) && (
-                    <form onSubmit={handleTaskSubmit} className="space-y-4">
-                      <div>
-                        <Label htmlFor="taskTitle">Task Title</Label>
-                        <Input
-                          id="taskTitle"
-                          value={newTask.title}
-                          onChange={(e) =>
-                            setNewTask({ ...newTask, title: e.target.value })
-                          }
-                          placeholder="Enter task title"
-                          required
-                        />
+                    <form onSubmit={handleDocumentSubmit} className="space-y-4">
+                      <div className="p-4 border rounded-md bg-gray-50">
+                        <h3 className="font-medium mb-4">Upload Document</h3>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Upload from your computer</Label>
+                            <FileUpload 
+                              onFileSelect={(file) => setSelectedFile(file)} 
+                              buttonText="Select Document"
+                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
+                              maxSize={20}
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="documentName">Document Name (Optional)</Label>
+                            <Input
+                              id="documentName"
+                              value={newDocumentName}
+                              onChange={(e) => setNewDocumentName(e.target.value)}
+                              placeholder="Enter document name (defaults to file name)"
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <Label htmlFor="taskDescription">Description</Label>
-                        <Textarea
-                          id="taskDescription"
-                          value={newTask.description}
-                          onChange={(e) =>
-                            setNewTask({
-                              ...newTask,
-                              description: e.target.value,
-                            })
-                          }
-                          placeholder="Enter task description"
-                          className="min-h-[100px]"
-                        />
-                      </div>
-                      <Button type="submit">Add Task</Button>
+                      <Button type="submit">Add Document</Button>
                     </form>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
-          )}
-
-          <TabsContent value="documents">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Documents</CardTitle>
-                <CardDescription>
-                  Share and manage all project-related files and documents
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Document list */}
-                {project.documents.length > 0 ? (
-                  <div className="space-y-2 mb-6">
-                    {project.documents.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="p-3 border rounded-lg flex justify-between items-center"
-                      >
-                        <div className="flex items-center gap-3">
-                          <FileIcon className="h-5 w-5 text-blue-500" />
-                          <div>
-                            <p className="font-medium">{doc.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Uploaded on {doc.createdAt.toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={doc.url} target="_blank" rel="noreferrer">
-                              View
-                            </a>
-                          </Button>
-                          {(isOwner || isAssignee) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                deleteDocument(project.id, doc.id)
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    No documents added yet
-                  </div>
-                )}
-
-                {/* Add document form */}
-                {(isOwner || isAssignee) && (
-                  <form onSubmit={handleDocumentSubmit} className="space-y-4">
-                    <div className="p-4 border rounded-md bg-gray-50">
-                      <h3 className="font-medium mb-4">Upload Document</h3>
-                      
-                      <div className="space-y-4">
-                        <div>
-                          <Label>Upload from your computer</Label>
-                          <FileUpload 
-                            onFileSelect={(file) => setSelectedFile(file)} 
-                            buttonText="Select Document"
-                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
-                            maxSize={20}
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="documentName">Document Name (Optional)</Label>
-                          <Input
-                            id="documentName"
-                            value={newDocumentName}
-                            onChange={(e) => setNewDocumentName(e.target.value)}
-                            placeholder="Enter document name (defaults to file name)"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <Button type="submit">Add Document</Button>
-                  </form>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </Tabs>
+        )}
       </div>
     </AppLayout>
   );
