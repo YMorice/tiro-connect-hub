@@ -45,7 +45,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       console.log("Fetching message groups for user:", user.id);
       
-      // Get message groups the user belongs to - updated for new primary key structure
+      // Get message groups the user belongs to with the new primary key structure
       const { data: userGroups, error: groupsError } = await supabase
         .from('message_groups')
         .select(`
@@ -127,6 +127,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
 
       console.log("Transformed groups:", transformedGroups.length);
+      console.log("Transformed messages:", transformedMessages.length);
       
       setMessageGroups(transformedGroups);
       setMessages(transformedMessages);
@@ -235,9 +236,20 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       setMessages(prevMessages => [...prevMessages, newMessage]);
       
-      // Find the project ID for this group
+      // Find the project ID for this group and add document to project
       const group = messageGroups.find(g => g.id === groupId);
       if (group?.projectId) {
+        // Add document to the project's document list
+        await supabase
+          .from('documents')
+          .insert({
+            id_project: group.projectId,
+            name: documentName,
+            link: documentUrl,
+            type: documentType === "regular" ? "document" : documentType
+          });
+
+        // Also add to project context for immediate UI update
         addDocument(group.projectId, {
           name: documentName,
           url: documentUrl,

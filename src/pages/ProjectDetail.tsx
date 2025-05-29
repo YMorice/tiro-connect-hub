@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
@@ -34,7 +33,7 @@ import { toast } from "@/components/ui/sonner";
 import { FileIcon, MessageCircle, Trash2, Download, CreditCard } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { User } from "@/types";
+import { User, Document } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -129,6 +128,7 @@ const ProjectDetail = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [paymentShown, setPaymentShown] = useState<boolean>(false);
   const [proposedStudents, setProposedStudents] = useState<User[]>([]);
+  const [projectDocuments, setProjectDocuments] = useState<Document[]>([]);
 
   useEffect(() => {
     if (id && project) {
@@ -136,8 +136,43 @@ const ProjectDetail = () => {
       if (project.status === "open" && user?.role === "entrepreneur") {
         fetchProposedStudents();
       }
+      // Fetch project documents from database
+      fetchProjectDocuments();
     }
   }, [id, project?.status, user?.role]);
+
+  // Fetch documents from database for this project
+  const fetchProjectDocuments = async () => {
+    if (!id) return;
+
+    try {
+      const { data: documentsData, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('id_project', id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching project documents:', error);
+        return;
+      }
+
+      // Transform database documents to our Document type
+      const transformedDocs: Document[] = (documentsData || []).map(doc => ({
+        id: doc.id_document,
+        name: doc.name,
+        url: doc.link,
+        type: doc.type,
+        projectId: doc.id_project,
+        uploadedBy: "unknown", // We don't store this in the database currently
+        createdAt: new Date(doc.created_at),
+      }));
+
+      setProjectDocuments(transformedDocs);
+    } catch (error) {
+      console.error('Error fetching project documents:', error);
+    }
+  };
 
   // Fetch proposed students for this project
   const fetchProposedStudents = async () => {
@@ -290,6 +325,11 @@ const ProjectDetail = () => {
       addDocument(project.id, { name: documentName }, selectedFile);
       setSelectedFile(null);
       setNewDocumentName("");
+      
+      // Refresh project documents from database
+      setTimeout(() => {
+        fetchProjectDocuments();
+      }, 1000);
     } else {
       toast.error("Please select a file to upload");
     }
@@ -352,8 +392,7 @@ const ProjectDetail = () => {
         .from('projects')
         .update({
           status: 'in_progress',
-          // We would add the student ID here, but need a way to get the student ID from user ID
-          // This will be handled in the updateProject function below
+          selected_student: studentId
         })
         .eq('id_project', project.id);
         
@@ -371,6 +410,14 @@ const ProjectDetail = () => {
       toast.error("Failed to select student");
     }
   };
+
+  // Combine project documents with database documents, avoiding duplicates
+  const allDocuments = [
+    ...project.documents,
+    ...projectDocuments.filter(doc => 
+      !project.documents.some(projDoc => projDoc.name === doc.name)
+    )
+  ];
 
   return (
     <AppLayout>
@@ -668,14 +715,14 @@ const ProjectDetail = () => {
                 <CardHeader>
                   <CardTitle>Project Documents</CardTitle>
                   <CardDescription>
-                    Share and manage all project-related files and documents
+                    All project documents including files shared via chat and uploaded directly
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* Document list */}
-                  {project.documents && project.documents.length > 0 ? (
+                  {/* Document list - now shows all documents including from chat */}
+                  {allDocuments && allDocuments.length > 0 ? (
                     <div className="space-y-2 mb-6">
-                      {project.documents.map((doc) => (
+                      {allDocuments.map((doc) => (
                         <div
                           key={doc.id}
                           className="p-3 border rounded-lg flex justify-between items-center"
@@ -686,6 +733,7 @@ const ProjectDetail = () => {
                               <p className="font-medium">{doc.name}</p>
                               <p className="text-xs text-muted-foreground">
                                 Uploaded on {doc.createdAt.toLocaleDateString()}
+                                {doc.type && ` • ${doc.type}`}
                               </p>
                             </div>
                           </div>
