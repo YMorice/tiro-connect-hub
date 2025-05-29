@@ -2,34 +2,88 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
-import { useProjects } from "@/context/project-context";
 import { useMessages } from "@/context/message-context";
 import AppLayout from "@/components/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Project } from "@/types";
 import { toast } from "@/components/ui/sonner";
 import { UserPlus, MessageSquare, CreditCard, Check, ArrowRight, FileCheck2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  ownerId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const Admin = () => {
   const { user } = useAuth();
-  const { projects, updateProject } = useProjects();
   const { sendMessage } = useMessages();
   const navigate = useNavigate();
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
   
   // Redirect if not admin
   useEffect(() => {
-    if (user && (user as any).role !== "admin") {
+    if (user && user.role !== "admin") {
       navigate("/dashboard");
       toast.error("You don't have permission to access this page");
     }
   }, [user, navigate]);
+
+  // Load projects from Supabase
+  useEffect(() => {
+    const loadProjects = async () => {
+      if (!user || user.role !== "admin") return;
+      
+      setLoading(true);
+      try {
+        const { data: projectsData, error } = await supabase
+          .from('projects')
+          .select(`
+            id_project,
+            title,
+            description,
+            status,
+            id_entrepreneur,
+            created_at,
+            updated_at
+          `)
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          throw error;
+        }
+        
+        const formattedProjects: Project[] = (projectsData || []).map(project => ({
+          id: project.id_project,
+          title: project.title,
+          description: project.description || "",
+          status: project.status || "STEP1",
+          ownerId: project.id_entrepreneur,
+          createdAt: new Date(project.created_at),
+          updatedAt: new Date(project.updated_at),
+        }));
+        
+        setProjects(formattedProjects);
+      } catch (error) {
+        console.error('Error loading projects:', error);
+        toast.error("Failed to load projects");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadProjects();
+  }, [user]);
 
   // Group projects by status
   const step1Projects = projects.filter(p => p.status === "STEP1");
@@ -74,16 +128,16 @@ const Admin = () => {
   const sendProposalsToStudents = async (project: Project) => {
     try {
       // Check if students have been proposed for this project
-      const { data: proposedStudents, error } = await supabase
-        .from('proposed_student')
-        .select('student_id')
-        .eq('project_id', project.id);
+      const { data: proposalData, error } = await supabase
+        .from('proposal_to_student')
+        .select('id_student')
+        .eq('id_project', project.id);
         
       if (error) {
         throw error;
       }
       
-      if (!proposedStudents || proposedStudents.length === 0) {
+      if (!proposalData || proposalData.length === 0) {
         toast.error("Please select students first before sending proposals");
         return;
       }
@@ -99,9 +153,11 @@ const Admin = () => {
       }
       
       // Update local state
-      updateProject(project.id, { status: "STEP2" });
+      setProjects(prev => prev.map(p => 
+        p.id === project.id ? { ...p, status: "STEP2" } : p
+      ));
       
-      toast.success(`Proposals sent to ${proposedStudents.length} students`);
+      toast.success(`Proposals sent to ${proposalData.length} students`);
     } catch (error) {
       console.error('Error sending proposals:', error);
       toast.error("Failed to send proposals to students");
@@ -116,14 +172,30 @@ const Admin = () => {
   // Proceed to entrepreneur review (STEP2 -> STEP3)
   const proposeToEntrepreneur = async (project: Project) => {
     try {
+      // Check if any students have accepted
+      const { data: acceptedStudents, error } = await supabase
+        .from('proposal_to_student')
+        .select('id_student')
+        .eq('id_project', project.id)
+        .eq('accepted', true);
+        
+      if (error) {
+        throw error;
+      }
+      
+      if (!acceptedStudents || acceptedStudents.length === 0) {
+        toast.error("No students have accepted the proposal yet");
+        return;
+      }
+      
       // Update project status to STEP3 in Supabase
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('projects')
         .update({ status: 'STEP3' })
         .eq('id_project', project.id);
         
-      if (error) {
-        throw error;
+      if (updateError) {
+        throw updateError;
       }
       
       // Get the message group for this project and send a message
@@ -141,7 +213,10 @@ const Admin = () => {
       }
       
       // Update local state
-      updateProject(project.id, { status: "STEP3" });
+      setProjects(prev => prev.map(p => 
+        p.id === project.id ? { ...p, status: "STEP3" } : p
+      ));
+      
       toast.success("Project moved to entrepreneur review");
     } catch (error) {
       console.error('Error updating project status:', error);
@@ -181,8 +256,11 @@ const Admin = () => {
         );
       }
       
-      // Update project in local state
-      updateProject(project.id, { status: "STEP5" });
+      // Update local state
+      setProjects(prev => prev.map(p => 
+        p.id === project.id ? { ...p, status: "STEP5" } : p
+      ));
+      
       toast.success(`Payment confirmed for project "${project.title}"`);
     } catch (error) {
       console.error('Error confirming payment:', error);
@@ -217,8 +295,11 @@ const Admin = () => {
         );
       }
       
-      // Update project in local state
-      updateProject(project.id, { status: "STEP6" });
+      // Update local state
+      setProjects(prev => prev.map(p => 
+        p.id === project.id ? { ...p, status: "STEP6" } : p
+      ));
+      
       toast.success(`Project "${project.title}" marked as complete`);
     } catch (error) {
       console.error('Error marking project as complete:', error);
@@ -231,8 +312,18 @@ const Admin = () => {
     navigate(`/messages?projectId=${projectId}`);
   };
 
-  if (!user || (user as any).role !== "admin") {
+  if (!user || user.role !== "admin") {
     return null; // Will redirect in the useEffect
+  }
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center items-center min-h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      </AppLayout>
+    );
   }
 
   // Render project card with appropriate actions

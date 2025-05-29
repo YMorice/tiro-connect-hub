@@ -242,6 +242,7 @@ export type Database = {
           id_entrepreneur: string
           id_pack: string | null
           id_project: string
+          selected_student: string | null
           status: string | null
           title: string
           updated_at: string
@@ -252,6 +253,7 @@ export type Database = {
           id_entrepreneur: string
           id_pack?: string | null
           id_project?: string
+          selected_student?: string | null
           status?: string | null
           title: string
           updated_at?: string
@@ -262,6 +264,7 @@ export type Database = {
           id_entrepreneur?: string
           id_pack?: string | null
           id_project?: string
+          selected_student?: string | null
           status?: string | null
           title?: string
           updated_at?: string
@@ -280,6 +283,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "project_packs"
             referencedColumns: ["id_pack"]
+          },
+          {
+            foreignKeyName: "projects_selected_student_fkey"
+            columns: ["selected_student"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id_student"]
           },
         ]
       }

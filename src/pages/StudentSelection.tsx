@@ -11,19 +11,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/sonner";
 import { ArrowLeft, Search, Check, FilterX } from "lucide-react";
-import { User } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface Student {
+  id: string;
+  email: string;
+  name: string;
+  bio?: string;
+  skills?: string[];
+  specialty?: string;
+}
 
 const StudentSelection = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('projectId');
   const projectTitle = searchParams.get('projectTitle');
   
-  const [students, setStudents] = useState<User[]>([]);
-  const [selectedStudents, setSelectedStudents] = useState<User[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [skillFilter, setSkillFilter] = useState("");
@@ -71,16 +78,14 @@ const StudentSelection = () => {
           throw error;
         }
         
-        // Transform the data to match the User type
-        const formattedStudents: User[] = studentsData.map(student => ({
+        // Transform the data to match the Student type
+        const formattedStudents: Student[] = studentsData.map(student => ({
           id: student.id_student,
           email: student.users.email,
           name: `${student.users.name} ${student.users.surname}`,
-          role: "student" as const,
           bio: student.biography || undefined,
           skills: student.skills || undefined,
           specialty: student.specialty || undefined,
-          createdAt: new Date(student.users.created_at),
         }));
         
         setStudents(formattedStudents);
@@ -121,7 +126,7 @@ const StudentSelection = () => {
   });
 
   // Toggle student selection
-  const toggleStudentSelection = (student: User) => {
+  const toggleStudentSelection = (student: Student) => {
     setSelectedStudents(prevSelected => {
       const isSelected = prevSelected.some(s => s.id === student.id);
       if (isSelected) {
@@ -145,17 +150,22 @@ const StudentSelection = () => {
     }
 
     try {
-      // Update project status to "open" in Supabase
-      const { error: projectUpdateError } = await supabase
-        .from('projects')
-        .update({ status: 'open' })
-        .eq('id_project', projectId);
+      // Add entries to proposal_to_student table
+      const proposalEntries = selectedStudents.map(student => ({
+        id_project: projectId,
+        id_student: student.id,
+        accepted: false // Initially false, students will accept later
+      }));
+      
+      const { error: proposalError } = await supabase
+        .from('proposal_to_student')
+        .insert(proposalEntries);
         
-      if (projectUpdateError) {
-        throw projectUpdateError;
+      if (proposalError) {
+        throw proposalError;
       }
       
-      // Add entries to proposed_student table
+      // Also add to proposed_student table for backward compatibility
       const proposedEntries = selectedStudents.map(student => ({
         student_id: student.id,
         project_id: projectId
@@ -167,46 +177,6 @@ const StudentSelection = () => {
         
       if (proposedError) {
         throw proposedError;
-      }
-      
-      // Create project assignments for selected students
-      const assignments = selectedStudents.map(student => ({
-        id_project: projectId,
-        id_student: student.id,
-        status: 'proposed',
-        role: 'developer'
-      }));
-      
-      const { error: assignmentError } = await supabase
-        .from('project_assignments')
-        .insert(assignments);
-        
-      if (assignmentError) {
-        throw assignmentError;
-      }
-      
-      // Get project owner (entrepreneur) to send notification
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('id_entrepreneur')
-        .eq('id_project', projectId)
-        .single();
-        
-      if (projectError) {
-        throw projectError;
-      }
-      
-      // Send a message to project owner about proposed students
-      const { error: messageError } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: user?.id,
-          project_id: projectId,
-          content: `${selectedStudents.length} students have been proposed for your project: "${projectTitle || "New Project"}"`
-        });
-          
-      if (messageError) {
-        console.error('Error sending message:', messageError);
       }
       
       toast.success(`Proposed ${selectedStudents.length} students for the project`);
@@ -333,7 +303,7 @@ const StudentSelection = () => {
           <CardContent>
             {loading ? (
               <div className="flex justify-center py-6">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tiro-purple"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
               </div>
             ) : (
               <>
