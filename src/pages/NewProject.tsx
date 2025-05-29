@@ -39,7 +39,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const NewProject = () => {
-  const { loadProjects } = useProjects(); // Only use loadProjects to refresh the list
+  const { loadProjects } = useProjects();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -121,7 +121,7 @@ const NewProject = () => {
         
       if (projectError) {
         console.error("Project creation error:", projectError);
-        throw projectError;
+        throw new Error(projectError.message);
       }
       
       console.log("Project created successfully:", projectData);
@@ -150,7 +150,7 @@ const NewProject = () => {
         }
       }
       
-      // Reload projects to get the latest data instead of manually calling createProject
+      // Reload projects to get the latest data
       await loadProjects();
       
       toast.success("Project created successfully");

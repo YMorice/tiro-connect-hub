@@ -160,48 +160,6 @@ export type Database = {
           },
         ]
       }
-      project_assignments: {
-        Row: {
-          created_at: string
-          id_assignment: string
-          id_project: string
-          id_student: string
-          role: string | null
-          status: string | null
-        }
-        Insert: {
-          created_at?: string
-          id_assignment?: string
-          id_project: string
-          id_student: string
-          role?: string | null
-          status?: string | null
-        }
-        Update: {
-          created_at?: string
-          id_assignment?: string
-          id_project?: string
-          id_student?: string
-          role?: string | null
-          status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_assignments_id_project_fkey"
-            columns: ["id_project"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id_project"]
-          },
-          {
-            foreignKeyName: "project_assignments_id_student_fkey"
-            columns: ["id_student"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id_student"]
-          },
-        ]
-      }
       project_packs: {
         Row: {
           active: boolean | null
@@ -461,6 +419,41 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["id_users"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          created_at: string
+          description: string | null
+          id_project: string | null
+          id_task: string
+          status: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id_project?: string | null
+          id_task?: string
+          status?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id_project?: string | null
+          id_task?: string
+          status?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_id_project_fkey"
+            columns: ["id_project"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id_project"]
           },
         ]
       }

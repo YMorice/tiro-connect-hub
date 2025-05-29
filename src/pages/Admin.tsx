@@ -19,6 +19,7 @@ interface Project {
   description: string;
   status: string;
   ownerId: string;
+  selectedStudent?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,6 +60,7 @@ const Admin = () => {
             description,
             status,
             id_entrepreneur,
+            selected_student,
             created_at,
             updated_at
           `)
@@ -77,6 +79,7 @@ const Admin = () => {
           description: project.description || "No description available",
           status: project.status || "STEP1",
           ownerId: project.id_entrepreneur,
+          selectedStudent: project.selected_student,
           createdAt: new Date(project.created_at),
           updatedAt: new Date(project.updated_at),
         }));
@@ -344,6 +347,12 @@ const Admin = () => {
             <div>
               <CardTitle>{project.title}</CardTitle>
               <CardDescription>{project.description}</CardDescription>
+              {project.selectedStudent && (
+                <div className="mt-2">
+                  <span className="text-sm text-muted-foreground">Selected Student: </span>
+                  <span className="text-sm font-medium">{project.selectedStudent}</span>
+                </div>
+              )}
             </div>
             <Badge className={getStatusBadgeColor(project.status)}>
               {getStatusLabel(project.status)}

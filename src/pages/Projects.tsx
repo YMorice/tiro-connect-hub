@@ -34,7 +34,7 @@ const Projects = () => {
       let projectData: any[] = [];
       
       if ((user as any).role === "entrepreneur") {
-        // Single query to get entrepreneur data and projects
+        // Get entrepreneur data and projects
         const { data, error } = await supabase
           .from('entrepreneurs')
           .select(`
@@ -46,7 +46,8 @@ const Projects = () => {
               status,
               created_at,
               updated_at,
-              id_pack
+              id_pack,
+              selected_student
             )
           `)
           .eq('id_user', user.id)
@@ -59,7 +60,7 @@ const Projects = () => {
         
         projectData = data?.projects || [];
       } else if ((user as any).role === "student") {
-        // Single query to get student data and assigned projects
+        // Get student data and check for accepted proposals
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('id_student')
@@ -72,10 +73,10 @@ const Projects = () => {
         }
         
         if (studentData) {
-          // Get both assigned and open projects in parallel
-          const [assignedResult, openResult] = await Promise.all([
+          // Get projects where this student has accepted proposals or is selected
+          const [acceptedProposalsResult, selectedProjectsResult, openProjectsResult] = await Promise.all([
             supabase
-              .from('project_assignments')
+              .from('proposal_to_student')
               .select(`
                 id_project,
                 projects (
@@ -86,30 +87,44 @@ const Projects = () => {
                   created_at,
                   updated_at,
                   id_entrepreneur,
-                  id_pack
+                  id_pack,
+                  selected_student
                 )
               `)
-              .eq('id_student', studentData.id_student),
+              .eq('id_student', studentData.id_student)
+              .eq('accepted', true),
             
             supabase
               .from('projects')
               .select('*')
-              .eq('status', 'open')
+              .eq('selected_student', studentData.id_student),
+            
+            supabase
+              .from('projects')
+              .select('*')
+              .in('status', ['STEP1', 'STEP2'])
           ]);
           
-          const assignedProjects = assignedResult.data?.map(a => a.projects).filter(Boolean) || [];
-          const openProjects = openResult.data || [];
+          const acceptedProjects = acceptedProposalsResult.data?.map(p => p.projects).filter(Boolean) || [];
+          const selectedProjects = selectedProjectsResult.data || [];
+          const openProjects = openProjectsResult.data || [];
           
-          // Remove duplicates
-          const assignedProjectIds = new Set(assignedProjects.map(p => p.id_project));
-          const uniqueOpenProjects = openProjects.filter(p => !assignedProjectIds.has(p.id_project));
+          // Combine and remove duplicates
+          const allProjectIds = new Set();
+          projectData = [];
           
-          projectData = [...assignedProjects, ...uniqueOpenProjects];
+          [...acceptedProjects, ...selectedProjects, ...openProjects].forEach(project => {
+            if (project && !allProjectIds.has(project.id_project)) {
+              allProjectIds.add(project.id_project);
+              projectData.push(project);
+            }
+          });
         }
       } else if ((user as any).role === "admin") {
         const { data, error } = await supabase
           .from('projects')
-          .select('*');
+          .select('*')
+          .order('created_at', { ascending: false });
         
         if (error) {
           console.error('Error fetching admin projects:', error);
@@ -126,6 +141,7 @@ const Projects = () => {
         description: dbProject.description || "",
         status: dbProject.status as any || "draft",
         ownerId: dbProject.id_entrepreneur,
+        assigneeId: dbProject.selected_student,
         tasks: [],
         documents: [],
         createdAt: new Date(dbProject.created_at),
@@ -203,11 +219,12 @@ const Projects = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="review">Review</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="STEP1">New Project</SelectItem>
+                <SelectItem value="STEP2">Awaiting Student Acceptance</SelectItem>
+                <SelectItem value="STEP3">Awaiting Entrepreneur Selection</SelectItem>
+                <SelectItem value="STEP4">Awaiting Payment</SelectItem>
+                <SelectItem value="STEP5">In Progress</SelectItem>
+                <SelectItem value="STEP6">Completed</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -230,18 +247,18 @@ const Projects = () => {
                           <h3 className="font-bold text-xl">{project.title}</h3>
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                              project.status === "completed"
+                              project.status === "STEP6"
                                 ? "bg-green-100 text-green-800"
-                                : project.status === "in_progress"
+                                : project.status === "STEP5"
                                 ? "bg-blue-100 text-blue-800"
-                                : project.status === "open"
+                                : project.status === "STEP2"
                                 ? "bg-yellow-100 text-yellow-800"
-                                : project.status === "review"
+                                : project.status === "STEP3" || project.status === "STEP4"
                                 ? "bg-purple-100 text-purple-800"
                                 : "bg-gray-100 text-gray-800"
                             }`}
                           >
-                            {project.status.replace("_", " ").toUpperCase()}
+                            {project.status}
                           </span>
                         </div>
                         <p className="text-muted-foreground">
