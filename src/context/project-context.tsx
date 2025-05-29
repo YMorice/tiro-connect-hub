@@ -147,15 +147,23 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             createdAt: new Date(doc.created_at),
           }));
 
-          const tasks: Task[] = (tasksData || []).map(task => ({
-            id: task.id_task,
-            projectId: task.id_project,
-            title: task.title || "Untitled Task",
-            description: task.description || "",
-            status: task.status as any || "todo",
-            createdAt: new Date(task.created_at),
-            updatedAt: new Date(task.created_at),
-          }));
+          // Convert task status to proper type
+          const tasks: Task[] = (tasksData || []).map(task => {
+            let taskStatus: "todo" | "in_progress" | "done" = "todo";
+            if (task.status === "in_progress" || task.status === "done") {
+              taskStatus = task.status as "todo" | "in_progress" | "done";
+            }
+
+            return {
+              id: task.id_task,
+              projectId: task.id_project || "",
+              title: task.title || "Untitled Task",
+              description: task.description || "",
+              status: taskStatus,
+              createdAt: new Date(task.created_at),
+              updatedAt: new Date(task.created_at),
+            };
+          });
 
           return {
             id: dbProject.id_project,
@@ -279,7 +287,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 projectId,
                 title: data.title || "New Task",
                 description: data.description || "",
-                status: data.status || "todo",
+                status: (data.status as "todo" | "in_progress" | "done") || "todo",
                 createdAt: new Date(data.created_at),
                 updatedAt: new Date(data.created_at),
               };

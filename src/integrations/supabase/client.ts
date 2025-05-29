@@ -24,4 +24,4 @@ export type Student = Database['public']['Tables']['students']['Row'];
 export type Entrepreneur = Database['public']['Tables']['entrepreneurs']['Row'];
 export type UserProfile = Database['public']['Tables']['users']['Row'];
 export type Message = Database['public']['Tables']['messages']['Row'];
-export type ProjectAssignment = Database['public']['Tables']['project_assignments']['Row'];
+export type Task = Database['public']['Tables']['tasks']['Row'];
