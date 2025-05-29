@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -319,32 +318,6 @@ const Admin = () => {
   // View project conversation
   const viewConversation = (projectId: string) => {
     navigate(`/messages?projectId=${projectId}`);
-  };
-
-  // Get project status label
-  const getStatusLabel = (status: string) => {
-    switch(status) {
-      case "STEP1": return "New Project";
-      case "STEP2": return "Awaiting Student Acceptance";
-      case "STEP3": return "Awaiting Entrepreneur Selection";
-      case "STEP4": return "Awaiting Payment";
-      case "STEP5": return "In Progress";
-      case "STEP6": return "Completed";
-      default: return status;
-    }
-  };
-
-  // Get status badge color
-  const getStatusBadgeColor = (status: string) => {
-    switch(status) {
-      case "STEP1": return "bg-blue-500";
-      case "STEP2": return "bg-purple-500";
-      case "STEP3": return "bg-yellow-500";
-      case "STEP4": return "bg-orange-500";
-      case "STEP5": return "bg-green-500";
-      case "STEP6": return "bg-gray-500";
-      default: return "bg-slate-500";
-    }
   };
 
   if (!user || user.role !== "admin") {
