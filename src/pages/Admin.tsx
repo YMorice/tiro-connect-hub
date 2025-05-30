@@ -163,6 +163,7 @@ const Admin = () => {
         .eq('id_project', project.id);
         
       if (error) {
+        console.error('Error checking proposals:', error);
         throw error;
       }
       
@@ -178,6 +179,7 @@ const Admin = () => {
         .eq('id_project', project.id);
         
       if (updateError) {
+        console.error('Error updating project status:', updateError);
         throw updateError;
       }
       
@@ -336,9 +338,104 @@ const Admin = () => {
     }
   };
 
-  // View project conversation
-  const viewConversation = (projectId: string) => {
-    navigate(`/messages?projectId=${projectId}`);
+  // View project conversation - Fixed to ensure proper message group creation
+  const viewConversation = async (projectId: string) => {
+    try {
+      // First check if a message group exists for this project
+      const { data: existingGroup, error: groupError } = await supabase
+        .from('message_groups')
+        .select('id_group')
+        .eq('id_project', projectId)
+        .limit(1);
+
+      if (groupError) {
+        console.error('Error checking message group:', groupError);
+        throw groupError;
+      }
+
+      // If no group exists, create one
+      if (!existingGroup || existingGroup.length === 0) {
+        console.log('No message group found for project', projectId, 'creating one...');
+        
+        // Get project details to find the entrepreneur
+        const { data: projectData, error: projectError } = await supabase
+          .from('projects')
+          .select('id_entrepreneur')
+          .eq('id_project', projectId)
+          .single();
+
+        if (projectError) {
+          console.error('Error fetching project:', projectError);
+          throw projectError;
+        }
+
+        // Get entrepreneur's user ID
+        const { data: entrepreneurData, error: entrepreneurError } = await supabase
+          .from('entrepreneurs')
+          .select('id_user')
+          .eq('id_entrepreneur', projectData.id_entrepreneur)
+          .single();
+
+        if (entrepreneurError) {
+          console.error('Error fetching entrepreneur:', entrepreneurError);
+          throw entrepreneurError;
+        }
+
+        // Create message group with unique group ID
+        const groupId = crypto.randomUUID();
+        
+        // Add entrepreneur to the group
+        const { error: insertEntrepreneurError } = await supabase
+          .from('message_groups')
+          .insert({
+            id_group: groupId,
+            id_project: projectId,
+            id_user: entrepreneurData.id_user
+          });
+
+        if (insertEntrepreneurError) {
+          console.error('Error adding entrepreneur to group:', insertEntrepreneurError);
+          throw insertEntrepreneurError;
+        }
+
+        // Add admin users to the group
+        const { data: adminUsers, error: adminError } = await supabase
+          .from('users')
+          .select('id_users')
+          .eq('role', 'admin');
+
+        if (adminError) {
+          console.error('Error fetching admin users:', adminError);
+          throw adminError;
+        }
+
+        // Insert admin users into the message group
+        if (adminUsers && adminUsers.length > 0) {
+          const adminInserts = adminUsers.map(admin => ({
+            id_group: groupId,
+            id_project: projectId,
+            id_user: admin.id_users
+          }));
+
+          const { error: insertAdminError } = await supabase
+            .from('message_groups')
+            .insert(adminInserts);
+
+          if (insertAdminError) {
+            console.error('Error adding admins to group:', insertAdminError);
+            throw insertAdminError;
+          }
+        }
+
+        console.log('Created message group with ID:', groupId);
+      }
+
+      // Navigate to messages with the project ID
+      navigate(`/messages?projectId=${projectId}`);
+    } catch (error) {
+      console.error('Error setting up conversation:', error);
+      toast.error("Failed to open conversation");
+    }
   };
 
   if (!user || user.role !== "admin") {

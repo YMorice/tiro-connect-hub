@@ -147,8 +147,11 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       });
 
+      // Get unique groups (remove duplicates by group ID)
+      const uniqueGroupIds = [...new Set(userGroups.map(g => g.id_group))];
+
       // Transform groups with message data and ensure proper typing
-      const transformedGroups: MessageGroup[] = groupIds.map((groupId: string) => {
+      const transformedGroups: MessageGroup[] = uniqueGroupIds.map((groupId: string) => {
         const groupMessages = transformedMessages.filter(m => m.groupId === groupId);
         const lastMessage = groupMessages[groupMessages.length - 1];
         const unreadCount = user.role === "admin" ? 0 : groupMessages.filter(m => m.sender !== user.id && !m.read).length;
