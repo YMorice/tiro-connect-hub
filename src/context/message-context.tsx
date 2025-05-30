@@ -95,8 +95,8 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
-      // Get unique group IDs
-      const groupIds = [...new Set(userGroups.map(g => g.id_group))];
+      // Get unique group IDs with proper type assertion
+      const groupIds = [...new Set(userGroups.map(g => g.id_group as string))];
       
       // Get messages for these groups with ordering
       const { data: messagesData, error: messagesError } = await supabase
@@ -135,7 +135,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       });
 
-      // Transform groups with message data
+      // Transform groups with message data and proper type assertion
       const transformedGroups: MessageGroup[] = groupIds.map(groupId => {
         const groupMessages = transformedMessages.filter(m => m.groupId === groupId);
         const lastMessage = groupMessages[groupMessages.length - 1];
@@ -143,7 +143,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const projectInfo = groupProjectMap.get(groupId);
 
         return {
-          id: groupId,
+          id: groupId, // Now properly typed as string
           projectId: projectInfo?.projectId || undefined,
           projectTitle: projectInfo?.projectTitle || "Direct Messages",
           lastMessage,
