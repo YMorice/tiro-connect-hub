@@ -173,7 +173,7 @@ const Dashboard = () => {
         
         const proposalProjects = proposalsResult.data?.map(p => ({
           ...p.projects,
-          proposalStatus: p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined'),
+          proposalStatus: (p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined')) as 'pending' | 'accepted' | 'declined',
           proposalId: p.id_proposal
         })).filter(Boolean) || [];
         
