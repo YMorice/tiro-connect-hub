@@ -46,7 +46,11 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       console.log("Fetching message groups for user:", user.id);
       
-      let userGroups;
+      let userGroups: Array<{
+        id_group: string;
+        id_project: string;
+        projects: { title: string } | null;
+      }>;
       
       if (user.role === "admin") {
         // Admin users can see all message groups
@@ -65,7 +69,11 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
           throw groupsError;
         }
 
-        userGroups = allGroups;
+        userGroups = (allGroups || []).map(group => ({
+          id_group: String(group.id_group),
+          id_project: String(group.id_project),
+          projects: group.projects
+        }));
       } else {
         // Regular users only see their groups
         const { data: regularGroups, error: groupsError } = await supabase
@@ -84,7 +92,11 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
           throw groupsError;
         }
 
-        userGroups = regularGroups;
+        userGroups = (regularGroups || []).map(group => ({
+          id_group: String(group.id_group),
+          id_project: String(group.id_project),
+          projects: group.projects
+        }));
       }
 
       console.log("User groups found:", userGroups);
@@ -95,8 +107,8 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
-      // Get unique group IDs and ensure they are properly typed as strings
-      const groupIds: string[] = [...new Set(userGroups.map(g => String(g.id_group)))];
+      // Get unique group IDs - now properly typed
+      const groupIds: string[] = [...new Set(userGroups.map(g => g.id_group))];
       
       // Get messages for these groups with ordering
       const { data: messagesData, error: messagesError } = await supabase
