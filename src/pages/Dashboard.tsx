@@ -1,28 +1,54 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/auth-context";
-import { Link } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from "recharts";
+import { 
+  FolderOpen, 
+  Users, 
+  MessageSquare, 
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Plus,
+  Eye
+} from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/sonner";
-import { Users, Briefcase, MessageSquare, Star, PlusCircle, Eye, Check, X } from "lucide-react";
 
 interface DashboardStats {
-  projects: number;
-  messages: number;
-  reviews: number;
-  students: number;
+  totalProjects: number;
+  activeProjects: number;
+  completedProjects: number;
+  totalMessages: number;
+  unreadMessages: number;
+  totalStudents?: number;
+  totalEntrepreneurs?: number;
+  pendingProposals?: number;
 }
 
-interface ProjectData {
-  id_project: string;
+interface Project {
+  id: string;
   title: string;
-  description?: string;
-  status?: string;
+  status: string;
   created_at: string;
   proposalStatus?: 'pending' | 'accepted' | 'declined';
-  proposalId?: string;
 }
 
 // Helper function to convert database status to display status
@@ -41,47 +67,35 @@ const convertDbStatusToDisplay = (dbStatus: string): string => {
 const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
-    projects: 0,
-    messages: 0,
-    reviews: 0,
-    students: 0,
+    totalProjects: 0,
+    activeProjects: 0,
+    completedProjects: 0,
+    totalMessages: 0,
+    unreadMessages: 0,
   });
-  const [recentProjects, setRecentProjects] = useState<ProjectData[]>([]);
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Handle proposal response (accept/decline)
-  const handleProposalResponse = async (proposalId: string, accepted: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('proposal_to_student')
-        .update({ accepted })
-        .eq('id_proposal', proposalId);
-        
-      if (error) {
-        throw error;
-      }
-      
-      toast.success(accepted ? "Proposal accepted!" : "Proposal declined");
-      
-      // Refresh dashboard data
-      fetchDashboardData();
-    } catch (error) {
-      console.error('Error updating proposal:', error);
-      toast.error("Failed to update proposal");
-    }
-  };
 
   const fetchDashboardData = async () => {
     if (!user?.id) return;
     
     try {
       setLoading(true);
+      const userRole = (user as any).role;
       
-      if ((user as any).role === 'entrepreneur') {
-        // Get entrepreneur data
+      if (userRole === "entrepreneur") {
+        // Get entrepreneur data and projects
         const { data: entrepreneurData, error: entrepreneurError } = await supabase
           .from('entrepreneurs')
-          .select('id_entrepreneur')
+          .select(`
+            id_entrepreneur,
+            projects (
+              id_project,
+              title,
+              status,
+              created_at
+            )
+          `)
           .eq('id_user', user.id)
           .single();
           
@@ -90,58 +104,52 @@ const Dashboard = () => {
           return;
         }
         
-        // Fetch projects separately
-        const { data: projectsData, error: projectsError } = await supabase
-          .from('projects')
-          .select('id_project, title, description, status, created_at')
-          .eq('id_entrepreneur', entrepreneurData.id_entrepreneur);
-          
-        if (projectsError) {
-          console.error('Error fetching projects:', projectsError);
-          return;
-        }
+        const projects = entrepreneurData?.projects || [];
+        const totalProjects = projects.length;
         
-        const projects = projectsData || [];
-        const projectIds = projects.map(p => p.id_project);
+        // Convert statuses and count
+        const convertedProjects = projects.map(p => ({
+          ...p,
+          status: convertDbStatusToDisplay(p.status || 'STEP1')
+        }));
         
-        // Get additional stats in parallel
-        const [messagesResult, reviewsResult] = await Promise.all([
-          supabase
-            .from('messages')
-            .select('id_message', { count: 'exact' })
-            .in('group_id', projectIds.length > 0 ? 
-              await supabase
-                .from('message_groups')
-                .select('id_group')
-                .in('id_project', projectIds)
-                .then(res => res.data?.map(g => g.id_group) || [])
-              : []
-            ),
-          supabase
-            .from('reviews')
-            .select('id', { count: 'exact' })
-            .eq('entrepreneur_id', entrepreneurData.id_entrepreneur)
-        ]);
+        const activeProjects = convertedProjects.filter(p => 
+          ['Active', 'In progress'].includes(p.status)
+        ).length;
         
+        const completedProjects = convertedProjects.filter(p => 
+          p.status === 'completed'
+        ).length;
+
+        // Get messages count
+        const { count: totalMessages } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('sender_id', user.id);
+
+        const { count: unreadMessages } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .neq('sender_id', user.id)
+          .eq('read', false);
+
         setStats({
-          projects: projects.length,
-          messages: messagesResult.count || 0,
-          reviews: reviewsResult.count || 0,
-          students: 0,
+          totalProjects,
+          activeProjects,
+          completedProjects,
+          totalMessages: totalMessages || 0,
+          unreadMessages: unreadMessages || 0,
         });
+
+        setRecentProjects(convertedProjects.slice(0, 5).map(p => ({
+          id: p.id_project,
+          title: p.title,
+          status: p.status,
+          created_at: p.created_at
+        })));
         
-        // Set recent projects (limit to 5 most recent) with converted status
-        const sortedProjects = projects
-          .map(project => ({
-            ...project,
-            status: convertDbStatusToDisplay(project.status || 'STEP1')
-          }))
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 5);
-        setRecentProjects(sortedProjects);
-        
-      } else if ((user as any).role === "student") {
-        // Fetch student data
+      } else if (userRole === "student") {
+        // Get student data
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('id_student')
@@ -153,113 +161,159 @@ const Dashboard = () => {
           return;
         }
         
-        // For students, get projects they have proposals for or are selected in
-        const [proposalsResult, selectedProjectsResult] = await Promise.all([
-          supabase
-            .from('proposal_to_student')
-            .select(`
-              id_proposal,
-              accepted,
-              projects (
-                id_project,
-                title,
-                description,
-                status,
-                created_at
-              )
-            `)
-            .eq('id_student', studentData.id_student),
+        if (studentData) {
+          // Get projects where this student has proposals that are NOT declined
+          // or where they are the selected student
+          const [proposalsResult, selectedProjectsResult] = await Promise.all([
+            supabase
+              .from('proposal_to_student')
+              .select(`
+                id_proposal,
+                accepted,
+                projects (
+                  id_project,
+                  title,
+                  status,
+                  created_at
+                )
+              `)
+              .eq('id_student', studentData.id_student)
+              .or('accepted.is.null,accepted.eq.true'), // Only show pending (null) or accepted proposals
+            
+            supabase
+              .from('projects')
+              .select('id_project, title, status, created_at')
+              .eq('selected_student', studentData.id_student)
+          ]);
+          
+          const proposalProjects = proposalsResult.data?.map(p => ({
+            ...p.projects,
+            proposalStatus: p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined')
+          })).filter(Boolean) || [];
+          
+          const selectedProjects = selectedProjectsResult.data || [];
+          
+          // Combine and remove duplicates
+          const allProjectIds = new Set();
+          const allProjects: any[] = [];
+          
+          [...proposalProjects, ...selectedProjects].forEach(project => {
+            if (project && !allProjectIds.has(project.id_project)) {
+              allProjectIds.add(project.id_project);
+              allProjects.push(project);
+            }
+          });
+          
+          const totalProjects = allProjects.length;
+          
+          // Convert statuses and count
+          const convertedProjects = allProjects.map(p => ({
+            ...p,
+            status: convertDbStatusToDisplay(p.status || 'STEP1')
+          }));
+          
+          const activeProjects = convertedProjects.filter(p => 
+            ['Active', 'In progress'].includes(p.status)
+          ).length;
+          
+          const completedProjects = convertedProjects.filter(p => 
+            p.status === 'completed'
+          ).length;
+          
+          const pendingProposals = proposalProjects.filter(p => 
+            p.proposalStatus === 'pending'
+          ).length;
+
+          // Get messages count
+          const { count: totalMessages } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('sender_id', user.id);
+
+          const { count: unreadMessages } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .neq('sender_id', user.id)
+            .eq('read', false);
+
+          setStats({
+            totalProjects,
+            activeProjects,
+            completedProjects,
+            totalMessages: totalMessages || 0,
+            unreadMessages: unreadMessages || 0,
+            pendingProposals,
+          });
+
+          setRecentProjects(convertedProjects.slice(0, 5).map(p => ({
+            id: p.id_project,
+            title: p.title,
+            status: p.status,
+            created_at: p.created_at,
+            proposalStatus: p.proposalStatus
+          })));
+        }
+        
+      } else if (userRole === "admin") {
+        // Admin sees all data
+        const [projectsResult, studentsResult, entrepreneursResult] = await Promise.all([
           supabase
             .from('projects')
-            .select('id_project, title, description, status, created_at')
-            .eq('selected_student', studentData.id_student)
-        ]);
-        
-        const proposalProjects = proposalsResult.data?.map(p => ({
-          ...p.projects,
-          status: convertDbStatusToDisplay(p.projects?.status || 'STEP1'),
-          proposalStatus: (p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined')) as 'pending' | 'accepted' | 'declined',
-          proposalId: p.id_proposal
-        })).filter(Boolean) || [];
-        
-        const selectedProjects = selectedProjectsResult.data?.map(project => ({
-          ...project,
-          status: convertDbStatusToDisplay(project.status || 'STEP1')
-        })) || [];
-        
-        let allProjects: ProjectData[] = [...selectedProjects];
-        
-        // Merge proposal projects and remove duplicates
-        const existingIds = new Set(allProjects.map(p => p.id_project));
-        proposalProjects.forEach(project => {
-          if (!existingIds.has(project.id_project)) {
-            allProjects.push(project);
-          }
-        });
-        
-        const projectIds = allProjects.map(p => p.id_project);
-        
-        // Get additional stats
-        const [messagesResult, reviewsResult] = await Promise.all([
+            .select('id_project, title, status, created_at'),
           supabase
-            .from('messages')
-            .select('id_message', { count: 'exact' })
-            .in('group_id', projectIds.length > 0 ? 
-              await supabase
-                .from('message_groups')
-                .select('id_group')
-                .in('id_project', projectIds)
-                .then(res => res.data?.map(g => g.id_group) || [])
-              : []
-            ),
+            .from('students')
+            .select('id_student', { count: 'exact', head: true }),
           supabase
-            .from('reviews')
-            .select('id', { count: 'exact' })
-            .eq('student_id', studentData.id_student)
+            .from('entrepreneurs')
+            .select('id_entrepreneur', { count: 'exact', head: true })
         ]);
         
+        const projects = projectsResult.data || [];
+        const totalProjects = projects.length;
+        
+        // Convert statuses and count
+        const convertedProjects = projects.map(p => ({
+          ...p,
+          status: convertDbStatusToDisplay(p.status || 'STEP1')
+        }));
+        
+        const activeProjects = convertedProjects.filter(p => 
+          ['Active', 'In progress'].includes(p.status)
+        ).length;
+        
+        const completedProjects = convertedProjects.filter(p => 
+          p.status === 'completed'
+        ).length;
+
+        // Get messages count
+        const { count: totalMessages } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true });
+
+        const { count: unreadMessages } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('read', false);
+
         setStats({
-          projects: allProjects.length,
-          messages: messagesResult.count || 0,
-          reviews: reviewsResult.count || 0,
-          students: 0,
+          totalProjects,
+          activeProjects,
+          completedProjects,
+          totalMessages: totalMessages || 0,
+          unreadMessages: unreadMessages || 0,
+          totalStudents: studentsResult.count || 0,
+          totalEntrepreneurs: entrepreneursResult.count || 0,
         });
-        
-        setRecentProjects(allProjects.slice(0, 5));
-        
-      } else if ((user as any).role === "admin") {
-        // Get all stats for admin
-        const [projectsResult, messagesResult, reviewsResult, studentsResult] = await Promise.all([
-          supabase.from('projects').select('id_project', { count: 'exact' }),
-          supabase.from('messages').select('id_message', { count: 'exact' }),
-          supabase.from('reviews').select('id', { count: 'exact' }),
-          supabase.from('students').select('id_student', { count: 'exact' })
-        ]);
-        
-        setStats({
-          projects: projectsResult.count || 0,
-          messages: messagesResult.count || 0,
-          reviews: reviewsResult.count || 0,
-          students: studentsResult.count || 0,
-        });
-        
-        // Get recent projects for admin with converted status
-        const { data: recentProjectsData } = await supabase
-          .from('projects')
-          .select('id_project, title, description, status, created_at')
-          .order('created_at', { ascending: false })
-          .limit(5);
-          
-        const convertedProjects = recentProjectsData?.map(project => ({
-          ...project,
-          status: convertDbStatusToDisplay(project.status || 'STEP1')
-        })) || [];
-        
-        setRecentProjects(convertedProjects);
+
+        setRecentProjects(convertedProjects.slice(0, 5).map(p => ({
+          id: p.id_project,
+          title: p.title,
+          status: p.status,
+          created_at: p.created_at
+        })));
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
@@ -269,47 +323,36 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [user?.id, (user as any)?.role]);
 
-  const dashboardCards = useMemo(() => {
-    const baseCards = [
-      {
-        title: "Projects",
-        value: stats.projects,
-        icon: Briefcase,
-        description: "Active projects",
-        color: "text-blue-600",
-        bgColor: "bg-blue-50",
-      },
-      {
-        title: "Messages",
-        value: stats.messages,
-        icon: MessageSquare,
-        description: "Unread messages",
-        color: "text-green-600",
-        bgColor: "bg-green-50",
-      },
-      {
-        title: "Reviews",
-        value: stats.reviews,
-        icon: Star,
-        description: "Total reviews",
-        color: "text-yellow-600",
-        bgColor: "bg-yellow-50",
-      },
+  const chartData = useMemo(() => {
+    const data = [
+      { name: 'New', value: stats.totalProjects - stats.activeProjects - stats.completedProjects },
+      { name: 'Active', value: stats.activeProjects },
+      { name: 'Completed', value: stats.completedProjects },
     ];
+    return data.filter(item => item.value > 0);
+  }, [stats]);
 
-    if ((user as any)?.role === 'admin') {
-      baseCards.push({
-        title: "Students",
-        value: stats.students,
-        icon: Users,
-        description: "Registered students",
-        color: "text-purple-600",
-        bgColor: "bg-purple-50",
-      });
+  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'New':
+        return 'bg-gray-100 text-gray-800';
+      case 'Active':
+        return 'bg-blue-100 text-blue-800';
+      case 'In progress':
+        return 'bg-green-100 text-green-800';
+      case 'Proposals':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Selection':
+      case 'Payment':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
+  };
 
-    return baseCards;
-  }, [stats, (user as any)?.role]);
+  const userRole = (user as any)?.role;
 
   if (loading) {
     return (
@@ -323,158 +366,181 @@ const Dashboard = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6 px-4 sm:px-6 lg:px-8">
-        <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-bold">
-            Welcome back, {(user as any)?.name || user?.email}!
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
-            Here's what's happening with your projects today.
-          </p>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Welcome back, {user?.name}! Here's what's happening with your projects.
+            </p>
+          </div>
+          {userRole === "entrepreneur" && (
+            <Button asChild className="bg-tiro-purple hover:bg-tiro-purple/90">
+              <Link to="/projects/pack-selection">
+                <Plus className="h-4 w-4 mr-2" />
+                New Project
+              </Link>
+            </Button>
+          )}
         </div>
 
-        {/* Stats Grid - Improved responsive layout */}
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {dashboardCards.map((card) => (
-            <Card key={card.title} className="min-w-0">
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
+              <FolderOpen className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalProjects}</div>
+              <p className="text-xs text-muted-foreground">
+                {userRole === "student" && stats.pendingProposals 
+                  ? `${stats.pendingProposals} pending proposals`
+                  : "All your projects"}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.activeProjects}</div>
+              <p className="text-xs text-muted-foreground">Currently in progress</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Messages</CardTitle>
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalMessages}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.unreadMessages} unread
+              </p>
+            </CardContent>
+          </Card>
+
+          {userRole === "admin" ? (
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium truncate">
-                  {card.title}
-                </CardTitle>
-                <div className={`p-2 rounded-lg ${card.bgColor} flex-shrink-0`}>
-                  <card.icon className={`h-4 w-4 ${card.color}`} />
-                </div>
+                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{card.value}</div>
+                <div className="text-2xl font-bold">
+                  {(stats.totalStudents || 0) + (stats.totalEntrepreneurs || 0)}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {card.description}
+                  {stats.totalStudents} students, {stats.totalEntrepreneurs} entrepreneurs
                 </p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Completed</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.completedProjects}</div>
+                <p className="text-xs text-muted-foreground">Successfully completed</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Recent Projects - Improved mobile layout */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
-              <div className="space-y-1">
-                <CardTitle className="text-lg sm:text-xl">Recent Projects</CardTitle>
-                <CardDescription className="text-sm">
-                  Your most recent project activity
-                </CardDescription>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                {(user as any)?.role === "entrepreneur" && (
-                  <Button asChild size="sm" className="w-full sm:w-auto">
-                    <Link to="/projects/pack-selection">
-                      <PlusCircle className="h-4 w-4 mr-2" />
-                      New Project
-                    </Link>
-                  </Button>
-                )}
-                <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-                  <Link to="/projects">
-                    <Eye className="h-4 w-4 mr-2" />
-                    View All
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {recentProjects.length > 0 ? (
-              <div className="space-y-4">
-                {recentProjects.map((project) => (
-                  <div
-                    key={project.id_project}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg space-y-3 sm:space-y-0"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-2">
-                        <h3 className="font-medium truncate">{project.title}</h3>
+        {/* Charts and Recent Projects */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Project Status Chart */}
+          {stats.totalProjects > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Status Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recent Projects */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Recent Projects</CardTitle>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/projects">
+                  <Eye className="h-4 w-4 mr-2" />
+                  View All
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {recentProjects.length > 0 ? (
+                <div className="space-y-4">
+                  {recentProjects.map((project) => (
+                    <div key={project.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="space-y-1">
+                        <h4 className="font-medium">{project.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(project.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
                         {project.proposalStatus && (
-                          <span
-                            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                              project.proposalStatus === "accepted"
-                                ? "bg-green-100 text-green-800"
-                                : project.proposalStatus === "declined"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-orange-100 text-orange-800"
-                            }`}
-                          >
-                            Proposal: {project.proposalStatus}
-                          </span>
+                          <Badge variant={project.proposalStatus === 'pending' ? 'default' : 'secondary'}>
+                            {project.proposalStatus}
+                          </Badge>
                         )}
-                      </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2 sm:line-clamp-1">
-                        {project.description?.substring(0, 100)}...
-                      </p>
-                      <div className="flex items-center mt-2">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                            project.status === "In progress"
-                              ? "bg-green-100 text-green-800"
-                              : project.status === "Active"
-                              ? "bg-blue-100 text-blue-800"
-                              : project.status === "Proposals"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : project.status === "Selection" || project.status === "Payment"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {project.status?.toUpperCase() || "NEW"}
-                        </span>
+                        <Badge className={getStatusColor(project.status)}>
+                          {project.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2 sm:ml-4">
-                      {/* Student proposal buttons */}
-                      {(user as any)?.role === "student" && project.proposalStatus === "pending" && (
-                        <>
-                          <Button
-                            onClick={() => handleProposalResponse(project.proposalId!, true)}
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Accept
-                          </Button>
-                          <Button
-                            onClick={() => handleProposalResponse(project.proposalId!, false)}
-                            size="sm"
-                            variant="destructive"
-                            className="w-full sm:w-auto"
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Decline
-                          </Button>
-                        </>
-                      )}
-                      <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-                        <Link to={`/projects/${project.id_project}`}>
-                          View
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No projects yet</p>
-                {(user as any)?.role === "entrepreneur" && (
-                  <Button asChild className="mt-4">
-                    <Link to="/projects/pack-selection">
-                      Create Your First Project
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-muted-foreground">
+                    {userRole === "student" 
+                      ? "You'll see projects here when you receive proposals"
+                      : "No projects yet. Create your first project to get started!"}
+                  </p>
+                  {userRole === "entrepreneur" && (
+                    <Button className="mt-4" asChild>
+                      <Link to="/projects/pack-selection">Create Project</Link>
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </AppLayout>
   );

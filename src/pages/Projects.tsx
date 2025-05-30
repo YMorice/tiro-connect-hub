@@ -79,7 +79,7 @@ const Projects = () => {
         
         projectData = data?.projects || [];
       } else if ((user as any).role === "student") {
-        // Get student data and check for proposals and assigned projects
+        // Get student data
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('id_student')
@@ -92,7 +92,8 @@ const Projects = () => {
         }
         
         if (studentData) {
-          // Get projects where this student has proposals or is selected
+          // Get projects where this student has proposals that are NOT declined (null or accepted)
+          // or where they are the selected student
           const [proposalsResult, selectedProjectsResult] = await Promise.all([
             supabase
               .from('proposal_to_student')
@@ -111,7 +112,8 @@ const Projects = () => {
                   selected_student
                 )
               `)
-              .eq('id_student', studentData.id_student),
+              .eq('id_student', studentData.id_student)
+              .or('accepted.is.null,accepted.eq.true'), // Only show pending (null) or accepted proposals
             
             supabase
               .from('projects')
@@ -196,7 +198,7 @@ const Projects = () => {
       
       toast.success(accepted ? "Proposal accepted!" : "Proposal declined");
       
-      // Refresh projects to update the status
+      // Refresh projects to update the status or remove declined projects
       fetchProjects();
     } catch (error) {
       console.error('Error updating proposal:', error);
@@ -363,6 +365,8 @@ const Projects = () => {
                     ? "Try changing your search filters"
                     : (user as any)?.role === "entrepreneur"
                     ? "Create your first project to get started"
+                    : (user as any)?.role === "student" 
+                    ? "You'll see projects here when you receive proposals or are working on them"
                     : "Browse open projects to start working"}
                 </p>
                 {(user as any)?.role === "entrepreneur" && !searchTerm && statusFilter === "all" && (
