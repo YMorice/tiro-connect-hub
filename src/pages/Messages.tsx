@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, Clock, Check, X, FileText, Download, Menu, Users, User } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { useMessages } from "@/context/message-context";
@@ -15,17 +16,39 @@ import { Message } from "@/types";
 import DocumentUpload from "@/components/DocumentUpload";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChatMessageProps {
   message: Message;
   isCurrentUser: boolean;
+  senderInfo?: {
+    name: string;
+    avatar?: string;
+  };
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser, senderInfo }) => {
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   // Special rendering for document messages
   if (message.documentUrl) {
     return (
-      <div className={`flex w-full py-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+      <div className={`flex w-full py-2 gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+        {!isCurrentUser && (
+          <Avatar className="h-8 w-8 flex-shrink-0">
+            <AvatarImage src={senderInfo?.avatar} alt={senderInfo?.name} />
+            <AvatarFallback className="text-xs">
+              {senderInfo?.name ? getInitials(senderInfo.name) : "U"}
+            </AvatarFallback>
+          </Avatar>
+        )}
         <div className={`rounded-lg p-3 text-sm w-fit max-w-[85%] sm:max-w-[75%] ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 flex-shrink-0" />
@@ -49,13 +72,29 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => 
             {message.read && <Check className="inline h-3 w-3 ml-1" />}
           </div>
         </div>
+        {isCurrentUser && (
+          <Avatar className="h-8 w-8 flex-shrink-0">
+            <AvatarImage src={senderInfo?.avatar} alt={senderInfo?.name} />
+            <AvatarFallback className="text-xs">
+              {senderInfo?.name ? getInitials(senderInfo.name) : "U"}
+            </AvatarFallback>
+          </Avatar>
+        )}
       </div>
     );
   }
 
   // Regular message rendering
   return (
-    <div className={`flex w-full py-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex w-full py-2 gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+      {!isCurrentUser && (
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarImage src={senderInfo?.avatar} alt={senderInfo?.name} />
+          <AvatarFallback className="text-xs">
+            {senderInfo?.name ? getInitials(senderInfo.name) : "U"}
+          </AvatarFallback>
+        </Avatar>
+      )}
       <div className={`rounded-lg p-3 text-sm w-fit max-w-[85%] sm:max-w-[75%] break-words ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
         {message.content}
         <div className="mt-1 text-xs opacity-70">
@@ -63,16 +102,25 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => 
           {message.read && <Check className="inline h-3 w-3 ml-1" />}
         </div>
       </div>
+      {isCurrentUser && (
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarImage src={senderInfo?.avatar} alt={senderInfo?.name} />
+          <AvatarFallback className="text-xs">
+            {senderInfo?.name ? getInitials(senderInfo.name) : "U"}
+          </AvatarFallback>
+        </Avatar>
+      )}
     </div>
   );
 };
 
 const Messages = () => {
   const { user } = useAuth();
-  const { messageGroups, sendMessage, sendDocumentMessage, markAsRead, getGroupMessages, loading } = useMessages();
+  const { messageGroups, sendMessage, sendDocumentMessage, markAsRead, getGroupMessages, loading, refreshMessages } = useMessages();
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
+  const [userProfiles, setUserProfiles] = useState<Record<string, { name: string; avatar?: string }>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,7 +147,7 @@ const Messages = () => {
     }
   }, [currentGroupId, messageGroups]);
 
-  // Filter messages based on current group
+  // Filter messages based on current group and fetch user profiles
   useEffect(() => {
     if (!currentGroupId || !user) return;
 
@@ -112,6 +160,38 @@ const Messages = () => {
         markAsRead(message.id);
       }
     });
+
+    // Fetch user profiles for message senders
+    const fetchUserProfiles = async () => {
+      const uniqueSenderIds = [...new Set(groupMessages.map(m => m.sender))];
+      const profiles: Record<string, { name: string; avatar?: string }> = {};
+      
+      for (const senderId of uniqueSenderIds) {
+        try {
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('name, surname, pp_link')
+            .eq('id_users', senderId)
+            .single();
+          
+          if (userData && !error) {
+            profiles[senderId] = {
+              name: `${userData.name} ${userData.surname}`.trim(),
+              avatar: userData.pp_link || undefined
+            };
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          profiles[senderId] = { name: 'Unknown User' };
+        }
+      }
+      
+      setUserProfiles(profiles);
+    };
+
+    if (groupMessages.length > 0) {
+      fetchUserProfiles();
+    }
   }, [currentGroupId, getGroupMessages, user, markAsRead]);
 
   useEffect(() => {
@@ -264,6 +344,7 @@ const Messages = () => {
                               key={message.id}
                               message={message}
                               isCurrentUser={message.sender === user?.id}
+                              senderInfo={userProfiles[message.sender]}
                             />
                           ))
                         ) : (

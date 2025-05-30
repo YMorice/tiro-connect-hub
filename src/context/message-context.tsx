@@ -26,6 +26,7 @@ interface MessageContextType {
   markAsRead: (messageId: string) => void;
   getGroupMessages: (groupId: string) => Message[];
   reviewDocument: (messageId: string, isApproved: boolean, comment?: string) => void;
+  refreshMessages: () => void;
 }
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
@@ -45,7 +46,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       console.log("Fetching message groups for user:", user.id);
       
-      // Get message groups the user belongs to with the new primary key structure
+      // Get message groups the user belongs to
       const { data: userGroups, error: groupsError } = await supabase
         .from('message_groups')
         .select(`
@@ -73,7 +74,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // Get unique group IDs
       const groupIds = [...new Set(userGroups.map(g => g.id_group))];
       
-      // Get messages for these groups
+      // Get messages for these groups with ordering
       const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
         .select('*')
@@ -85,7 +86,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         throw messagesError;
       }
 
-      console.log("Messages found:", messagesData?.length || 0);
+      console.log("Messages found:", messagesData?.length || 0, messagesData);
 
       // Transform messages
       const transformedMessages: Message[] = (messagesData || []).map(msg => ({
@@ -139,6 +140,10 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [user?.id]);
 
+  const refreshMessages = useCallback(() => {
+    fetchMessageGroups();
+  }, [fetchMessageGroups]);
+
   useEffect(() => {
     fetchMessageGroups();
   }, [fetchMessageGroups]);
@@ -183,12 +188,17 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         )
       );
       
+      // Refresh messages to ensure consistency
+      setTimeout(() => {
+        refreshMessages();
+      }, 100);
+      
       toast.success("Message sent");
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");
     }
-  }, [user]);
+  }, [user, refreshMessages]);
 
   const sendDocumentMessage = useCallback(async (groupId: string, documentDetails: {
     documentUrl: string;
@@ -261,6 +271,11 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       }
       
+      // Refresh messages to ensure consistency
+      setTimeout(() => {
+        refreshMessages();
+      }, 100);
+      
       toast.success(documentType === "regular" 
         ? "Document shared" 
         : documentType === "proposal" 
@@ -270,7 +285,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.error("Error sending document message:", error);
       toast.error("Failed to send document");
     }
-  }, [user, addDocument, updateProject, messageGroups]);
+  }, [user, addDocument, updateProject, messageGroups, refreshMessages]);
 
   const markAsRead = useCallback(async (messageId: string) => {
     try {
@@ -346,7 +361,8 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       sendDocumentMessage,
       markAsRead, 
       getGroupMessages,
-      reviewDocument
+      reviewDocument,
+      refreshMessages
     }}>
       {children}
     </MessageContext.Provider>
