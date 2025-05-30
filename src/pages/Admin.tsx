@@ -153,48 +153,6 @@ const Admin = () => {
     navigate(`/admin/student-selection?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
   };
 
-  // Send proposals to students (New -> Proposals)
-  const sendProposalsToStudents = async (project: Project) => {
-    try {
-      // Check if students have been proposed for this project
-      const { data: proposalData, error } = await supabase
-        .from('proposal_to_student')
-        .select('id_student')
-        .eq('id_project', project.id);
-        
-      if (error) {
-        console.error('Error checking proposals:', error);
-        throw error;
-      }
-      
-      if (!proposalData || proposalData.length === 0) {
-        toast.error("Please select students first before sending proposals");
-        return;
-      }
-      
-      // Update project to Proposals in Supabase
-      const { error: updateError } = await supabase
-        .from('projects')
-        .update({ status: convertDisplayStatusToDb('Proposals') })
-        .eq('id_project', project.id);
-        
-      if (updateError) {
-        console.error('Error updating project status:', updateError);
-        throw updateError;
-      }
-      
-      // Update local state
-      setProjects(prev => prev.map(p => 
-        p.id === project.id ? { ...p, status: "Proposals" } : p
-      ));
-      
-      toast.success(`Proposals sent to ${proposalData.length} students`);
-    } catch (error) {
-      console.error('Error sending proposals:', error);
-      toast.error("Failed to send proposals to students");
-    }
-  };
-
   // View students who accepted project (Proposals)
   const viewAcceptedStudents = (project: Project) => {
     navigate(`/admin/accepted-students?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
@@ -338,7 +296,7 @@ const Admin = () => {
     }
   };
 
-  // View project conversation - SIMPLIFIED
+  // View project conversation
   const viewConversation = (projectId: string) => {
     console.log('Navigating to conversation for project:', projectId);
     navigate(`/messages?projectId=${projectId}`);
@@ -390,25 +348,15 @@ const Admin = () => {
               View Conversation
             </Button>
             
-            {/* New: Select students and send proposals */}
+            {/* New: Select students */}
             {project.status === "New" && (
-              <>
-                <Button
-                  onClick={() => navigateToStudentSelection(project)}
-                  variant="secondary"
-                  className="w-full sm:w-auto"
-                >
-                  <UserPlus className="h-4 w-4 mr-1" />
-                  Select Students
-                </Button>
-                <Button
-                  onClick={() => sendProposalsToStudents(project)}
-                  className="w-full sm:w-auto"
-                >
-                  <ArrowRight className="h-4 w-4 mr-1" />
-                  Send Proposals to Students
-                </Button>
-              </>
+              <Button
+                onClick={() => navigateToStudentSelection(project)}
+                className="w-full sm:w-auto"
+              >
+                <UserPlus className="h-4 w-4 mr-1" />
+                Select & Propose Students
+              </Button>
             )}
             
             {/* Proposals: View accepted students and propose to entrepreneur */}

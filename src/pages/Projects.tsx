@@ -16,6 +16,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { Project } from "@/types";
+import { Check, X } from "lucide-react";
 
 // Helper function to convert database status to display status
 const convertDbStatusToDisplay = (dbStatus: string): string => {
@@ -30,9 +31,14 @@ const convertDbStatusToDisplay = (dbStatus: string): string => {
   return statusMap[dbStatus] || dbStatus;
 };
 
+interface ProjectWithProposal extends Project {
+  proposalStatus?: 'pending' | 'accepted' | 'declined';
+  proposalId?: string;
+}
+
 const Projects = () => {
   const { user } = useAuth();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ProjectWithProposal[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -73,7 +79,7 @@ const Projects = () => {
         
         projectData = data?.projects || [];
       } else if ((user as any).role === "student") {
-        // Get student data and check for accepted proposals
+        // Get student data and check for proposals and assigned projects
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('id_student')
@@ -86,12 +92,13 @@ const Projects = () => {
         }
         
         if (studentData) {
-          // Get projects where this student has accepted proposals or is selected
-          const [acceptedProposalsResult, selectedProjectsResult, openProjectsResult] = await Promise.all([
+          // Get projects where this student has proposals or is selected
+          const [proposalsResult, selectedProjectsResult] = await Promise.all([
             supabase
               .from('proposal_to_student')
               .select(`
-                id_project,
+                id_proposal,
+                accepted,
                 projects (
                   id_project,
                   title,
@@ -104,29 +111,27 @@ const Projects = () => {
                   selected_student
                 )
               `)
-              .eq('id_student', studentData.id_student)
-              .eq('accepted', true),
+              .eq('id_student', studentData.id_student),
             
             supabase
               .from('projects')
               .select('*')
-              .eq('selected_student', studentData.id_student),
-            
-            supabase
-              .from('projects')
-              .select('*')
-              .in('status', ['STEP1', 'STEP2'])
+              .eq('selected_student', studentData.id_student)
           ]);
           
-          const acceptedProjects = acceptedProposalsResult.data?.map(p => p.projects).filter(Boolean) || [];
+          const proposalProjects = proposalsResult.data?.map(p => ({
+            ...p.projects,
+            proposalStatus: p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined'),
+            proposalId: p.id_proposal
+          })).filter(Boolean) || [];
+          
           const selectedProjects = selectedProjectsResult.data || [];
-          const openProjects = openProjectsResult.data || [];
           
           // Combine and remove duplicates
           const allProjectIds = new Set();
           projectData = [];
           
-          [...acceptedProjects, ...selectedProjects, ...openProjects].forEach(project => {
+          [...proposalProjects, ...selectedProjects].forEach(project => {
             if (project && !allProjectIds.has(project.id_project)) {
               allProjectIds.add(project.id_project);
               projectData.push(project);
@@ -148,7 +153,7 @@ const Projects = () => {
       }
       
       // Convert to UI format
-      const formattedProjects: Project[] = projectData.map(dbProject => ({
+      const formattedProjects: ProjectWithProposal[] = projectData.map(dbProject => ({
         id: dbProject.id_project,
         title: dbProject.title,
         description: dbProject.description || "",
@@ -159,7 +164,9 @@ const Projects = () => {
         documents: [],
         createdAt: new Date(dbProject.created_at),
         updatedAt: new Date(dbProject.updated_at),
-        packId: dbProject.id_pack
+        packId: dbProject.id_pack,
+        proposalStatus: dbProject.proposalStatus,
+        proposalId: dbProject.proposalId
       }));
       
       setProjects(formattedProjects);
@@ -174,6 +181,28 @@ const Projects = () => {
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
+
+  // Handle proposal response (accept/decline)
+  const handleProposalResponse = async (proposalId: string, accepted: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('proposal_to_student')
+        .update({ accepted })
+        .eq('id_proposal', proposalId);
+        
+      if (error) {
+        throw error;
+      }
+      
+      toast.success(accepted ? "Proposal accepted!" : "Proposal declined");
+      
+      // Refresh projects to update the status
+      fetchProjects();
+    } catch (error) {
+      console.error('Error updating proposal:', error);
+      toast.error("Failed to update proposal");
+    }
+  };
 
   // Memoized filtered projects to prevent unnecessary recalculations
   const filteredProjects = useMemo(() => {
@@ -255,8 +284,8 @@ const Projects = () => {
                 <Card key={project.id}>
                   <CardContent className="p-6">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-bold text-xl">{project.title}</h3>
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
@@ -273,6 +302,19 @@ const Projects = () => {
                           >
                             {project.status}
                           </span>
+                          {project.proposalStatus && (
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                                project.proposalStatus === "accepted"
+                                  ? "bg-green-100 text-green-800"
+                                  : project.proposalStatus === "declined"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-orange-100 text-orange-800"
+                              }`}
+                            >
+                              Proposal: {project.proposalStatus}
+                            </span>
+                          )}
                         </div>
                         <p className="text-muted-foreground">
                           {project.description.substring(0, 150)}
@@ -285,9 +327,30 @@ const Projects = () => {
                           </div>
                         </div>
                       </div>
-                      <Button asChild>
-                        <Link to={`/projects/${project.id}`}>View Project</Link>
-                      </Button>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        {/* Student proposal buttons */}
+                        {(user as any)?.role === "student" && project.proposalStatus === "pending" && (
+                          <>
+                            <Button
+                              onClick={() => handleProposalResponse(project.proposalId!, true)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Accept
+                            </Button>
+                            <Button
+                              onClick={() => handleProposalResponse(project.proposalId!, false)}
+                              variant="destructive"
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              Decline
+                            </Button>
+                          </>
+                        )}
+                        <Button asChild>
+                          <Link to={`/projects/${project.id}`}>View Project</Link>
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

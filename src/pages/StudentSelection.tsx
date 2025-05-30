@@ -21,6 +21,19 @@ interface Student {
   specialty?: string;
 }
 
+// Helper function to convert display status to database status
+const convertDisplayStatusToDb = (displayStatus: string): string => {
+  const statusMap: { [key: string]: string } = {
+    'New': 'STEP1',
+    'Proposals': 'STEP2',
+    'Selection': 'STEP3', 
+    'Payment': 'STEP4',
+    'Active': 'STEP5',
+    'In progress': 'STEP6'
+  };
+  return statusMap[displayStatus] || displayStatus;
+};
+
 const StudentSelection = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -151,7 +164,7 @@ const StudentSelection = () => {
     try {
       console.log('Proposing students:', selectedStudents.map(s => s.id), 'for project:', projectId);
       
-      // Only add entries to proposal_to_student table
+      // Insert proposals into proposal_to_student table
       const proposalEntries = selectedStudents.map(student => ({
         id_project: projectId,
         id_student: student.id,
@@ -169,8 +182,19 @@ const StudentSelection = () => {
         throw proposalError;
       }
       
-      console.log('Successfully proposed students');
-      toast.success(`Proposed ${selectedStudents.length} students for the project`);
+      // Update project status to "Proposals" (STEP2)
+      const { error: statusError } = await supabase
+        .from('projects')
+        .update({ status: convertDisplayStatusToDb('Proposals') })
+        .eq('id_project', projectId);
+        
+      if (statusError) {
+        console.error('Error updating project status:', statusError);
+        throw statusError;
+      }
+      
+      console.log('Successfully proposed students and updated project status');
+      toast.success(`Proposed ${selectedStudents.length} students for the project. Project status updated to "Proposals".`);
       navigate('/admin');
       
     } catch (error) {
