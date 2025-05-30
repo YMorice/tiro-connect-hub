@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -69,6 +68,7 @@ const ProposalStudentSelection = () => {
     const fetchAcceptedStudents = async () => {
       try {
         setLoading(true);
+        console.log('Fetching students who accepted proposals for project:', projectId);
         
         // Get students who accepted the proposal for this specific project
         const { data: proposalData, error } = await supabase
@@ -95,24 +95,37 @@ const ProposalStudentSelection = () => {
           .eq('accepted', true);
           
         if (error) {
+          console.error('Error fetching accepted students:', error);
           throw error;
         }
         
-        // Transform the data to match the Student type
-        const formattedStudents: Student[] = proposalData.map(proposal => ({
-          id: proposal.students.id_student,
-          email: proposal.students.users.email,
-          name: `${proposal.students.users.name} ${proposal.students.users.surname}`,
-          bio: proposal.students.biography || undefined,
-          skills: proposal.students.skills || undefined,
-          specialty: proposal.students.specialty || undefined,
-        }));
+        console.log('Found accepted students:', proposalData);
         
+        if (!proposalData || proposalData.length === 0) {
+          console.log('No students have accepted the proposal yet');
+          setStudents([]);
+          setSpecialties([]);
+          return;
+        }
+        
+        // Transform the data to match the Student type
+        const formattedStudents: Student[] = proposalData
+          .filter(proposal => proposal.students && proposal.students.users) // Filter out invalid entries
+          .map(proposal => ({
+            id: proposal.students.id_student,
+            email: proposal.students.users.email,
+            name: `${proposal.students.users.name} ${proposal.students.users.surname}`,
+            bio: proposal.students.biography || undefined,
+            skills: proposal.students.skills || undefined,
+            specialty: proposal.students.specialty || undefined,
+          }));
+        
+        console.log('Formatted students:', formattedStudents);
         setStudents(formattedStudents);
         
         // Extract unique specialties for filter dropdown
         const uniqueSpecialties = Array.from(
-          new Set(proposalData.map(proposal => proposal.students.specialty).filter(Boolean))
+          new Set(formattedStudents.map(student => student.specialty).filter(Boolean))
         ) as string[];
         
         setSpecialties(uniqueSpecialties);
@@ -193,7 +206,7 @@ const ProposalStudentSelection = () => {
       // Update project status to "Selection" (STEP3)
       const { error: statusError } = await supabase
         .from('projects')
-        .update({ status: convertDisplayStatusToDb('Selection') })
+        .update({ status: 'STEP3' })
         .eq('id_project', projectId);
         
       if (statusError) {
