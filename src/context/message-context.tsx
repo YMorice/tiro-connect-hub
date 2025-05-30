@@ -46,21 +46,45 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       console.log("Fetching message groups for user:", user.id);
       
-      // Get message groups the user belongs to
-      const { data: userGroups, error: groupsError } = await supabase
-        .from('message_groups')
-        .select(`
-          id_group,
-          id_project,
-          projects (
-            title
-          )
-        `)
-        .eq('id_user', user.id);
+      let userGroups;
+      
+      if (user.role === "admin") {
+        // Admin users can see all message groups
+        const { data: allGroups, error: groupsError } = await supabase
+          .from('message_groups')
+          .select(`
+            id_group,
+            id_project,
+            projects (
+              title
+            )
+          `);
 
-      if (groupsError) {
-        console.error('Error fetching user groups:', groupsError);
-        throw groupsError;
+        if (groupsError) {
+          console.error('Error fetching all groups:', groupsError);
+          throw groupsError;
+        }
+
+        userGroups = allGroups;
+      } else {
+        // Regular users only see their groups
+        const { data: regularGroups, error: groupsError } = await supabase
+          .from('message_groups')
+          .select(`
+            id_group,
+            id_project,
+            projects (
+              title
+            )
+          `)
+          .eq('id_user', user.id);
+
+        if (groupsError) {
+          console.error('Error fetching user groups:', groupsError);
+          throw groupsError;
+        }
+
+        userGroups = regularGroups;
       }
 
       console.log("User groups found:", userGroups);
@@ -115,7 +139,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const transformedGroups: MessageGroup[] = groupIds.map(groupId => {
         const groupMessages = transformedMessages.filter(m => m.groupId === groupId);
         const lastMessage = groupMessages[groupMessages.length - 1];
-        const unreadCount = groupMessages.filter(m => m.sender !== user.id && !m.read).length;
+        const unreadCount = user.role === "admin" ? 0 : groupMessages.filter(m => m.sender !== user.id && !m.read).length;
         const projectInfo = groupProjectMap.get(groupId);
 
         return {
@@ -138,7 +162,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, user?.role]);
 
   const refreshMessages = useCallback(() => {
     fetchMessageGroups();

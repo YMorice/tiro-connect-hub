@@ -49,7 +49,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser, sende
             </AvatarFallback>
           </Avatar>
         )}
-        <div className={`rounded-lg p-3 text-sm w-fit max-w-[85%] sm:max-w-[75%] ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
+        <div className={`rounded-lg p-3 text-sm w-fit max-w-[85%] sm:max-w-[75%] ${
+          isCurrentUser 
+            ? 'bg-primary text-primary-foreground' 
+            : 'bg-muted text-muted-foreground'
+        }`}>
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 flex-shrink-0" />
             <div className="flex-1 min-w-0">
@@ -60,7 +64,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser, sende
                   href={message.documentUrl} 
                   target="_blank" 
                   rel="noreferrer"
-                  className={`flex items-center gap-1 text-xs ${isCurrentUser ? 'text-white/80 hover:text-white' : 'text-blue-600 hover:text-blue-800'}`}
+                  className={`flex items-center gap-1 text-xs ${
+                    isCurrentUser 
+                      ? 'text-primary-foreground/80 hover:text-primary-foreground' 
+                      : 'text-blue-600 hover:text-blue-800'
+                  }`}
                 >
                   <Download className="h-3 w-3" /> View document
                 </a>
@@ -95,7 +103,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser, sende
           </AvatarFallback>
         </Avatar>
       )}
-      <div className={`rounded-lg p-3 text-sm w-fit max-w-[85%] sm:max-w-[75%] break-words ${isCurrentUser ? 'bg-tiro-purple text-white' : 'bg-gray-100 text-gray-800'}`}>
+      <div className={`rounded-lg p-3 text-sm w-fit max-w-[85%] sm:max-w-[75%] break-words ${
+        isCurrentUser 
+          ? 'bg-primary text-primary-foreground' 
+          : 'bg-muted text-foreground'
+      }`}>
         {message.content}
         <div className="mt-1 text-xs opacity-70">
           {message.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -121,31 +133,70 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState("");
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
   const [userProfiles, setUserProfiles] = useState<Record<string, { name: string; avatar?: string }>>({});
+  const [allMessageGroups, setAllMessageGroups] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  // Fetch all message groups for admin users
+  useEffect(() => {
+    if (user?.role === "admin") {
+      const fetchAllGroups = async () => {
+        try {
+          const { data: allGroups, error } = await supabase
+            .from('message_groups')
+            .select(`
+              id_group,
+              id_project,
+              projects (
+                title
+              )
+            `);
+
+          if (error) throw error;
+
+          // Get unique groups
+          const uniqueGroups = allGroups?.reduce((acc, group) => {
+            if (!acc.find(g => g.id_group === group.id_group)) {
+              acc.push(group);
+            }
+            return acc;
+          }, [] as any[]) || [];
+
+          setAllMessageGroups(uniqueGroups);
+        } catch (error) {
+          console.error("Error fetching all groups:", error);
+        }
+      };
+
+      fetchAllGroups();
+    }
+  }, [user]);
   
   // Extract query parameters for project-specific messaging
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const projectId = queryParams.get('projectId');
     
-    if (projectId && messageGroups.length > 0) {
-      const projectGroup = messageGroups.find(g => g.projectId === projectId);
+    const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
+    
+    if (projectId && groupsToUse.length > 0) {
+      const projectGroup = groupsToUse.find(g => g.id_project === projectId);
       if (projectGroup) {
-        setCurrentGroupId(projectGroup.id);
+        setCurrentGroupId(projectGroup.id_group);
       }
     }
-  }, [location.search, messageGroups]);
+  }, [location.search, messageGroups, allMessageGroups, user]);
 
   // Auto-select first group if none selected
   useEffect(() => {
-    if (!currentGroupId && messageGroups.length > 0) {
-      setCurrentGroupId(messageGroups[0].id);
+    const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
+    if (!currentGroupId && groupsToUse.length > 0) {
+      setCurrentGroupId(groupsToUse[0].id_group);
     }
-  }, [currentGroupId, messageGroups]);
+  }, [currentGroupId, messageGroups, allMessageGroups, user]);
 
   // Filter messages based on current group and fetch user profiles
   useEffect(() => {
@@ -224,26 +275,29 @@ const Messages = () => {
     }
   };
 
-  const currentGroup = messageGroups.find(g => g.id === currentGroupId);
+  const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
+  const currentGroup = groupsToUse.find(g => g.id_group === currentGroupId);
 
   const GroupsList = () => (
     <div className="h-full">
       <CardHeader className="p-4">
         <CardTitle className="text-lg">Message Groups</CardTitle>
-        <CardDescription>Your project discussions</CardDescription>
+        <CardDescription>
+          {user?.role === "admin" ? "All project discussions" : "Your project discussions"}
+        </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea className="h-[300px] md:h-[calc(100vh-240px)] w-full">
           <div className="p-2 space-y-1">
-            {messageGroups.length > 0 ? (
-              messageGroups.map((group) => (
+            {groupsToUse.length > 0 ? (
+              groupsToUse.map((group) => (
                 <Button
-                  key={group.id}
+                  key={group.id_group}
                   variant="ghost"
                   className={`w-full justify-start text-left p-3 h-auto ${
-                    currentGroupId === group.id ? 'bg-muted' : ''
+                    currentGroupId === group.id_group ? 'bg-muted' : ''
                   }`}
-                  onClick={() => handleGroupSelect(group.id)}
+                  onClick={() => handleGroupSelect(group.id_group)}
                 >
                   <div className="flex items-center gap-3 w-full">
                     <div className="flex-shrink-0">
@@ -253,18 +307,10 @@ const Messages = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium truncate">{group.projectTitle}</span>
-                        {group.unreadCount > 0 && (
-                          <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1 ml-2">
-                            {group.unreadCount}
-                          </span>
-                        )}
+                        <span className="font-medium truncate">
+                          {group.projects?.title || "Direct Messages"}
+                        </span>
                       </div>
-                      {group.lastMessage && (
-                        <p className="text-sm text-muted-foreground truncate">
-                          {group.lastMessage.content}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </Button>
@@ -292,7 +338,7 @@ const Messages = () => {
                   <Button variant="outline" className="w-full flex justify-between items-center">
                     <span>
                       {currentGroup 
-                        ? currentGroup.projectTitle
+                        ? (currentGroup.projects?.title || "Direct Messages")
                         : "Select Group"}
                     </span>
                     <Menu className="h-4 w-4" />
@@ -322,7 +368,7 @@ const Messages = () => {
                   {currentGroup && (
                     <>
                       <Users className="h-5 w-5 text-blue-600" />
-                      {currentGroup.projectTitle}
+                      {currentGroup.projects?.title || "Direct Messages"}
                     </>
                   )}
                 </CardTitle>
@@ -361,7 +407,7 @@ const Messages = () => {
                       <div className="flex justify-end">
                         <DocumentUpload
                           onDocumentSubmit={handleDocumentSubmit}
-                          projectId={currentGroup.projectId}
+                          projectId={currentGroup.id_project}
                         />
                       </div>
                       
@@ -393,7 +439,7 @@ const Messages = () => {
                           ? "Tap 'Select Group' above to choose a group"
                           : "Select a message group to start messaging"}
                       </p>
-                      {messageGroups.length === 0 && !loading && (
+                      {groupsToUse.length === 0 && !loading && (
                         <p className="mt-2 text-sm text-muted-foreground">
                           Message groups will appear when projects are created
                         </p>
