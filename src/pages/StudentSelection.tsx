@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -44,6 +45,7 @@ const StudentSelection = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  const [proposing, setProposing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [skillFilter, setSkillFilter] = useState("");
   const [specialtyFilter, setSpecialtyFilter] = useState("");
@@ -51,7 +53,7 @@ const StudentSelection = () => {
   
   // Redirect if not admin
   useEffect(() => {
-    if (user && user.role !== "admin") {
+    if (user && (user as any).role !== "admin") {
       navigate("/dashboard");
       toast.error("You don't have permission to access this page");
     }
@@ -116,7 +118,7 @@ const StudentSelection = () => {
       }
     };
     
-    if (user && user.role === "admin" && projectId) {
+    if (user && (user as any).role === "admin" && projectId) {
       fetchStudents();
     }
   }, [user, projectId]);
@@ -162,13 +164,14 @@ const StudentSelection = () => {
     }
 
     try {
+      setProposing(true);
       console.log('Proposing students:', selectedStudents.map(s => s.id), 'for project:', projectId);
       
-      // Insert proposals into proposal_to_student table
+      // Insert proposals into proposal_to_student table with accepted=null (pending)
       const proposalEntries = selectedStudents.map(student => ({
         id_project: projectId,
         id_student: student.id,
-        accepted: false // Initially false, students will accept later
+        accepted: null // null means pending, true means accepted, false means declined
       }));
       
       console.log('Inserting proposal entries:', proposalEntries);
@@ -194,12 +197,14 @@ const StudentSelection = () => {
       }
       
       console.log('Successfully proposed students and updated project status');
-      toast.success(`Proposed ${selectedStudents.length} students for the project. Project status updated to "Proposals".`);
+      toast.success(`Successfully proposed ${selectedStudents.length} student${selectedStudents.length > 1 ? 's' : ''} for the project. Project status updated to "Proposals".`);
       navigate('/admin');
       
     } catch (error) {
       console.error('Error proposing students:', error);
       toast.error("Failed to propose students");
+    } finally {
+      setProposing(false);
     }
   };
 
@@ -210,12 +215,7 @@ const StudentSelection = () => {
     setSpecialtyFilter("");
   };
 
-  // Navigate back to admin page
-  const goBack = () => {
-    navigate('/admin');
-  };
-
-  if (!user || user.role !== "admin") {
+  if (!user || (user as any).role !== "admin") {
     return null; // Will redirect in the useEffect
   }
 
@@ -240,11 +240,7 @@ const StudentSelection = () => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => {
-                setSearchQuery("");
-                setSkillFilter("");
-                setSpecialtyFilter("");
-              }}
+              onClick={clearFilters}
               disabled={!searchQuery && !skillFilter && !specialtyFilter}
               className="flex items-center"
             >
@@ -253,14 +249,21 @@ const StudentSelection = () => {
             </Button>
             <Button 
               onClick={proposeStudents}
-              disabled={selectedStudents.length === 0}
+              disabled={selectedStudents.length === 0 || proposing}
               className="flex items-center"
             >
               <Check className="h-4 w-4 mr-1" />
-              Propose {selectedStudents.length} Student{selectedStudents.length !== 1 ? 's' : ''}
+              {proposing ? 'Proposing...' : `Propose ${selectedStudents.length} Student${selectedStudents.length !== 1 ? 's' : ''}`}
             </Button>
           </div>
         </div>
+
+        {selectedStudents.length === 0 && (
+          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-orange-800 font-medium">⚠️ Please select at least one student before proposing</p>
+            <p className="text-orange-600 text-sm mt-1">You must choose students to send proposals to for this project.</p>
+          </div>
+        )}
 
         <Card>
           <CardHeader>

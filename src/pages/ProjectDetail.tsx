@@ -37,81 +37,17 @@ import { User, Document } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 
-// Mock profiles for demonstration
-const mockProfiles: User[] = [
-  {
-    id: "101",
-    email: "sam@example.com",
-    name: "Sam Johnson",
-    role: "student",
-    bio: "Web developer specializing in React and Node.js. 3 years of experience in building responsive web applications.",
-    skills: ["React", "Node.js", "TypeScript", "Tailwind CSS"],
-    createdAt: new Date(),
-    avatar: "https://i.pravatar.cc/150?u=101",
-    isOnline: true,
-  },
-  {
-    id: "102",
-    email: "alex@example.com",
-    name: "Alex Rivera",
-    role: "student",
-    bio: "UX/UI designer with a background in graphic design. Passionate about creating intuitive user experiences.",
-    skills: ["UI/UX", "Figma", "Adobe XD", "User Testing"],
-    createdAt: new Date(),
-    avatar: "https://i.pravatar.cc/150?u=102",
-    isOnline: false,
-  },
-  {
-    id: "103",
-    email: "jordan@example.com",
-    name: "Jordan Smith",
-    role: "student",
-    bio: "Full-stack developer with experience in e-commerce and SaaS applications.",
-    skills: ["JavaScript", "Python", "MongoDB", "Express"],
-    createdAt: new Date(),
-    avatar: "https://i.pravatar.cc/150?u=103",
-    isOnline: true,
-  },
-];
-
-const ProfileProposition: React.FC<{ profile: User, onSelect: () => void }> = ({ profile, onSelect }) => {
-  return (
-    <div className="p-4 border rounded-lg mb-4">
-      <div className="flex items-center gap-3 mb-3">
-        <Avatar>
-          <AvatarImage src={profile.avatar} />
-          <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
-        </Avatar>
-        <div>
-          <p className="font-medium">{profile.name}</p>
-          <div className="flex items-center">
-            <span className={`w-2 h-2 rounded-full mr-1 ${profile.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-            <span className="text-xs text-muted-foreground">{profile.isOnline ? 'Online' : 'Offline'}</span>
-          </div>
-        </div>
-      </div>
-      
-      <p className="text-sm mb-3">{profile.bio}</p>
-      
-      <div className="mb-4">
-        <p className="text-sm font-medium mb-2">Skills:</p>
-        <div className="flex flex-wrap gap-1">
-          {profile.skills?.map(skill => (
-            <span 
-              key={skill} 
-              className="bg-gray-100 px-2 py-1 text-xs rounded"
-            >
-              {skill}
-            </span>
-          ))}
-        </div>
-      </div>
-      
-      <Button onClick={onSelect} className="w-full">
-        Select Student
-      </Button>
-    </div>
-  );
+// Helper function to convert database status to display status
+const convertDbStatusToDisplay = (dbStatus: string): string => {
+  const statusMap: { [key: string]: string } = {
+    'STEP1': 'New',
+    'STEP2': 'Proposals', 
+    'STEP3': 'Selection',
+    'STEP4': 'Payment',
+    'STEP5': 'Active',
+    'STEP6': 'In progress'
+  };
+  return statusMap[dbStatus] || dbStatus;
 };
 
 const ProjectDetail = () => {
@@ -120,9 +56,9 @@ const ProjectDetail = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Add defensive check for projects array and project existence
-  const project = projects && Array.isArray(projects) ? projects.find((p) => p.id === id) : null;
-
+  const [project, setProject] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
   const [newTask, setNewTask] = useState({ title: "", description: "" });
   const [newDocumentName, setNewDocumentName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -130,16 +66,138 @@ const ProjectDetail = () => {
   const [proposedStudents, setProposedStudents] = useState<User[]>([]);
   const [projectDocuments, setProjectDocuments] = useState<Document[]>([]);
 
+  // Fetch project and check access permissions
   useEffect(() => {
-    if (id && project) {
+    const fetchProjectAndCheckAccess = async () => {
+      if (!id || !user) return;
+
+      try {
+        setLoading(true);
+        console.log('Fetching project:', id, 'for user:', user.id, 'role:', (user as any).role);
+
+        // First try to get the project from the projects context
+        const contextProject = projects && Array.isArray(projects) ? projects.find(p => p.id === id) : null;
+        
+        if (contextProject) {
+          setProject(contextProject);
+          setHasAccess(true);
+          setLoading(false);
+          return;
+        }
+
+        // If not found in context, fetch from database and check access
+        const { data: projectData, error: projectError } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('id_project', id)
+          .single();
+
+        if (projectError) {
+          console.error('Error fetching project:', projectError);
+          setHasAccess(false);
+          setLoading(false);
+          return;
+        }
+
+        if (!projectData) {
+          setHasAccess(false);
+          setLoading(false);
+          return;
+        }
+
+        console.log('Project data:', projectData);
+
+        // Check access permissions based on user role
+        let userHasAccess = false;
+
+        if ((user as any).role === "admin") {
+          userHasAccess = true;
+        } else if ((user as any).role === "entrepreneur") {
+          // Check if user owns this project
+          const { data: entrepreneurData, error: entrepreneurError } = await supabase
+            .from('entrepreneurs')
+            .select('id_entrepreneur')
+            .eq('id_user', user.id)
+            .single();
+
+          if (!entrepreneurError && entrepreneurData) {
+            userHasAccess = projectData.id_entrepreneur === entrepreneurData.id_entrepreneur;
+          }
+        } else if ((user as any).role === "student") {
+          // Check if student has a proposal for this project or is the selected student
+          const { data: studentData, error: studentError } = await supabase
+            .from('students')
+            .select('id_student')
+            .eq('id_user', user.id)
+            .single();
+
+          if (!studentError && studentData) {
+            // Check if student is selected for this project
+            if (projectData.selected_student === studentData.id_student) {
+              userHasAccess = true;
+            } else {
+              // Check if student has a pending or accepted proposal
+              const { data: proposalData, error: proposalError } = await supabase
+                .from('proposal_to_student')
+                .select('accepted')
+                .eq('id_project', id)
+                .eq('id_student', studentData.id_student)
+                .single();
+
+              if (!proposalError && proposalData) {
+                // Student has access if proposal is pending (null) or accepted (true)
+                userHasAccess = proposalData.accepted === null || proposalData.accepted === true;
+              }
+            }
+          }
+        }
+
+        console.log('User has access:', userHasAccess);
+
+        if (userHasAccess) {
+          // Convert database project to UI format
+          const uiProject = {
+            id: projectData.id_project,
+            title: projectData.title,
+            description: projectData.description || "",
+            status: convertDbStatusToDisplay(projectData.status || "STEP1"),
+            ownerId: projectData.id_entrepreneur,
+            assigneeId: projectData.selected_student,
+            tasks: [],
+            documents: [],
+            createdAt: new Date(projectData.created_at),
+            updatedAt: new Date(projectData.updated_at),
+            packId: projectData.id_pack,
+          };
+
+          setProject(uiProject);
+          setHasAccess(true);
+        } else {
+          setHasAccess(false);
+        }
+
+      } catch (error) {
+        console.error('Error in fetchProjectAndCheckAccess:', error);
+        setHasAccess(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjectAndCheckAccess();
+  }, [id, user, projects]);
+
+  // Fetch additional project data when project is set
+  useEffect(() => {
+    if (project && hasAccess) {
       // Fetch proposed students if project is open
-      if (project.status === "open" && user?.role === "entrepreneur") {
+      if (project.status === "open" && (user as any)?.role === "entrepreneur") {
         fetchProposedStudents();
       }
       // Fetch project documents from database
       fetchProjectDocuments();
     }
-  }, [id, project?.status, user?.role]);
+  }, [project, hasAccess, user?.role]);
 
   // Fetch documents from database for this project
   const fetchProjectDocuments = async () => {
@@ -184,11 +242,24 @@ const ProjectDetail = () => {
 
       console.log("Fetching proposed students for project:", id);
       
-      // Get all proposed students for this project
+      // Get all proposed students for this project using the proposal_to_student table
       const { data: proposedData, error: proposedError } = await supabase
-        .from('proposed_student')
-        .select('student_id')
-        .eq('project_id', id);
+        .from('proposal_to_student')
+        .select(`
+          id_student,
+          students (
+            id_student,
+            skills,
+            specialty,
+            users (
+              id_users,
+              name,
+              surname,
+              email
+            )
+          )
+        `)
+        .eq('id_project', id);
         
       if (proposedError) {
         console.error("Error fetching proposed students:", proposedError);
@@ -202,71 +273,24 @@ const ProjectDetail = () => {
         return;
       }
       
-      // Get student details for each proposed student
-      const studentIds = proposedData.map(p => p.student_id).filter(Boolean);
-      
-      if (studentIds.length === 0) {
-        console.log("No valid student IDs found");
-        setProposedStudents([]);
-        return;
-      }
-      
-      // First get user IDs from student IDs
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('id_user, skills, specialty')
-        .in('id_student', studentIds);
+      // Transform the data to create User objects
+      const proposedStudentsList = proposedData.map(proposal => {
+        const student = proposal.students;
+        const user = student?.users;
         
-      if (studentError) {
-        console.error("Error fetching student data:", studentError);
-        return;
-      }
-      
-      if (!studentData || !Array.isArray(studentData) || studentData.length === 0) {
-        console.log("No student data found");
-        setProposedStudents([]);
-        return;
-      }
-      
-      // Now get user details
-      const userIds = studentData.map(s => s.id_user).filter(Boolean);
-      
-      if (userIds.length === 0) {
-        console.log("No valid user IDs found");
-        setProposedStudents([]);
-        return;
-      }
-      
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id_users, name, email, role')
-        .in('id_users', userIds);
+        if (!student || !user) return null;
         
-      if (userError) {
-        console.error("Error fetching user data:", userError);
-        return;
-      }
-      
-      if (!userData || !Array.isArray(userData) || userData.length === 0) {
-        console.log("No user data found");
-        setProposedStudents([]);
-        return;
-      }
-      
-      // Combine the data to create User objects
-      const proposedStudentsList = userData.map(user => {
-        const studentInfo = studentData.find(s => s.id_user === user.id_users);
         return {
           id: user.id_users,
-          name: user.name || "Unknown",
+          name: `${user.name} ${user.surname}` || "Unknown",
           email: user.email || "",
           role: "student" as const,
-          skills: Array.isArray(studentInfo?.skills) ? studentInfo.skills : [],
-          specialty: studentInfo?.specialty || "",
+          skills: Array.isArray(student.skills) ? student.skills : [],
+          specialty: student.specialty || "",
           createdAt: new Date(),
           isOnline: false
         };
-      }).filter(student => student.id && student.name); // Filter out invalid entries
+      }).filter(Boolean); // Filter out null entries
       
       console.log("Successfully fetched proposed students:", proposedStudentsList);
       setProposedStudents(proposedStudentsList);
@@ -276,14 +300,27 @@ const ProjectDetail = () => {
     }
   };
 
-  // Add loading state for when project is not found
-  if (!project) {
+  // Loading state
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-tiro-purple"></div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Access denied or project not found
+  if (!hasAccess || !project) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2">Project not found</h2>
-            <p className="text-muted-foreground mb-4">The project you're looking for doesn't exist or you don't have access to it.</p>
+            <p className="text-muted-foreground mb-4">
+              The project you're looking for doesn't exist or you don't have access to it.
+            </p>
             <Button onClick={() => navigate('/projects')}>
               Back to Projects
             </Button>
@@ -391,7 +428,7 @@ const ProjectDetail = () => {
       const { error } = await supabase
         .from('projects')
         .update({
-          status: 'in_progress',
+          status: 'STEP6', // In progress
           selected_student: studentId
         })
         .eq('id_project', project.id);
@@ -401,7 +438,7 @@ const ProjectDetail = () => {
       // Update in local state
       updateProject(project.id, { 
         assigneeId: studentId, 
-        status: "in_progress" 
+        status: "In progress" 
       });
       
       toast.success("Student selected successfully");
@@ -493,7 +530,7 @@ const ProjectDetail = () => {
                 Mark as Complete
               </Button>
             )}
-            {user?.role === "student" && project.status === "open" && !isAssignee && (
+            {(user as any)?.role === "student" && project.status === "open" && !isAssignee && (
               <Button
                 onClick={() => {
                   updateProject(project.id, { assigneeId: user.id, status: "in_progress" });

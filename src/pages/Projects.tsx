@@ -121,6 +121,9 @@ const Projects = () => {
               .eq('selected_student', studentData.id_student)
           ]);
           
+          console.log('Proposals result:', proposalsResult);
+          console.log('Selected projects result:', selectedProjectsResult);
+          
           const proposalProjects = proposalsResult.data?.map(p => ({
             ...p.projects,
             proposalStatus: p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined'),
@@ -139,6 +142,8 @@ const Projects = () => {
               projectData.push(project);
             }
           });
+          
+          console.log('Final project data for student:', projectData);
         }
       } else if ((user as any).role === "admin") {
         const { data, error } = await supabase
