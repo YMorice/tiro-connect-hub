@@ -1,26 +1,17 @@
 
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "@/components/AppLayout";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/sonner";
-import { ArrowLeft, Search, Check, FilterX } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface Student {
-  id: string;
-  email: string;
-  name: string;
-  bio?: string;
-  skills?: string[];
-  specialty?: string;
-}
+import { ArrowLeft, Check } from "lucide-react";
+import { StudentSelectionFilters } from "@/components/student-selection/StudentSelectionFilters";
+import { StudentTable } from "@/components/student-selection/StudentTable";
+import { useStudentSelection } from "@/hooks/useStudentSelection";
+import { useState } from "react";
 
 // Helper function to convert display status to database status
 const convertDisplayStatusToDb = (displayStatus: string): string => {
@@ -41,15 +32,21 @@ const StudentSelection = () => {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('projectId');
   const projectTitle = searchParams.get('projectTitle');
+  const mode = searchParams.get('mode') as 'new' | 'proposals' || 'new';
   
-  const [students, setStudents] = useState<Student[]>([]);
-  const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
   const [proposing, setProposing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [skillFilter, setSkillFilter] = useState("");
   const [specialtyFilter, setSpecialtyFilter] = useState("");
-  const [specialties, setSpecialties] = useState<string[]>([]); 
+  
+  const {
+    students,
+    selectedStudents,
+    loading,
+    specialties,
+    toggleStudentSelection,
+    isStudentSelected
+  } = useStudentSelection({ projectId, mode });
   
   // Redirect if not admin
   useEffect(() => {
@@ -63,65 +60,6 @@ const StudentSelection = () => {
       toast.error("No project selected");
     }
   }, [user, navigate, projectId]);
-
-  // Fetch students from database
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        setLoading(true);
-        
-        const { data: studentsData, error } = await supabase
-          .from('students')
-          .select(`
-            id_student,
-            biography,
-            skills,
-            specialty,
-            formation,
-            users (
-              id_users,
-              email,
-              name,
-              surname,
-              role,
-              created_at
-            )
-          `);
-          
-        if (error) {
-          throw error;
-        }
-        
-        // Transform the data to match the Student type
-        const formattedStudents: Student[] = studentsData.map(student => ({
-          id: student.id_student,
-          email: student.users.email,
-          name: `${student.users.name} ${student.users.surname}`,
-          bio: student.biography || undefined,
-          skills: student.skills || undefined,
-          specialty: student.specialty || undefined,
-        }));
-        
-        setStudents(formattedStudents);
-        
-        // Extract unique specialties for filter dropdown
-        const uniqueSpecialties = Array.from(
-          new Set(studentsData.map(student => student.specialty).filter(Boolean))
-        ) as string[];
-        
-        setSpecialties(uniqueSpecialties);
-      } catch (error) {
-        console.error('Error fetching students:', error);
-        toast.error("Failed to load student profiles");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (user && (user as any).role === "admin" && projectId) {
-      fetchStudents();
-    }
-  }, [user, projectId]);
 
   // Filter students based on search query, skill filter, and specialty filter
   const filteredStudents = students.filter(student => {
@@ -139,23 +77,6 @@ const StudentSelection = () => {
     return matchesSearch && matchesSkill && matchesSpecialty;
   });
 
-  // Toggle student selection
-  const toggleStudentSelection = (student: Student) => {
-    setSelectedStudents(prevSelected => {
-      const isSelected = prevSelected.some(s => s.id === student.id);
-      if (isSelected) {
-        return prevSelected.filter(s => s.id !== student.id);
-      } else {
-        return [...prevSelected, student];
-      }
-    });
-  };
-
-  // Check if student is selected
-  const isStudentSelected = (studentId: string) => {
-    return selectedStudents.some(s => s.id === studentId);
-  };
-
   // Propose selected students for the project
   const proposeStudents = async () => {
     if (selectedStudents.length === 0) {
@@ -165,39 +86,73 @@ const StudentSelection = () => {
 
     try {
       setProposing(true);
-      console.log('Proposing students:', selectedStudents.map(s => s.id), 'for project:', projectId);
+      console.log('Proposing students:', selectedStudents.map(s => s.id), 'for project:', projectId, 'mode:', mode);
       
-      // Insert proposals into proposal_to_student table with accepted=null (pending)
-      const proposalEntries = selectedStudents.map(student => ({
-        id_project: projectId,
-        id_student: student.id,
-        accepted: null // null means pending, true means accepted, false means declined
-      }));
-      
-      console.log('Inserting proposal entries:', proposalEntries);
-      
-      const { error: proposalError } = await supabase
-        .from('proposal_to_student')
-        .insert(proposalEntries);
+      if (mode === 'new') {
+        // Insert proposals into proposal_to_student table with accepted=null (pending)
+        const proposalEntries = selectedStudents.map(student => ({
+          id_project: projectId,
+          id_student: student.id,
+          accepted: null // null means pending, true means accepted, false means declined
+        }));
         
-      if (proposalError) {
-        console.error('Error inserting proposals:', proposalError);
-        throw proposalError;
+        console.log('Inserting proposal entries:', proposalEntries);
+        
+        const { error: proposalError } = await supabase
+          .from('proposal_to_student')
+          .insert(proposalEntries);
+          
+        if (proposalError) {
+          console.error('Error inserting proposals:', proposalError);
+          throw proposalError;
+        }
+        
+        // Update project status to "Proposals" (STEP2)
+        const { error: statusError } = await supabase
+          .from('projects')
+          .update({ status: convertDisplayStatusToDb('Proposals') })
+          .eq('id_project', projectId);
+          
+        if (statusError) {
+          console.error('Error updating project status:', statusError);
+          throw statusError;
+        }
+        
+        console.log('Successfully proposed students and updated project status');
+        toast.success(`Successfully proposed ${selectedStudents.length} student${selectedStudents.length > 1 ? 's' : ''} for the project. Project status updated to "Proposals".`);
+      } else {
+        // Insert entries into proposed_student table
+        const proposedEntries = selectedStudents.map(student => ({
+          project_id: projectId,
+          student_id: student.id
+        }));
+        
+        console.log('Inserting proposed student entries:', proposedEntries);
+        
+        const { error: proposedError } = await supabase
+          .from('proposed_student')
+          .insert(proposedEntries);
+          
+        if (proposedError) {
+          console.error('Error inserting proposed students:', proposedError);
+          throw proposedError;
+        }
+        
+        // Update project status to "Selection" (STEP3)
+        const { error: statusError } = await supabase
+          .from('projects')
+          .update({ status: convertDisplayStatusToDb('Selection') })
+          .eq('id_project', projectId);
+          
+        if (statusError) {
+          console.error('Error updating project status:', statusError);
+          throw statusError;
+        }
+        
+        console.log('Successfully proposed students to entrepreneur and updated project status');
+        toast.success(`Successfully proposed ${selectedStudents.length} student${selectedStudents.length > 1 ? 's' : ''} to the entrepreneur. Project status updated to "Selection".`);
       }
       
-      // Update project status to "Proposals" (STEP2)
-      const { error: statusError } = await supabase
-        .from('projects')
-        .update({ status: convertDisplayStatusToDb('Proposals') })
-        .eq('id_project', projectId);
-        
-      if (statusError) {
-        console.error('Error updating project status:', statusError);
-        throw statusError;
-      }
-      
-      console.log('Successfully proposed students and updated project status');
-      toast.success(`Successfully proposed ${selectedStudents.length} student${selectedStudents.length > 1 ? 's' : ''} for the project. Project status updated to "Proposals".`);
       navigate('/admin');
       
     } catch (error) {
@@ -219,6 +174,20 @@ const StudentSelection = () => {
     return null; // Will redirect in the useEffect
   }
 
+  const pageTitle = mode === 'new' ? 'Student Selection' : 'Proposal Student Selection';
+  const pageDescription = mode === 'new' 
+    ? 'Select students for project' 
+    : 'Select students who accepted to propose to entrepreneur';
+  const buttonText = mode === 'new' 
+    ? `Propose ${selectedStudents.length} Student${selectedStudents.length !== 1 ? 's' : ''}` 
+    : `Propose ${selectedStudents.length} Student${selectedStudents.length !== 1 ? 's' : ''} to Entrepreneur`;
+  const warningText = mode === 'new' 
+    ? 'You must choose students to send proposals to for this project.' 
+    : 'You must choose from students who accepted the proposal to send to the entrepreneur.';
+  const emptyMessage = mode === 'new' 
+    ? (students.length > 0 ? "No students match the current filters" : "No student profiles found")
+    : (students.length > 0 ? "No students match the current filters" : "No students have accepted the proposal yet");
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -231,29 +200,19 @@ const StudentSelection = () => {
               <ArrowLeft className="h-4 w-4 mr-1" />
               Back to Admin
             </button>
-            <h1 className="text-3xl font-bold">Student Selection</h1>
+            <h1 className="text-3xl font-bold">{pageTitle}</h1>
             <p className="text-muted-foreground">
-              {projectTitle ? `For project: ${projectTitle}` : 'Select students for project'}
+              {projectTitle ? `For project: ${projectTitle}` : pageDescription}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={clearFilters}
-              disabled={!searchQuery && !skillFilter && !specialtyFilter}
-              className="flex items-center"
-            >
-              <FilterX className="h-4 w-4 mr-1" />
-              Clear Filters
-            </Button>
             <Button 
               onClick={proposeStudents}
               disabled={selectedStudents.length === 0 || proposing}
               className="flex items-center"
             >
               <Check className="h-4 w-4 mr-1" />
-              {proposing ? 'Proposing...' : `Propose ${selectedStudents.length} Student${selectedStudents.length !== 1 ? 's' : ''}`}
+              {proposing ? 'Proposing...' : buttonText}
             </Button>
           </div>
         </div>
@@ -261,141 +220,36 @@ const StudentSelection = () => {
         {selectedStudents.length === 0 && (
           <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
             <p className="text-orange-800 font-medium">⚠️ Please select at least one student before proposing</p>
-            <p className="text-orange-600 text-sm mt-1">You must choose students to send proposals to for this project.</p>
+            <p className="text-orange-600 text-sm mt-1">{warningText}</p>
           </div>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Filters</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="search" className="text-sm font-medium">Search by name or bio</label>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="search"
-                    type="text"
-                    placeholder="Search students..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="skill" className="text-sm font-medium">Filter by skill</label>
-                <Input
-                  id="skill"
-                  type="text"
-                  placeholder="Enter a skill..."
-                  value={skillFilter}
-                  onChange={(e) => setSkillFilter(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="specialty" className="text-sm font-medium">Filter by specialty</label>
-                <Select
-                  value={specialtyFilter}
-                  onValueChange={setSpecialtyFilter}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All specialties" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All specialties</SelectItem>
-                    {specialties.map((specialty) => (
-                      <SelectItem key={specialty} value={specialty.toLowerCase()}>
-                        {specialty}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StudentSelectionFilters
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          skillFilter={skillFilter}
+          setSkillFilter={setSkillFilter}
+          specialtyFilter={specialtyFilter}
+          setSpecialtyFilter={setSpecialtyFilter}
+          specialties={specialties}
+          onClearFilters={clearFilters}
+        />
 
         <Card>
           <CardHeader>
-            <CardTitle>Students ({filteredStudents.length})</CardTitle>
+            <CardTitle>
+              {mode === 'new' ? `Students (${filteredStudents.length})` : `Students Who Accepted (${filteredStudents.length})`}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="flex justify-center py-6">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-              </div>
-            ) : (
-              <>
-                <div className="mb-4">
-                  <p className="text-sm text-muted-foreground">
-                    {selectedStudents.length === 0 
-                      ? "No students selected" 
-                      : `${selectedStudents.length} student${selectedStudents.length !== 1 ? 's' : ''} selected`}
-                  </p>
-                </div>
-                <div className="border rounded-md">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[50px]">Select</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead className="hidden sm:table-cell">Skills</TableHead>
-                        <TableHead className="hidden md:table-cell">Specialty</TableHead>
-                        <TableHead className="hidden lg:table-cell">Bio</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredStudents.length > 0 ? (
-                        filteredStudents.map(student => (
-                          <TableRow 
-                            key={student.id}
-                            className={isStudentSelected(student.id) ? "bg-muted/50" : ""}
-                          >
-                            <TableCell>
-                              <Checkbox
-                                checked={isStudentSelected(student.id)}
-                                onCheckedChange={() => toggleStudentSelection(student)}
-                                aria-label={`Select ${student.name}`}
-                              />
-                            </TableCell>
-                            <TableCell className="font-medium">{student.name}</TableCell>
-                            <TableCell className="hidden sm:table-cell">
-                              <div className="flex flex-wrap gap-1">
-                                {student.skills?.map((skill, index) => (
-                                  <span 
-                                    key={index}
-                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted"
-                                  >
-                                    {skill}
-                                  </span>
-                                )) || "No skills listed"}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              {student.specialty || "Not specified"}
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell max-w-[300px] truncate">
-                              {student.bio || "No bio available"}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-4">
-                            {students.length > 0
-                              ? "No students match the current filters"
-                              : "No student profiles found"}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </>
-            )}
+            <StudentTable
+              students={filteredStudents}
+              selectedStudents={selectedStudents}
+              onToggleSelection={toggleStudentSelection}
+              isStudentSelected={isStudentSelected}
+              loading={loading}
+              emptyMessage={emptyMessage}
+            />
           </CardContent>
         </Card>
       </div>

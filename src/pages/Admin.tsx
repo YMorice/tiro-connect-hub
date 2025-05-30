@@ -1,33 +1,34 @@
-import { useEffect, useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
-import { useMessages } from "@/context/message-context";
-import AppLayout from "@/components/AppLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/sonner";
-import { UserPlus, MessageSquare, CreditCard, Check, ArrowRight, FileCheck2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsMobile } from "@/hooks/use-mobile";
+import AppLayout from "@/components/AppLayout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { toast } from "@/components/ui/sonner";
+import { Users, MessageCircle, Plus, Search, Eye, UserPlus } from "lucide-react";
 
 interface Project {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   status: string;
-  ownerId: string;
-  selectedStudent?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: string;
+  entrepreneur: {
+    name: string;
+    companyName?: string;
+  };
 }
 
 // Helper function to convert database status to display status
 const convertDbStatusToDisplay = (dbStatus: string): string => {
   const statusMap: { [key: string]: string } = {
     'STEP1': 'New',
-    'STEP2': 'Proposals', 
+    'STEP2': 'Proposals',
     'STEP3': 'Selection',
     'STEP4': 'Payment',
     'STEP5': 'Active',
@@ -36,46 +37,39 @@ const convertDbStatusToDisplay = (dbStatus: string): string => {
   return statusMap[dbStatus] || dbStatus;
 };
 
-// Helper function to convert display status to database status
-const convertDisplayStatusToDb = (displayStatus: string): string => {
-  const statusMap: { [key: string]: string } = {
-    'New': 'STEP1',
-    'Proposals': 'STEP2',
-    'Selection': 'STEP3', 
-    'Payment': 'STEP4',
-    'Active': 'STEP5',
-    'In progress': 'STEP6'
-  };
-  return statusMap[displayStatus] || displayStatus;
+// Helper function to get status color
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'New': return 'bg-blue-100 text-blue-800';
+    case 'Proposals': return 'bg-yellow-100 text-yellow-800';
+    case 'Selection': return 'bg-purple-100 text-purple-800';
+    case 'Payment': return 'bg-orange-100 text-orange-800';
+    case 'Active': return 'bg-green-100 text-green-800';
+    case 'In progress': return 'bg-indigo-100 text-indigo-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
 };
 
 const Admin = () => {
   const { user } = useAuth();
-  const { sendMessage } = useMessages();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const isMobile = useIsMobile();
-  
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Redirect if not admin
   useEffect(() => {
-    if (user && user.role !== "admin") {
+    if (user && (user as any).role !== "admin") {
       navigate("/dashboard");
       toast.error("You don't have permission to access this page");
     }
   }, [user, navigate]);
 
-  // Load projects from Supabase
+  // Fetch projects
   useEffect(() => {
-    const loadProjects = async () => {
-      if (!user || user.role !== "admin") {
-        setLoading(false);
-        return;
-      }
-      
-      setLoading(true);
+    const fetchProjects = async () => {
       try {
-        console.log("Fetching projects for admin user:", user.id);
+        setLoading(true);
         
         const { data: projectsData, error } = await supabase
           .from('projects')
@@ -84,433 +78,227 @@ const Admin = () => {
             title,
             description,
             status,
-            id_entrepreneur,
-            selected_student,
             created_at,
-            updated_at
+            entrepreneurs (
+              id_entrepreneur,
+              company_name,
+              users (
+                name,
+                surname
+              )
+            )
           `)
           .order('created_at', { ascending: false });
           
         if (error) {
-          console.error('Error fetching projects:', error);
           throw error;
         }
         
-        console.log("Raw projects data:", projectsData);
-        
-        const formattedProjects: Project[] = (projectsData || []).map(project => ({
+        const formattedProjects: Project[] = projectsData.map(project => ({
           id: project.id_project,
-          title: project.title || "Untitled Project",
-          description: project.description || "No description available",
-          status: convertDbStatusToDisplay(project.status || "STEP1"),
-          ownerId: project.id_entrepreneur,
-          selectedStudent: project.selected_student,
-          createdAt: new Date(project.created_at),
-          updatedAt: new Date(project.updated_at),
+          title: project.title,
+          description: project.description || undefined,
+          status: convertDbStatusToDisplay(project.status || 'STEP1'),
+          created_at: project.created_at,
+          entrepreneur: {
+            name: `${project.entrepreneurs.users.name} ${project.entrepreneurs.users.surname}`,
+            companyName: project.entrepreneurs.company_name || undefined,
+          }
         }));
         
-        console.log("Formatted projects:", formattedProjects);
         setProjects(formattedProjects);
       } catch (error) {
-        console.error('Error loading projects:', error);
+        console.error('Error fetching projects:', error);
         toast.error("Failed to load projects");
       } finally {
         setLoading(false);
       }
     };
     
-    loadProjects();
+    if (user && (user as any).role === "admin") {
+      fetchProjects();
+    }
   }, [user]);
 
-  // Group projects by status
-  const newProjects = projects.filter(p => p.status === "New");
-  const proposalsProjects = projects.filter(p => p.status === "Proposals");
-  const selectionProjects = projects.filter(p => p.status === "Selection");
-  const paymentProjects = projects.filter(p => p.status === "Payment");
-  const activeProjects = projects.filter(p => p.status === "Active");
-  const inProgressProjects = projects.filter(p => p.status === "In progress");
+  // Filter projects based on search query
+  const filteredProjects = projects.filter(project => 
+    searchQuery.trim() === "" || 
+    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (project.entrepreneur.companyName && project.entrepreneur.companyName.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
-  // Get project status label
-  const getStatusLabel = (status: string) => {
-    return status;
-  };
-
-  // Get status badge color
-  const getStatusBadgeColor = (status: string) => {
-    switch(status) {
-      case "New": return "bg-blue-500";
-      case "Proposals": return "bg-purple-500";
-      case "Selection": return "bg-yellow-500";
-      case "Payment": return "bg-orange-500";
-      case "Active": return "bg-green-500";
-      case "In progress": return "bg-gray-500";
-      default: return "bg-slate-500";
-    }
-  };
-
-  // Navigate to student selection page (New)
-  const navigateToStudentSelection = (project: Project) => {
-    navigate(`/admin/student-selection?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
-  };
-
-  // Navigate to proposal student selection page (Proposals)
-  const navigateToProposalStudentSelection = (project: Project) => {
-    navigate(`/admin/proposal-student-selection?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
-  };
-
-  // View students who accepted project (Proposals)
-  const viewAcceptedStudents = (project: Project) => {
-    navigate(`/admin/accepted-students?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
-  };
-
-  // Proceed to entrepreneur review (Proposals -> Selection)
-  const proposeToEntrepreneur = async (project: Project) => {
-    try {
-      // Check if any students have accepted
-      const { data: acceptedStudents, error } = await supabase
-        .from('proposal_to_student')
-        .select('id_student')
-        .eq('id_project', project.id)
-        .eq('accepted', true);
-        
-      if (error) {
-        throw error;
-      }
-      
-      if (!acceptedStudents || acceptedStudents.length === 0) {
-        toast.error("No students have accepted the proposal yet");
-        return;
-      }
-      
-      // Update project status to Selection in Supabase
-      const { error: updateError } = await supabase
-        .from('projects')
-        .update({ status: convertDisplayStatusToDb('Selection') })
-        .eq('id_project', project.id);
-        
-      if (updateError) {
-        throw updateError;
-      }
-      
-      // Get the message group for this project and send a message
-      const { data: messageGroups } = await supabase
-        .from('message_groups')
-        .select('id_group')
-        .eq('id_project', project.id)
-        .limit(1);
-        
-      if (messageGroups && messageGroups.length > 0) {
-        await sendMessage(
-          messageGroups[0].id_group,
-          `Admin has proposed students for your project "${project.title}". Please review and select a student.`
-        );
-      }
-      
-      // Update local state
-      setProjects(prev => prev.map(p => 
-        p.id === project.id ? { ...p, status: "Selection" } : p
-      ));
-      
-      toast.success("Project moved to entrepreneur review");
-    } catch (error) {
-      console.error('Error updating project status:', error);
-      toast.error("Failed to update project status");
-    }
-  };
-
-  // Confirm payment for a project (Payment -> Active)
-  const confirmPayment = async (project: Project) => {
-    try {
-      // Update project status to Active in Supabase
-      const { error } = await supabase
-        .from('projects')
-        .update({ status: convertDisplayStatusToDb('Active') })
-        .eq('id_project', project.id);
-        
-      if (error) {
-        throw error;
-      }
-      
-      // Get the message group for this project and send notification
-      const { data: messageGroups } = await supabase
-        .from('message_groups')
-        .select('id_group')
-        .eq('id_project', project.id)
-        .limit(1);
-        
-      if (messageGroups && messageGroups.length > 0) {
-        await sendMessage(
-          messageGroups[0].id_group,
-          `Payment confirmed for project "${project.title}". You can now start working on it.`
-        );
-        
-        await sendMessage(
-          messageGroups[0].id_group,
-          `Admin has confirmed payment. Project status is now "In Progress".`
-        );
-      }
-      
-      // Update local state
-      setProjects(prev => prev.map(p => 
-        p.id === project.id ? { ...p, status: "Active" } : p
-      ));
-      
-      toast.success(`Payment confirmed for project "${project.title}"`);
-    } catch (error) {
-      console.error('Error confirming payment:', error);
-      toast.error("Failed to confirm payment");
-    }
-  };
-
-  // Mark project as complete (Active -> In progress)
-  const markAsComplete = async (project: Project) => {
-    try {
-      // Update project status to In progress in Supabase
-      const { error } = await supabase
-        .from('projects')
-        .update({ status: convertDisplayStatusToDb('In progress') })
-        .eq('id_project', project.id);
-        
-      if (error) {
-        throw error;
-      }
-      
-      // Get the message group for this project and send completion notification
-      const { data: messageGroups } = await supabase
-        .from('message_groups')
-        .select('id_group')
-        .eq('id_project', project.id)
-        .limit(1);
-        
-      if (messageGroups && messageGroups.length > 0) {
-        await sendMessage(
-          messageGroups[0].id_group,
-          `Project "${project.title}" has been marked as completed. Thank you for your work!`
-        );
-      }
-      
-      // Update local state
-      setProjects(prev => prev.map(p => 
-        p.id === project.id ? { ...p, status: "In progress" } : p
-      ));
-      
-      toast.success(`Project "${project.title}" marked as complete`);
-    } catch (error) {
-      console.error('Error marking project as complete:', error);
-      toast.error("Failed to update project status");
-    }
-  };
-
-  // View project conversation
-  const viewConversation = (projectId: string) => {
-    console.log('Navigating to conversation for project:', projectId);
+  const handleViewConversation = (projectId: string) => {
     navigate(`/messages?projectId=${projectId}`);
   };
 
-  if (!user || user.role !== "admin") {
+  const handleSelectStudents = (projectId: string, projectTitle: string, status: string) => {
+    const mode = status === 'New' ? 'new' : 'proposals';
+    navigate(`/student-selection?projectId=${projectId}&projectTitle=${encodeURIComponent(projectTitle)}&mode=${mode}`);
+  };
+
+  if (!user || (user as any).role !== "admin") {
     return null; // Will redirect in the useEffect
   }
-
-  if (loading) {
-    return (
-      <AppLayout>
-        <div className="flex justify-center items-center min-h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
-      </AppLayout>
-    );
-  }
-
-  // Render project card with appropriate actions
-  const renderProjectCard = (project: Project) => {
-    return (
-      <Card key={project.id} className="mb-6">
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>{project.title}</CardTitle>
-              <CardDescription>{project.description}</CardDescription>
-              {project.selectedStudent && (
-                <div className="mt-2">
-                  <span className="text-sm text-muted-foreground">Selected Student: </span>
-                  <span className="text-sm font-medium">{project.selectedStudent}</span>
-                </div>
-              )}
-            </div>
-            <Badge className={getStatusBadgeColor(project.status)}>
-              {getStatusLabel(project.status)}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
-            <Button 
-              variant="outline" 
-              onClick={() => viewConversation(project.id)}
-              className="w-full sm:w-auto"
-            >
-              <MessageSquare className="h-4 w-4 mr-1" />
-              View Conversation
-            </Button>
-            
-            {/* New: Select students */}
-            {project.status === "New" && (
-              <Button
-                onClick={() => navigateToStudentSelection(project)}
-                className="w-full sm:w-auto"
-              >
-                <UserPlus className="h-4 w-4 mr-1" />
-                Select & Propose Students
-              </Button>
-            )}
-            
-            {/* Proposals: Select from accepted students and propose to entrepreneur */}
-            {project.status === "Proposals" && (
-              <>
-                <Button
-                  onClick={() => viewAcceptedStudents(project)}
-                  variant="secondary"
-                  className="w-full sm:w-auto"
-                >
-                  <UserPlus className="h-4 w-4 mr-1" />
-                  View Accepted Students
-                </Button>
-                <Button
-                  onClick={() => navigateToProposalStudentSelection(project)}
-                  className="w-full sm:w-auto"
-                >
-                  <ArrowRight className="h-4 w-4 mr-1" />
-                  Select Students for Entrepreneur
-                </Button>
-              </>
-            )}
-            
-            {/* Payment: Confirm payment */}
-            {project.status === "Payment" && (
-              <Button 
-                onClick={() => confirmPayment(project)}
-                className="w-full sm:w-auto"
-              >
-                <CreditCard className="h-4 w-4 mr-1" />
-                Confirm Payment
-              </Button>
-            )}
-            
-            {/* Active: Mark as complete */}
-            {project.status === "Active" && (
-              <Button 
-                onClick={() => markAsComplete(project)}
-                className="w-full sm:w-auto"
-              >
-                <FileCheck2 className="h-4 w-4 mr-1" />
-                Mark as Complete
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
 
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage projects through their lifecycle</p>
-          {projects.length === 0 && !loading && (
-            <p className="text-muted-foreground mt-2">No projects found in the system.</p>
-          )}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Manage projects and student assignments</p>
+          </div>
+          <Button onClick={() => navigate('/new-project')} className="flex items-center">
+            <Plus className="h-4 w-4 mr-1" />
+            Create New Project
+          </Button>
         </div>
 
-        <Tabs defaultValue="new">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
-            <TabsTrigger value="new">New ({newProjects.length})</TabsTrigger>
-            <TabsTrigger value="proposals">Proposals ({proposalsProjects.length})</TabsTrigger>
-            <TabsTrigger value="selection">Selection ({selectionProjects.length})</TabsTrigger>
-            <TabsTrigger value="payment">Payment ({paymentProjects.length})</TabsTrigger>
-            <TabsTrigger value="active">Active ({activeProjects.length})</TabsTrigger>
-            <TabsTrigger value="inprogress">In Progress ({inProgressProjects.length})</TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{projects.length}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+              <MessageCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {projects.filter(p => p.status === 'Active' || p.status === 'In progress').length}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Projects</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {projects.filter(p => p.status === 'New' || p.status === 'Proposals' || p.status === 'Selection').length}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          {/* New Projects Tab */}
-          <TabsContent value="new" className="space-y-4">
-            {newProjects.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">No new projects found</p>
-                </CardContent>
-              </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>All Projects</CardTitle>
+            <CardDescription>Manage project statuses and student assignments</CardDescription>
+            <div className="flex items-center space-x-2">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center py-6">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              </div>
             ) : (
-              newProjects.map(project => renderProjectCard(project))
+              <div className="border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Project Title</TableHead>
+                      <TableHead className="hidden md:table-cell">Entrepreneur</TableHead>
+                      <TableHead className="hidden sm:table-cell">Status</TableHead>
+                      <TableHead className="hidden lg:table-cell">Created</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProjects.length > 0 ? (
+                      filteredProjects.map(project => (
+                        <TableRow key={project.id}>
+                          <TableCell className="font-medium">
+                            <div>
+                              <div className="font-semibold">{project.title}</div>
+                              {project.description && (
+                                <div className="text-sm text-muted-foreground truncate max-w-[200px]">
+                                  {project.description}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <div>
+                              <div className="font-medium">{project.entrepreneur.name}</div>
+                              {project.entrepreneur.companyName && (
+                                <div className="text-sm text-muted-foreground">
+                                  {project.entrepreneur.companyName}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge className={getStatusColor(project.status)}>
+                              {project.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {new Date(project.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleViewConversation(project.id)}
+                                className="flex items-center"
+                              >
+                                <MessageCircle className="h-3 w-3 mr-1" />
+                                View Conversation
+                              </Button>
+                              
+                              {(project.status === 'New' || project.status === 'Proposals') && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleSelectStudents(project.id, project.title, project.status)}
+                                  className="flex items-center"
+                                >
+                                  <UserPlus className="h-3 w-3 mr-1" />
+                                  {project.status === 'New' ? 'Select Students' : 'Select from Accepted'}
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-4">
+                          {projects.length > 0 
+                            ? "No projects match the search criteria" 
+                            : "No projects found"}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             )}
-          </TabsContent>
-
-          {/* Proposals Tab */}
-          <TabsContent value="proposals" className="space-y-4">
-            {proposalsProjects.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">No projects in the proposal phase</p>
-                </CardContent>
-              </Card>
-            ) : (
-              proposalsProjects.map(project => renderProjectCard(project))
-            )}
-          </TabsContent>
-
-          {/* Selection Tab */}
-          <TabsContent value="selection" className="space-y-4">
-            {selectionProjects.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">No projects awaiting entrepreneur selection</p>
-                </CardContent>
-              </Card>
-            ) : (
-              selectionProjects.map(project => renderProjectCard(project))
-            )}
-          </TabsContent>
-
-          {/* Payment Tab */}
-          <TabsContent value="payment" className="space-y-4">
-            {paymentProjects.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">No projects awaiting payment confirmation</p>
-                </CardContent>
-              </Card>
-            ) : (
-              paymentProjects.map(project => renderProjectCard(project))
-            )}
-          </TabsContent>
-
-          {/* Active Projects Tab */}
-          <TabsContent value="active" className="space-y-4">
-            {activeProjects.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">No active projects found</p>
-                </CardContent>
-              </Card>
-            ) : (
-              activeProjects.map(project => renderProjectCard(project))
-            )}
-          </TabsContent>
-
-          {/* In Progress Projects Tab */}
-          <TabsContent value="inprogress" className="space-y-4">
-            {inProgressProjects.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">No projects in progress found</p>
-                </CardContent>
-              </Card>
-            ) : (
-              inProgressProjects.map(project => renderProjectCard(project))
-            )}
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );
