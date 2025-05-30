@@ -156,14 +156,22 @@ const Messages = () => {
 
           if (error) throw error;
 
-          // Get unique groups
+          console.log("All groups for admin:", allGroups);
+
+          // Get unique groups by group ID
           const uniqueGroups = allGroups?.reduce((acc, group) => {
-            if (!acc.find(g => g.id_group === group.id_group)) {
-              acc.push(group);
+            const existingGroup = acc.find(g => g.id_group === group.id_group);
+            if (!existingGroup && group.projects?.title) {
+              acc.push({
+                id_group: group.id_group,
+                id_project: group.id_project,
+                projects: { title: group.projects.title }
+              });
             }
             return acc;
           }, [] as any[]) || [];
 
+          console.log("Processed unique groups:", uniqueGroups);
           setAllMessageGroups(uniqueGroups);
         } catch (error) {
           console.error("Error fetching all groups:", error);
@@ -188,18 +196,22 @@ const Messages = () => {
       // Use a timeout to ensure message groups are loaded
       const timer = setTimeout(() => {
         const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
-        console.log('Available groups:', groupsToUse);
+        console.log('Available groups for selection:', groupsToUse);
         
-        const projectGroup = groupsToUse.find(g => g.id_project === projectId);
+        const projectGroup = groupsToUse.find(g => {
+          console.log('Checking group:', g, 'against project ID:', projectId);
+          return g.id_project === projectId || g.projectId === projectId;
+        });
+        
         console.log('Found project group:', projectGroup);
         
         if (projectGroup) {
-          console.log('Setting current group to:', projectGroup.id_group);
-          setCurrentGroupId(projectGroup.id_group);
+          console.log('Setting current group to:', projectGroup.id_group || projectGroup.id);
+          setCurrentGroupId(projectGroup.id_group || projectGroup.id);
         } else {
           console.log('No group found for project:', projectId);
         }
-      }, 500);
+      }, 1000);
       
       return () => clearTimeout(timer);
     }
@@ -213,7 +225,7 @@ const Messages = () => {
     if (!projectId && !currentGroupId) {
       const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
       if (groupsToUse.length > 0) {
-        setCurrentGroupId(groupsToUse[0].id_group);
+        setCurrentGroupId(groupsToUse[0].id_group || groupsToUse[0].id);
       }
     }
   }, [currentGroupId, messageGroups, allMessageGroups, user, location.search]);
@@ -296,7 +308,7 @@ const Messages = () => {
   };
 
   const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
-  const currentGroup = groupsToUse.find(g => g.id_group === currentGroupId);
+  const currentGroup = groupsToUse.find(g => (g.id_group || g.id) === currentGroupId);
 
   const GroupsList = () => (
     <div className="h-full">
@@ -310,31 +322,36 @@ const Messages = () => {
         <ScrollArea className="h-[300px] md:h-[calc(100vh-240px)] w-full">
           <div className="p-2 space-y-1">
             {groupsToUse.length > 0 ? (
-              groupsToUse.map((group) => (
-                <Button
-                  key={group.id_group}
-                  variant="ghost"
-                  className={`w-full justify-start text-left p-3 h-auto ${
-                    currentGroupId === group.id_group ? 'bg-muted' : ''
-                  }`}
-                  onClick={() => handleGroupSelect(group.id_group)}
-                >
-                  <div className="flex items-center gap-3 w-full">
-                    <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Users className="h-5 w-5 text-blue-600" />
+              groupsToUse.map((group) => {
+                const groupId = group.id_group || group.id;
+                const projectTitle = group.projects?.title || group.projectTitle || "Unknown Project";
+                
+                return (
+                  <Button
+                    key={groupId}
+                    variant="ghost"
+                    className={`w-full justify-start text-left p-3 h-auto ${
+                      currentGroupId === groupId ? 'bg-muted' : ''
+                    }`}
+                    onClick={() => handleGroupSelect(groupId)}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex-shrink-0">
+                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <Users className="h-5 w-5 text-blue-600" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium truncate">
+                            {projectTitle}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium truncate">
-                          {group.projects?.title || "Direct Messages"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Button>
-              ))
+                  </Button>
+                );
+              })
             ) : (
               <div className="px-4 py-2 text-sm text-muted-foreground">
                 {loading ? "Loading groups..." : "No message groups yet"}
@@ -358,7 +375,7 @@ const Messages = () => {
                   <Button variant="outline" className="w-full flex justify-between items-center">
                     <span>
                       {currentGroup 
-                        ? (currentGroup.projects?.title || "Direct Messages")
+                        ? (currentGroup.projects?.title || currentGroup.projectTitle || "Unknown Project")
                         : "Select Group"}
                     </span>
                     <Menu className="h-4 w-4" />
@@ -388,7 +405,7 @@ const Messages = () => {
                   {currentGroup && (
                     <>
                       <Users className="h-5 w-5 text-blue-600" />
-                      {currentGroup.projects?.title || "Direct Messages"}
+                      {currentGroup.projects?.title || currentGroup.projectTitle || "Unknown Project"}
                     </>
                   )}
                 </CardTitle>
@@ -427,7 +444,7 @@ const Messages = () => {
                       <div className="flex justify-end">
                         <DocumentUpload
                           onDocumentSubmit={handleDocumentSubmit}
-                          projectId={currentGroup.id_project}
+                          projectId={currentGroup.id_project || currentGroup.projectId}
                         />
                       </div>
                       

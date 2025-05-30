@@ -25,18 +25,18 @@ interface ProjectData {
   proposalId?: string;
 }
 
-// Simplified interfaces for database responses
-interface EntrepreneurResponse {
-  id_entrepreneur: string;
-  projects: ProjectData[];
-}
-
-interface StudentResponse {
-  id_student: string;
-  project_assignments: Array<{
-    projects: ProjectData;
-  }>;
-}
+// Helper function to convert database status to display status
+const convertDbStatusToDisplay = (dbStatus: string): string => {
+  const statusMap: { [key: string]: string } = {
+    'STEP1': 'New',
+    'STEP2': 'Proposals', 
+    'STEP3': 'Selection',
+    'STEP4': 'Payment',
+    'STEP5': 'Active',
+    'STEP6': 'In progress'
+  };
+  return statusMap[dbStatus] || dbStatus;
+};
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -130,13 +130,17 @@ const Dashboard = () => {
           students: 0,
         });
         
-        // Set recent projects (limit to 5 most recent)
+        // Set recent projects (limit to 5 most recent) with converted status
         const sortedProjects = projects
+          .map(project => ({
+            ...project,
+            status: convertDbStatusToDisplay(project.status || 'STEP1')
+          }))
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
           .slice(0, 5);
         setRecentProjects(sortedProjects);
         
-      } else if ((user as any).role === 'student') {
+      } else if ((user as any).role === "student") {
         // Fetch student data
         const { data: studentData, error: studentError } = await supabase
           .from('students')
@@ -173,11 +177,15 @@ const Dashboard = () => {
         
         const proposalProjects = proposalsResult.data?.map(p => ({
           ...p.projects,
+          status: convertDbStatusToDisplay(p.projects?.status || 'STEP1'),
           proposalStatus: (p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined')) as 'pending' | 'accepted' | 'declined',
           proposalId: p.id_proposal
         })).filter(Boolean) || [];
         
-        const selectedProjects = selectedProjectsResult.data || [];
+        const selectedProjects = selectedProjectsResult.data?.map(project => ({
+          ...project,
+          status: convertDbStatusToDisplay(project.status || 'STEP1')
+        })) || [];
         
         let allProjects: ProjectData[] = [...selectedProjects];
         
@@ -219,7 +227,7 @@ const Dashboard = () => {
         
         setRecentProjects(allProjects.slice(0, 5));
         
-      } else if ((user as any).role === 'admin') {
+      } else if ((user as any).role === "admin") {
         // Get all stats for admin
         const [projectsResult, messagesResult, reviewsResult, studentsResult] = await Promise.all([
           supabase.from('projects').select('id_project', { count: 'exact' }),
@@ -235,14 +243,19 @@ const Dashboard = () => {
           students: studentsResult.count || 0,
         });
         
-        // Get recent projects for admin
+        // Get recent projects for admin with converted status
         const { data: recentProjectsData } = await supabase
           .from('projects')
           .select('id_project, title, description, status, created_at')
           .order('created_at', { ascending: false })
           .limit(5);
           
-        setRecentProjects(recentProjectsData || []);
+        const convertedProjects = recentProjectsData?.map(project => ({
+          ...project,
+          status: convertDbStatusToDisplay(project.status || 'STEP1')
+        })) || [];
+        
+        setRecentProjects(convertedProjects);
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -401,16 +414,18 @@ const Dashboard = () => {
                       <div className="flex items-center mt-2">
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                            project.status === "completed"
+                            project.status === "In progress"
                               ? "bg-green-100 text-green-800"
-                              : project.status === "in_progress"
+                              : project.status === "Active"
                               ? "bg-blue-100 text-blue-800"
-                              : project.status === "open"
+                              : project.status === "Proposals"
                               ? "bg-yellow-100 text-yellow-800"
+                              : project.status === "Selection" || project.status === "Payment"
+                              ? "bg-purple-100 text-purple-800"
                               : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {project.status?.replace("_", " ").toUpperCase() || "DRAFT"}
+                          {project.status?.toUpperCase() || "NEW"}
                         </span>
                       </div>
                     </div>
