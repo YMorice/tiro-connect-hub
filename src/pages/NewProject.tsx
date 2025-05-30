@@ -56,17 +56,25 @@ const NewProject = () => {
     const fetchEntrepreneurId = async () => {
       if (user) {
         try {
+          console.log("Fetching entrepreneur ID for user:", user.id);
           const { data, error } = await supabase
             .from('entrepreneurs')
             .select('id_entrepreneur')
             .eq('id_user', user.id)
             .single();
             
+          console.log("Entrepreneur query result:", { data, error });
+          
           if (data) {
+            console.log("Found entrepreneur ID:", data.id_entrepreneur);
             setEntrepreneurId(data.id_entrepreneur);
           } else if (error) {
             console.error("Error fetching entrepreneur ID:", error);
-            toast.error("Failed to fetch your entrepreneur profile");
+            if (error.code === 'PGRST116') {
+              toast.error("No entrepreneur profile found. Please complete your profile first.");
+            } else {
+              toast.error("Failed to fetch your entrepreneur profile");
+            }
           }
         } catch (error) {
           console.error("Error fetching entrepreneur ID:", error);
@@ -95,8 +103,13 @@ const NewProject = () => {
   });
 
   const onSubmit = async (values: FormValues) => {
-    if (!user || !entrepreneurId) {
-      toast.error("You need to be logged in as an entrepreneur to create a project");
+    if (!user) {
+      toast.error("You need to be logged in to create a project");
+      return;
+    }
+
+    if (!entrepreneurId) {
+      toast.error("No entrepreneur profile found. Please complete your profile first.");
       return;
     }
     
@@ -105,8 +118,9 @@ const NewProject = () => {
     try {
       console.log("Creating project with values:", values);
       console.log("Entrepreneur ID:", entrepreneurId);
+      console.log("User ID:", user.id);
       
-      // Save the project to Supabase - the trigger will handle message group creation
+      // Create the project with proper error handling
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .insert({
@@ -121,14 +135,91 @@ const NewProject = () => {
         
       if (projectError) {
         console.error("Project creation error:", projectError);
-        throw new Error(projectError.message);
+        throw new Error(`Failed to create project: ${projectError.message}`);
+      }
+      
+      if (!projectData) {
+        throw new Error("No project data returned after creation");
       }
       
       console.log("Project created successfully:", projectData);
       const projectId = projectData.id_project;
       
+      // Create message group for the project
+      try {
+        console.log("Creating message group for project:", projectId);
+        
+        // The database trigger should handle message group creation automatically
+        // But let's verify it was created and create manually if needed
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for trigger
+        
+        const { data: existingGroup, error: groupCheckError } = await supabase
+          .from('message_groups')
+          .select('id_group')
+          .eq('id_project', projectId)
+          .eq('id_user', user.id)
+          .maybeSingle();
+          
+        if (groupCheckError) {
+          console.error("Error checking message group:", groupCheckError);
+        }
+        
+        if (!existingGroup) {
+          console.log("No message group found, creating manually...");
+          
+          // Create message group manually
+          const groupId = crypto.randomUUID();
+          
+          // Add entrepreneur to the group
+          const { error: groupError } = await supabase
+            .from('message_groups')
+            .insert({
+              id_group: groupId,
+              id_project: projectId,
+              id_user: user.id
+            });
+            
+          if (groupError) {
+            console.error("Error creating message group:", groupError);
+          } else {
+            console.log("Message group created manually");
+          }
+          
+          // Add admin users to the group
+          const { data: adminUsers } = await supabase
+            .from('users')
+            .select('id_users')
+            .eq('role', 'admin');
+            
+          if (adminUsers && adminUsers.length > 0) {
+            const adminGroupInserts = adminUsers.map(admin => ({
+              id_group: groupId,
+              id_project: projectId,
+              id_user: admin.id_users
+            }));
+            
+            const { error: adminGroupError } = await supabase
+              .from('message_groups')
+              .insert(adminGroupInserts);
+              
+            if (adminGroupError) {
+              console.error("Error adding admins to message group:", adminGroupError);
+            } else {
+              console.log("Admins added to message group");
+            }
+          }
+        } else {
+          console.log("Message group already exists");
+        }
+      } catch (messageError) {
+        console.error("Error with message group creation:", messageError);
+        // Don't fail the whole project creation for message group issues
+        toast.warning("Project created but there may be an issue with messaging setup");
+      }
+      
       // Handle file uploads if any were selected
       if (selectedFiles.length > 0) {
+        console.log("Uploading files:", selectedFiles.length);
         for (const file of selectedFiles) {
           try {
             // Upload file to storage
@@ -142,6 +233,7 @@ const NewProject = () => {
                 'proposal',
                 fileUrl
               );
+              console.log("File uploaded successfully:", file.name);
             }
           } catch (error) {
             console.error(`Error uploading file ${file.name}:`, error);
@@ -153,13 +245,14 @@ const NewProject = () => {
       // Reload projects to get the latest data
       await loadProjects();
       
-      toast.success("Project created successfully");
+      toast.success("Project created successfully!");
       
       // Navigate to projects page after successful creation
       navigate("/projects");
     } catch (error) {
       console.error("Error creating project:", error);
-      toast.error(`Failed to create project: ${error.message || 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to create project: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -190,6 +283,14 @@ const NewProject = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {!entrepreneurId && (
+              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-yellow-800">
+                  Loading your entrepreneur profile...
+                </p>
+              </div>
+            )}
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField

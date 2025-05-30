@@ -44,15 +44,15 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setLoading(true);
     
     try {
-      console.log("Fetching message groups for user:", user.id);
+      console.log("Fetching message groups for user:", user.id, "role:", (user as any).role);
       
       let userGroups: Array<{
         id_group: string;
         id_project: string;
         projects: { title: string } | null;
-      }>;
+      }> = [];
       
-      if (user.role === "admin") {
+      if ((user as any).role === "admin") {
         // Admin users can see all message groups
         const { data: allGroups, error: groupsError } = await supabase
           .from('message_groups')
@@ -99,7 +99,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }));
       }
 
-      console.log("User groups found:", userGroups);
+      console.log("User groups found:", userGroups.length);
 
       if (!userGroups || userGroups.length === 0) {
         setMessageGroups([]);
@@ -107,8 +107,9 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
-      // Get unique group IDs - now properly typed
+      // Get unique group IDs
       const groupIds: string[] = [...new Set(userGroups.map(g => g.id_group))];
+      console.log("Unique group IDs:", groupIds);
       
       // Get messages for these groups with ordering
       const { data: messagesData, error: messagesError } = await supabase
@@ -122,7 +123,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         throw messagesError;
       }
 
-      console.log("Messages found:", messagesData?.length || 0, messagesData);
+      console.log("Messages found:", messagesData?.length || 0);
 
       // Transform messages
       const transformedMessages: Message[] = (messagesData || []).map(msg => ({
@@ -142,7 +143,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (!groupProjectMap.has(group.id_group)) {
           groupProjectMap.set(group.id_group, {
             projectId: group.id_project,
-            projectTitle: group.projects?.title || "Direct Messages"
+            projectTitle: group.projects?.title || `Project ${group.id_project.substring(0, 8)}`
           });
         }
       });
@@ -154,7 +155,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const transformedGroups: MessageGroup[] = uniqueGroupIds.map((groupId: string) => {
         const groupMessages = transformedMessages.filter(m => m.groupId === groupId);
         const lastMessage = groupMessages[groupMessages.length - 1];
-        const unreadCount = user.role === "admin" ? 0 : groupMessages.filter(m => m.sender !== user.id && !m.read).length;
+        const unreadCount = (user as any).role === "admin" ? 0 : groupMessages.filter(m => m.sender !== user.id && !m.read).length;
         const projectInfo = groupProjectMap.get(groupId);
 
         return {
@@ -167,7 +168,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
 
       console.log("Transformed groups:", transformedGroups.length);
-      console.log("Transformed messages:", transformedMessages.length);
+      console.log("Groups with titles:", transformedGroups.map(g => ({ id: g.id, title: g.projectTitle })));
       
       setMessageGroups(transformedGroups);
       setMessages(transformedMessages);
@@ -177,7 +178,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } finally {
       setLoading(false);
     }
-  }, [user?.id, user?.role]);
+  }, [user?.id, (user as any)?.role]);
 
   const refreshMessages = useCallback(() => {
     fetchMessageGroups();
