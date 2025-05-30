@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
@@ -180,23 +179,44 @@ const Messages = () => {
     const queryParams = new URLSearchParams(location.search);
     const projectId = queryParams.get('projectId');
     
-    const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
+    console.log('Looking for project:', projectId);
     
-    if (projectId && groupsToUse.length > 0) {
-      const projectGroup = groupsToUse.find(g => g.id_project === projectId);
-      if (projectGroup) {
-        setCurrentGroupId(projectGroup.id_group);
+    if (projectId) {
+      // Force refresh messages to ensure we have the latest data
+      refreshMessages();
+      
+      // Use a timeout to ensure message groups are loaded
+      const timer = setTimeout(() => {
+        const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
+        console.log('Available groups:', groupsToUse);
+        
+        const projectGroup = groupsToUse.find(g => g.id_project === projectId);
+        console.log('Found project group:', projectGroup);
+        
+        if (projectGroup) {
+          console.log('Setting current group to:', projectGroup.id_group);
+          setCurrentGroupId(projectGroup.id_group);
+        } else {
+          console.log('No group found for project:', projectId);
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location.search, messageGroups, allMessageGroups, user, refreshMessages]);
+
+  // Auto-select first group if none selected and no project ID in URL
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const projectId = queryParams.get('projectId');
+    
+    if (!projectId && !currentGroupId) {
+      const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
+      if (groupsToUse.length > 0) {
+        setCurrentGroupId(groupsToUse[0].id_group);
       }
     }
-  }, [location.search, messageGroups, allMessageGroups, user]);
-
-  // Auto-select first group if none selected
-  useEffect(() => {
-    const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
-    if (!currentGroupId && groupsToUse.length > 0) {
-      setCurrentGroupId(groupsToUse[0].id_group);
-    }
-  }, [currentGroupId, messageGroups, allMessageGroups, user]);
+  }, [currentGroupId, messageGroups, allMessageGroups, user, location.search]);
 
   // Filter messages based on current group and fetch user profiles
   useEffect(() => {

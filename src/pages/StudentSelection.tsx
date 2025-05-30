@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -150,35 +149,27 @@ const StudentSelection = () => {
     }
 
     try {
-      // Add entries to proposal_to_student table
+      console.log('Proposing students:', selectedStudents.map(s => s.id), 'for project:', projectId);
+      
+      // Only add entries to proposal_to_student table
       const proposalEntries = selectedStudents.map(student => ({
         id_project: projectId,
         id_student: student.id,
         accepted: false // Initially false, students will accept later
       }));
       
+      console.log('Inserting proposal entries:', proposalEntries);
+      
       const { error: proposalError } = await supabase
         .from('proposal_to_student')
         .insert(proposalEntries);
         
       if (proposalError) {
+        console.error('Error inserting proposals:', proposalError);
         throw proposalError;
       }
       
-      // Also add to proposed_student table for backward compatibility
-      const proposedEntries = selectedStudents.map(student => ({
-        student_id: student.id,
-        project_id: projectId
-      }));
-      
-      const { error: proposedError } = await supabase
-        .from('proposed_student')
-        .insert(proposedEntries);
-        
-      if (proposedError) {
-        throw proposedError;
-      }
-      
+      console.log('Successfully proposed students');
       toast.success(`Proposed ${selectedStudents.length} students for the project`);
       navigate('/admin');
       
@@ -210,7 +201,7 @@ const StudentSelection = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <button 
-              onClick={goBack}
+              onClick={() => navigate('/admin')}
               className="flex items-center text-muted-foreground hover:text-foreground mb-2"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
@@ -225,7 +216,11 @@ const StudentSelection = () => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={clearFilters}
+              onClick={() => {
+                setSearchQuery("");
+                setSkillFilter("");
+                setSpecialtyFilter("");
+              }}
               disabled={!searchQuery && !skillFilter && !specialtyFilter}
               className="flex items-center"
             >
