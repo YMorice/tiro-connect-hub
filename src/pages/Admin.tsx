@@ -153,6 +153,11 @@ const Admin = () => {
     navigate(`/admin/student-selection?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
   };
 
+  // Navigate to proposal student selection page (Proposals)
+  const navigateToProposalStudentSelection = (project: Project) => {
+    navigate(`/admin/proposal-student-selection?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
+  };
+
   // View students who accepted project (Proposals)
   const viewAcceptedStudents = (project: Project) => {
     navigate(`/admin/accepted-students?projectId=${project.id}&projectTitle=${encodeURIComponent(project.title)}`);
@@ -359,7 +364,7 @@ const Admin = () => {
               </Button>
             )}
             
-            {/* Proposals: View accepted students and propose to entrepreneur */}
+            {/* Proposals: Select from accepted students and propose to entrepreneur */}
             {project.status === "Proposals" && (
               <>
                 <Button
@@ -371,11 +376,11 @@ const Admin = () => {
                   View Accepted Students
                 </Button>
                 <Button
-                  onClick={() => proposeToEntrepreneur(project)}
+                  onClick={() => navigateToProposalStudentSelection(project)}
                   className="w-full sm:w-auto"
                 >
                   <ArrowRight className="h-4 w-4 mr-1" />
-                  Propose to Entrepreneur
+                  Select Students for Entrepreneur
                 </Button>
               </>
             )}
