@@ -182,16 +182,17 @@ const Messages = () => {
     }
   }, [user]);
   
-  // Extract query parameters for project-specific messaging and auto-select group
+  // Extract query parameters for project-specific messaging
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const projectId = queryParams.get('projectId');
     
     console.log('Looking for project:', projectId);
-    console.log('Current messageGroups:', messageGroups);
-    console.log('Current allMessageGroups:', allMessageGroups);
     
     if (projectId) {
+      // Force refresh messages to ensure we have the latest data
+      refreshMessages();
+      
       // Use a timeout to ensure message groups are loaded
       const timer = setTimeout(() => {
         const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
@@ -199,21 +200,18 @@ const Messages = () => {
         
         const projectGroup = groupsToUse.find(g => {
           console.log('Checking group:', g, 'against project ID:', projectId);
-          return String(g.id_project) === String(projectId) || String(g.projectId) === String(projectId);
+          return g.id_project === projectId || g.projectId === projectId;
         });
         
         console.log('Found project group:', projectGroup);
         
         if (projectGroup) {
-          const groupId = projectGroup.id_group || projectGroup.id;
-          console.log('Setting current group to:', groupId);
-          setCurrentGroupId(groupId);
+          console.log('Setting current group to:', projectGroup.id_group || projectGroup.id);
+          setCurrentGroupId(projectGroup.id_group || projectGroup.id);
         } else {
           console.log('No group found for project:', projectId);
-          // If no group found, try refreshing messages
-          refreshMessages();
         }
-      }, 500);
+      }, 1000);
       
       return () => clearTimeout(timer);
     }
@@ -227,8 +225,7 @@ const Messages = () => {
     if (!projectId && !currentGroupId) {
       const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
       if (groupsToUse.length > 0) {
-        const firstGroup = groupsToUse[0];
-        setCurrentGroupId(firstGroup.id_group || firstGroup.id);
+        setCurrentGroupId(groupsToUse[0].id_group || groupsToUse[0].id);
       }
     }
   }, [currentGroupId, messageGroups, allMessageGroups, user, location.search]);
@@ -304,7 +301,6 @@ const Messages = () => {
   };
 
   const handleGroupSelect = (groupId: string) => {
-    console.log('Selecting group:', groupId);
     setCurrentGroupId(groupId);
     if (isMobile) {
       setSheetOpen(false);
