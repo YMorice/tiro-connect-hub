@@ -136,6 +136,7 @@ const Projects = () => {
   });
 
   const handleViewProject = (projectId: string) => {
+    console.log('Navigating to project:', projectId);
     navigate(`/projects/${projectId}`);
   };
 
@@ -209,164 +210,166 @@ const Projects = () => {
 
   return (
     <AppLayout>
-      <div className="h-full overflow-auto">
-        <div className="max-w-full p-4 space-y-4">
-          <div className="flex flex-col gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">My Projects</h1>
-              <p className="text-muted-foreground text-sm">Manage and track your projects</p>
-            </div>
-            <Button onClick={() => navigate('/pack-selection')} className="flex items-center w-fit text-sm h-9" size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              Create New Project
-            </Button>
-          </div>
-
-          {/* Filters */}
-          <Card>
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">Filter Projects</CardTitle>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Search projects..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8 text-sm h-9"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[150px] h-9 text-sm">
-                      <SelectValue placeholder="All statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">All statuses</SelectItem>
-                      {statusOptions.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {(searchQuery || statusFilter) && (
-                    <Button variant="outline" size="sm" onClick={clearFilters} className="h-9 text-sm">
-                      <Filter className="h-4 w-4 mr-1" />
-                      Clear
-                    </Button>
-                  )}
-                </div>
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <div className="flex-1 overflow-auto p-4">
+          <div className="max-w-7xl mx-auto space-y-4">
+            <div className="flex flex-col gap-3">
+              <div>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">My Projects</h1>
+                <p className="text-muted-foreground text-sm">Manage and track your projects</p>
               </div>
-            </CardHeader>
-          </Card>
-
-          {/* Projects List */}
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <Button onClick={() => navigate('/pack-selection')} className="flex items-center w-fit text-sm h-9" size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                Create New Project
+              </Button>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredProjects.length > 0 ? (
-                filteredProjects.map(project => (
-                  <div key={project.id} className="space-y-3">
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardHeader className="p-4">
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-lg truncate">{project.title}</CardTitle>
-                            <CardDescription className="text-sm mt-1">
-                              {project.description || "No description provided"}
-                            </CardDescription>
-                            <div className="flex flex-wrap items-center gap-2 mt-2">
-                              <Badge className={`${getStatusColor(project.status)} text-xs`}>
-                                {project.status}
-                              </Badge>
-                              <div className="flex items-center text-xs text-muted-foreground">
-                                <Calendar className="h-3 w-3 mr-1" />
-                                {new Date(project.created_at).toLocaleDateString()}
-                              </div>
-                              {project.pack && (
+
+            {/* Filters */}
+            <Card>
+              <CardHeader className="p-4">
+                <CardTitle className="text-lg">Filter Projects</CardTitle>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search projects..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8 text-sm h-9"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-[150px] h-9 text-sm">
+                        <SelectValue placeholder="All statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">All statuses</SelectItem>
+                        {statusOptions.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {(searchQuery || statusFilter) && (
+                      <Button variant="outline" size="sm" onClick={clearFilters} className="h-9 text-sm">
+                        <Filter className="h-4 w-4 mr-1" />
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* Projects List */}
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <div className="space-y-4 pb-4">
+                {filteredProjects.length > 0 ? (
+                  filteredProjects.map(project => (
+                    <div key={project.id} className="space-y-3">
+                      <Card className="hover:shadow-md transition-shadow">
+                        <CardHeader className="p-4">
+                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-lg truncate">{project.title}</CardTitle>
+                              <CardDescription className="text-sm mt-1">
+                                {project.description || "No description provided"}
+                              </CardDescription>
+                              <div className="flex flex-wrap items-center gap-2 mt-2">
+                                <Badge className={`${getStatusColor(project.status)} text-xs`}>
+                                  {project.status}
+                                </Badge>
                                 <div className="flex items-center text-xs text-muted-foreground">
-                                  <span>{project.pack.name}</span>
-                                  {project.pack.price && (
-                                    <span className="ml-1">- €{project.pack.price}</span>
-                                  )}
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  {new Date(project.created_at).toLocaleDateString()}
                                 </div>
+                                {project.pack && (
+                                  <div className="flex items-center text-xs text-muted-foreground">
+                                    <span>{project.pack.name}</span>
+                                    {project.pack.price && (
+                                      <span className="ml-1">- €{project.pack.price}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleViewConversation(project.id, project.title)}
+                                className="text-xs h-8"
+                              >
+                                <MessageCircle className="h-3 w-3 mr-1" />
+                                Chat
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleViewProject(project.id)}
+                                className="text-xs h-8"
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                              {(project.status === 'Selection' || project.status === 'Proposals') && (
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  onClick={() => toggleProjectExpansion(project.id)}
+                                  className="text-xs h-8"
+                                >
+                                  <User className="h-3 w-3 mr-1" />
+                                  {expandedProject === project.id ? 'Hide' : 'Show'} Students
+                                </Button>
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleViewConversation(project.id, project.title)}
-                              className="text-xs h-8"
-                            >
-                              <MessageCircle className="h-3 w-3 mr-1" />
-                              Chat
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleViewProject(project.id)}
-                              className="text-xs h-8"
-                            >
-                              <Eye className="h-3 w-3 mr-1" />
-                              View
-                            </Button>
-                            {(project.status === 'Selection' || project.status === 'Proposals') && (
-                              <Button 
-                                variant="default" 
-                                size="sm"
-                                onClick={() => toggleProjectExpansion(project.id)}
-                                className="text-xs h-8"
-                              >
-                                <User className="h-3 w-3 mr-1" />
-                                {expandedProject === project.id ? 'Hide' : 'Show'} Students
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                    
-                    {/* Proposed Students Display */}
-                    {expandedProject === project.id && (project.status === 'Selection' || project.status === 'Proposals') && (
-                      <ProposedStudentsDisplay 
-                        projectId={project.id}
-                        projectStatus={project.status}
-                        isEntrepreneur={true}
-                        onStudentSelected={handleStudentSelected}
-                      />
-                    )}
-                  </div>
-                ))
-              ) : (
-                <Card>
-                  <CardContent className="text-center py-8">
-                    <p className="text-muted-foreground text-sm">
-                      {projects.length > 0 
-                        ? "No projects match your search criteria" 
-                        : "You haven't created any projects yet"}
-                    </p>
-                    {projects.length === 0 && (
-                      <Button 
-                        onClick={() => navigate('/pack-selection')} 
-                        className="mt-3 text-sm h-9"
-                        size="sm"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Create Your First Project
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
+                        </CardHeader>
+                      </Card>
+                      
+                      {/* Proposed Students Display */}
+                      {expandedProject === project.id && (project.status === 'Selection' || project.status === 'Proposals') && (
+                        <ProposedStudentsDisplay 
+                          projectId={project.id}
+                          projectStatus={project.status}
+                          isEntrepreneur={true}
+                          onStudentSelected={handleStudentSelected}
+                        />
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <Card>
+                    <CardContent className="text-center py-8">
+                      <p className="text-muted-foreground text-sm">
+                        {projects.length > 0 
+                          ? "No projects match your search criteria" 
+                          : "You haven't created any projects yet"}
+                      </p>
+                      {projects.length === 0 && (
+                        <Button 
+                          onClick={() => navigate('/pack-selection')} 
+                          className="mt-3 text-sm h-9"
+                          size="sm"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Create Your First Project
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </AppLayout>

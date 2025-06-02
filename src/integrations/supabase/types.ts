@@ -200,6 +200,7 @@ export type Database = {
           id_entrepreneur: string
           id_pack: string | null
           id_project: string
+          price: number | null
           selected_student: string | null
           status: string | null
           title: string
@@ -211,6 +212,7 @@ export type Database = {
           id_entrepreneur: string
           id_pack?: string | null
           id_project?: string
+          price?: number | null
           selected_student?: string | null
           status?: string | null
           title: string
@@ -222,6 +224,7 @@ export type Database = {
           id_entrepreneur?: string
           id_pack?: string | null
           id_project?: string
+          price?: number | null
           selected_student?: string | null
           status?: string | null
           title?: string

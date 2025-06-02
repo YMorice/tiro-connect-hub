@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/sonner";
-import { FileIcon, MessageCircle, Trash2, Download, CreditCard } from "lucide-react";
+import { FileIcon, MessageCircle, Trash2, Download, CreditCard, Euro } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { User, Document } from "@/types";
@@ -65,6 +65,7 @@ const ProjectDetail = () => {
   const [paymentShown, setPaymentShown] = useState<boolean>(false);
   const [proposedStudents, setProposedStudents] = useState<User[]>([]);
   const [projectDocuments, setProjectDocuments] = useState<Document[]>([]);
+  const [projectPack, setProjectPack] = useState<any>(null);
 
   // Fetch project and check access permissions
   useEffect(() => {
@@ -88,7 +89,15 @@ const ProjectDetail = () => {
         // If not found in context, fetch from database and check access
         const { data: projectData, error: projectError } = await supabase
           .from('projects')
-          .select('*')
+          .select(`
+            *,
+            project_packs (
+              name,
+              price,
+              description,
+              features
+            )
+          `)
           .eq('id_project', id)
           .single();
 
@@ -106,6 +115,11 @@ const ProjectDetail = () => {
         }
 
         console.log('Project data:', projectData);
+
+        // Set project pack info
+        if (projectData.project_packs) {
+          setProjectPack(projectData.project_packs);
+        }
 
         // Check access permissions based on user role
         let userHasAccess = false;
@@ -168,6 +182,7 @@ const ProjectDetail = () => {
             createdAt: new Date(projectData.created_at),
             updatedAt: new Date(projectData.updated_at),
             packId: projectData.id_pack,
+            price: projectData.price,
           };
 
           setProject(uiProject);
@@ -458,385 +473,511 @@ const ProjectDetail = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">{project.title}</h1>
-            <div className="flex items-center gap-2 mt-2">
-              <span
-                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                  project.status === "completed"
-                    ? "bg-green-100 text-green-800"
-                    : project.status === "in_progress"
-                    ? "bg-blue-100 text-blue-800"
-                    : project.status === "open"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : project.status === "review"
-                    ? "bg-purple-100 text-purple-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {project.status.replace("_", " ").toUpperCase()}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                Created on {project.createdAt.toLocaleDateString()}
-              </span>
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <div className="flex-1 overflow-auto p-4">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Project Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl md:text-3xl font-bold truncate">{project.title}</h1>
+                <div className="flex items-center gap-2 mt-2">
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                      project.status === "completed"
+                        ? "bg-green-100 text-green-800"
+                        : project.status === "in_progress"
+                        ? "bg-blue-100 text-blue-800"
+                        : project.status === "open"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : project.status === "review"
+                        ? "bg-purple-100 text-purple-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {project.status.replace("_", " ").toUpperCase()}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    Created on {project.createdAt.toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Add button to go to messages */}
+                <Button
+                  onClick={() => navigate(`/messages?projectId=${project.id}`)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <MessageCircle size={18} />
+                  Messages
+                </Button>
+                
+                {isOwner && project.status === "draft" && (
+                  <Button
+                    onClick={() => handleStatusChange("open")}
+                    className="bg-tiro-blue hover:bg-tiro-blue/90"
+                  >
+                    Publish Project
+                  </Button>
+                )}
+                {isOwner && project.status === "open" && !paymentShown && (
+                  <Button
+                    onClick={handleProceedToPayment}
+                    className="bg-tiro-purple hover:bg-tiro-purple/90 flex items-center gap-2"
+                  >
+                    <CreditCard size={18} />
+                    Pay to Launch Project
+                  </Button>
+                )}
+                {isOwner && project.status === "open" && paymentShown && (
+                  <Button
+                    onClick={handleDownloadInvoice}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Download size={18} />
+                    Download Invoice
+                  </Button>
+                )}
+                {isOwner && project.status === "review" && (
+                  <Button
+                    onClick={() => handleStatusChange("completed")}
+                    className="bg-green-600 hover:bg-green-700"
+                    variant="default"
+                  >
+                    Mark as Complete
+                  </Button>
+                )}
+                {(user as any)?.role === "student" && project.status === "open" && !isAssignee && (
+                  <Button
+                    onClick={() => {
+                      updateProject(project.id, { assigneeId: user.id, status: "in_progress" });
+                      toast.success("You have successfully taken this project");
+                    }}
+                    className="bg-tiro-purple hover:bg-tiro-purple/90"
+                  >
+                    Take Project
+                  </Button>
+                )}
+                {isAssignee && project.status === "review" && (
+                  <Button
+                    onClick={() => handleStatusChange("in_progress")}
+                  >
+                    Return to In Progress
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Add button to go to messages */}
-            <Button
-              onClick={() => navigate(`/messages?projectId=${project.id}`)}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <MessageCircle size={18} />
-              Messages
-            </Button>
-            
-            {isOwner && project.status === "draft" && (
-              <Button
-                onClick={() => handleStatusChange("open")}
-                className="bg-tiro-blue hover:bg-tiro-blue/90"
-              >
-                Publish Project
-              </Button>
-            )}
-            {isOwner && project.status === "open" && !paymentShown && (
-              <Button
-                onClick={handleProceedToPayment}
-                className="bg-tiro-purple hover:bg-tiro-purple/90 flex items-center gap-2"
-              >
-                <CreditCard size={18} />
-                Pay to Launch Project
-              </Button>
-            )}
-            {isOwner && project.status === "open" && paymentShown && (
-              <Button
-                onClick={handleDownloadInvoice}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Download size={18} />
-                Download Invoice
-              </Button>
-            )}
-            {isOwner && project.status === "review" && (
-              <Button
-                onClick={() => handleStatusChange("completed")}
-                className="bg-green-600 hover:bg-green-700"
-                variant="default"
-              >
-                Mark as Complete
-              </Button>
-            )}
-            {(user as any)?.role === "student" && project.status === "open" && !isAssignee && (
-              <Button
-                onClick={() => {
-                  updateProject(project.id, { assigneeId: user.id, status: "in_progress" });
-                  toast.success("You have successfully taken this project");
-                }}
-                className="bg-tiro-purple hover:bg-tiro-purple/90"
-              >
-                Take Project
-              </Button>
-            )}
-            {isAssignee && project.status === "review" && (
-              <Button
-                onClick={() => handleStatusChange("in_progress")}
-              >
-                Return to In Progress
-              </Button>
-            )}
-          </div>
-        </div>
 
-        <div className="p-4 bg-gray-50 rounded-lg border">
-          <h2 className="text-lg font-semibold mb-2">Description</h2>
-          <p>{project.description}</p>
-        </div>
+            {/* Project Information Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">Project Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Description</h3>
+                  <p className="text-muted-foreground">
+                    {project.description || "No description provided"}
+                  </p>
+                </div>
+                
+                {/* Pack Information */}
+                {projectPack && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                    <div>
+                      <h3 className="font-semibold mb-2">Package</h3>
+                      <p className="text-sm text-muted-foreground">{projectPack.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{projectPack.description}</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-2 flex items-center gap-1">
+                        <Euro size={16} />
+                        Price
+                      </h3>
+                      <p className="text-lg font-bold text-green-600">
+                        €{projectPack.price || project.price || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-        {project.status === "open" && isOwner && paymentShown && (
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h2 className="text-lg font-semibold mb-2 text-yellow-800">Payment Pending</h2>
-            <p className="mb-4">
-              Your payment request has been submitted and is awaiting approval from an administrator. 
-              Once approved, your project will be visible to students who can then apply to work on it.
-            </p>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                onClick={handleDownloadInvoice}
-                className="flex items-center gap-2"
-              >
-                <Download size={18} />
-                Download Invoice
-              </Button>
-              <Button variant="secondary" onClick={() => navigate('/messages?user=admin')}>
-                Contact Support
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {tabsConfig.length > 0 && (
-          <Tabs defaultValue={defaultTab} className="w-full">
-            <TabsList className="w-full grid" style={{ gridTemplateColumns: `repeat(${tabsConfig.length}, 1fr)` }}>
-              {tabsConfig.map(tab => (
-                <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
-              ))}
-            </TabsList>
-            
-            {project.status === "open" && isOwner && (
-              <TabsContent value="student-proposals">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Student Proposals</CardTitle>
-                    <CardDescription>
-                      Select a student to work on your project
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {proposedStudents.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {proposedStudents.map(student => (
-                          <div key={student.id} className="p-4 border rounded-lg mb-4">
-                            <div className="flex items-center gap-3 mb-3">
-                              <Avatar>
-                                <AvatarImage src={student.avatar} />
-                                <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-medium">{student.name}</p>
-                                <p className="text-xs text-muted-foreground">{student.email}</p>
-                              </div>
-                            </div>
-                            
-                            <div className="mb-3">
-                              <p className="text-sm font-medium mb-1">Specialty:</p>
-                              <p className="text-sm">{student.specialty || "Not specified"}</p>
-                            </div>
-                            
-                            <div className="mb-4">
-                              <p className="text-sm font-medium mb-1">Skills:</p>
-                              <div className="flex flex-wrap gap-1">
-                                {student.skills?.map(skill => (
-                                  <span 
-                                    key={skill} 
-                                    className="bg-gray-100 px-2 py-1 text-xs rounded"
-                                  >
-                                    {skill}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                            
-                            <Button 
-                              onClick={() => handleSelectStudent(student.id)} 
-                              className="w-full"
-                            >
-                              Select Student
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-10 text-muted-foreground">
-                        No students have been proposed for this project yet.
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            )}
-            
-            {["in_progress", "review", "completed"].includes(project.status) && (
-              <TabsContent value="tasks">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Project Tasks</CardTitle>
-                    <CardDescription>
-                      Manage and track all tasks related to this project
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Task list */}
-                    {project.tasks && project.tasks.length > 0 ? (
-                      <div className="space-y-4 mb-6">
-                        {project.tasks.map((task) => (
-                          <div
-                            key={task.id}
-                            className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-                          >
-                            <div>
-                              <h3 className="font-medium">{task.title}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {task.description}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2 self-end md:self-center">
-                              <select
-                                value={task.status}
-                                onChange={(e) =>
-                                  handleTaskStatusChange(
-                                    task.id,
-                                    e.target.value as any
-                                  )
-                                }
-                                className="border rounded p-1 text-sm"
-                                disabled={!isOwner && !isAssignee}
-                              >
-                                <option value="todo">To Do</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="done">Done</option>
-                              </select>
-                              {(isOwner || isAssignee) && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => deleteTask(project.id, task.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-4 text-muted-foreground">
-                        No tasks added yet
-                      </div>
-                    )}
-
-                    {/* Add task form */}
-                    {(isOwner || isAssignee) && (
-                      <form onSubmit={handleTaskSubmit} className="space-y-4">
-                        <div>
-                          <Label htmlFor="taskTitle">Task Title</Label>
-                          <Input
-                            id="taskTitle"
-                            value={newTask.title}
-                            onChange={(e) =>
-                              setNewTask({ ...newTask, title: e.target.value })
-                            }
-                            placeholder="Enter task title"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="taskDescription">Description</Label>
-                          <Textarea
-                            id="taskDescription"
-                            value={newTask.description}
-                            onChange={(e) =>
-                              setNewTask({
-                                ...newTask,
-                                description: e.target.value,
-                              })
-                            }
-                            placeholder="Enter task description"
-                            className="min-h-[100px]"
-                          />
-                        </div>
-                        <Button type="submit">Add Task</Button>
-                      </form>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            )}
-
-            <TabsContent value="documents">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Project Documents</CardTitle>
-                  <CardDescription>
-                    All project documents including files shared via chat and uploaded directly
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {/* Document list - now shows all documents including from chat */}
-                  {allDocuments && allDocuments.length > 0 ? (
-                    <div className="space-y-2 mb-6">
-                      {allDocuments.map((doc) => (
-                        <div
-                          key={doc.id}
-                          className="p-3 border rounded-lg flex justify-between items-center"
-                        >
-                          <div className="flex items-center gap-3">
-                            <FileIcon className="h-5 w-5 text-blue-500" />
-                            <div>
-                              <p className="font-medium">{doc.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                Uploaded on {doc.createdAt.toLocaleDateString()}
-                                {doc.type && ` • ${doc.type}`}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" asChild>
-                              <a href={doc.url} target="_blank" rel="noreferrer">
-                                View
-                              </a>
-                            </Button>
-                            {(isOwner || isAssignee) && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  deleteDocument(project.id, doc.id)
-                                }
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
+                {/* Features if available */}
+                {projectPack?.features && projectPack.features.length > 0 && (
+                  <div className="pt-4 border-t">
+                    <h3 className="font-semibold mb-2">Package Features</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      {projectPack.features.map((feature: string, index: number) => (
+                        <li key={index} className="text-sm text-muted-foreground">{feature}</li>
                       ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      No documents added yet
-                    </div>
-                  )}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-                  {/* Add document form */}
-                  {(isOwner || isAssignee) && (
-                    <form onSubmit={handleDocumentSubmit} className="space-y-4">
-                      <div className="p-4 border rounded-md bg-gray-50">
-                        <h3 className="font-medium mb-4">Upload Document</h3>
-                        
-                        <div className="space-y-4">
+            {/* Documents Section - Always visible */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">Project Documents</CardTitle>
+                <CardDescription>
+                  All project documents including files shared via chat and uploaded directly
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Document list */}
+                {allDocuments && allDocuments.length > 0 ? (
+                  <div className="space-y-2 mb-6">
+                    {allDocuments.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="p-3 border rounded-lg flex justify-between items-center"
+                      >
+                        <div className="flex items-center gap-3">
+                          <FileIcon className="h-5 w-5 text-blue-500" />
                           <div>
-                            <Label>Upload from your computer</Label>
-                            <FileUpload 
-                              onFileSelect={(file) => setSelectedFile(file)} 
-                              buttonText="Select Document"
-                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
-                              maxSize={20}
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="documentName">Document Name (Optional)</Label>
-                            <Input
-                              id="documentName"
-                              value={newDocumentName}
-                              onChange={(e) => setNewDocumentName(e.target.value)}
-                              placeholder="Enter document name (defaults to file name)"
-                            />
+                            <p className="font-medium">{doc.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Uploaded on {doc.createdAt.toLocaleDateString()}
+                              {doc.type && ` • ${doc.type}`}
+                            </p>
                           </div>
                         </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={doc.url} target="_blank" rel="noreferrer">
+                              View
+                            </a>
+                          </Button>
+                          {(isOwner || isAssignee) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                deleteDocument(project.id, doc.id)
+                              }
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <Button type="submit">Add Document</Button>
-                    </form>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No documents added yet
+                  </div>
+                )}
+
+                {/* Add document form */}
+                {(isOwner || isAssignee) && (
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    
+                    if (selectedFile) {
+                      const documentName = newDocumentName.trim() || selectedFile.name;
+                      addDocument(project.id, { name: documentName }, selectedFile);
+                      setSelectedFile(null);
+                      setNewDocumentName("");
+                      setTimeout(() => {
+                        fetchProjectDocuments();
+                      }, 1000);
+                    } else {
+                      toast.error("Please select a file to upload");
+                    }
+                  }} className="space-y-4">
+                    <div className="p-4 border rounded-md bg-gray-50">
+                      <h3 className="font-medium mb-4">Upload Document</h3>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Upload from your computer</Label>
+                          <FileUpload 
+                            onFileSelect={(file) => setSelectedFile(file)} 
+                            buttonText="Select Document"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
+                            maxSize={20}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="documentName">Document Name (Optional)</Label>
+                          <Input
+                            id="documentName"
+                            value={newDocumentName}
+                            onChange={(e) => setNewDocumentName(e.target.value)}
+                            placeholder="Enter document name (defaults to file name)"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <Button type="submit">Add Document</Button>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+
+            {tabsConfig.length > 0 && (
+              <Tabs defaultValue={defaultTab} className="w-full">
+                <TabsList className="w-full grid" style={{ gridTemplateColumns: `repeat(${tabsConfig.length}, 1fr)` }}>
+                  {tabsConfig.map(tab => (
+                    <TabsTrigger key={tab.id} value={tab.id}>{tab.label}</TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                {project.status === "open" && isOwner && (
+                  <TabsContent value="student-proposals">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Student Proposals</CardTitle>
+                        <CardDescription>
+                          Select a student to work on your project
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {proposedStudents.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {proposedStudents.map(student => (
+                              <div key={student.id} className="p-4 border rounded-lg mb-4">
+                                <div className="flex items-center gap-3 mb-3">
+                                  <Avatar>
+                                    <AvatarImage src={student.avatar} />
+                                    <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="font-medium">{student.name}</p>
+                                    <p className="text-xs text-muted-foreground">{student.email}</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="mb-3">
+                                  <p className="text-sm font-medium mb-1">Specialty:</p>
+                                  <p className="text-sm">{student.specialty || "Not specified"}</p>
+                                </div>
+                                
+                                <div className="mb-4">
+                                  <p className="text-sm font-medium mb-1">Skills:</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {student.skills?.map(skill => (
+                                      <span 
+                                        key={skill} 
+                                        className="bg-gray-100 px-2 py-1 text-xs rounded"
+                                      >
+                                        {skill}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                                
+                                <Button 
+                                  onClick={() => handleSelectStudent(student.id)} 
+                                  className="w-full"
+                                >
+                                  Select Student
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-10 text-muted-foreground">
+                            No students have been proposed for this project yet.
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                )}
+                
+                {["in_progress", "review", "completed"].includes(project.status) && (
+                  <TabsContent value="tasks">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Project Tasks</CardTitle>
+                        <CardDescription>
+                          Manage and track all tasks related to this project
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {/* Task list */}
+                        {project.tasks && project.tasks.length > 0 ? (
+                          <div className="space-y-4 mb-6">
+                            {project.tasks.map((task) => (
+                              <div
+                                key={task.id}
+                                className="p-4 border rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+                              >
+                                <div>
+                                  <h3 className="font-medium">{task.title}</h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    {task.description}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2 self-end md:self-center">
+                                  <select
+                                    value={task.status}
+                                    onChange={(e) =>
+                                      handleTaskStatusChange(
+                                        task.id,
+                                        e.target.value as any
+                                      )
+                                    }
+                                    className="border rounded p-1 text-sm"
+                                    disabled={!isOwner && !isAssignee}
+                                  >
+                                    <option value="todo">To Do</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="done">Done</option>
+                                  </select>
+                                  {(isOwner || isAssignee) && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => deleteTask(project.id, task.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 text-muted-foreground">
+                            No tasks added yet
+                          </div>
+                        )}
+
+                        {/* Add task form */}
+                        {(isOwner || isAssignee) && (
+                          <form onSubmit={handleTaskSubmit} className="space-y-4">
+                            <div>
+                              <Label htmlFor="taskTitle">Task Title</Label>
+                              <Input
+                                id="taskTitle"
+                                value={newTask.title}
+                                onChange={(e) =>
+                                  setNewTask({ ...newTask, title: e.target.value })
+                                }
+                                placeholder="Enter task title"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="taskDescription">Description</Label>
+                              <Textarea
+                                id="taskDescription"
+                                value={newTask.description}
+                                onChange={(e) =>
+                                  setNewTask({
+                                    ...newTask,
+                                    description: e.target.value,
+                                  })
+                                }
+                                placeholder="Enter task description"
+                                className="min-h-[100px]"
+                              />
+                            </div>
+                            <Button type="submit">Add Task</Button>
+                          </form>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                )}
+                
+                <TabsContent value="documents">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Project Documents</CardTitle>
+                      <CardDescription>
+                        All project documents including files shared via chat and uploaded directly
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {/* Document list - now shows all documents including from chat */}
+                      {allDocuments && allDocuments.length > 0 ? (
+                        <div className="space-y-2 mb-6">
+                          {allDocuments.map((doc) => (
+                            <div
+                              key={doc.id}
+                              className="p-3 border rounded-lg flex justify-between items-center"
+                            >
+                              <div className="flex items-center gap-3">
+                                <FileIcon className="h-5 w-5 text-blue-500" />
+                                <div>
+                                  <p className="font-medium">{doc.name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Uploaded on {doc.createdAt.toLocaleDateString()}
+                                    {doc.type && ` • ${doc.type}`}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" asChild>
+                                  <a href={doc.url} target="_blank" rel="noreferrer">
+                                    View
+                                  </a>
+                                </Button>
+                                {(isOwner || isAssignee) && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      deleteDocument(project.id, doc.id)
+                                    }
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-muted-foreground">
+                          No documents added yet
+                        </div>
+                      )}
+
+                      {/* Add document form */}
+                      {(isOwner || isAssignee) && (
+                        <form onSubmit={handleDocumentSubmit} className="space-y-4">
+                          <div className="p-4 border rounded-md bg-gray-50">
+                            <h3 className="font-medium mb-4">Upload Document</h3>
+                            
+                            <div className="space-y-4">
+                              <div>
+                                <Label>Upload from your computer</Label>
+                                <FileUpload 
+                                  onFileSelect={(file) => setSelectedFile(file)} 
+                                  buttonText="Select Document"
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip"
+                                  maxSize={20}
+                                />
+                              </div>
+                              
+                              <div>
+                                <Label htmlFor="documentName">Document Name (Optional)</Label>
+                                <Input
+                                  id="documentName"
+                                  value={newDocumentName}
+                                  onChange={(e) => setNewDocumentName(e.target.value)}
+                                  placeholder="Enter document name (defaults to file name)"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <Button type="submit">Add Document</Button>
+                        </form>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            )}
+          </div>
+        </div>
       </div>
     </AppLayout>
   );

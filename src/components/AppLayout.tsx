@@ -202,10 +202,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 overflow-auto min-w-0",
+        "flex-1 flex flex-col min-w-0 min-h-0",
         isMobile ? "pt-14" : ""
       )}>
-        <div className="h-full w-full">
+        <div className="flex-1 overflow-auto w-full">
           {children}
         </div>
       </main>
