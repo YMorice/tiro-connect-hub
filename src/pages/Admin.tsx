@@ -37,6 +37,19 @@ const convertDbStatusToDisplay = (dbStatus: string): string => {
   return statusMap[dbStatus] || dbStatus;
 };
 
+// Helper function to convert display status to database status
+const convertDisplayStatusToDb = (displayStatus: string): string => {
+  const statusMap: { [key: string]: string } = {
+    'New': 'STEP1',
+    'Proposals': 'STEP2',
+    'Selection': 'STEP3',
+    'Payment': 'STEP4',
+    'Active': 'STEP5',
+    'In progress': 'STEP6'
+  };
+  return statusMap[displayStatus] || displayStatus;
+};
+
 // Helper function to get status color
 const getStatusColor = (status: string): string => {
   switch (status) {
