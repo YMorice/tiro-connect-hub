@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/sonner";
-import { Users, MessageCircle, Plus, Search, Eye, UserPlus } from "lucide-react";
+import { Users, MessageCircle, Plus, Search, Eye, UserPlus, Filter } from "lucide-react";
 
 interface Project {
   id: string;
@@ -69,6 +70,7 @@ const Admin = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   // Redirect if not admin
   useEffect(() => {
@@ -133,13 +135,17 @@ const Admin = () => {
     }
   }, [user]);
 
-  // Filter projects based on search query
-  const filteredProjects = projects.filter(project => 
-    searchQuery.trim() === "" || 
-    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (project.entrepreneur.companyName && project.entrepreneur.companyName.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Filter projects based on search query and status filter
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = searchQuery.trim() === "" || 
+      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (project.entrepreneur.companyName && project.entrepreneur.companyName.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesStatus = statusFilter === "" || project.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const handleViewConversation = (projectId: string, projectTitle: string) => {
     console.log('Navigating to conversation for project:', projectId, projectTitle);
@@ -203,6 +209,13 @@ const Admin = () => {
     }
   };
 
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("");
+  };
+
+  const statusOptions = ['New', 'Proposals', 'Selection', 'Payment', 'Active', 'In progress'];
+
   if (!user || (user as any).role !== "admin") {
     return null; // Will redirect in the useEffect
   }
@@ -261,7 +274,7 @@ const Admin = () => {
           <CardHeader>
             <CardTitle>All Projects</CardTitle>
             <CardDescription>Manage project statuses and student assignments</CardDescription>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -271,6 +284,27 @@ const Admin = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-8"
                 />
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All statuses</SelectItem>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(searchQuery || statusFilter) && (
+                  <Button variant="outline" size="sm" onClick={clearFilters}>
+                    <Filter className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                )}
               </div>
             </div>
           </CardHeader>

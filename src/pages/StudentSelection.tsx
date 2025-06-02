@@ -39,6 +39,8 @@ const StudentSelection = () => {
   const [skillFilter, setSkillFilter] = useState("");
   const [specialtyFilter, setSpecialtyFilter] = useState("");
   
+  console.log('StudentSelection page params:', { projectId, projectTitle, mode });
+  
   const {
     students,
     selectedStudents,
@@ -84,9 +86,14 @@ const StudentSelection = () => {
       return;
     }
 
+    if (!projectId) {
+      toast.error("No project ID found");
+      return;
+    }
+
     try {
       setProposing(true);
-      console.log('Proposing students:', selectedStudents.map(s => s.id), 'for project:', projectId, 'mode:', mode);
+      console.log('Proposing students:', selectedStudents.map(s => ({ id: s.id, name: s.name })), 'for project:', projectId, 'mode:', mode);
       
       if (mode === 'new') {
         // Insert proposals into proposal_to_student table with accepted=null (pending)
@@ -108,6 +115,7 @@ const StudentSelection = () => {
         }
         
         // Update project status to "Proposals" (STEP2)
+        console.log('Updating project status to STEP2');
         const { error: statusError } = await supabase
           .from('projects')
           .update({ status: convertDisplayStatusToDb('Proposals') })
@@ -121,7 +129,7 @@ const StudentSelection = () => {
         console.log('Successfully proposed students and updated project status');
         toast.success(`Successfully proposed ${selectedStudents.length} student${selectedStudents.length > 1 ? 's' : ''} for the project. Project status updated to "Proposals".`);
       } else {
-        // Insert entries into proposed_student table
+        // For proposals mode, insert entries into proposed_student table
         const proposedEntries = selectedStudents.map(student => ({
           project_id: projectId,
           student_id: student.id
@@ -139,6 +147,7 @@ const StudentSelection = () => {
         }
         
         // Update project status to "Selection" (STEP3)
+        console.log('Updating project status to STEP3');
         const { error: statusError } = await supabase
           .from('projects')
           .update({ status: convertDisplayStatusToDb('Selection') })
@@ -203,6 +212,9 @@ const StudentSelection = () => {
             <h1 className="text-3xl font-bold">{pageTitle}</h1>
             <p className="text-muted-foreground">
               {projectTitle ? `For project: ${projectTitle}` : pageDescription}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Mode: {mode} | Project ID: {projectId}
             </p>
           </div>
           <div className="flex items-center gap-2">
