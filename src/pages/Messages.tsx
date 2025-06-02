@@ -13,8 +13,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
-import { Send, FileText, CheckCircle, XCircle, MessageCircle, ArrowLeft, Clock } from "lucide-react";
+import { Send, FileText, CheckCircle, XCircle, MessageCircle, ArrowLeft, Clock, User } from "lucide-react";
 import DocumentUpload from "@/components/DocumentUpload";
+import { supabase } from "@/integrations/supabase/client";
 
 const Messages = () => {
   const { user } = useAuth();
@@ -37,6 +38,7 @@ const Messages = () => {
   const [reviewComment, setReviewComment] = useState("");
   const [showReviewModal, setShowReviewModal] = useState<string | null>(null);
   const [showMobileConversations, setShowMobileConversations] = useState(true);
+  const [userProfiles, setUserProfiles] = useState<Record<string, any>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -46,6 +48,39 @@ const Messages = () => {
   useEffect(() => {
     scrollToBottom();
   }, [selectedGroupId, getGroupMessages(selectedGroupId || "")]);
+
+  // Fetch user profiles for messages
+  useEffect(() => {
+    const fetchUserProfiles = async () => {
+      const selectedMessages = selectedGroupId ? getGroupMessages(selectedGroupId) : [];
+      const userIds = [...new Set(selectedMessages.map(msg => msg.sender))];
+      
+      if (userIds.length === 0) return;
+
+      try {
+        const { data: users, error } = await supabase
+          .from('users')
+          .select('id_users, name, pp_link')
+          .in('id_users', userIds);
+
+        if (error) throw error;
+
+        const profileMap: Record<string, any> = {};
+        users?.forEach(user => {
+          profileMap[user.id_users] = {
+            name: user.name,
+            avatar: user.pp_link ? `${user.pp_link}?t=${Date.now()}` : undefined
+          };
+        });
+
+        setUserProfiles(profileMap);
+      } catch (error) {
+        console.error("Error fetching user profiles:", error);
+      }
+    };
+
+    fetchUserProfiles();
+  }, [selectedGroupId, getGroupMessages]);
 
   // Auto-select group if projectId is provided in URL
   useEffect(() => {
@@ -90,6 +125,14 @@ const Messages = () => {
   const handleBackToConversations = () => {
     setShowMobileConversations(true);
     setSelectedGroupId(null);
+  };
+
+  const getUserInitials = (userId: string) => {
+    const profile = userProfiles[userId];
+    if (profile?.name) {
+      return profile.name.charAt(0).toUpperCase();
+    }
+    return "U";
   };
 
   const selectedMessages = selectedGroupId ? getGroupMessages(selectedGroupId) : [];
@@ -210,6 +253,7 @@ const Messages = () => {
                 <div className="space-y-4 pr-4">
                   {selectedMessages.map((message) => {
                     const isCurrentUser = message.sender === user?.id;
+                    const senderProfile = userProfiles[message.sender];
                     
                     if (!message.read && !isCurrentUser) {
                       markAsRead(message.id);
@@ -218,66 +262,117 @@ const Messages = () => {
                     return (
                       <div
                         key={message.id}
-                        className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
+                        className={`flex gap-3 ${isCurrentUser ? "justify-end" : "justify-start"}`}
                       >
-                        <div
-                          className={`max-w-[85%] sm:max-w-[70%] rounded-lg p-3 ${
-                            isCurrentUser
-                              ? "bg-tiro-primary text-white"
-                              : "bg-gray-100 text-gray-900"
-                          }`}
-                        >
-                          <p className="text-sm break-words">{message.content}</p>
-                          
-                          {/* Document handling */}
-                          {message.documentUrl && (
-                            <div className="mt-2 p-2 border rounded bg-white/10">
-                              <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 flex-shrink-0" />
-                                <span className="text-xs truncate">{message.documentName}</span>
-                              </div>
-                              
-                              {message.documentType === "final" && (user as any)?.role === "entrepreneur" && !message.documentStatus && (
-                                <div className="mt-2 flex flex-col sm:flex-row gap-2">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleReviewSubmit(message.id, true)}
-                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                  >
-                                    <CheckCircle className="h-3 w-3 mr-1" />
-                                    Approve
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => setShowReviewModal(message.id)}
-                                  >
-                                    <XCircle className="h-3 w-3 mr-1" />
-                                    Request Changes
-                                  </Button>
-                                </div>
-                              )}
-                              
-                              {message.documentStatus && (
-                                <div className="mt-1">
-                                  <Badge
-                                    variant={message.documentStatus === "approved" ? "default" : "destructive"}
-                                    className="text-xs"
-                                  >
-                                    {message.documentStatus === "approved" ? "Approved" : "Changes Requested"}
-                                  </Badge>
-                                </div>
-                              )}
-                            </div>
+                        {/* Avatar for other users */}
+                        {!isCurrentUser && (
+                          <Avatar className="w-8 h-8 flex-shrink-0 mt-1">
+                            {senderProfile?.avatar ? (
+                              <AvatarImage 
+                                src={senderProfile.avatar} 
+                                alt={senderProfile?.name || "User"}
+                                className="object-cover"
+                                onError={(e) => {
+                                  console.error("Failed to load sender avatar:", senderProfile.avatar);
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <AvatarFallback className="bg-gray-300 text-gray-600 text-xs">
+                                {getUserInitials(message.sender)}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                        )}
+
+                        <div className={`max-w-[85%] sm:max-w-[70%] ${isCurrentUser ? 'order-2' : 'order-1'}`}>
+                          {/* Sender name for other users */}
+                          {!isCurrentUser && (
+                            <p className="text-xs text-muted-foreground mb-1 px-3">
+                              {senderProfile?.name || "Unknown User"}
+                            </p>
                           )}
                           
-                          <p className="text-xs opacity-70 mt-1">
-                            {message.createdAt.toLocaleTimeString([], { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
-                            })}
-                          </p>
+                          <div
+                            className={`rounded-lg p-3 ${
+                              isCurrentUser
+                                ? "bg-tiro-primary text-white"
+                                : "bg-gray-100 text-gray-900"
+                            }`}
+                          >
+                            <p className="text-sm break-words">{message.content}</p>
+                            
+                            {/* Document handling */}
+                            {message.documentUrl && (
+                              <div className="mt-2 p-2 border rounded bg-white/10">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4 flex-shrink-0" />
+                                  <span className="text-xs truncate">{message.documentName}</span>
+                                </div>
+                                
+                                {message.documentType === "final" && (user as any)?.role === "entrepreneur" && !message.documentStatus && (
+                                  <div className="mt-2 flex flex-col sm:flex-row gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleReviewSubmit(message.id, true)}
+                                      className="bg-green-600 hover:bg-green-700 text-white"
+                                    >
+                                      <CheckCircle className="h-3 w-3 mr-1" />
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => setShowReviewModal(message.id)}
+                                    >
+                                      <XCircle className="h-3 w-3 mr-1" />
+                                      Request Changes
+                                    </Button>
+                                  </div>
+                                )}
+                                
+                                {message.documentStatus && (
+                                  <div className="mt-1">
+                                    <Badge
+                                      variant={message.documentStatus === "approved" ? "default" : "destructive"}
+                                      className="text-xs"
+                                    >
+                                      {message.documentStatus === "approved" ? "Approved" : "Changes Requested"}
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            <p className="text-xs opacity-70 mt-1">
+                              {message.createdAt.toLocaleTimeString([], { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </p>
+                          </div>
                         </div>
+
+                        {/* Avatar for current user */}
+                        {isCurrentUser && (
+                          <Avatar className="w-8 h-8 flex-shrink-0 mt-1 order-3">
+                            {user?.avatar ? (
+                              <AvatarImage 
+                                src={`${user.avatar}?t=${Date.now()}`} 
+                                alt={user?.name || "You"}
+                                className="object-cover"
+                                onError={(e) => {
+                                  console.error("Failed to load current user avatar:", user.avatar);
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <AvatarFallback className="bg-tiro-primary text-white text-xs">
+                                {user?.name?.charAt(0).toUpperCase() || "U"}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                        )}
                       </div>
                     );
                   })}

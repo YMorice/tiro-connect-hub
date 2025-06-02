@@ -83,6 +83,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return "U";
   };
 
+  // Get avatar URL with cache busting
+  const getAvatarUrl = () => {
+    if (user?.avatar) {
+      return `${user.avatar}?t=${Date.now()}`;
+    }
+    return undefined;
+  };
+
   // Close sidebar when route changes on mobile
   React.useEffect(() => {
     if (isMobile) {
@@ -169,8 +177,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center min-w-0 flex-1">
               <Avatar className="w-8 h-8 flex-shrink-0">
-                {user?.avatar ? (
-                  <AvatarImage src={user.avatar} alt={user?.name || "User"} />
+                {getAvatarUrl() ? (
+                  <AvatarImage 
+                    src={getAvatarUrl()} 
+                    alt={user?.name || "User"}
+                    className="object-cover"
+                    onError={(e) => {
+                      console.error("Failed to load avatar image in sidebar:", getAvatarUrl());
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
                 ) : (
                   <AvatarFallback className="bg-tiro-primary text-white text-sm">
                     {getUserInitials()}

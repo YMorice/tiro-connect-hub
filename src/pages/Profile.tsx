@@ -170,6 +170,11 @@ const Profile = () => {
         if (userData) {
           form.setValue('surname', userData.surname || "");
           form.setValue('phone', userData.phone || "");
+          
+          // Set avatar URL with cache busting
+          if (userData.pp_link) {
+            setAvatarUrl(`${userData.pp_link}?t=${Date.now()}`);
+          }
         }
         
       } catch (error) {
@@ -188,7 +193,7 @@ const Profile = () => {
       setSelectedSkills(user.skills);
     }
     if (user?.avatar) {
-      setAvatarUrl(user.avatar);
+      setAvatarUrl(`${user.avatar}?t=${Date.now()}`);
     }
   }, [user]);
 
@@ -219,7 +224,7 @@ const Profile = () => {
           name: formData.name,
           surname: formData.surname,
           phone: formData.phone,
-          pp_link: avatarUrl // Store the profile picture URL in pp_link column
+          pp_link: avatarUrl?.split('?')[0] // Remove cache busting parameter
         })
         .eq('id_users', user.id);
         
@@ -307,13 +312,13 @@ const Profile = () => {
         .from('pp')
         .getPublicUrl(filePath);
         
-      const avatarUrlFromStorage = urlData.publicUrl;
+      const avatarUrlFromStorage = `${urlData.publicUrl}?t=${Date.now()}`;
       setAvatarUrl(avatarUrlFromStorage);
       
       // Update the pp_link in the users table
       const { error: updateError } = await supabase
         .from('users')
-        .update({ pp_link: avatarUrlFromStorage })
+        .update({ pp_link: urlData.publicUrl })
         .eq('id_users', user.id);
         
       if (updateError) throw updateError;
@@ -407,9 +412,19 @@ const Profile = () => {
                   <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start mb-4">
                     <Avatar className="w-24 h-24">
                       {avatarUrl ? (
-                        <AvatarImage src={avatarUrl} alt={user?.name || "User"} />
+                        <AvatarImage 
+                          src={avatarUrl} 
+                          alt={user?.name || "User"} 
+                          className="object-cover"
+                          onError={(e) => {
+                            console.error("Failed to load avatar image:", avatarUrl);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
                       ) : (
-                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                        <AvatarFallback className="bg-tiro-primary text-white text-xl">
+                          {getUserInitials()}
+                        </AvatarFallback>
                       )}
                     </Avatar>
                     <FileUpload 
@@ -683,9 +698,19 @@ const Profile = () => {
                 <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start mb-4">
                   <Avatar className="w-24 h-24">
                     {avatarUrl ? (
-                      <AvatarImage src={avatarUrl} alt={user?.name || "User"} />
+                      <AvatarImage 
+                        src={avatarUrl} 
+                        alt={user?.name || "User"} 
+                        className="object-cover"
+                        onError={(e) => {
+                          console.error("Failed to load avatar image:", avatarUrl);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
                     ) : (
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      <AvatarFallback className="bg-tiro-primary text-white text-xl">
+                        {getUserInitials()}
+                      </AvatarFallback>
                     )}
                   </Avatar>
                 </div>

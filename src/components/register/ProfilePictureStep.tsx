@@ -41,13 +41,13 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
         
       if (uploadError) throw uploadError;
       
-      // Get the public URL
+      // Get the public URL with cache busting
       const { data: urlData } = supabase
         .storage
         .from('pp')
         .getPublicUrl(filePath);
         
-      const avatarUrlFromStorage = urlData.publicUrl;
+      const avatarUrlFromStorage = `${urlData.publicUrl}?t=${Date.now()}`;
       setAvatarUrl(avatarUrlFromStorage);
       toast.success("Profile picture uploaded successfully");
       
@@ -80,9 +80,19 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
       <div className="flex flex-col items-center gap-4">
         <Avatar className="w-24 h-24">
           {avatarUrl ? (
-            <AvatarImage src={avatarUrl} alt={formData.name || "User"} />
+            <AvatarImage 
+              src={avatarUrl} 
+              alt={formData.name || "User"}
+              className="object-cover"
+              onError={(e) => {
+                console.error("Failed to load avatar image:", avatarUrl);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
           ) : (
-            <AvatarFallback>{getUserInitials()}</AvatarFallback>
+            <AvatarFallback className="bg-tiro-primary text-white text-xl">
+              {getUserInitials()}
+            </AvatarFallback>
           )}
         </Avatar>
         <FileUpload 
