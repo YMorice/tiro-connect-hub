@@ -41,37 +41,34 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
             skills,
             specialty,
             formation,
-            users (
+            users!inner (
               id_users,
               email,
               name,
               surname,
-              role,
-              created_at
+              role
             )
           `);
           
         if (error) throw error;
-        studentsData = data;
+        studentsData = data || [];
       } else {
         // Fetch only students who accepted the proposal for this project
         const { data, error } = await supabase
           .from('proposal_to_student')
           .select(`
-            id_student,
-            students (
+            students!inner (
               id_student,
               biography,
               skills,
               specialty,
               formation,
-              users (
+              users!inner (
                 id_users,
                 email,
                 name,
                 surname,
-                role,
-                created_at
+                role
               )
             )
           `)
@@ -81,6 +78,8 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
         if (error) throw error;
         studentsData = data?.map(proposal => proposal.students) || [];
       }
+      
+      console.log('Fetched students data:', studentsData);
       
       // Transform the data to match the Student type
       const formattedStudents: Student[] = studentsData.map(student => ({
@@ -92,6 +91,7 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
         specialty: student.specialty || undefined,
       }));
       
+      console.log('Formatted students:', formattedStudents);
       setStudents(formattedStudents);
       
       // Extract unique specialties for filter dropdown

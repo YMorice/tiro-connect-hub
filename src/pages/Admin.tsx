@@ -128,13 +128,66 @@ const Admin = () => {
     (project.entrepreneur.companyName && project.entrepreneur.companyName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const handleViewConversation = (projectId: string) => {
-    navigate(`/messages?projectId=${projectId}`);
+  const handleViewConversation = (projectId: string, projectTitle: string) => {
+    console.log('Navigating to conversation for project:', projectId, projectTitle);
+    navigate(`/messages?projectId=${projectId}&projectTitle=${encodeURIComponent(projectTitle)}`);
   };
 
   const handleSelectStudents = (projectId: string, projectTitle: string, status: string) => {
     const mode = status === 'New' ? 'new' : 'proposals';
     navigate(`/student-selection?projectId=${projectId}&projectTitle=${encodeURIComponent(projectTitle)}&mode=${mode}`);
+  };
+
+  const handleConfirmPayment = async (projectId: string) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ status: convertDisplayStatusToDb('Active') })
+        .eq('id_project', projectId);
+        
+      if (error) throw error;
+      
+      toast.success("Payment confirmed. Project is now active.");
+      
+      // Refresh projects list
+      const { data: projectsData, error: fetchError } = await supabase
+        .from('projects')
+        .select(`
+          id_project,
+          title,
+          description,
+          status,
+          created_at,
+          entrepreneurs (
+            id_entrepreneur,
+            company_name,
+            users (
+              name,
+              surname
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+        
+      if (!fetchError && projectsData) {
+        const formattedProjects: Project[] = projectsData.map(project => ({
+          id: project.id_project,
+          title: project.title,
+          description: project.description || undefined,
+          status: convertDbStatusToDisplay(project.status || 'STEP1'),
+          created_at: project.created_at,
+          entrepreneur: {
+            name: `${project.entrepreneurs.users.name} ${project.entrepreneurs.users.surname}`,
+            companyName: project.entrepreneurs.company_name || undefined,
+          }
+        }));
+        
+        setProjects(formattedProjects);
+      }
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      toast.error("Failed to confirm payment");
+    }
   };
 
   if (!user || (user as any).role !== "admin") {
@@ -258,11 +311,11 @@ const Admin = () => {
                             {new Date(project.created_at).toLocaleDateString()}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => handleViewConversation(project.id)}
+                                onClick={() => handleViewConversation(project.id, project.title)}
                                 className="flex items-center"
                               >
                                 <MessageCircle className="h-3 w-3 mr-1" />
@@ -278,6 +331,18 @@ const Admin = () => {
                                 >
                                   <UserPlus className="h-3 w-3 mr-1" />
                                   {project.status === 'New' ? 'Select Students' : 'Select from Accepted'}
+                                </Button>
+                              )}
+                              
+                              {project.status === 'Payment' && (
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  onClick={() => handleConfirmPayment(project.id)}
+                                  className="flex items-center bg-green-600 hover:bg-green-700"
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  Confirm Payment
                                 </Button>
                               )}
                             </div>

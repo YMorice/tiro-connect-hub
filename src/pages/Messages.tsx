@@ -182,12 +182,13 @@ const Messages = () => {
     }
   }, [user]);
   
-  // Extract query parameters for project-specific messaging with improved logic
+  // Extract query parameters for project-specific messaging
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const projectId = queryParams.get('projectId');
+    const projectTitle = queryParams.get('projectTitle');
     
-    console.log('Looking for project:', projectId);
+    console.log('Looking for project:', projectId, 'with title:', projectTitle);
     
     if (projectId) {
       // Force refresh messages to ensure we have the latest data
@@ -214,11 +215,16 @@ const Messages = () => {
           if (isMobile) {
             setSheetOpen(false);
           }
+          
+          // Show success message
+          if (projectTitle) {
+            toast.success(`Opened discussion for: ${decodeURIComponent(projectTitle)}`);
+          }
         } else {
           console.log('No group found for project:', projectId);
           // If no group found, show a toast message
           setTimeout(() => {
-            toast.error("Discussion not found for this project");
+            toast.error("Discussion not found for this project. A discussion will be created when the project is assigned to students.");
           }, 1000);
         }
       };
