@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
-import { Send, FileText, CheckCircle, XCircle, MessageCircle } from "lucide-react";
+import { Send, FileText, CheckCircle, XCircle, MessageCircle, ArrowLeft } from "lucide-react";
 import DocumentUpload from "@/components/DocumentUpload";
 
 const Messages = () => {
@@ -36,6 +36,7 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState("");
   const [reviewComment, setReviewComment] = useState("");
   const [showReviewModal, setShowReviewModal] = useState<string | null>(null);
+  const [showMobileConversations, setShowMobileConversations] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -52,6 +53,7 @@ const Messages = () => {
       const group = messageGroups.find(g => g.projectId === projectId);
       if (group) {
         setSelectedGroupId(group.id);
+        setShowMobileConversations(false); // Show chat on mobile when auto-selecting
       }
     }
   }, [projectId, messageGroups]);
@@ -80,14 +82,24 @@ const Messages = () => {
     setReviewComment("");
   };
 
+  const handleSelectConversation = (groupId: string) => {
+    setSelectedGroupId(groupId);
+    setShowMobileConversations(false); // Hide conversations list on mobile
+  };
+
+  const handleBackToConversations = () => {
+    setShowMobileConversations(true);
+    setSelectedGroupId(null);
+  };
+
   const selectedMessages = selectedGroupId ? getGroupMessages(selectedGroupId) : [];
   const selectedGroup = messageGroups.find(g => g.id === selectedGroupId);
 
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-tiro-purple"></div>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-tiro-primary"></div>
         </div>
       </AppLayout>
     );
@@ -95,25 +107,28 @@ const Messages = () => {
 
   return (
     <AppLayout>
-      <div className="h-[calc(100vh-200px)] flex gap-6">
-        {/* Conversations List */}
-        <div className="w-1/3 border-r pr-6">
+      <div className="h-[calc(100vh-120px)] flex flex-col lg:flex-row gap-4 lg:gap-6 p-4 lg:p-6">
+        {/* Conversations List - Mobile: Conditional, Desktop: Always shown */}
+        <div className={`
+          ${showMobileConversations ? 'block' : 'hidden'} lg:block
+          w-full lg:w-1/3 lg:border-r lg:pr-6
+        `}>
           <h2 className="text-xl font-semibold mb-4">Conversations</h2>
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-[calc(100vh-200px)]">
             <div className="space-y-2">
               {messageGroups.length > 0 ? (
                 messageGroups.map((group) => (
                   <Card
                     key={group.id}
                     className={`cursor-pointer transition-colors hover:bg-gray-50 ${
-                      selectedGroupId === group.id ? "border-tiro-purple bg-purple-50" : ""
+                      selectedGroupId === group.id ? "border-tiro-primary bg-red-50" : ""
                     }`}
-                    onClick={() => setSelectedGroupId(group.id)}
+                    onClick={() => handleSelectConversation(group.id)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Avatar>
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <Avatar className="flex-shrink-0">
                             <AvatarFallback>
                               <MessageCircle className="h-5 w-5" />
                             </AvatarFallback>
@@ -130,7 +145,7 @@ const Messages = () => {
                           </div>
                         </div>
                         {group.unreadCount > 0 && (
-                          <Badge variant="default" className="ml-2">
+                          <Badge variant="default" className="ml-2 flex-shrink-0">
                             {group.unreadCount}
                           </Badge>
                         )}
@@ -149,20 +164,33 @@ const Messages = () => {
           </ScrollArea>
         </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
+        {/* Chat Area - Mobile: Conditional, Desktop: Always shown */}
+        <div className={`
+          ${!showMobileConversations ? 'flex' : 'hidden'} lg:flex
+          flex-1 flex-col min-h-0
+        `}>
           {selectedGroupId ? (
             <>
               {/* Chat Header */}
-              <div className="border-b pb-4 mb-4">
-                <h3 className="text-lg font-semibold">{selectedGroup?.projectTitle}</h3>
-                <p className="text-sm text-muted-foreground">
-                  Project Discussion
-                </p>
+              <div className="border-b pb-4 mb-4 flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="lg:hidden"
+                  onClick={handleBackToConversations}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold truncate">{selectedGroup?.projectTitle}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Project Discussion
+                  </p>
+                </div>
               </div>
 
               {/* Messages */}
-              <ScrollArea className="flex-1 mb-4">
+              <ScrollArea className="flex-1 mb-4 min-h-0">
                 <div className="space-y-4 pr-4">
                   {selectedMessages.map((message) => {
                     const isCurrentUser = message.sender === user?.id;
@@ -177,24 +205,24 @@ const Messages = () => {
                         className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`max-w-[70%] rounded-lg p-3 ${
+                          className={`max-w-[85%] sm:max-w-[70%] rounded-lg p-3 ${
                             isCurrentUser
-                              ? "bg-tiro-purple text-white"
+                              ? "bg-tiro-primary text-white"
                               : "bg-gray-100 text-gray-900"
                           }`}
                         >
-                          <p className="text-sm">{message.content}</p>
+                          <p className="text-sm break-words">{message.content}</p>
                           
                           {/* Document handling */}
                           {message.documentUrl && (
                             <div className="mt-2 p-2 border rounded bg-white/10">
                               <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4" />
-                                <span className="text-xs">{message.documentName}</span>
+                                <FileText className="h-4 w-4 flex-shrink-0" />
+                                <span className="text-xs truncate">{message.documentName}</span>
                               </div>
                               
                               {message.documentType === "final" && (user as any)?.role === "entrepreneur" && !message.documentStatus && (
-                                <div className="mt-2 flex gap-2">
+                                <div className="mt-2 flex flex-col sm:flex-row gap-2">
                                   <Button
                                     size="sm"
                                     onClick={() => handleReviewSubmit(message.id, true)}
@@ -257,21 +285,21 @@ const Messages = () => {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1"
+                  className="flex-1 min-w-0"
                 />
-                <Button type="submit" disabled={!newMessage.trim()}>
+                <Button type="submit" disabled={!newMessage.trim()} className="flex-shrink-0">
                   <Send className="h-4 w-4" />
                 </Button>
               </form>
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
+              <div className="text-center p-4">
                 <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   Select a conversation
                 </h3>
-                <p className="text-gray-500">
+                <p className="text-gray-500 text-sm">
                   Choose a conversation from the list to start messaging
                 </p>
               </div>
@@ -282,7 +310,7 @@ const Messages = () => {
 
       {/* Review Modal */}
       {showReviewModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">
             <CardHeader>
               <CardTitle>Request Changes</CardTitle>

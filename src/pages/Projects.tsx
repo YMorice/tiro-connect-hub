@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { Project } from "@/types";
-import { Check, X } from "lucide-react";
+import { Check, X, Plus } from "lucide-react";
 
 // Helper function to convert database status to display status
 const convertDbStatusToDisplay = (dbStatus: string): string => {
@@ -235,22 +234,27 @@ const Projects = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Projects</h1>
+      <div className="p-4 lg:p-6 space-y-6 min-h-screen">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-2xl lg:text-3xl font-bold">Projects</h1>
           {(user as any)?.role === "entrepreneur" && (
             <Button
               asChild
-              className="bg-tiro-purple hover:bg-tiro-purple/90"
+              className="bg-tiro-primary hover:bg-tiro-primary/90 w-full sm:w-auto"
             >
-              <Link to="/projects/pack-selection">Create New Project</Link>
+              <Link to="/projects/pack-selection" className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Create New Project</span>
+                <span className="sm:hidden">New Project</span>
+              </Link>
             </Button>
           )}
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="w-full sm:w-2/3">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="w-full lg:w-2/3">
             <Input
               placeholder="Search projects..."
               value={searchTerm}
@@ -258,7 +262,7 @@ const Projects = () => {
               className="w-full"
             />
           </div>
-          <div className="w-full sm:w-1/3">
+          <div className="w-full lg:w-1/3">
             <Select
               value={statusFilter}
               onValueChange={handleStatusChange}
@@ -282,65 +286,74 @@ const Projects = () => {
         {/* Projects List */}
         {loading ? (
           <div className="flex justify-center py-10">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-tiro-purple"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-tiro-primary"></div>
           </div>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid gap-4 lg:gap-6">
             {filteredProjects.length > 0 ? (
               filteredProjects.map((project) => (
-                <Card key={project.id}>
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                      <div className="space-y-1 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-bold text-xl">{project.title}</h3>
-                          <span
-                            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                              project.status === "In progress"
-                                ? "bg-green-100 text-green-800"
-                                : project.status === "Active"
-                                ? "bg-blue-100 text-blue-800"
-                                : project.status === "Proposals"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : project.status === "Selection" || project.status === "Payment"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {project.status}
-                          </span>
-                          {project.proposalStatus && (
+                <Card key={project.id} className="overflow-hidden">
+                  <CardContent className="p-4 lg:p-6">
+                    <div className="flex flex-col gap-4">
+                      {/* Project Title and Status */}
+                      <div className="space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                          <h3 className="font-bold text-lg lg:text-xl flex-1 min-w-0 break-words">
+                            {project.title}
+                          </h3>
+                          <div className="flex flex-wrap gap-2">
                             <span
                               className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                project.proposalStatus === "accepted"
+                                project.status === "In progress"
                                   ? "bg-green-100 text-green-800"
-                                  : project.proposalStatus === "declined"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-orange-100 text-orange-800"
+                                  : project.status === "Active"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : project.status === "Proposals"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : project.status === "Selection" || project.status === "Payment"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-gray-100 text-gray-800"
                               }`}
                             >
-                              Proposal: {project.proposalStatus}
+                              {project.status}
                             </span>
-                          )}
-                        </div>
-                        <p className="text-muted-foreground">
-                          {project.description.substring(0, 150)}
-                          {project.description.length > 150 && "..."}
-                        </p>
-                        <div className="flex items-center gap-4 pt-2">
-                          <div className="text-sm">
-                            <span className="text-muted-foreground">Created: </span>
-                            <span>{project.createdAt.toLocaleDateString()}</span>
+                            {project.proposalStatus && (
+                              <span
+                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                                  project.proposalStatus === "accepted"
+                                    ? "bg-green-100 text-green-800"
+                                    : project.proposalStatus === "declined"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-orange-100 text-orange-800"
+                                }`}
+                              >
+                                Proposal: {project.proposalStatus}
+                              </span>
+                            )}
                           </div>
                         </div>
+                        
+                        {/* Description */}
+                        <p className="text-muted-foreground text-sm lg:text-base break-words">
+                          {project.description.substring(0, 200)}
+                          {project.description.length > 200 && "..."}
+                        </p>
+                        
+                        {/* Created Date */}
+                        <div className="text-xs lg:text-sm">
+                          <span className="text-muted-foreground">Created: </span>
+                          <span>{project.createdAt.toLocaleDateString()}</span>
+                        </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-2">
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-2 pt-2">
                         {/* Student proposal buttons */}
                         {(user as any)?.role === "student" && project.proposalStatus === "pending" && (
                           <>
                             <Button
                               onClick={() => handleProposalResponse(project.proposalId!, true)}
-                              className="bg-green-600 hover:bg-green-700"
+                              className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none"
                             >
                               <Check className="h-4 w-4 mr-1" />
                               Accept
@@ -348,13 +361,14 @@ const Projects = () => {
                             <Button
                               onClick={() => handleProposalResponse(project.proposalId!, false)}
                               variant="destructive"
+                              className="flex-1 sm:flex-none"
                             >
                               <X className="h-4 w-4 mr-1" />
                               Decline
                             </Button>
                           </>
                         )}
-                        <Button asChild>
+                        <Button asChild className="flex-1 sm:flex-none">
                           <Link to={`/project/${project.id}`}>View Project</Link>
                         </Button>
                       </div>
@@ -363,9 +377,9 @@ const Projects = () => {
                 </Card>
               ))
             ) : (
-              <div className="text-center p-10">
-                <h3 className="text-lg font-medium">No projects found</h3>
-                <p className="text-muted-foreground">
+              <div className="text-center p-6 lg:p-10">
+                <h3 className="text-base lg:text-lg font-medium mb-2">No projects found</h3>
+                <p className="text-muted-foreground text-sm lg:text-base mb-4">
                   {searchTerm || statusFilter !== "all"
                     ? "Try changing your search filters"
                     : (user as any)?.role === "entrepreneur"
@@ -375,7 +389,7 @@ const Projects = () => {
                     : "Browse open projects to start working"}
                 </p>
                 {(user as any)?.role === "entrepreneur" && !searchTerm && statusFilter === "all" && (
-                  <Button className="mt-4" asChild>
+                  <Button className="w-full sm:w-auto" asChild>
                     <Link to="/projects/pack-selection">Create Project</Link>
                   </Button>
                 )}

@@ -16,6 +16,7 @@ import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -25,7 +26,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Default to closed on mobile
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -81,61 +83,88 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return "U";
   };
 
+  // Close sidebar when route changes on mobile
+  React.useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Mobile overlay */}
-      {sidebarOpen && (
+      {sidebarOpen && isMobile && (
         <div 
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden" 
+          className="fixed inset-0 bg-black/50 z-30" 
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar Toggle Button for Mobile */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="rounded-full bg-background shadow-md"
-        >
-          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-        </Button>
-      </div>
+      {/* Mobile Header with Menu Button */}
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 h-14 bg-background border-b border-sidebar-border z-20 flex items-center px-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="mr-3"
+          >
+            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </Button>
+          <img 
+            src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
+            alt="Tiro Logo" 
+            className="h-6" 
+          />
+        </div>
+      )}
 
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex flex-col transition-transform duration-300 bg-sidebar border-r border-sidebar-border shadow-lg lg:relative lg:transform-none",
+          "fixed inset-y-0 left-0 z-40 flex flex-col transition-transform duration-300 bg-sidebar border-r border-sidebar-border shadow-lg",
           "w-64",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          isMobile 
+            ? sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            : "relative transform-none"
         )}
       >
-        <div className="flex items-center justify-center h-16 border-b border-sidebar-border px-4">
-          <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-8" />
-        </div>
+        {/* Desktop Logo */}
+        {!isMobile && (
+          <div className="flex items-center justify-center h-16 border-b border-sidebar-border px-4">
+            <img 
+              src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
+              alt="Tiro Logo" 
+              className="h-8" 
+            />
+          </div>
+        )}
+
+        {/* Mobile spacing for header */}
+        {isMobile && <div className="h-14" />}
 
         <div className="flex flex-col flex-1 overflow-y-auto">
-          <nav className="flex-1 px-2 py-4 space-y-2">
+          <nav className="flex-1 px-2 py-4 space-y-1">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
-                onClick={() => setSidebarOpen(false)} // Close sidebar on navigation
+                onClick={() => isMobile && setSidebarOpen(false)}
                 className={cn(
-                  "flex items-center p-3 rounded-lg transition-all",
+                  "flex items-center p-3 rounded-lg transition-all text-sm lg:text-base",
                   isActive(item.href)
                     ? "bg-tiro-primary text-white"
                     : "hover:bg-sidebar-accent text-sidebar-foreground"
                 )}
               >
-                <item.icon size={20} />
+                <item.icon size={isMobile ? 18 : 20} />
                 <span className="ml-3">{item.label}</span>
               </Link>
             ))}
           </nav>
         </div>
 
+        {/* User Info and Logout */}
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center min-w-0 flex-1">
@@ -143,14 +172,18 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 {user?.avatar ? (
                   <AvatarImage src={user.avatar} alt={user?.name || "User"} />
                 ) : (
-                  <AvatarFallback className="bg-tiro-primary text-white">
+                  <AvatarFallback className="bg-tiro-primary text-white text-sm">
                     {getUserInitials()}
                   </AvatarFallback>
                 )}
               </Avatar>
               <div className="ml-3 min-w-0 flex-1">
-                <p className="font-medium text-sidebar-foreground truncate">{user?.name || "User"}</p>
-                <p className="text-xs text-muted-foreground capitalize">{user?.role || "user"}</p>
+                <p className="font-medium text-sidebar-foreground truncate text-sm">
+                  {user?.name || "User"}
+                </p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {user?.role || "user"}
+                </p>
               </div>
             </div>
 
@@ -159,16 +192,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               size="icon"
               onClick={handleLogout}
               title="Logout"
-              className="flex-shrink-0 ml-2"
+              className="flex-shrink-0 ml-2 h-8 w-8"
             >
-              <LogOut size={20} />
+              <LogOut size={16} />
             </Button>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto lg:ml-0">
+      <main className={cn(
+        "flex-1 overflow-auto",
+        isMobile ? "pt-14" : ""
+      )}>
         <div className="h-full">
           {children}
         </div>
