@@ -10,6 +10,7 @@ interface Student {
   bio?: string;
   skills?: string[];
   specialty?: string;
+  available?: boolean;
 }
 
 interface UseStudentSelectionProps {
@@ -37,8 +38,8 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
       let studentsData: any[] = [];
       
       if (mode === 'new') {
-        // Fetch all students for new projects
-        console.log('Fetching all students for new project');
+        // Fetch only available students for new projects
+        console.log('Fetching available students for new project');
         const { data, error } = await supabase
           .from('students')
           .select(`
@@ -47,6 +48,7 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
             skills,
             specialty,
             formation,
+            available,
             users!inner (
               id_users,
               email,
@@ -54,7 +56,8 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
               surname,
               role
             )
-          `);
+          `)
+          .eq('available', true);
           
         if (error) {
           console.error('Error fetching students:', error);
@@ -75,6 +78,7 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
               skills,
               specialty,
               formation,
+              available,
               users!inner (
                 id_users,
                 email,
@@ -108,6 +112,7 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
           bio: student.biography || undefined,
           skills: Array.isArray(student.skills) ? student.skills : [],
           specialty: student.specialty || undefined,
+          available: student.available !== false, // Default to true if null/undefined
         };
       });
       

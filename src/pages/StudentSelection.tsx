@@ -146,6 +146,17 @@ const StudentSelection = () => {
           throw proposedError;
         }
         
+        // Set selected students as unavailable
+        const { error: availabilityError } = await supabase
+          .from('students')
+          .update({ available: false })
+          .in('id_student', selectedStudents.map(s => s.id));
+          
+        if (availabilityError) {
+          console.error('Error updating student availability:', availabilityError);
+          throw availabilityError;
+        }
+        
         // Update project status to "Selection" (STEP3)
         console.log('Updating project status to STEP3');
         const { error: statusError } = await supabase
@@ -199,71 +210,77 @@ const StudentSelection = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <button 
-              onClick={() => navigate('/admin')}
-              className="flex items-center text-muted-foreground hover:text-foreground mb-2"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Admin
-            </button>
-            <h1 className="text-3xl font-bold">{pageTitle}</h1>
-            <p className="text-muted-foreground">
-              {projectTitle ? `For project: ${projectTitle}` : pageDescription}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Mode: {mode} | Project ID: {projectId}
-            </p>
+      <div className="h-screen flex flex-col overflow-hidden">
+        <div className="flex-shrink-0 space-y-6 p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <button 
+                onClick={() => navigate('/admin')}
+                className="flex items-center text-muted-foreground hover:text-foreground mb-2"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Back to Admin
+              </button>
+              <h1 className="text-3xl font-bold">{pageTitle}</h1>
+              <p className="text-muted-foreground">
+                {projectTitle ? `For project: ${projectTitle}` : pageDescription}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Mode: {mode} | Project ID: {projectId}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={proposeStudents}
+                disabled={selectedStudents.length === 0 || proposing}
+                className="flex items-center"
+              >
+                <Check className="h-4 w-4 mr-1" />
+                {proposing ? 'Proposing...' : buttonText}
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={proposeStudents}
-              disabled={selectedStudents.length === 0 || proposing}
-              className="flex items-center"
-            >
-              <Check className="h-4 w-4 mr-1" />
-              {proposing ? 'Proposing...' : buttonText}
-            </Button>
-          </div>
+
+          {selectedStudents.length === 0 && (
+            <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-orange-800 font-medium">⚠️ Please select at least one student before proposing</p>
+              <p className="text-orange-600 text-sm mt-1">{warningText}</p>
+            </div>
+          )}
+
+          <StudentSelectionFilters
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            skillFilter={skillFilter}
+            setSkillFilter={setSkillFilter}
+            specialtyFilter={specialtyFilter}
+            setSpecialtyFilter={setSpecialtyFilter}
+            specialties={specialties}
+            onClearFilters={clearFilters}
+          />
         </div>
 
-        {selectedStudents.length === 0 && (
-          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-            <p className="text-orange-800 font-medium">⚠️ Please select at least one student before proposing</p>
-            <p className="text-orange-600 text-sm mt-1">{warningText}</p>
-          </div>
-        )}
-
-        <StudentSelectionFilters
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          skillFilter={skillFilter}
-          setSkillFilter={setSkillFilter}
-          specialtyFilter={specialtyFilter}
-          setSpecialtyFilter={setSpecialtyFilter}
-          specialties={specialties}
-          onClearFilters={clearFilters}
-        />
-
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {mode === 'new' ? `Students (${filteredStudents.length})` : `Students Who Accepted (${filteredStudents.length})`}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <StudentTable
-              students={filteredStudents}
-              selectedStudents={selectedStudents}
-              onToggleSelection={toggleStudentSelection}
-              isStudentSelected={isStudentSelected}
-              loading={loading}
-              emptyMessage={emptyMessage}
-            />
-          </CardContent>
-        </Card>
+        <div className="flex-1 overflow-hidden px-6 pb-6">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="flex-shrink-0">
+              <CardTitle>
+                {mode === 'new' ? `Students (${filteredStudents.length})` : `Students Who Accepted (${filteredStudents.length})`}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-hidden">
+              <div className="h-full">
+                <StudentTable
+                  students={filteredStudents}
+                  selectedStudents={selectedStudents}
+                  onToggleSelection={toggleStudentSelection}
+                  isStudentSelected={isStudentSelected}
+                  loading={loading}
+                  emptyMessage={emptyMessage}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </AppLayout>
   );

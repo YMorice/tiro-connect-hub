@@ -378,11 +378,13 @@ export type Database = {
       students: {
         Row: {
           address: string | null
+          available: boolean | null
           biography: string | null
           formation: string | null
           iban: string | null
           id_student: string
           id_user: string
+          portfolio_grade: number | null
           portfolio_link: string | null
           siret: string | null
           skills: string[] | null
@@ -390,11 +392,13 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          available?: boolean | null
           biography?: string | null
           formation?: string | null
           iban?: string | null
           id_student?: string
           id_user: string
+          portfolio_grade?: number | null
           portfolio_link?: string | null
           siret?: string | null
           skills?: string[] | null
@@ -402,11 +406,13 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          available?: boolean | null
           biography?: string | null
           formation?: string | null
           iban?: string | null
           id_student?: string
           id_user?: string
+          portfolio_grade?: number | null
           portfolio_link?: string | null
           siret?: string | null
           skills?: string[] | null

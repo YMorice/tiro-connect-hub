@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -12,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/sonner";
 import { Users, MessageCircle, Plus, Search, Eye, UserPlus, Filter } from "lucide-react";
+import { StudentAvailabilityService } from "@/services/student-availability-service";
 
 interface Project {
   id: string;
@@ -209,6 +209,62 @@ const Admin = () => {
     }
   };
 
+  const handleCompleteProject = async (projectId: string) => {
+    try {
+      // Update project status to completed
+      const { error: statusError } = await supabase
+        .from('projects')
+        .update({ status: 'completed' })
+        .eq('id_project', projectId);
+        
+      if (statusError) throw statusError;
+      
+      // Handle student availability when project is completed
+      await StudentAvailabilityService.handleProjectCompletion(projectId);
+      
+      toast.success("Project marked as completed. Student is now available for new projects.");
+      
+      // Refresh projects list
+      const { data: projectsData, error: fetchError } = await supabase
+        .from('projects')
+        .select(`
+          id_project,
+          title,
+          description,
+          status,
+          created_at,
+          entrepreneurs (
+            id_entrepreneur,
+            company_name,
+            users (
+              name,
+              surname
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+        
+      if (!fetchError && projectsData) {
+        const formattedProjects: Project[] = projectsData.map(project => ({
+          id: project.id_project,
+          title: project.title,
+          description: project.description || undefined,
+          status: convertDbStatusToDisplay(project.status || 'STEP1'),
+          created_at: project.created_at,
+          entrepreneur: {
+            name: `${project.entrepreneurs.users.name} ${project.entrepreneurs.users.surname}`,
+            companyName: project.entrepreneurs.company_name || undefined,
+          }
+        }));
+        
+        setProjects(formattedProjects);
+      }
+    } catch (error) {
+      console.error('Error completing project:', error);
+      toast.error("Failed to complete project");
+    }
+  };
+
   const clearFilters = () => {
     setSearchQuery("");
     setStatusFilter("");
@@ -390,6 +446,18 @@ const Admin = () => {
                                 >
                                   <Eye className="h-3 w-3 mr-1" />
                                   Confirm Payment
+                                </Button>
+                              )}
+                              
+                              {(project.status === 'Active' || project.status === 'In progress') && (
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  onClick={() => handleCompleteProject(project.id)}
+                                  className="flex items-center bg-purple-600 hover:bg-purple-700"
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  Complete Project
                                 </Button>
                               )}
                             </div>
