@@ -1,532 +1,336 @@
+
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/auth-context";
+import { useMessages } from "@/context/message-context";
 import AppLayout from "@/components/AppLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Check, FileText, Download, Menu, Users } from "lucide-react";
-import { useAuth } from "@/context/auth-context";
-import { useMessages } from "@/context/message-context";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
-import { Message } from "@/types";
+import { Send, FileText, CheckCircle, XCircle, MessageCircle } from "lucide-react";
 import DocumentUpload from "@/components/DocumentUpload";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { supabase } from "@/integrations/supabase/client";
-
-interface ChatMessageProps {
-  message: Message;
-  isCurrentUser: boolean;
-  senderInfo?: {
-    name: string;
-    avatar?: string;
-  };
-}
-
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser, senderInfo }) => {
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  // Special rendering for document messages
-  if (message.documentUrl) {
-    return (
-      <div className={`flex w-full py-2 gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-        {!isCurrentUser && (
-          <Avatar className="h-8 w-8 flex-shrink-0">
-            <AvatarImage src={senderInfo?.avatar} alt={senderInfo?.name} />
-            <AvatarFallback className="text-xs">
-              {senderInfo?.name ? getInitials(senderInfo.name) : "U"}
-            </AvatarFallback>
-          </Avatar>
-        )}
-        <div className={`rounded-lg p-3 text-sm w-fit max-w-[85%] sm:max-w-[75%] ${
-          isCurrentUser 
-            ? 'bg-primary text-primary-foreground' 
-            : 'bg-muted text-muted-foreground'
-        }`}>
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">{message.documentName || "Document"}</p>
-              <p className="break-words">{message.content}</p>
-              <div className="mt-2">
-                <a 
-                  href={message.documentUrl} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className={`flex items-center gap-1 text-xs ${
-                    isCurrentUser 
-                      ? 'text-primary-foreground/80 hover:text-primary-foreground' 
-                      : 'text-blue-600 hover:text-blue-800'
-                  }`}
-                >
-                  <Download className="h-3 w-3" /> View document
-                </a>
-              </div>
-            </div>
-          </div>
-          <div className="mt-1 text-xs opacity-70">
-            {message.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-            {message.read && <Check className="inline h-3 w-3 ml-1" />}
-          </div>
-        </div>
-        {isCurrentUser && (
-          <Avatar className="h-8 w-8 flex-shrink-0">
-            <AvatarImage src={senderInfo?.avatar} alt={senderInfo?.name} />
-            <AvatarFallback className="text-xs">
-              {senderInfo?.name ? getInitials(senderInfo.name) : "U"}
-            </AvatarFallback>
-          </Avatar>
-        )}
-      </div>
-    );
-  }
-
-  // Regular message rendering
-  return (
-    <div className={`flex w-full py-2 gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-      {!isCurrentUser && (
-        <Avatar className="h-8 w-8 flex-shrink-0">
-          <AvatarImage src={senderInfo?.avatar} alt={senderInfo?.name} />
-          <AvatarFallback className="text-xs">
-            {senderInfo?.name ? getInitials(senderInfo.name) : "U"}
-          </AvatarFallback>
-        </Avatar>
-      )}
-      <div className={`rounded-lg p-3 text-sm w-fit max-w-[85%] sm:max-w-[75%] break-words ${
-        isCurrentUser 
-          ? 'bg-primary text-primary-foreground' 
-          : 'bg-muted text-foreground'
-      }`}>
-        {message.content}
-        <div className="mt-1 text-xs opacity-70">
-          {message.createdAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-          {message.read && <Check className="inline h-3 w-3 ml-1" />}
-        </div>
-      </div>
-      {isCurrentUser && (
-        <Avatar className="h-8 w-8 flex-shrink-0">
-          <AvatarImage src={senderInfo?.avatar} alt={senderInfo?.name} />
-          <AvatarFallback className="text-xs">
-            {senderInfo?.name ? getInitials(senderInfo.name) : "U"}
-          </AvatarFallback>
-        </Avatar>
-      )}
-    </div>
-  );
-};
 
 const Messages = () => {
   const { user } = useAuth();
-  const { messageGroups, sendMessage, sendDocumentMessage, markAsRead, getGroupMessages, loading, refreshMessages } = useMessages();
-  const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
-  const [newMessage, setNewMessage] = useState("");
-  const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
-  const [userProfiles, setUserProfiles] = useState<Record<string, { name: string; avatar?: string }>>({});
-  const [allMessageGroups, setAllMessageGroups] = useState<any[]>([]);
-  const [hasShownProjectToast, setHasShownProjectToast] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isMobile = useIsMobile();
-  const [sheetOpen, setSheetOpen] = useState(false);
-
-  // Fetch all message groups for admin users
-  useEffect(() => {
-    if (user?.role === "admin") {
-      const fetchAllGroups = async () => {
-        try {
-          const { data: allGroups, error } = await supabase
-            .from('message_groups')
-            .select(`
-              id_group,
-              id_project,
-              projects (
-                title
-              )
-            `);
-
-          if (error) throw error;
-
-          console.log("All groups for admin:", allGroups);
-
-          // Get unique groups by group ID
-          const uniqueGroups = allGroups?.reduce((acc, group) => {
-            const existingGroup = acc.find(g => g.id_group === group.id_group);
-            if (!existingGroup && group.projects?.title) {
-              acc.push({
-                id_group: group.id_group,
-                id_project: group.id_project,
-                projects: { title: group.projects.title }
-              });
-            }
-            return acc;
-          }, [] as any[]) || [];
-
-          console.log("Processed unique groups:", uniqueGroups);
-          setAllMessageGroups(uniqueGroups);
-        } catch (error) {
-          console.error("Error fetching all groups:", error);
-        }
-      };
-
-      fetchAllGroups();
-    }
-  }, [user]);
+  const { 
+    messageGroups, 
+    loading, 
+    sendMessage, 
+    sendDocumentMessage, 
+    markAsRead, 
+    getGroupMessages,
+    reviewDocument 
+  } = useMessages();
   
-  // Extract query parameters for project-specific messaging
-  useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const projectId = queryParams.get('projectId');
-    const projectTitle = queryParams.get('projectTitle');
-    
-    console.log('Looking for project:', projectId, 'with title:', projectTitle);
-    
-    if (projectId && !hasShownProjectToast) {
-      // Force refresh messages to ensure we have the latest data
-      refreshMessages();
-      
-      // Use a more reliable approach to find and select the correct group
-      const findAndSelectGroup = () => {
-        const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
-        console.log('Available groups for selection:', groupsToUse);
-        
-        const projectGroup = groupsToUse.find(g => {
-          const groupProjectId = g.id_project || g.projectId;
-          console.log('Checking group:', g, 'project ID:', groupProjectId, 'against target:', projectId);
-          return groupProjectId === projectId;
-        });
-        
-        console.log('Found project group:', projectGroup);
-        
-        if (projectGroup) {
-          const groupId = projectGroup.id_group || projectGroup.id;
-          console.log('Setting current group to:', groupId);
-          setCurrentGroupId(groupId);
-          // Close mobile sheet if open
-          if (isMobile) {
-            setSheetOpen(false);
-          }
-          
-          // Show success message only once
-          if (projectTitle && !hasShownProjectToast) {
-            toast.success(`Opened discussion for: ${decodeURIComponent(projectTitle)}`);
-            setHasShownProjectToast(true);
-          }
-        } else {
-          console.log('No group found for project:', projectId);
-          // If no group found, show a toast message only once
-          if (!hasShownProjectToast) {
-            setTimeout(() => {
-              toast.error("Discussion not found for this project. A discussion will be created when the project is assigned to students.");
-              setHasShownProjectToast(true);
-            }, 1000);
-          }
-        }
-      };
-      
-      // Try immediately, then with delays to handle async loading
-      findAndSelectGroup();
-      const timer1 = setTimeout(findAndSelectGroup, 500);
-      const timer2 = setTimeout(findAndSelectGroup, 1500);
-      
-      return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-      };
-    }
-  }, [location.search, messageGroups, allMessageGroups, user, refreshMessages, isMobile, hasShownProjectToast]);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const projectId = searchParams.get("projectId");
+  
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
+  const [showReviewModal, setShowReviewModal] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Reset toast flag when URL changes
-  useEffect(() => {
-    setHasShownProjectToast(false);
-  }, [location.search]);
-
-  // Auto-select first group if none selected and no project ID in URL
-  useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const projectId = queryParams.get('projectId');
-    
-    if (!projectId && !currentGroupId) {
-      const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
-      if (groupsToUse.length > 0) {
-        const firstGroupId = groupsToUse[0].id_group || groupsToUse[0].id;
-        console.log('Auto-selecting first group:', firstGroupId);
-        setCurrentGroupId(firstGroupId);
-      }
-    }
-  }, [currentGroupId, messageGroups, allMessageGroups, user, location.search]);
-
-  // Filter messages based on current group and fetch user profiles
-  useEffect(() => {
-    if (!currentGroupId || !user) return;
-
-    const groupMessages = getGroupMessages(currentGroupId);
-    setFilteredMessages(groupMessages);
-    
-    // Mark unread messages as read
-    groupMessages.forEach(message => {
-      if (message.sender !== user.id && !message.read) {
-        markAsRead(message.id);
-      }
-    });
-
-    // Fetch user profiles for message senders
-    const fetchUserProfiles = async () => {
-      const uniqueSenderIds = [...new Set(groupMessages.map(m => m.sender))];
-      const profiles: Record<string, { name: string; avatar?: string }> = {};
-      
-      for (const senderId of uniqueSenderIds) {
-        try {
-          const { data: userData, error } = await supabase
-            .from('users')
-            .select('name, surname, pp_link')
-            .eq('id_users', senderId)
-            .single();
-          
-          if (userData && !error) {
-            profiles[senderId] = {
-              name: `${userData.name} ${userData.surname}`.trim(),
-              avatar: userData.pp_link || undefined
-            };
-          }
-        } catch (error) {
-          console.error('Error fetching user profile:', error);
-          profiles[senderId] = { name: 'Unknown User' };
-        }
-      }
-      
-      setUserProfiles(profiles);
-    };
-
-    if (groupMessages.length > 0) {
-      fetchUserProfiles();
-    }
-  }, [currentGroupId, getGroupMessages, user, markAsRead]);
-
-  useEffect(() => {
-    // Scroll to bottom whenever messages change
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [filteredMessages]);
+  };
 
-  const handleSendMessage = () => {
-    if (!user || !currentGroupId || !newMessage.trim()) return;
+  useEffect(() => {
+    scrollToBottom();
+  }, [selectedGroupId, getGroupMessages(selectedGroupId || "")]);
 
-    sendMessage(currentGroupId, newMessage);
+  // Auto-select group if projectId is provided in URL
+  useEffect(() => {
+    if (projectId && messageGroups.length > 0) {
+      const group = messageGroups.find(g => g.projectId === projectId);
+      if (group) {
+        setSelectedGroupId(group.id);
+        // Show toast only once when the group is found and selected
+        const hasShownToast = sessionStorage.getItem(`toast-shown-${group.id}`);
+        if (!hasShownToast) {
+          toast.success(`Opened discussion for: ${group.projectTitle}`);
+          sessionStorage.setItem(`toast-shown-${group.id}`, 'true');
+        }
+      }
+    }
+  }, [projectId, messageGroups]);
+
+  // Clear toast flag when leaving the page
+  useEffect(() => {
+    return () => {
+      if (selectedGroupId) {
+        sessionStorage.removeItem(`toast-shown-${selectedGroupId}`);
+      }
+    };
+  }, [selectedGroupId]);
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedGroupId || !newMessage.trim()) return;
+    
+    sendMessage(selectedGroupId, newMessage);
     setNewMessage("");
   };
 
-  const handleDocumentSubmit = (documentDetails: {
-    documentUrl: string;
-    documentName: string;
-    documentType: "proposal" | "final" | "regular";
-  }) => {
-    if (!user || !currentGroupId) return;
+  const handleDocumentUpload = (documentUrl: string, fileName: string, documentType: "proposal" | "final" | "regular") => {
+    if (!selectedGroupId) return;
     
-    sendDocumentMessage(currentGroupId, documentDetails);
-    toast.success("Document shared");
+    sendDocumentMessage(selectedGroupId, {
+      documentUrl,
+      documentName: fileName,
+      documentType
+    });
   };
 
-  const handleGroupSelect = (groupId: string) => {
-    console.log('Manually selecting group:', groupId);
-    setCurrentGroupId(groupId);
-    if (isMobile) {
-      setSheetOpen(false);
-    }
-    // Clear URL parameters when manually selecting a group
-    navigate('/messages', { replace: true });
+  const handleReviewSubmit = (messageId: string, isApproved: boolean) => {
+    reviewDocument(messageId, isApproved, reviewComment);
+    setShowReviewModal(null);
+    setReviewComment("");
   };
 
-  const groupsToUse = user?.role === "admin" ? allMessageGroups : messageGroups;
-  const currentGroup = groupsToUse.find(g => (g.id_group || g.id) === currentGroupId);
+  const selectedMessages = selectedGroupId ? getGroupMessages(selectedGroupId) : [];
+  const selectedGroup = messageGroups.find(g => g.id === selectedGroupId);
 
-  const GroupsList = () => (
-    <div className="h-full">
-      <CardHeader className="p-4">
-        <CardTitle className="text-lg">Message Groups</CardTitle>
-        <CardDescription>
-          {user?.role === "admin" ? "All project discussions" : "Your project discussions"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="p-0">
-        <ScrollArea className="h-[300px] md:h-[calc(100vh-240px)] w-full">
-          <div className="p-2 space-y-1">
-            {groupsToUse.length > 0 ? (
-              groupsToUse.map((group) => {
-                const groupId = group.id_group || group.id;
-                const projectTitle = group.projects?.title || group.projectTitle || "Unknown Project";
-                
-                return (
-                  <Button
-                    key={groupId}
-                    variant="ghost"
-                    className={`w-full justify-start text-left p-3 h-auto ${
-                      currentGroupId === groupId ? 'bg-muted' : ''
-                    }`}
-                    onClick={() => handleGroupSelect(groupId)}
-                  >
-                    <div className="flex items-center gap-3 w-full">
-                      <div className="flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-blue-600" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium truncate">
-                            {projectTitle}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Button>
-                );
-              })
-            ) : (
-              <div className="px-4 py-2 text-sm text-muted-foreground">
-                {loading ? "Loading groups..." : "No message groups yet"}
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-      </CardContent>
-    </div>
-  );
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-tiro-purple"></div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
-      <div className="container max-w-6xl mx-auto py-2 px-2 sm:py-6 sm:px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
-          {/* Mobile Groups List as Slide-over */}
-          {isMobile && (
-            <div className="md:hidden mb-2">
-              <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="w-full flex justify-between items-center">
-                    <span>
-                      {currentGroup 
-                        ? (currentGroup.projects?.title || currentGroup.projectTitle || "Unknown Project")
-                        : "Select Group"}
-                    </span>
-                    <Menu className="h-4 w-4" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[80%] sm:w-[380px] p-0">
-                  <Card className="h-full border-0">
-                    <GroupsList />
+      <div className="h-[calc(100vh-200px)] flex gap-6">
+        {/* Conversations List */}
+        <div className="w-1/3 border-r pr-6">
+          <h2 className="text-xl font-semibold mb-4">Conversations</h2>
+          <ScrollArea className="h-full">
+            <div className="space-y-2">
+              {messageGroups.length > 0 ? (
+                messageGroups.map((group) => (
+                  <Card
+                    key={group.id}
+                    className={`cursor-pointer transition-colors hover:bg-gray-50 ${
+                      selectedGroupId === group.id ? "border-tiro-purple bg-purple-50" : ""
+                    }`}
+                    onClick={() => setSelectedGroupId(group.id)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarFallback>
+                              <MessageCircle className="h-5 w-5" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm truncate">
+                              {group.projectTitle}
+                            </h4>
+                            {group.lastMessage && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                {group.lastMessage.content}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {group.unreadCount > 0 && (
+                          <Badge variant="default" className="ml-2">
+                            {group.unreadCount}
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
                   </Card>
-                </SheetContent>
-              </Sheet>
+                ))
+              ) : (
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-muted-foreground">No conversations yet</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col">
+          {selectedGroupId ? (
+            <>
+              {/* Chat Header */}
+              <div className="border-b pb-4 mb-4">
+                <h3 className="text-lg font-semibold">{selectedGroup?.projectTitle}</h3>
+                <p className="text-sm text-muted-foreground">
+                  Project Discussion
+                </p>
+              </div>
+
+              {/* Messages */}
+              <ScrollArea className="flex-1 mb-4">
+                <div className="space-y-4 pr-4">
+                  {selectedMessages.map((message) => {
+                    const isCurrentUser = message.sender === user?.id;
+                    
+                    if (!message.read && !isCurrentUser) {
+                      markAsRead(message.id);
+                    }
+
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
+                      >
+                        <div
+                          className={`max-w-[70%] rounded-lg p-3 ${
+                            isCurrentUser
+                              ? "bg-tiro-purple text-white"
+                              : "bg-gray-100 text-gray-900"
+                          }`}
+                        >
+                          <p className="text-sm">{message.content}</p>
+                          
+                          {/* Document handling */}
+                          {message.documentUrl && (
+                            <div className="mt-2 p-2 border rounded bg-white/10">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4" />
+                                <span className="text-xs">{message.documentName}</span>
+                              </div>
+                              
+                              {message.documentType === "final" && (user as any)?.role === "entrepreneur" && !message.documentStatus && (
+                                <div className="mt-2 flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleReviewSubmit(message.id, true)}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => setShowReviewModal(message.id)}
+                                  >
+                                    <XCircle className="h-3 w-3 mr-1" />
+                                    Request Changes
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              {message.documentStatus && (
+                                <div className="mt-1">
+                                  <Badge
+                                    variant={message.documentStatus === "approved" ? "default" : "destructive"}
+                                    className="text-xs"
+                                  >
+                                    {message.documentStatus === "approved" ? "Approved" : "Changes Requested"}
+                                  </Badge>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
+                          <p className="text-xs opacity-70 mt-1">
+                            {message.createdAt.toLocaleTimeString([], { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
+
+              {/* Document Upload */}
+              {(user as any)?.role === "student" && (
+                <div className="mb-4">
+                  <DocumentUpload onUpload={handleDocumentUpload} />
+                </div>
+              )}
+
+              {/* Message Input */}
+              <form onSubmit={handleSendMessage} className="flex gap-2">
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type your message..."
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={!newMessage.trim()}>
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Select a conversation
+                </h3>
+                <p className="text-gray-500">
+                  Choose a conversation from the list to start messaging
+                </p>
+              </div>
             </div>
           )}
-
-          {/* Desktop Groups List */}
-          <div className="hidden md:block md:col-span-1">
-            <Card className="h-full">
-              <GroupsList />
-            </Card>
-          </div>
-
-          {/* Messages */}
-          <div className="md:col-span-3">
-            <Card className="h-full">
-              <CardHeader className="p-3 sm:p-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  {currentGroup && (
-                    <>
-                      <Users className="h-5 w-5 text-blue-600" />
-                      {currentGroup.projects?.title || currentGroup.projectTitle || "Unknown Project"}
-                    </>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  {currentGroup 
-                    ? "Project group discussion" 
-                    : "Select a group to start messaging"
-                  }
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="h-[calc(100vh-240px)] flex flex-col p-3 sm:p-4">
-                {currentGroup ? (
-                  <>
-                    <ScrollArea className="flex-grow mb-4 pr-2">
-                      <div className="space-y-2">
-                        {filteredMessages.length > 0 ? (
-                          filteredMessages.map((message) => (
-                            <ChatMessage
-                              key={message.id}
-                              message={message}
-                              isCurrentUser={message.sender === user?.id}
-                              senderInfo={userProfiles[message.sender]}
-                            />
-                          ))
-                        ) : (
-                          <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">
-                            No messages yet. Start the conversation!
-                          </div>
-                        )}
-                        <div ref={messagesEndRef} />
-                      </div>
-                    </ScrollArea>
-
-                    <div className="flex flex-col space-y-2 mt-auto">
-                      {/* Document upload button */}
-                      <div className="flex justify-end">
-                        <DocumentUpload
-                          onDocumentSubmit={handleDocumentSubmit}
-                          projectId={currentGroup.id_project || currentGroup.projectId}
-                        />
-                      </div>
-                      
-                      {/* Text message input */}
-                      <div className="flex items-center space-x-2">
-                        <Textarea
-                          placeholder="Type your message here..."
-                          className="flex-grow min-h-[60px] max-h-[120px]"
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendMessage();
-                            }
-                          }}
-                        />
-                        <Button onClick={handleSendMessage} className="h-[60px]">
-                          <Send className="h-5 w-5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <p className="text-muted-foreground">
-                        {isMobile 
-                          ? "Tap 'Select Group' above to choose a group"
-                          : "Select a message group to start messaging"}
-                      </p>
-                      {groupsToUse.length === 0 && !loading && (
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          Message groups will appear when projects are created
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Request Changes</CardTitle>
+              <CardDescription>
+                Provide feedback on what needs to be improved
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="review-comment">Feedback</Label>
+                <Textarea
+                  id="review-comment"
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="Explain what changes are needed..."
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowReviewModal(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => handleReviewSubmit(showReviewModal, false)}
+                  disabled={!reviewComment.trim()}
+                >
+                  Send Feedback
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </AppLayout>
   );
 };

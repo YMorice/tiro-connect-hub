@@ -355,7 +355,7 @@ const Projects = () => {
                           </>
                         )}
                         <Button asChild>
-                          <Link to={`/projects/${project.id}`}>View Project</Link>
+                          <Link to={`/project/${project.id}`}>View Project</Link>
                         </Button>
                       </div>
                     </div>
