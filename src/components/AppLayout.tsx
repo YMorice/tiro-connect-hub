@@ -91,7 +91,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   }, [location.pathname, isMobile]);
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="min-h-screen h-screen flex overflow-hidden bg-background">
       {/* Mobile overlay */}
       {sidebarOpen && isMobile && (
         <div 
@@ -131,7 +131,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       >
         {/* Desktop Logo */}
         {!isMobile && (
-          <div className="flex items-center justify-center h-16 border-b border-sidebar-border px-4">
+          <div className="flex items-center justify-center h-16 border-b border-sidebar-border px-4 flex-shrink-0">
             <img 
               src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
               alt="Tiro Logo" 
@@ -141,7 +141,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         )}
 
         {/* Mobile spacing for header */}
-        {isMobile && <div className="h-14" />}
+        {isMobile && <div className="h-14 flex-shrink-0" />}
 
         <div className="flex flex-col flex-1 overflow-y-auto">
           <nav className="flex-1 px-2 py-4 space-y-1">
@@ -165,7 +165,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
 
         {/* User Info and Logout */}
-        <div className="p-4 border-t border-sidebar-border">
+        <div className="p-4 border-t border-sidebar-border flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center min-w-0 flex-1">
               <Avatar className="w-8 h-8 flex-shrink-0">
@@ -202,10 +202,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 overflow-auto",
+        "flex-1 overflow-auto min-w-0",
         isMobile ? "pt-14" : ""
       )}>
-        <div className="h-full">
+        <div className="h-full w-full">
           {children}
         </div>
       </main>
