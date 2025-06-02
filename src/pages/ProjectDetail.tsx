@@ -85,6 +85,16 @@ const ProjectDetail = () => {
     }
   };
 
+  const handleDocumentSubmit = (documentDetails: {
+    documentUrl: string;
+    documentName: string;
+    documentType: "proposal" | "final" | "regular";
+  }) => {
+    console.log("Document uploaded:", documentDetails);
+    toast.success(`Document "${documentDetails.documentName}" uploaded successfully`);
+    // You can add additional logic here if needed, like refreshing document list
+  };
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -198,7 +208,10 @@ const ProjectDetail = () => {
 
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-3">Project Documents</h3>
-            <DocumentUpload projectId={project.id_project} />
+            <DocumentUpload 
+              projectId={project.id_project} 
+              onDocumentSubmit={handleDocumentSubmit}
+            />
           </div>
 
           {project.student && project.selected_student && (
