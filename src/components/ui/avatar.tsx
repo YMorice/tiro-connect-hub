@@ -27,6 +27,15 @@ const AvatarImage = React.forwardRef<
     ref={ref}
     className={cn("aspect-square h-full w-full object-cover", className)}
     {...props}
+    onLoad={(e) => {
+      console.log("Avatar image loaded successfully:", props.src);
+      e.currentTarget.style.opacity = '1';
+    }}
+    onError={(e) => {
+      console.error("Failed to load avatar image:", props.src);
+      e.currentTarget.style.display = 'none';
+    }}
+    style={{ opacity: 0, transition: 'opacity 0.3s ease' }}
   />
 ))
 AvatarImage.displayName = AvatarPrimitive.Image.displayName
