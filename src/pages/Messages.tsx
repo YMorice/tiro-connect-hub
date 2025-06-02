@@ -52,24 +52,9 @@ const Messages = () => {
       const group = messageGroups.find(g => g.projectId === projectId);
       if (group) {
         setSelectedGroupId(group.id);
-        // Show toast only once when the group is found and selected
-        const hasShownToast = sessionStorage.getItem(`toast-shown-${group.id}`);
-        if (!hasShownToast) {
-          toast.success(`Opened discussion for: ${group.projectTitle}`);
-          sessionStorage.setItem(`toast-shown-${group.id}`, 'true');
-        }
       }
     }
   }, [projectId, messageGroups]);
-
-  // Clear toast flag when leaving the page
-  useEffect(() => {
-    return () => {
-      if (selectedGroupId) {
-        sessionStorage.removeItem(`toast-shown-${selectedGroupId}`);
-      }
-    };
-  }, [selectedGroupId]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,14 +64,14 @@ const Messages = () => {
     setNewMessage("");
   };
 
-  const handleDocumentUpload = (documentUrl: string, fileName: string, documentType: "proposal" | "final" | "regular") => {
+  const handleDocumentSubmit = (documentDetails: {
+    documentUrl: string;
+    documentName: string;
+    documentType: "proposal" | "final" | "regular";
+  }) => {
     if (!selectedGroupId) return;
     
-    sendDocumentMessage(selectedGroupId, {
-      documentUrl,
-      documentName: fileName,
-      documentType
-    });
+    sendDocumentMessage(selectedGroupId, documentDetails);
   };
 
   const handleReviewSubmit = (messageId: string, isApproved: boolean) => {
@@ -259,7 +244,10 @@ const Messages = () => {
               {/* Document Upload */}
               {(user as any)?.role === "student" && (
                 <div className="mb-4">
-                  <DocumentUpload onUpload={handleDocumentUpload} />
+                  <DocumentUpload 
+                    onDocumentSubmit={handleDocumentSubmit} 
+                    projectId={selectedGroup?.projectId || null}
+                  />
                 </div>
               )}
 
