@@ -91,7 +91,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   }, [location.pathname, isMobile]);
 
   return (
-    <div className="min-h-screen h-screen flex overflow-hidden bg-background">
+    <div className="h-screen w-screen flex overflow-hidden bg-background">
       {/* Mobile overlay */}
       {sidebarOpen && isMobile && (
         <div 
@@ -202,10 +202,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 flex flex-col min-w-0 min-h-0",
-        isMobile ? "pt-14" : ""
+        "flex-1 flex flex-col h-full overflow-hidden",
+        isMobile ? "pt-14" : "",
+        !isMobile ? "ml-0" : ""
       )}>
-        <div className="flex-1 overflow-auto w-full">
+        <div className="flex-1 h-full overflow-auto">
           {children}
         </div>
       </main>

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Message } from "../types";
 import { useAuth } from "./auth-context";
@@ -13,6 +12,7 @@ interface MessageGroup {
   projectTitle?: string;
   lastMessage?: Message;
   unreadCount: number;
+  lastMessageTime?: Date;
 }
 
 interface MessageContextType {
@@ -164,8 +164,16 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
           projectId: projectInfo?.projectId || undefined,
           projectTitle: projectInfo?.projectTitle || "Direct Messages",
           lastMessage,
-          unreadCount
+          unreadCount,
+          lastMessageTime: lastMessage?.createdAt || new Date(0)
         };
+      });
+
+      // Sort groups by last message time (most recent first)
+      transformedGroups.sort((a, b) => {
+        const timeA = a.lastMessageTime?.getTime() || 0;
+        const timeB = b.lastMessageTime?.getTime() || 0;
+        return timeB - timeA;
       });
 
       console.log("Transformed groups:", transformedGroups.length);
@@ -220,14 +228,21 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       setMessages(prevMessages => [...prevMessages, newMessage]);
       
-      // Update the group's last message
-      setMessageGroups(prevGroups => 
-        prevGroups.map(group => 
+      // Update the group's last message and move it to top
+      setMessageGroups(prevGroups => {
+        const updatedGroups = prevGroups.map(group => 
           group.id === groupId 
-            ? { ...group, lastMessage: newMessage }
+            ? { ...group, lastMessage: newMessage, lastMessageTime: newMessage.createdAt }
             : group
-        )
-      );
+        );
+        
+        // Sort by last message time
+        return updatedGroups.sort((a, b) => {
+          const timeA = a.lastMessageTime?.getTime() || 0;
+          const timeB = b.lastMessageTime?.getTime() || 0;
+          return timeB - timeA;
+        });
+      });
       
       // Refresh messages to ensure consistency
       setTimeout(() => {
@@ -345,10 +360,19 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
           return message;
         })
       );
+
+      // Update unread count in groups
+      setMessageGroups(prevGroups =>
+        prevGroups.map(group => {
+          const groupMessages = messages.filter(m => m.groupId === group.id);
+          const unreadCount = groupMessages.filter(m => m.sender !== user?.id && !m.read).length;
+          return { ...group, unreadCount: Math.max(0, unreadCount - 1) };
+        })
+      );
     } catch (error) {
       console.error("Error marking message as read:", error);
     }
-  }, []);
+  }, [messages, user?.id]);
 
   const reviewDocument = useCallback((messageId: string, isApproved: boolean, comment?: string) => {
     if (!user || (user as any).role !== "entrepreneur") return;
