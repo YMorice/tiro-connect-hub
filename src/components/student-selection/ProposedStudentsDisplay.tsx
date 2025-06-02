@@ -144,33 +144,23 @@ export const ProposedStudentsDisplay = ({
         
       if (updateError) throw updateError;
       
-      // Handle student availability (set selected student as unavailable, others as available)
-      const { error: availabilityError } = await supabase.rpc('handle_student_selection', {
-        project_id: projectId,
-        selected_student_id: studentId
-      });
-      
-      if (availabilityError) {
-        console.warn('Student availability function not found, handling manually');
+      // Set all proposed students as available except the selected one
+      const otherStudentIds = proposedStudents
+        .filter(s => s.id !== studentId)
+        .map(s => s.id);
         
-        // Set all proposed students as available except the selected one
-        const otherStudentIds = proposedStudents
-          .filter(s => s.id !== studentId)
-          .map(s => s.id);
-          
-        if (otherStudentIds.length > 0) {
-          await supabase
-            .from('students')
-            .update({ available: true })
-            .in('id_student', otherStudentIds);
-        }
-        
-        // Set selected student as unavailable
+      if (otherStudentIds.length > 0) {
         await supabase
           .from('students')
-          .update({ available: false })
-          .eq('id_student', studentId);
+          .update({ available: true })
+          .in('id_student', otherStudentIds);
       }
+      
+      // Set selected student as unavailable
+      await supabase
+        .from('students')
+        .update({ available: false })
+        .eq('id_student', studentId);
       
       toast.success("Student selected successfully! Project status updated to Payment.");
       
