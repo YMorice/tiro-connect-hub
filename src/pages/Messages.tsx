@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
@@ -133,6 +132,7 @@ const Messages = () => {
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
   const [userProfiles, setUserProfiles] = useState<Record<string, { name: string; avatar?: string }>>({});
   const [allMessageGroups, setAllMessageGroups] = useState<any[]>([]);
+  const [hasShownProjectToast, setHasShownProjectToast] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -190,7 +190,7 @@ const Messages = () => {
     
     console.log('Looking for project:', projectId, 'with title:', projectTitle);
     
-    if (projectId) {
+    if (projectId && !hasShownProjectToast) {
       // Force refresh messages to ensure we have the latest data
       refreshMessages();
       
@@ -216,16 +216,20 @@ const Messages = () => {
             setSheetOpen(false);
           }
           
-          // Show success message
-          if (projectTitle) {
+          // Show success message only once
+          if (projectTitle && !hasShownProjectToast) {
             toast.success(`Opened discussion for: ${decodeURIComponent(projectTitle)}`);
+            setHasShownProjectToast(true);
           }
         } else {
           console.log('No group found for project:', projectId);
-          // If no group found, show a toast message
-          setTimeout(() => {
-            toast.error("Discussion not found for this project. A discussion will be created when the project is assigned to students.");
-          }, 1000);
+          // If no group found, show a toast message only once
+          if (!hasShownProjectToast) {
+            setTimeout(() => {
+              toast.error("Discussion not found for this project. A discussion will be created when the project is assigned to students.");
+              setHasShownProjectToast(true);
+            }, 1000);
+          }
         }
       };
       
@@ -239,7 +243,12 @@ const Messages = () => {
         clearTimeout(timer2);
       };
     }
-  }, [location.search, messageGroups, allMessageGroups, user, refreshMessages, isMobile]);
+  }, [location.search, messageGroups, allMessageGroups, user, refreshMessages, isMobile, hasShownProjectToast]);
+
+  // Reset toast flag when URL changes
+  useEffect(() => {
+    setHasShownProjectToast(false);
+  }, [location.search]);
 
   // Auto-select first group if none selected and no project ID in URL
   useEffect(() => {

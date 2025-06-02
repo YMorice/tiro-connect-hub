@@ -1,48 +1,44 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/auth-context";
 import { ProjectProvider } from "@/context/project-context";
 import { MessageProvider } from "@/context/message-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
-
-// Pages
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ResetPassword from "./pages/ResetPassword";
-import Dashboard from "./pages/Dashboard";
-import Projects from "./pages/Projects";
-import ProjectDetail from "./pages/ProjectDetail";
-import PackSelection from "./pages/PackSelection";
-import NewProject from "./pages/NewProject";
-import Messages from "./pages/Messages";
-import Profile from "./pages/Profile";
-import NotFound from "./pages/NotFound";
-import Admin from "./pages/Admin";
-import StudentSelection from "./pages/StudentSelection";
-import CreateAdminAccount from "./pages/CreateAdminAccount";
+import Index from "@/pages/Index";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import ResetPassword from "@/pages/ResetPassword";
+import Dashboard from "@/pages/Dashboard";
+import Projects from "@/pages/Projects";
+import ProjectDetail from "@/pages/ProjectDetail";
+import Profile from "@/pages/Profile";
+import Messages from "@/pages/Messages";
+import Admin from "@/pages/Admin";
+import StudentSelection from "@/pages/StudentSelection";
+import NewProject from "@/pages/NewProject";
+import PackSelection from "@/pages/PackSelection";
+import AcceptedStudents from "@/pages/AcceptedStudents";
+import CreateAdminAccount from "@/pages/CreateAdminAccount";
+import NotFound from "@/pages/NotFound";
+import "./App.css";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
           <ProjectProvider>
             <MessageProvider>
               <Routes>
-                <Route path="/" element={<Login />} />
+                <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/admin-setup" element={<CreateAdminAccount />} />
-                
+                <Route path="/create-admin" element={<CreateAdminAccount />} />
                 <Route
                   path="/dashboard"
                   element={
@@ -51,7 +47,6 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                
                 <Route
                   path="/projects"
                   element={
@@ -60,45 +55,14 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                
-                {/* --- FIXED-PATH PROJECT ROUTES FIRST --- */}
                 <Route
-                  path="/projects/pack-selection"
-                  element={
-                    <ProtectedRoute requiredRole="entrepreneur">
-                      <PackSelection />
-                    </ProtectedRoute>
-                  }
-                />
-                
-                <Route
-                  path="/projects/new"
-                  element={
-                    <ProtectedRoute requiredRole="entrepreneur">
-                      <NewProject />
-                    </ProtectedRoute>
-                  }
-                />
-                
-                {/* --- DYNAMIC ROUTE LAST --- */}
-                <Route
-                  path="/projects/:id"
+                  path="/project/:id"
                   element={
                     <ProtectedRoute>
                       <ProjectDetail />
                     </ProtectedRoute>
                   }
                 />
-                
-                <Route
-                  path="/messages"
-                  element={
-                    <ProtectedRoute>
-                      <Messages />
-                    </ProtectedRoute>
-                  }
-                />
-                
                 <Route
                   path="/profile"
                   element={
@@ -107,33 +71,63 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-
+                <Route
+                  path="/messages"
+                  element={
+                    <ProtectedRoute>
+                      <Messages />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/admin"
                   element={
-                    <ProtectedRoute requiredRole="admin">
+                    <ProtectedRoute>
                       <Admin />
                     </ProtectedRoute>
                   }
                 />
-                
                 <Route
-                  path="/admin/student-selection"
+                  path="/student-selection"
                   element={
-                    <ProtectedRoute requiredRole="admin">
+                    <ProtectedRoute>
                       <StudentSelection />
                     </ProtectedRoute>
                   }
                 />
-                
+                <Route
+                  path="/new-project"
+                  element={
+                    <ProtectedRoute>
+                      <NewProject />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/pack-selection"
+                  element={
+                    <ProtectedRoute>
+                      <PackSelection />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/accepted-students"
+                  element={
+                    <ProtectedRoute>
+                      <AcceptedStudents />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <Toaster />
             </MessageProvider>
           </ProjectProvider>
         </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </Router>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
