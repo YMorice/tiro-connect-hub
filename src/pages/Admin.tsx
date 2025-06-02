@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -278,48 +279,48 @@ const Admin = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="space-y-4 p-4">
+        <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage projects and student assignments</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Admin Dashboard</h1>
+            <p className="text-muted-foreground text-sm">Manage projects and student assignments</p>
           </div>
-          <Button onClick={() => navigate('/new-project')} className="flex items-center">
+          <Button onClick={() => navigate('/new-project')} className="flex items-center w-fit text-sm h-9" size="sm">
             <Plus className="h-4 w-4 mr-1" />
             Create New Project
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
               <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{projects.length}</div>
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl font-bold">{projects.length}</div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
               <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
               <MessageCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl font-bold">
                 {projects.filter(p => p.status === 'Active' || p.status === 'In progress').length}
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
               <CardTitle className="text-sm font-medium">Pending Projects</CardTitle>
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl font-bold">
                 {projects.filter(p => p.status === 'New' || p.status === 'Proposals' || p.status === 'Selection').length}
               </div>
             </CardContent>
@@ -327,23 +328,23 @@ const Admin = () => {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>All Projects</CardTitle>
-            <CardDescription>Manage project statuses and student assignments</CardDescription>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="relative flex-1 max-w-md">
+          <CardHeader className="p-4">
+            <CardTitle className="text-lg">All Projects</CardTitle>
+            <CardDescription className="text-sm">Manage project statuses and student assignments</CardDescription>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
+                  className="pl-8 text-sm h-9"
                 />
               </div>
               <div className="flex items-center gap-2">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[150px] h-9 text-sm">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -356,7 +357,7 @@ const Admin = () => {
                   </SelectContent>
                 </Select>
                 {(searchQuery || statusFilter) && (
-                  <Button variant="outline" size="sm" onClick={clearFilters}>
+                  <Button variant="outline" size="sm" onClick={clearFilters} className="h-9 text-sm">
                     <Filter className="h-4 w-4 mr-1" />
                     Clear
                   </Button>
@@ -364,21 +365,21 @@ const Admin = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-0">
             {loading ? (
               <div className="flex justify-center py-6">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
               </div>
             ) : (
-              <div className="border rounded-md">
+              <div className="border rounded-md overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Project Title</TableHead>
-                      <TableHead className="hidden md:table-cell">Entrepreneur</TableHead>
-                      <TableHead className="hidden sm:table-cell">Status</TableHead>
-                      <TableHead className="hidden lg:table-cell">Created</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead className="text-sm">Project Title</TableHead>
+                      <TableHead className="hidden md:table-cell text-sm">Entrepreneur</TableHead>
+                      <TableHead className="hidden sm:table-cell text-sm">Status</TableHead>
+                      <TableHead className="hidden lg:table-cell text-sm">Created</TableHead>
+                      <TableHead className="text-sm">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -387,9 +388,9 @@ const Admin = () => {
                         <TableRow key={project.id}>
                           <TableCell className="font-medium">
                             <div>
-                              <div className="font-semibold">{project.title}</div>
+                              <div className="font-semibold text-sm">{project.title}</div>
                               {project.description && (
-                                <div className="text-sm text-muted-foreground truncate max-w-[200px]">
+                                <div className="text-xs text-muted-foreground truncate max-w-[200px]">
                                   {project.description}
                                 </div>
                               )}
@@ -397,32 +398,33 @@ const Admin = () => {
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             <div>
-                              <div className="font-medium">{project.entrepreneur.name}</div>
+                              <div className="font-medium text-sm">{project.entrepreneur.name}</div>
                               {project.entrepreneur.companyName && (
-                                <div className="text-sm text-muted-foreground">
+                                <div className="text-xs text-muted-foreground">
                                   {project.entrepreneur.companyName}
                                 </div>
                               )}
                             </div>
                           </TableCell>
                           <TableCell className="hidden sm:table-cell">
-                            <Badge className={getStatusColor(project.status)}>
+                            <Badge className={`${getStatusColor(project.status)} text-xs`}>
                               {project.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="hidden lg:table-cell">
+                          <TableCell className="hidden lg:table-cell text-xs">
                             {new Date(project.created_at).toLocaleDateString()}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-1 flex-wrap">
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => handleViewConversation(project.id, project.title)}
-                                className="flex items-center"
+                                className="flex items-center text-xs h-8"
                               >
                                 <MessageCircle className="h-3 w-3 mr-1" />
-                                View Conversation
+                                <span className="hidden sm:inline">View Conversation</span>
+                                <span className="sm:hidden">Chat</span>
                               </Button>
                               
                               {(project.status === 'New' || project.status === 'Proposals') && (
@@ -430,10 +432,13 @@ const Admin = () => {
                                   variant="outline" 
                                   size="sm"
                                   onClick={() => handleSelectStudents(project.id, project.title, project.status)}
-                                  className="flex items-center"
+                                  className="flex items-center text-xs h-8"
                                 >
                                   <UserPlus className="h-3 w-3 mr-1" />
-                                  {project.status === 'New' ? 'Select Students' : 'Select from Accepted'}
+                                  <span className="hidden sm:inline">
+                                    {project.status === 'New' ? 'Select Students' : 'Select from Accepted'}
+                                  </span>
+                                  <span className="sm:hidden">Select</span>
                                 </Button>
                               )}
                               
@@ -442,10 +447,11 @@ const Admin = () => {
                                   variant="default" 
                                   size="sm"
                                   onClick={() => handleConfirmPayment(project.id)}
-                                  className="flex items-center bg-green-600 hover:bg-green-700"
+                                  className="flex items-center bg-green-600 hover:bg-green-700 text-xs h-8"
                                 >
                                   <Eye className="h-3 w-3 mr-1" />
-                                  Confirm Payment
+                                  <span className="hidden sm:inline">Confirm Payment</span>
+                                  <span className="sm:hidden">Confirm</span>
                                 </Button>
                               )}
                               
@@ -454,10 +460,11 @@ const Admin = () => {
                                   variant="default" 
                                   size="sm"
                                   onClick={() => handleCompleteProject(project.id)}
-                                  className="flex items-center bg-purple-600 hover:bg-purple-700"
+                                  className="flex items-center bg-purple-600 hover:bg-purple-700 text-xs h-8"
                                 >
                                   <Eye className="h-3 w-3 mr-1" />
-                                  Complete Project
+                                  <span className="hidden sm:inline">Complete Project</span>
+                                  <span className="sm:hidden">Complete</span>
                                 </Button>
                               )}
                             </div>
@@ -466,7 +473,7 @@ const Admin = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-4">
+                        <TableCell colSpan={5} className="text-center py-4 text-sm">
                           {projects.length > 0 
                             ? "No projects match the search criteria" 
                             : "No projects found"}

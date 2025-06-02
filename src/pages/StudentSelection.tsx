@@ -211,21 +211,21 @@ const StudentSelection = () => {
   return (
     <AppLayout>
       <div className="h-screen flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 space-y-6 p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-shrink-0 space-y-4 p-4">
+          <div className="flex flex-col gap-3">
             <div>
               <button 
                 onClick={() => navigate('/admin')}
-                className="flex items-center text-muted-foreground hover:text-foreground mb-2"
+                className="flex items-center text-muted-foreground hover:text-foreground mb-2 text-sm"
               >
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Back to Admin
               </button>
-              <h1 className="text-3xl font-bold">{pageTitle}</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{pageTitle}</h1>
+              <p className="text-muted-foreground text-sm">
                 {projectTitle ? `For project: ${projectTitle}` : pageDescription}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground">
                 Mode: {mode} | Project ID: {projectId}
               </p>
             </div>
@@ -233,7 +233,8 @@ const StudentSelection = () => {
               <Button 
                 onClick={proposeStudents}
                 disabled={selectedStudents.length === 0 || proposing}
-                className="flex items-center"
+                className="flex items-center text-sm h-9"
+                size="sm"
               >
                 <Check className="h-4 w-4 mr-1" />
                 {proposing ? 'Proposing...' : buttonText}
@@ -242,9 +243,9 @@ const StudentSelection = () => {
           </div>
 
           {selectedStudents.length === 0 && (
-            <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-              <p className="text-orange-800 font-medium">⚠️ Please select at least one student before proposing</p>
-              <p className="text-orange-600 text-sm mt-1">{warningText}</p>
+            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-orange-800 font-medium text-sm">⚠️ Please select at least one student before proposing</p>
+              <p className="text-orange-600 text-xs mt-1">{warningText}</p>
             </div>
           )}
 
@@ -260,14 +261,14 @@ const StudentSelection = () => {
           />
         </div>
 
-        <div className="flex-1 overflow-hidden px-6 pb-6">
+        <div className="flex-1 overflow-hidden px-4 pb-4">
           <Card className="h-full flex flex-col">
-            <CardHeader className="flex-shrink-0">
-              <CardTitle>
+            <CardHeader className="flex-shrink-0 p-4">
+              <CardTitle className="text-lg">
                 {mode === 'new' ? `Students (${filteredStudents.length})` : `Students Who Accepted (${filteredStudents.length})`}
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden">
+            <CardContent className="flex-1 overflow-hidden p-4 pt-0">
               <div className="h-full">
                 <StudentTable
                   students={filteredStudents}

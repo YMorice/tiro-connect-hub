@@ -62,10 +62,10 @@ const Login = () => {
   // Show a minimal loading state only for the initial auth check
   if (loading && !user && !session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tiro-primary mx-auto mb-4"></div>
-          <p className="text-sm lg:text-base">Loading...</p>
+          <p className="text-sm">Loading...</p>
         </div>
       </div>
     );
@@ -77,22 +77,22 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-sm">
         <Card className="shadow-lg">
-          <CardHeader className="space-y-1 text-center pb-6">
-            <div className="flex justify-center mb-4">
+          <CardHeader className="space-y-2 text-center pb-4">
+            <div className="flex justify-center mb-3">
               <img 
                 src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
                 alt="Tiro Logo" 
-                className="h-8 lg:h-10" 
+                className="h-8" 
               />
             </div>
-            <CardDescription className="text-sm lg:text-base">
+            <CardDescription className="text-sm">
               Sign in to your account
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-6">
+          <CardContent className="p-4">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField 
@@ -100,17 +100,17 @@ const Login = () => {
                   name="email" 
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm lg:text-base">Email</FormLabel>
+                      <FormLabel className="text-sm">Email</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="example@email.com" 
                           {...field} 
                           autoComplete="email" 
                           disabled={isSubmitting}
-                          className="text-sm lg:text-base"
+                          className="text-sm h-10"
                         />
                       </FormControl>
-                      <FormMessage className="text-xs lg:text-sm" />
+                      <FormMessage className="text-xs" />
                     </FormItem>
                   )} 
                 />
@@ -119,7 +119,7 @@ const Login = () => {
                   name="password" 
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm lg:text-base">Password</FormLabel>
+                      <FormLabel className="text-sm">Password</FormLabel>
                       <FormControl>
                         <Input 
                           type="password" 
@@ -127,24 +127,24 @@ const Login = () => {
                           {...field} 
                           autoComplete="current-password" 
                           disabled={isSubmitting}
-                          className="text-sm lg:text-base"
+                          className="text-sm h-10"
                         />
                       </FormControl>
-                      <FormMessage className="text-xs lg:text-sm" />
+                      <FormMessage className="text-xs" />
                     </FormItem>
                   )} 
                 />
                 <div className="text-right">
                   <Link 
                     to="/reset-password" 
-                    className="text-xs lg:text-sm text-tiro-primary hover:underline"
+                    className="text-xs text-tiro-primary hover:underline"
                   >
                     Forgot your password?
                   </Link>
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white text-sm lg:text-base" 
+                  className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white text-sm h-10" 
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Signing in..." : "Sign In"}
@@ -152,8 +152,8 @@ const Login = () => {
               </form>
             </Form>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-2 px-6 pb-6">
-            <div className="text-xs lg:text-sm text-center">
+          <CardFooter className="flex flex-col space-y-2 p-4 pt-0">
+            <div className="text-xs text-center">
               <span className="text-muted-foreground">New to Tiro? </span>
               <Link to="/register" className="text-tiro-primary hover:underline">
                 Create an account

@@ -62,8 +62,8 @@ const PackSelection = () => {
   if (loading) {
     return (
       <AppLayout>
-        <div className="container max-w-6xl py-8 px-4">
-          <h1 className="text-2xl lg:text-3xl font-bold mb-8">Loading project packs...</h1>
+        <div className="container max-w-6xl py-4 px-4">
+          <h1 className="text-xl sm:text-2xl font-bold mb-6">Loading project packs...</h1>
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
@@ -74,24 +74,24 @@ const PackSelection = () => {
 
   return (
     <AppLayout>
-      <div className="container max-w-6xl py-6 lg:py-8 px-4">
-        <div className="mb-6 lg:mb-8">
-          <h1 className="text-2xl lg:text-3xl font-bold mb-4">Choose a Project Pack</h1>
-          <p className="text-muted-foreground text-sm lg:text-base">
+      <div className="container max-w-6xl py-4 px-4">
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">Choose a Project Pack</h1>
+          <p className="text-muted-foreground text-sm">
             Select the package that best suits your project needs.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {packs.map((pack) => (
             <Card key={pack.id_pack} className="flex flex-col h-full">
-              <CardHeader className="flex-shrink-0">
-                <CardTitle className="text-lg lg:text-xl">{pack.name}</CardTitle>
-                <CardDescription className="text-sm lg:text-base">{pack.description}</CardDescription>
+              <CardHeader className="flex-shrink-0 p-4">
+                <CardTitle className="text-lg">{pack.name}</CardTitle>
+                <CardDescription className="text-sm">{pack.description}</CardDescription>
               </CardHeader>
-              <CardContent className="flex-grow">
+              <CardContent className="flex-grow p-4 pt-0">
                 {pack.price !== null && pack.price !== undefined ? (
-                  <p className="text-2xl lg:text-3xl font-bold mb-4">
+                  <p className="text-xl sm:text-2xl font-bold mb-3">
                     {pack.price === 0 ? (
                       ""
                     ) : (
@@ -102,21 +102,21 @@ const PackSelection = () => {
                     )}
                   </p>
                 ) : (
-                  <p className="text-2xl lg:text-3xl font-bold mb-4">Contact us for pricing</p>
+                  <p className="text-xl sm:text-2xl font-bold mb-3">Contact us for pricing</p>
                 )}
-                <h3 className="font-semibold mb-3 text-sm lg:text-base">Features:</h3>
-                <ul className="space-y-2">
+                <h3 className="font-semibold mb-2 text-sm">Features:</h3>
+                <ul className="space-y-1">
                   {pack.features?.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <Badge variant="outline" className="mt-0.5 flex-shrink-0 text-xs">✓</Badge>
-                      <span className="text-xs lg:text-sm break-words">{feature}</span>
+                      <Badge variant="outline" className="mt-0.5 flex-shrink-0 text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center">✓</Badge>
+                      <span className="text-xs leading-5 break-words">{feature}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
-              <CardFooter className="flex-shrink-0">
+              <CardFooter className="flex-shrink-0 p-4">
                 <Button 
-                  className="w-full text-sm lg:text-base" 
+                  className="w-full text-sm h-9" 
                   onClick={() => handleSelectPack(pack.id_pack)}
                 >
                   Select This Pack

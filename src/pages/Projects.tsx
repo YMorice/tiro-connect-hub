@@ -1,27 +1,35 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
-import { Link } from "react-router-dom";
-import AppLayout from "@/components/AppLayout";
-import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import AppLayout from "@/components/AppLayout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
-import { Project } from "@/types";
-import { Check, X, Plus } from "lucide-react";
+import { Plus, Search, Eye, MessageCircle, Filter, Calendar, User } from "lucide-react";
+import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
+
+interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  status: string;
+  created_at: string;
+  pack?: {
+    name: string;
+    price?: number;
+  };
+}
 
 // Helper function to convert database status to display status
 const convertDbStatusToDisplay = (dbStatus: string): string => {
   const statusMap: { [key: string]: string } = {
     'STEP1': 'New',
-    'STEP2': 'Proposals', 
+    'STEP2': 'Proposals',
     'STEP3': 'Selection',
     'STEP4': 'Payment',
     'STEP5': 'Active',
@@ -30,370 +38,331 @@ const convertDbStatusToDisplay = (dbStatus: string): string => {
   return statusMap[dbStatus] || dbStatus;
 };
 
-interface ProjectWithProposal extends Project {
-  proposalStatus?: 'pending' | 'accepted' | 'declined';
-  proposalId?: string;
-}
+// Helper function to get status color
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'New': return 'bg-blue-100 text-blue-800';
+    case 'Proposals': return 'bg-yellow-100 text-yellow-800';
+    case 'Selection': return 'bg-purple-100 text-purple-800';
+    case 'Payment': return 'bg-orange-100 text-orange-800';
+    case 'Active': return 'bg-green-100 text-green-800';
+    case 'In progress': return 'bg-indigo-100 text-indigo-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+};
 
 const Projects = () => {
   const { user } = useAuth();
-  const [projects, setProjects] = useState<ProjectWithProposal[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const navigate = useNavigate();
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const fetchProjects = useCallback(async () => {
-    if (!user?.id) return;
-    
-    try {
-      setLoading(true);
-      console.log("Fetching projects for user:", user.id, "with role:", (user as any).role);
-      
-      let projectData: any[] = [];
-      
-      if ((user as any).role === "entrepreneur") {
-        // Get entrepreneur data and projects
-        const { data, error } = await supabase
-          .from('entrepreneurs')
-          .select(`
-            id_entrepreneur,
-            projects (
-              id_project,
-              title,
-              description,
-              status,
-              created_at,
-              updated_at,
-              id_pack,
-              selected_student
-            )
-          `)
-          .eq('id_user', user.id)
-          .single();
-          
-        if (error) {
-          console.error('Error fetching entrepreneur projects:', error);
-          return;
-        }
-        
-        projectData = data?.projects || [];
-      } else if ((user as any).role === "student") {
-        // Get student data
-        const { data: studentData, error: studentError } = await supabase
-          .from('students')
-          .select('id_student')
-          .eq('id_user', user.id)
-          .single();
-          
-        if (studentError) {
-          console.error('Error fetching student data:', studentError);
-          return;
-        }
-        
-        if (studentData) {
-          // Get projects where this student has proposals that are NOT declined (null or accepted)
-          // or where they are the selected student
-          const [proposalsResult, selectedProjectsResult] = await Promise.all([
-            supabase
-              .from('proposal_to_student')
-              .select(`
-                id_proposal,
-                accepted,
-                projects (
-                  id_project,
-                  title,
-                  description,
-                  status,
-                  created_at,
-                  updated_at,
-                  id_entrepreneur,
-                  id_pack,
-                  selected_student
-                )
-              `)
-              .eq('id_student', studentData.id_student)
-              .or('accepted.is.null,accepted.eq.true'), // Only show pending (null) or accepted proposals
-            
-            supabase
-              .from('projects')
-              .select('*')
-              .eq('selected_student', studentData.id_student)
-          ]);
-          
-          console.log('Proposals result:', proposalsResult);
-          console.log('Selected projects result:', selectedProjectsResult);
-          
-          const proposalProjects = proposalsResult.data?.map(p => ({
-            ...p.projects,
-            proposalStatus: p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined'),
-            proposalId: p.id_proposal
-          })).filter(Boolean) || [];
-          
-          const selectedProjects = selectedProjectsResult.data || [];
-          
-          // Combine and remove duplicates
-          const allProjectIds = new Set();
-          projectData = [];
-          
-          [...proposalProjects, ...selectedProjects].forEach(project => {
-            if (project && !allProjectIds.has(project.id_project)) {
-              allProjectIds.add(project.id_project);
-              projectData.push(project);
-            }
-          });
-          
-          console.log('Final project data for student:', projectData);
-        }
-      } else if ((user as any).role === "admin") {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error('Error fetching admin projects:', error);
-          return;
-        }
-        
-        projectData = data || [];
-      }
-      
-      // Convert to UI format
-      const formattedProjects: ProjectWithProposal[] = projectData.map(dbProject => ({
-        id: dbProject.id_project,
-        title: dbProject.title,
-        description: dbProject.description || "",
-        status: convertDbStatusToDisplay(dbProject.status || "STEP1") as any,
-        ownerId: dbProject.id_entrepreneur,
-        assigneeId: dbProject.selected_student,
-        tasks: [],
-        documents: [],
-        createdAt: new Date(dbProject.created_at),
-        updatedAt: new Date(dbProject.updated_at),
-        packId: dbProject.id_pack,
-        proposalStatus: dbProject.proposalStatus,
-        proposalId: dbProject.proposalId
-      }));
-      
-      setProjects(formattedProjects);
-    } catch (error) {
-      console.error("Error fetching projects:", error);
-      toast.error("Failed to load projects");
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, (user as any)?.role]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [expandedProject, setExpandedProject] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    const fetchProjects = async () => {
+      if (!user) return;
 
-  // Handle proposal response (accept/decline)
-  const handleProposalResponse = async (proposalId: string, accepted: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('proposal_to_student')
-        .update({ accepted })
-        .eq('id_proposal', proposalId);
+      try {
+        setLoading(true);
         
-      if (error) {
-        throw error;
+        // Get the current user's entrepreneur profile
+        const { data: entrepreneurData, error: entrepreneurError } = await supabase
+          .from('entrepreneurs')
+          .select('id_entrepreneur')
+          .eq('id_user', user.id)
+          .single();
+          
+        if (entrepreneurError) {
+          console.error('Error fetching entrepreneur:', entrepreneurError);
+          toast.error("Error loading user profile");
+          return;
+        }
+        
+        const { data: projectsData, error } = await supabase
+          .from('projects')
+          .select(`
+            id_project,
+            title,
+            description,
+            status,
+            created_at,
+            project_packs (
+              name,
+              price
+            )
+          `)
+          .eq('id_entrepreneur', entrepreneurData.id_entrepreneur)
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          throw error;
+        }
+        
+        const formattedProjects: Project[] = projectsData.map(project => ({
+          id: project.id_project,
+          title: project.title,
+          description: project.description || undefined,
+          status: convertDbStatusToDisplay(project.status || 'STEP1'),
+          created_at: project.created_at,
+          pack: project.project_packs ? {
+            name: project.project_packs.name,
+            price: project.project_packs.price
+          } : undefined
+        }));
+        
+        setProjects(formattedProjects);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        toast.error("Failed to load projects");
+      } finally {
+        setLoading(false);
       }
-      
-      toast.success(accepted ? "Proposal accepted!" : "Proposal declined");
-      
-      // Refresh projects to update the status or remove declined projects
-      fetchProjects();
-    } catch (error) {
-      console.error('Error updating proposal:', error);
-      toast.error("Failed to update proposal");
-    }
+    };
+    
+    fetchProjects();
+  }, [user]);
+
+  // Filter projects based on search query and status filter
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = searchQuery.trim() === "" || 
+      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesStatus = statusFilter === "" || project.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleViewProject = (projectId: string) => {
+    navigate(`/projects/${projectId}`);
   };
 
-  // Memoized filtered projects to prevent unnecessary recalculations
-  const filteredProjects = useMemo(() => {
-    return projects.filter((project) => {
-      const searchMatch = 
-        project.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        project.description.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const statusMatch = 
-        statusFilter === "all" || project.status === statusFilter;
-      
-      return searchMatch && statusMatch;
-    });
-  }, [projects, searchTerm, statusFilter]);
+  const handleViewConversation = (projectId: string, projectTitle: string) => {
+    navigate(`/messages?projectId=${projectId}&projectTitle=${encodeURIComponent(projectTitle)}`);
+  };
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  }, []);
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("");
+  };
 
-  const handleStatusChange = useCallback((value: string) => {
-    setStatusFilter(value);
-  }, []);
+  const toggleProjectExpansion = (projectId: string) => {
+    setExpandedProject(expandedProject === projectId ? null : projectId);
+  };
+
+  const handleStudentSelected = (studentId: string) => {
+    // Refresh projects after student selection
+    const fetchProjects = async () => {
+      if (!user) return;
+
+      try {
+        const { data: entrepreneurData, error: entrepreneurError } = await supabase
+          .from('entrepreneurs')
+          .select('id_entrepreneur')
+          .eq('id_user', user.id)
+          .single();
+          
+        if (entrepreneurError) return;
+        
+        const { data: projectsData, error } = await supabase
+          .from('projects')
+          .select(`
+            id_project,
+            title,
+            description,
+            status,
+            created_at,
+            project_packs (
+              name,
+              price
+            )
+          `)
+          .eq('id_entrepreneur', entrepreneurData.id_entrepreneur)
+          .order('created_at', { ascending: false });
+          
+        if (!error && projectsData) {
+          const formattedProjects: Project[] = projectsData.map(project => ({
+            id: project.id_project,
+            title: project.title,
+            description: project.description || undefined,
+            status: convertDbStatusToDisplay(project.status || 'STEP1'),
+            created_at: project.created_at,
+            pack: project.project_packs ? {
+              name: project.project_packs.name,
+              price: project.project_packs.price
+            } : undefined
+          }));
+          
+          setProjects(formattedProjects);
+        }
+      } catch (error) {
+        console.error('Error refreshing projects:', error);
+      }
+    };
+    
+    fetchProjects();
+  };
+
+  const statusOptions = ['New', 'Proposals', 'Selection', 'Payment', 'Active', 'In progress'];
 
   return (
     <AppLayout>
-      <div className="p-4 lg:p-6 space-y-6 min-h-screen">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-2xl lg:text-3xl font-bold">Projects</h1>
-          {(user as any)?.role === "entrepreneur" && (
-            <Button
-              asChild
-              className="bg-tiro-primary hover:bg-tiro-primary/90 w-full sm:w-auto"
-            >
-              <Link to="/projects/pack-selection" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Create New Project</span>
-                <span className="sm:hidden">New Project</span>
-              </Link>
-            </Button>
-          )}
+      <div className="space-y-4 p-4">
+        <div className="flex flex-col gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">My Projects</h1>
+            <p className="text-muted-foreground text-sm">Manage and track your projects</p>
+          </div>
+          <Button onClick={() => navigate('/pack-selection')} className="flex items-center w-fit text-sm h-9" size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Create New Project
+          </Button>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="w-full lg:w-2/3">
-            <Input
-              placeholder="Search projects..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="w-full"
-            />
-          </div>
-          <div className="w-full lg:w-1/3">
-            <Select
-              value={statusFilter}
-              onValueChange={handleStatusChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="New">New</SelectItem>
-                <SelectItem value="Proposals">Proposals</SelectItem>
-                <SelectItem value="Selection">Selection</SelectItem>
-                <SelectItem value="Payment">Payment</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="In progress">In Progress</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Projects List */}
-        {loading ? (
-          <div className="flex justify-center py-10">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-tiro-primary"></div>
-          </div>
-        ) : (
-          <div className="grid gap-4 lg:gap-6">
-            {filteredProjects.length > 0 ? (
-              filteredProjects.map((project) => (
-                <Card key={project.id} className="overflow-hidden">
-                  <CardContent className="p-4 lg:p-6">
-                    <div className="flex flex-col gap-4">
-                      {/* Project Title and Status */}
-                      <div className="space-y-2">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                          <h3 className="font-bold text-lg lg:text-xl flex-1 min-w-0 break-words">
-                            {project.title}
-                          </h3>
-                          <div className="flex flex-wrap gap-2">
-                            <span
-                              className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                project.status === "In progress"
-                                  ? "bg-green-100 text-green-800"
-                                  : project.status === "Active"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : project.status === "Proposals"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : project.status === "Selection" || project.status === "Payment"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {project.status}
-                            </span>
-                            {project.proposalStatus && (
-                              <span
-                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                  project.proposalStatus === "accepted"
-                                    ? "bg-green-100 text-green-800"
-                                    : project.proposalStatus === "declined"
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-orange-100 text-orange-800"
-                                }`}
-                              >
-                                Proposal: {project.proposalStatus}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {/* Description */}
-                        <p className="text-muted-foreground text-sm lg:text-base break-words">
-                          {project.description.substring(0, 200)}
-                          {project.description.length > 200 && "..."}
-                        </p>
-                        
-                        {/* Created Date */}
-                        <div className="text-xs lg:text-sm">
-                          <span className="text-muted-foreground">Created: </span>
-                          <span>{project.createdAt.toLocaleDateString()}</span>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                        {/* Student proposal buttons */}
-                        {(user as any)?.role === "student" && project.proposalStatus === "pending" && (
-                          <>
-                            <Button
-                              onClick={() => handleProposalResponse(project.proposalId!, true)}
-                              className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none"
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              Accept
-                            </Button>
-                            <Button
-                              onClick={() => handleProposalResponse(project.proposalId!, false)}
-                              variant="destructive"
-                              className="flex-1 sm:flex-none"
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              Decline
-                            </Button>
-                          </>
-                        )}
-                        <Button asChild className="flex-1 sm:flex-none">
-                          <Link to={`/project/${project.id}`}>View Project</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="text-center p-6 lg:p-10">
-                <h3 className="text-base lg:text-lg font-medium mb-2">No projects found</h3>
-                <p className="text-muted-foreground text-sm lg:text-base mb-4">
-                  {searchTerm || statusFilter !== "all"
-                    ? "Try changing your search filters"
-                    : (user as any)?.role === "entrepreneur"
-                    ? "Create your first project to get started"
-                    : (user as any)?.role === "student" 
-                    ? "You'll see projects here when you receive proposals or are working on them"
-                    : "Browse open projects to start working"}
-                </p>
-                {(user as any)?.role === "entrepreneur" && !searchTerm && statusFilter === "all" && (
-                  <Button className="w-full sm:w-auto" asChild>
-                    <Link to="/projects/pack-selection">Create Project</Link>
+        <Card>
+          <CardHeader className="p-4">
+            <CardTitle className="text-lg">Filter Projects</CardTitle>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 text-sm h-9"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[150px] h-9 text-sm">
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All statuses</SelectItem>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(searchQuery || statusFilter) && (
+                  <Button variant="outline" size="sm" onClick={clearFilters} className="h-9 text-sm">
+                    <Filter className="h-4 w-4 mr-1" />
+                    Clear
                   </Button>
                 )}
               </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Projects List */}
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredProjects.length > 0 ? (
+              filteredProjects.map(project => (
+                <div key={project.id} className="space-y-3">
+                  <Card className="hover:shadow-md transition-shadow">
+                    <CardHeader className="p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-lg truncate">{project.title}</CardTitle>
+                          <CardDescription className="text-sm mt-1">
+                            {project.description || "No description provided"}
+                          </CardDescription>
+                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                            <Badge className={`${getStatusColor(project.status)} text-xs`}>
+                              {project.status}
+                            </Badge>
+                            <div className="flex items-center text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {new Date(project.created_at).toLocaleDateString()}
+                            </div>
+                            {project.pack && (
+                              <div className="flex items-center text-xs text-muted-foreground">
+                                <span>{project.pack.name}</span>
+                                {project.pack.price && (
+                                  <span className="ml-1">- €{project.pack.price}</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleViewConversation(project.id, project.title)}
+                            className="text-xs h-8"
+                          >
+                            <MessageCircle className="h-3 w-3 mr-1" />
+                            Chat
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleViewProject(project.id)}
+                            className="text-xs h-8"
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                          {(project.status === 'Selection' || project.status === 'Proposals') && (
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              onClick={() => toggleProjectExpansion(project.id)}
+                              className="text-xs h-8"
+                            >
+                              <User className="h-3 w-3 mr-1" />
+                              {expandedProject === project.id ? 'Hide' : 'Show'} Students
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                  
+                  {/* Proposed Students Display */}
+                  {expandedProject === project.id && (project.status === 'Selection' || project.status === 'Proposals') && (
+                    <ProposedStudentsDisplay 
+                      projectId={project.id}
+                      projectStatus={project.status}
+                      isEntrepreneur={true}
+                      onStudentSelected={handleStudentSelected}
+                    />
+                  )}
+                </div>
+              ))
+            ) : (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <p className="text-muted-foreground text-sm">
+                    {projects.length > 0 
+                      ? "No projects match your search criteria" 
+                      : "You haven't created any projects yet"}
+                  </p>
+                  {projects.length === 0 && (
+                    <Button 
+                      onClick={() => navigate('/pack-selection')} 
+                      className="mt-3 text-sm h-9"
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Create Your First Project
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
             )}
           </div>
         )}
