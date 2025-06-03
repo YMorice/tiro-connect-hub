@@ -112,6 +112,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 alt="Tiro Logo" 
                 className="h-8" 
               />
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
