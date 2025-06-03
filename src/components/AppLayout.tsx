@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   Shield,
-  LogOut
+  LogOut,
+  Home
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
@@ -99,91 +100,51 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   }, [location.pathname, isMobile]);
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-background">
-      {/* Mobile overlay */}
-      {sidebarOpen && isMobile && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-30" 
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Mobile Header with Menu Button */}
-      {isMobile && (
-        <div className="fixed top-0 left-0 right-0 h-14 bg-background border-b border-sidebar-border z-20 flex items-center px-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="mr-3"
-          >
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </Button>
-          <img 
-            src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
-            alt="Tiro Logo" 
-            className="h-6" 
-          />
-        </div>
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-40 flex flex-col transition-transform duration-300 bg-sidebar border-r border-sidebar-border shadow-lg",
-          "w-64",
-          isMobile 
-            ? sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            : "relative transform-none"
-        )}
-      >
-        {/* Desktop Logo */}
-        {!isMobile && (
-          <div className="flex items-center justify-center h-16 border-b border-sidebar-border px-4 flex-shrink-0">
+    <div className="min-h-screen w-full bg-background">
+      {/* Glass Morphism Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/80 backdrop-blur-md border-b border-white/20 shadow-lg">
+        <div className="flex items-center justify-between h-full px-4 lg:px-6">
+          {/* Logo */}
+          <div className="flex items-center">
             <img 
               src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
               alt="Tiro Logo" 
               className="h-8" 
             />
           </div>
-        )}
 
-        {/* Mobile spacing for header */}
-        {isMobile && <div className="h-14 flex-shrink-0" />}
+          {/* Desktop Navigation */}
+          {!isMobile && (
+            <nav className="hidden md:flex items-center space-x-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={cn(
+                    "flex items-center px-3 py-2 rounded-lg transition-all text-sm font-medium",
+                    isActive(item.href)
+                      ? "bg-tiro-primary/20 text-tiro-primary backdrop-blur-sm"
+                      : "hover:bg-white/10 text-foreground"
+                  )}
+                >
+                  <item.icon size={18} className="mr-2" />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </nav>
+          )}
 
-        <div className="flex flex-col flex-1 overflow-y-auto">
-          <nav className="flex-1 px-2 py-4 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={() => isMobile && setSidebarOpen(false)}
-                className={cn(
-                  "flex items-center p-3 rounded-lg transition-all text-sm lg:text-base",
-                  isActive(item.href)
-                    ? "bg-tiro-primary text-white"
-                    : "hover:bg-sidebar-accent text-sidebar-foreground"
-                )}
-              >
-                <item.icon size={isMobile ? 18 : 20} />
-                <span className="ml-3">{item.label}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
-
-        {/* User Info and Logout */}
-        <div className="p-4 border-t border-sidebar-border flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center min-w-0 flex-1">
-              <Avatar className="w-8 h-8 flex-shrink-0">
+          {/* User Section */}
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center">
+              <Avatar className="w-8 h-8">
                 {getAvatarUrl() ? (
                   <AvatarImage 
                     src={getAvatarUrl()} 
                     alt={user?.name || "User"}
                     className="object-cover"
                     onError={(e) => {
-                      console.error("Failed to load avatar image in sidebar:", getAvatarUrl());
+                      console.error("Failed to load avatar image in header:", getAvatarUrl());
                       e.currentTarget.style.display = 'none';
                     }}
                   />
@@ -193,14 +154,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   </AvatarFallback>
                 )}
               </Avatar>
-              <div className="ml-3 min-w-0 flex-1">
-                <p className="font-medium text-sidebar-foreground truncate text-sm">
-                  {user?.name || "User"}
-                </p>
-                <p className="text-xs text-muted-foreground capitalize">
-                  {user?.role || "user"}
-                </p>
-              </div>
+              {!isMobile && (
+                <div className="ml-3">
+                  <p className="font-medium text-foreground text-sm">
+                    {user?.name || "User"}
+                  </p>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {user?.role || "user"}
+                  </p>
+                </div>
+              )}
             </div>
 
             <Button 
@@ -208,24 +171,62 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               size="icon"
               onClick={handleLogout}
               title="Logout"
-              className="flex-shrink-0 ml-2 h-8 w-8"
+              className="h-8 w-8 hover:bg-white/10"
             >
               <LogOut size={16} />
             </Button>
           </div>
         </div>
-      </aside>
+      </header>
 
-      {/* Main Content */}
+      {/* Main Content with top padding for fixed header */}
       <main className={cn(
-        "flex-1 flex flex-col h-full overflow-hidden",
-        isMobile ? "pt-14" : "",
-        !isMobile ? "ml-0" : ""
+        "w-full",
+        isMobile ? "pt-16 pb-20" : "pt-16" // Extra bottom padding on mobile for bottom nav
       )}>
-        <div className="flex-1 h-full overflow-auto">
+        <div className="w-full min-h-[calc(100vh-4rem)] overflow-auto">
           {children}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-t border-white/20 shadow-lg">
+          <div className="flex items-center justify-around h-16 px-2">
+            {navItems.slice(0, 4).map((item) => ( // Show only first 4 items to prevent overflow
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1",
+                  isActive(item.href)
+                    ? "bg-tiro-primary/20 text-tiro-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/10"
+                )}
+              >
+                <item.icon size={20} className="mb-1" />
+                <span className="text-xs font-medium truncate">{item.label}</span>
+              </Link>
+            ))}
+            
+            {/* Show admin button if user is admin and we have space */}
+            {user?.role === "admin" && (
+              <Link
+                to="/admin"
+                className={cn(
+                  "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1",
+                  isActive("/admin")
+                    ? "bg-tiro-primary/20 text-tiro-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/10"
+                )}
+              >
+                <Shield size={20} className="mb-1" />
+                <span className="text-xs font-medium truncate">Admin</span>
+              </Link>
+            )}
+          </div>
+        </nav>
+      )}
     </div>
   );
 };
