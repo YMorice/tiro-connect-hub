@@ -84,7 +84,7 @@ const Dashboard = () => {
       const userRole = (user as any).role;
       
       if (userRole === "entrepreneur") {
-        // Get entrepreneur data and projects
+        // Get entrepreneur data and their projects only
         const { data: entrepreneurData, error: entrepreneurError } = await supabase
           .from('entrepreneurs')
           .select(`
@@ -121,7 +121,7 @@ const Dashboard = () => {
           p.status === 'completed'
         ).length;
 
-        // Get messages count
+        // Get messages count for entrepreneur
         const { count: totalMessages } = await supabase
           .from('messages')
           .select('*', { count: 'exact', head: true })
@@ -149,7 +149,7 @@ const Dashboard = () => {
         })));
         
       } else if (userRole === "student") {
-        // Get student data
+        // Get student data and projects proposed to them
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('id_student')
@@ -162,69 +162,52 @@ const Dashboard = () => {
         }
         
         if (studentData) {
-          // Get projects where this student has proposals that are NOT declined
-          // or where they are the selected student
-          const [proposalsResult, selectedProjectsResult] = await Promise.all([
-            supabase
-              .from('proposal_to_student')
-              .select(`
-                id_proposal,
-                accepted,
-                projects (
-                  id_project,
-                  title,
-                  status,
-                  created_at
-                )
-              `)
-              .eq('id_student', studentData.id_student)
-              .or('accepted.is.null,accepted.eq.true'), // Only show pending (null) or accepted proposals
-            
-            supabase
-              .from('projects')
-              .select('id_project, title, status, created_at')
-              .eq('selected_student', studentData.id_student)
-          ]);
+          // Get only projects that were proposed to this student
+          const { data: proposalData, error: proposalError } = await supabase
+            .from('proposal_to_student')
+            .select(`
+              id_proposal,
+              accepted,
+              projects (
+                id_project,
+                title,
+                status,
+                created_at
+              )
+            `)
+            .eq('id_student', studentData.id_student);
           
-          const proposalProjects = proposalsResult.data?.map(p => ({
+          if (proposalError) {
+            console.error('Error fetching proposals:', proposalError);
+            return;
+          }
+          
+          const proposalProjects = proposalData?.map(p => ({
             ...p.projects,
             proposalStatus: p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined')
           })).filter(Boolean) || [];
           
-          const selectedProjects = selectedProjectsResult.data || [];
-          
-          // Combine and remove duplicates
-          const allProjectIds = new Set();
-          const allProjects: any[] = [];
-          
-          [...proposalProjects, ...selectedProjects].forEach(project => {
-            if (project && !allProjectIds.has(project.id_project)) {
-              allProjectIds.add(project.id_project);
-              allProjects.push(project);
-            }
-          });
-          
-          const totalProjects = allProjects.length;
+          const totalProjects = proposalProjects.length;
           
           // Convert statuses and count
-          const convertedProjects = allProjects.map(p => ({
+          const convertedProjects = proposalProjects.map(p => ({
             ...p,
             status: convertDbStatusToDisplay(p.status || 'STEP1')
           }));
           
           const activeProjects = convertedProjects.filter(p => 
-            ['Active', 'In progress'].includes(p.status)
+            ['Active', 'In progress'].includes(p.status) && p.proposalStatus === 'accepted'
           ).length;
           
           const completedProjects = convertedProjects.filter(p => 
-            p.status === 'completed'
+            p.status === 'completed' && p.proposalStatus === 'accepted'
           ).length;
           
           const pendingProposals = proposalProjects.filter(p => 
             p.proposalStatus === 'pending'
           ).length;
 
-          // Get messages count
+          // Get messages count for student
           const { count: totalMessages } = await supabase
             .from('messages')
             .select('*', { count: 'exact', head: true })
@@ -376,8 +359,8 @@ const Dashboard = () => {
             </p>
           </div>
           {userRole === "entrepreneur" && (
-            <Button asChild className="bg-tiro-purple hover:bg-tiro-purple/90">
-              <Link to="/projects/pack-selection">
+            <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/90">
+              <Link to="/new-project">
                 <Plus className="h-4 w-4 mr-2" />
                 New Project
               </Link>
@@ -397,6 +380,8 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground">
                 {userRole === "student" && stats.pendingProposals 
                   ? `${stats.pendingProposals} pending proposals`
+                  : userRole === "student" 
+                  ? "Projects proposed to you"
                   : "All your projects"}
               </p>
             </CardContent>
@@ -533,7 +518,7 @@ const Dashboard = () => {
                   </p>
                   {userRole === "entrepreneur" && (
                     <Button className="mt-4" asChild>
-                      <Link to="/projects/pack-selection">Create Project</Link>
+                      <Link to="/new-project">Create Project</Link>
                     </Button>
                   )}
                 </div>

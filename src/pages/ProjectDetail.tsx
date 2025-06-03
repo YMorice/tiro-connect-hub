@@ -30,6 +30,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DocumentUpload from "@/components/DocumentUpload";
 import ProjectReviewSection from "@/components/reviews/ProjectReviewSection";
+import StudentProposalActions from "@/components/student/StudentProposalActions";
 import { Download, FileText, Calendar, User, DollarSign, MessageCircle } from "lucide-react";
 
 /**
@@ -103,12 +104,17 @@ const ProjectDetail = () => {
   const [loading, setLoading] = useState(true);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const [proposalStatus, setProposalStatus] = useState<'pending' | 'accepted' | 'declined' | null>(null);
+  const [studentId, setStudentId] = useState<string | null>(null);
 
   // Fetch project data when component mounts or dependencies change
   useEffect(() => {
     if (user && id) {
       fetchProject();
       checkUnreadMessages();
+      if ((user as any)?.role === 'student') {
+        checkProposalStatus();
+      }
     }
   }, [user, id]);
 
@@ -328,6 +334,44 @@ const ProjectDetail = () => {
     }
   };
 
+  // Checks the proposal status for students
+  const checkProposalStatus = async () => {
+    if (!user?.id || !id) return;
+
+    try {
+      // Get student ID
+      const { data: studentData } = await supabase
+        .from('students')
+        .select('id_student')
+        .eq('id_user', user.id)
+        .single();
+
+      if (studentData) {
+        setStudentId(studentData.id_student);
+        
+        // Check proposal status
+        const { data: proposalData } = await supabase
+          .from('proposal_to_student')
+          .select('accepted')
+          .eq('id_project', id)
+          .eq('id_student', studentData.id_student)
+          .single();
+
+        if (proposalData) {
+          if (proposalData.accepted === null) {
+            setProposalStatus('pending');
+          } else if (proposalData.accepted === true) {
+            setProposalStatus('accepted');
+          } else {
+            setProposalStatus('declined');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking proposal status:', error);
+    }
+  };
+
   // Redirect to login if user is not authenticated
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -358,10 +402,24 @@ const ProjectDetail = () => {
     );
   }
 
+  const userRole = (user as any)?.role;
+
   return (
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
+          {/* Student Proposal Actions - Show for students with pending proposals */}
+          {userRole === 'student' && proposalStatus && studentId && (
+            <div className="mb-6">
+              <StudentProposalActions
+                projectId={project.id_project}
+                studentId={studentId}
+                proposalStatus={proposalStatus}
+                onStatusChange={handleProposalStatusChange}
+              />
+            </div>
+          )}
+
           {/* Project Header Card - Contains title, status, price, and discussion link */}
           <Card className="mb-6">
             <CardHeader className="pb-4">

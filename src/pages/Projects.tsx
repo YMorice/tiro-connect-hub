@@ -1,28 +1,4 @@
 
-/**
- * Projects Page Component
- * 
- * This component displays a comprehensive list of projects with filtering and search capabilities.
- * It adapts its display and functionality based on the user's role (entrepreneur, student, admin).
- * 
- * Key Features:
- * - Role-based project filtering and display
- * - Search functionality across project titles and descriptions
- * - Status-based filtering with predefined options
- * - Responsive grid layout that adapts to screen size
- * - Project status ordering (New -> Completed)
- * - Smooth loading states and error handling
- * - Interactive project cards with hover effects
- * 
- * User Roles:
- * - Entrepreneurs: See their own projects
- * - Students: See projects they can apply to or are assigned to
- * - Admins: See all projects in the system
- * 
- * The component uses Supabase for data fetching and includes comprehensive
- * error handling and loading states for a smooth user experience.
- */
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import AppLayout from "@/components/AppLayout";
@@ -35,24 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Plus, Calendar, DollarSign, User } from "lucide-react";
 import { Link } from "react-router-dom";
 
-/**
- * Interface for project data structure
- * Represents the core project information displayed in the list
- */
 interface Project {
-  /** Unique identifier for the project */
   id_project: string;
-  /** Project title/name */
   title: string;
-  /** Brief description of the project */
   description: string;
-  /** Current status of the project */
   status: string;
-  /** Timestamp when the project was created */
   created_at: string;
-  /** Project budget/price in euros */
   price: number;
-  /** Information about the project's entrepreneur */
+  proposalStatus?: 'pending' | 'accepted' | 'declined';
   entrepreneur?: {
     users: {
       name: string;
@@ -60,21 +26,15 @@ interface Project {
   };
 }
 
-/**
- * Projects Component
- * Main component that renders the projects list page
- */
 const Projects = () => {
   const { user } = useAuth();
   
-  // State management for projects list and UI controls
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Predefined status filter options for the UI
   const statusOptions = [
     { value: "all", label: "All Projects" },
     { value: "STEP1", label: "New" },
@@ -86,28 +46,16 @@ const Projects = () => {
     { value: "completed", label: "Completed" }
   ];
 
-  // Fetch projects when component mounts or user changes
   useEffect(() => {
     if (user) {
       fetchProjects();
     }
   }, [user]);
 
-  // Apply filters when projects list or filter criteria change
   useEffect(() => {
     applyFilters();
   }, [projects, searchTerm, statusFilter]);
 
-  /**
-   * Fetches projects from the database based on user role
-   * 
-   * This function handles different user roles:
-   * - Entrepreneurs: Fetch their own projects
-   * - Students: Fetch projects they can see (may include applied projects)
-   * - Admins: Fetch all projects in the system
-   * 
-   * Projects are ordered by status priority (New -> Completed) and creation date
-   */
   const fetchProjects = async () => {
     if (!user) return;
 
@@ -115,16 +63,6 @@ const Projects = () => {
     try {
       console.log("Fetching projects for user:", user.id, "role:", (user as any)?.role);
       
-      let query = supabase
-        .from("projects")
-        .select(`
-          *,
-          entrepreneurs (
-            users (name)
-          )
-        `);
-
-      // Apply role-based filtering
       const userRole = (user as any)?.role;
       
       if (userRole === "entrepreneur") {
@@ -136,28 +74,85 @@ const Projects = () => {
           .single();
           
         if (entrepreneurData) {
-          query = query.eq("id_entrepreneur", entrepreneurData.id_entrepreneur);
+          const { data, error } = await supabase
+            .from("projects")
+            .select(`
+              *,
+              entrepreneurs (
+                users (name)
+              )
+            `)
+            .eq("id_entrepreneur", entrepreneurData.id_entrepreneur)
+            .order("created_at", { ascending: false });
+
+          if (error) {
+            console.error("Error fetching entrepreneur projects:", error);
+            throw error;
+          }
+
+          console.log("Entrepreneur projects fetched:", data?.length || 0);
+          const sortedProjects = sortProjectsByStatus(data || []);
+          setProjects(sortedProjects);
         }
       } else if (userRole === "student") {
-        // Students see projects they can apply to or are assigned to
-        // This could be expanded to include more complex filtering logic
-        query = query.not("status", "eq", "completed");
+        // Students see only projects proposed to them
+        const { data: studentData } = await supabase
+          .from("students")
+          .select("id_student")
+          .eq("id_user", user.id)
+          .single();
+          
+        if (studentData) {
+          // Get projects with proposals for this student
+          const { data: proposalData, error: proposalError } = await supabase
+            .from('proposal_to_student')
+            .select(`
+              id_proposal,
+              accepted,
+              projects (
+                *,
+                entrepreneurs (
+                  users (name)
+                )
+              )
+            `)
+            .eq('id_student', studentData.id_student);
+          
+          if (proposalError) {
+            console.error("Error fetching student proposals:", proposalError);
+            throw proposalError;
+          }
+
+          const projectsWithProposals = proposalData?.map(p => ({
+            ...p.projects,
+            proposalStatus: p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined')
+          })).filter(Boolean) || [];
+
+          console.log("Student projects fetched:", projectsWithProposals.length);
+          const sortedProjects = sortProjectsByStatus(projectsWithProposals);
+          setProjects(sortedProjects);
+        }
+      } else if (userRole === "admin") {
+        // Admins see all projects
+        const { data, error } = await supabase
+          .from("projects")
+          .select(`
+            *,
+            entrepreneurs (
+              users (name)
+            )
+          `)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching admin projects:", error);
+          throw error;
+        }
+
+        console.log("Admin projects fetched:", data?.length || 0);
+        const sortedProjects = sortProjectsByStatus(data || []);
+        setProjects(sortedProjects);
       }
-      // Admins see all projects (no additional filtering)
-
-      // Execute query with ordering
-      const { data, error } = await query.order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching projects:", error);
-        throw error;
-      }
-
-      console.log("Projects fetched:", data?.length || 0);
-      
-      // Sort projects by status priority and then by creation date
-      const sortedProjects = sortProjectsByStatus(data || []);
-      setProjects(sortedProjects);
       
     } catch (error: any) {
       console.error("Error fetching projects:", error);
@@ -167,15 +162,6 @@ const Projects = () => {
     }
   };
 
-  /**
-   * Sorts projects by status priority and creation date
-   * 
-   * Status priority order: New -> Proposals -> Selection -> Payment -> Active -> In Progress -> Completed
-   * Within each status group, projects are sorted by creation date (newest first)
-   * 
-   * @param projectsList - Array of projects to sort
-   * @returns Sorted array of projects
-   */
   const sortProjectsByStatus = (projectsList: Project[]) => {
     const statusPriority: { [key: string]: number } = {
       'STEP1': 1,  // New
@@ -203,15 +189,6 @@ const Projects = () => {
     });
   };
 
-  /**
-   * Applies search and status filters to the projects list
-   * 
-   * Filtering logic:
-   * - Search: Case-insensitive search across project title and description
-   * - Status: Exact match filtering (or show all if "all" is selected)
-   * 
-   * Results are updated in the filteredProjects state
-   */
   const applyFilters = () => {
     let filtered = projects;
 
@@ -232,12 +209,6 @@ const Projects = () => {
     setFilteredProjects(filtered);
   };
 
-  /**
-   * Returns appropriate CSS classes for status badges based on project status
-   * 
-   * @param status - The project status string
-   * @returns CSS classes for styling the status badge
-   */
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "step1":
@@ -261,12 +232,6 @@ const Projects = () => {
     }
   };
 
-  /**
-   * Converts internal status codes to user-friendly display names
-   * 
-   * @param status - The internal status code
-   * @returns Human-readable status string
-   */
   const getStatusDisplay = (status: string) => {
     const statusMap: { [key: string]: string } = {
       'STEP1': 'New',
@@ -282,15 +247,11 @@ const Projects = () => {
     return statusMap[status] || status?.replace('_', ' ').toUpperCase() || 'Unknown';
   };
 
-  /**
-   * Determines if the current user can create new projects
-   * Currently only entrepreneurs can create projects
-   * 
-   * @returns Boolean indicating if user can create projects
-   */
   const canCreateProject = () => {
     return (user as any)?.role === "entrepreneur";
   };
+
+  const userRole = (user as any)?.role;
 
   return (
     <AppLayout>
@@ -298,7 +259,14 @@ const Projects = () => {
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Page Header with Title and Create Button */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Projects</h1>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Projects</h1>
+              <p className="text-gray-600 mt-1">
+                {userRole === "student" && "Projects proposed to you"}
+                {userRole === "entrepreneur" && "Your projects"}
+                {userRole === "admin" && "All projects in the system"}
+              </p>
+            </div>
             {canCreateProject() && (
               <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/90">
                 <Link to="/new-project">
@@ -351,6 +319,8 @@ const Projects = () => {
               <div className="text-gray-500 text-lg mb-2">
                 {searchTerm || statusFilter !== "all" 
                   ? "No projects match your filters" 
+                  : userRole === "student"
+                  ? "No projects have been proposed to you yet"
                   : "No projects found"
                 }
               </div>
@@ -375,9 +345,20 @@ const Projects = () => {
                   <Card className="h-full hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer">
                     <CardHeader className="pb-3">
                       <div className="flex justify-between items-start mb-2">
-                        <Badge className={`${getStatusColor(project.status)} text-xs`}>
-                          {getStatusDisplay(project.status)}
-                        </Badge>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge className={`${getStatusColor(project.status)} text-xs`}>
+                            {getStatusDisplay(project.status)}
+                          </Badge>
+                          {project.proposalStatus && (
+                            <Badge 
+                              variant={project.proposalStatus === 'pending' ? 'default' : 
+                                      project.proposalStatus === 'accepted' ? 'secondary' : 'destructive'}
+                              className="text-xs"
+                            >
+                              {project.proposalStatus}
+                            </Badge>
+                          )}
+                        </div>
                         {project.price && (
                           <div className="flex items-center text-sm text-tiro-primary font-semibold">
                             <DollarSign className="h-4 w-4 mr-1" />
