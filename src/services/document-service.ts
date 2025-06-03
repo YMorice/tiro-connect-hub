@@ -1,12 +1,63 @@
 
+/**
+ * Document Service
+ * 
+ * This service provides comprehensive document management functionality for the application.
+ * It handles file uploads to Supabase Storage, document metadata management in the database,
+ * and provides utilities for document operations throughout the project lifecycle.
+ * 
+ * Key Features:
+ * - File upload to Supabase Storage with proper organization
+ * - Document metadata storage and retrieval
+ * - Error handling and user feedback via toasts
+ * - File path generation with timestamps for uniqueness
+ * - Document deletion with cleanup of both database and storage
+ * - Multiple function aliases for semantic clarity in different contexts
+ * 
+ * Storage Organization:
+ * - Files are organized by project ID in folders
+ * - Timestamps are added to filenames to prevent conflicts
+ * - Public URLs are generated for easy access
+ * 
+ * Security Considerations:
+ * - File uploads are authenticated through Supabase Auth
+ * - Storage bucket permissions control access
+ * - Document metadata includes creator information
+ * 
+ * The service integrates with the toast notification system to provide
+ * immediate feedback to users about operation success or failure.
+ */
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 
 /**
- * Upload a file to Supabase Storage
- * @param file The file to upload
- * @param projectId The project ID to associate with the file
- * @returns The URL of the uploaded file
+ * Uploads a file to Supabase Storage
+ * 
+ * This function handles the complete file upload process:
+ * 1. Validates that a file is provided
+ * 2. Generates a unique file path using project ID and timestamp
+ * 3. Uploads the file to the 'documents' storage bucket
+ * 4. Generates and returns a public URL for the uploaded file
+ * 5. Provides user feedback through toast notifications
+ * 
+ * File Organization:
+ * - Files are stored in project-specific folders: `{projectId}/{timestamp}-{filename}`
+ * - Timestamps prevent filename conflicts
+ * - Cache control is set to 1 hour for performance
+ * 
+ * @param file - The File object to upload
+ * @param projectId - The project ID to associate with the file (used for folder organization)
+ * @returns Promise<string | null> - The public URL of the uploaded file, or null if upload failed
+ * 
+ * @example
+ * ```typescript
+ * const file = event.target.files[0];
+ * const url = await uploadFile(file, "project-123");
+ * if (url) {
+ *   console.log("File uploaded to:", url);
+ * }
+ * ```
  */
 export const uploadFile = async (file: File, projectId: string): Promise<string | null> => {
   try {
@@ -47,12 +98,31 @@ export const uploadFile = async (file: File, projectId: string): Promise<string 
 };
 
 /**
- * Add a document to a project
- * @param projectId The project ID
- * @param name Document name
- * @param type Document type ('proposal' or 'final_proposal')
- * @param link Document URL
- * @returns The created document data
+ * Adds document metadata to the database
+ * 
+ * This function stores document information in the database after a successful file upload.
+ * It creates a database record that links the document to a project and stores metadata
+ * such as name, type, and storage URL.
+ * 
+ * Document Types:
+ * - 'proposal': Initial project proposals from students
+ * - 'final_proposal': Final deliverables or completed work
+ * 
+ * @param projectId - The ID of the project this document belongs to
+ * @param name - Display name for the document
+ * @param type - Type of document ('proposal' or 'final_proposal')
+ * @param link - URL or path to access the document
+ * @returns Promise<object | null> - The created document record, or null if creation failed
+ * 
+ * @example
+ * ```typescript
+ * const doc = await addDocumentToProject(
+ *   "project-123",
+ *   "Project Proposal.pdf",
+ *   "proposal",
+ *   "https://storage.url/document.pdf"
+ * );
+ * ```
  */
 export const addDocumentToProject = async (
   projectId: string,
@@ -87,9 +157,19 @@ export const addDocumentToProject = async (
 };
 
 /**
- * Get documents for a project
- * @param projectId The project ID
- * @returns Array of documents
+ * Retrieves all documents for a specific project
+ * 
+ * This function fetches all document records associated with a project,
+ * ordered by creation date (newest first) for consistent display.
+ * 
+ * @param projectId - The ID of the project to fetch documents for
+ * @returns Promise<Array> - Array of document objects, or empty array if none found
+ * 
+ * @example
+ * ```typescript
+ * const documents = await getProjectDocuments("project-123");
+ * console.log(`Found ${documents.length} documents`);
+ * ```
  */
 export const getProjectDocuments = async (projectId: string) => {
   try {
@@ -114,9 +194,27 @@ export const getProjectDocuments = async (projectId: string) => {
 };
 
 /**
- * Delete a document
- * @param documentId The document ID to delete
- * @returns Success boolean
+ * Deletes a document and its associated file
+ * 
+ * This function performs a complete document deletion:
+ * 1. Fetches the document record to get storage information
+ * 2. Deletes the database record
+ * 3. Attempts to delete the file from storage (best effort)
+ * 4. Provides user feedback about the operation
+ * 
+ * Note: Storage deletion is done as a best effort operation. If it fails,
+ * the database record is still deleted to maintain consistency.
+ * 
+ * @param documentId - The ID of the document to delete
+ * @returns Promise<boolean> - True if deletion was successful, false otherwise
+ * 
+ * @example
+ * ```typescript
+ * const success = await deleteDocument("doc-123");
+ * if (success) {
+ *   console.log("Document deleted successfully");
+ * }
+ * ```
  */
 export const deleteDocument = async (documentId: string) => {
   try {
@@ -171,18 +269,31 @@ export const deleteDocument = async (documentId: string) => {
   }
 };
 
-// Add the missing functions that DocumentUpload.tsx is trying to use
 /**
- * Upload a document file to storage
- * This function wraps the uploadFile function for more semantic naming in the UI
+ * Semantic alias for uploadFile function
+ * 
+ * This function provides a more descriptive name for document uploads
+ * in UI contexts where the semantic meaning is important.
+ * 
+ * @param file - The file to upload
+ * @param projectId - The project ID for organization
+ * @returns Promise<string | null> - The public URL of the uploaded document
  */
 export const uploadDocumentFile = async (file: File, projectId: string): Promise<string | null> => {
   return uploadFile(file, projectId);
 };
 
 /**
- * Save document metadata to the database
- * This function wraps the addDocumentToProject function for more semantic naming in the UI
+ * Semantic alias for addDocumentToProject function
+ * 
+ * This function provides a more descriptive name for saving document metadata
+ * in UI contexts where the semantic meaning is important.
+ * 
+ * @param projectId - The project ID
+ * @param name - Document name
+ * @param type - Document type
+ * @param link - Document URL
+ * @returns Promise<object | null> - The created document record
  */
 export const saveDocumentToDB = async (
   projectId: string,

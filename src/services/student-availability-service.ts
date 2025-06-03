@@ -1,11 +1,58 @@
 
+/**
+ * Student Availability Service
+ * 
+ * This service manages student availability status throughout the project lifecycle.
+ * It handles the complex logic of updating student availability when they are selected
+ * for projects and when projects are completed.
+ * 
+ * Key Responsibilities:
+ * - Mark selected students as unavailable when chosen for a project
+ * - Mark non-selected students as available again after selection
+ * - Mark students as available when their projects are completed
+ * - Update project records with selected student information
+ * 
+ * Business Logic:
+ * - Students can only work on one project at a time
+ * - When an entrepreneur selects a student, all other proposed students become available again
+ * - When a project is completed, the assigned student becomes available for new projects
+ * 
+ * This service is typically called from project management workflows and ensures
+ * consistent student availability tracking across the platform.
+ */
+
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * StudentAvailabilityService Class
+ * 
+ * Static service class that provides methods for managing student availability
+ * in relation to project assignments and completions.
+ */
 export class StudentAvailabilityService {
   /**
-   * When a student is selected for a project (entrepreneur makes final choice)
-   * - Set the selected student as unavailable
-   * - Set all other proposed students back to available
+   * Handles student selection for a project
+   * 
+   * This method is called when an entrepreneur makes their final choice of student for a project.
+   * It performs several database operations to ensure data consistency:
+   * 
+   * 1. Finds all students who were proposed for this project
+   * 2. Sets all non-selected students back to available status
+   * 3. Sets the selected student as unavailable
+   * 4. Updates the project record with the selected student ID
+   * 
+   * @param projectId - The ID of the project for which a student is being selected
+   * @param selectedStudentId - The ID of the student who was chosen for the project
+   * 
+   * @throws {Error} If any database operation fails
+   * 
+   * @example
+   * ```typescript
+   * await StudentAvailabilityService.handleStudentSelection(
+   *   "project-123",
+   *   "student-456"
+   * );
+   * ```
    */
   static async handleStudentSelection(projectId: string, selectedStudentId: string) {
     try {
@@ -75,8 +122,25 @@ export class StudentAvailabilityService {
   }
   
   /**
-   * When a project is completed/finished
-   * - Set the selected student back to available
+   * Handles project completion and student availability update
+   * 
+   * This method is called when a project reaches completion status.
+   * It ensures that the student who was working on the project becomes
+   * available for new project assignments.
+   * 
+   * Process:
+   * 1. Fetches the project to find the selected student
+   * 2. Updates the student's availability status to true
+   * 3. Logs the operation for audit purposes
+   * 
+   * @param projectId - The ID of the project that has been completed
+   * 
+   * @throws {Error} If any database operation fails
+   * 
+   * @example
+   * ```typescript
+   * await StudentAvailabilityService.handleProjectCompletion("project-123");
+   * ```
    */
   static async handleProjectCompletion(projectId: string) {
     try {
@@ -94,8 +158,8 @@ export class StudentAvailabilityService {
         throw projectError;
       }
       
+      // If there's a selected student, make them available again
       if (project?.selected_student) {
-        // Set the student back to available
         const { error: availableError } = await supabase
           .from('students')
           .update({ available: true })

@@ -1,4 +1,24 @@
 
+/**
+ * Project Detail Page Component
+ * 
+ * This component displays comprehensive information about a specific project including:
+ * - Project metadata (title, description, status, price)
+ * - Entrepreneur and student information with avatars
+ * - Project documents with upload functionality
+ * - Review system for completed projects
+ * 
+ * The component handles different user roles and project states appropriately,
+ * ensuring proper access control and functionality based on context.
+ * 
+ * Key Features:
+ * - Responsive design for all screen sizes
+ * - Real-time document management
+ * - Avatar display with fallback handling
+ * - Status-based conditional rendering
+ * - Review submission for entrepreneurs
+ */
+
 import React, { useEffect, useState } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -13,23 +33,45 @@ import DocumentUpload from "@/components/DocumentUpload";
 import ProjectReviewSection from "@/components/reviews/ProjectReviewSection";
 import { Download, FileText, Calendar, User, DollarSign } from "lucide-react";
 
+/**
+ * Interface for project document data structure
+ * Represents a document associated with a project
+ */
 interface ProjectDocument {
+  /** Unique identifier for the document */
   id_document: string;
+  /** Display name of the document */
   name: string;
+  /** URL or path to access the document */
   link: string;
+  /** Type of document (proposal, final, regular, etc.) */
   type: string;
+  /** Timestamp when the document was uploaded */
   created_at: string;
 }
 
+/**
+ * Interface for project data structure with related entities
+ * Contains all project information and related user data
+ */
 interface Project {
+  /** Unique identifier for the project */
   id_project: string;
+  /** Project title/name */
   title: string;
+  /** Detailed description of the project */
   description: string;
+  /** Current status of the project (STEP1-STEP6, completed, etc.) */
   status: string;
+  /** Timestamp when the project was created */
   created_at: string;
+  /** Project budget/price in euros */
   price: number;
+  /** ID of the entrepreneur who owns the project */
   id_entrepreneur: string;
+  /** ID of the selected student (if any) */
   selected_student?: string;
+  /** Entrepreneur information with nested user data */
   entrepreneur?: {
     users: {
       name: string;
@@ -37,6 +79,7 @@ interface Project {
       pp_link?: string;
     };
   };
+  /** Student information with nested user data */
   student?: {
     users: {
       name: string;
@@ -44,22 +87,39 @@ interface Project {
       pp_link?: string;
     };
   };
+  /** Array of documents associated with the project */
   documents?: ProjectDocument[];
 }
 
+/**
+ * ProjectDetail Component
+ * Main component that renders the project detail page
+ */
 const ProjectDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
+  
+  // State management
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [documentsLoading, setDocumentsLoading] = useState(false);
 
+  // Fetch project data when component mounts or dependencies change
   useEffect(() => {
     if (user && id) {
       fetchProject();
     }
   }, [user, id]);
 
+  /**
+   * Fetches comprehensive project data including related entities
+   * 
+   * This function:
+   * 1. Fetches the main project data with entrepreneur information
+   * 2. If there's a selected student, fetches their information
+   * 3. Fetches all project documents
+   * 4. Combines all data into a single project object
+   */
   const fetchProject = async () => {
     if (!id) return;
 
@@ -67,7 +127,7 @@ const ProjectDetail = () => {
       setLoading(true);
       console.log("Fetching project with ID:", id);
 
-      // Fetch project with entrepreneur data
+      // Fetch main project data with entrepreneur information
       const { data: projectData, error: projectError } = await supabase
         .from("projects")
         .select(`
@@ -88,7 +148,7 @@ const ProjectDetail = () => {
 
       let studentData = null;
       
-      // If there's a selected student, fetch their data
+      // Fetch selected student data if available
       if (projectData.selected_student) {
         console.log("Fetching student data for:", projectData.selected_student);
         const { data: studentInfo, error: studentError } = await supabase
@@ -107,7 +167,7 @@ const ProjectDetail = () => {
         }
       }
 
-      // Fetch project documents
+      // Fetch project documents and combine all data
       await fetchProjectDocuments(id, projectData, studentData);
 
     } catch (error: any) {
@@ -119,11 +179,19 @@ const ProjectDetail = () => {
     }
   };
 
+  /**
+   * Fetches all documents associated with the project
+   * 
+   * @param projectId - The ID of the project to fetch documents for
+   * @param projectData - The main project data object
+   * @param studentData - The student data object (if available)
+   */
   const fetchProjectDocuments = async (projectId: string, projectData: any, studentData: any) => {
     try {
       setDocumentsLoading(true);
       console.log("Fetching documents for project:", projectId);
 
+      // Fetch all documents for this project, ordered by creation date (newest first)
       const { data: documentsData, error: documentsError } = await supabase
         .from("documents")
         .select("*")
@@ -137,6 +205,7 @@ const ProjectDetail = () => {
 
       console.log("Documents fetched:", documentsData?.length || 0);
 
+      // Combine all data into final project object
       const formattedProject = {
         ...projectData,
         entrepreneur: projectData.entrepreneurs,
@@ -160,6 +229,12 @@ const ProjectDetail = () => {
     }
   };
 
+  /**
+   * Handles successful document upload
+   * Refreshes the project documents list to show the new document
+   * 
+   * @param documentDetails - Object containing details of the uploaded document
+   */
   const handleDocumentSubmit = async (documentDetails: {
     documentUrl: string;
     documentName: string;
@@ -177,10 +252,21 @@ const ProjectDetail = () => {
     }
   };
 
+  /**
+   * Downloads a document by opening it in a new tab
+   * 
+   * @param doc - The document object to download
+   */
   const downloadDocument = (doc: ProjectDocument) => {
     window.open(doc.link, '_blank');
   };
 
+  /**
+   * Returns appropriate CSS classes for status badges based on project status
+   * 
+   * @param status - The project status string
+   * @returns CSS classes for styling the status badge
+   */
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "completed": return "bg-green-100 text-green-800";
@@ -192,6 +278,12 @@ const ProjectDetail = () => {
     }
   };
 
+  /**
+   * Converts internal status codes to user-friendly display names
+   * 
+   * @param status - The internal status code
+   * @returns Human-readable status string
+   */
   const getStatusDisplay = (status: string) => {
     const statusMap: { [key: string]: string } = {
       'STEP1': 'New',
@@ -204,10 +296,12 @@ const ProjectDetail = () => {
     return statusMap[status] || status?.replace('_', ' ').toUpperCase() || 'Unknown';
   };
 
+  // Redirect to login if user is not authenticated
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
+  // Show loading spinner while fetching data
   if (loading) {
     return (
       <AppLayout>
@@ -218,6 +312,7 @@ const ProjectDetail = () => {
     );
   }
 
+  // Show error state if project not found
   if (!project) {
     return (
       <AppLayout>
@@ -235,7 +330,7 @@ const ProjectDetail = () => {
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
-          {/* Header Card */}
+          {/* Project Header Card - Contains title, status, and price */}
           <Card className="mb-6">
             <CardHeader className="pb-4">
               <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
@@ -253,6 +348,7 @@ const ProjectDetail = () => {
                     </div>
                   </div>
                 </div>
+                {/* Project price display */}
                 {project.price && (
                   <div className="flex items-center bg-gray-50 px-4 py-3 rounded-lg">
                     <DollarSign className="h-5 w-5 text-tiro-primary mr-2" />
@@ -268,7 +364,7 @@ const ProjectDetail = () => {
             </CardHeader>
           </Card>
 
-          {/* Description Card */}
+          {/* Project Description Card */}
           {project.description && (
             <Card className="mb-6">
               <CardHeader>
@@ -285,9 +381,9 @@ const ProjectDetail = () => {
             </Card>
           )}
 
-          {/* People Cards */}
+          {/* People Information Cards - Entrepreneur and Student */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {/* Entrepreneur Card */}
+            {/* Entrepreneur Information Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
@@ -317,7 +413,7 @@ const ProjectDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Student Card */}
+            {/* Student Information Card - Only shown if a student is assigned */}
             {project.student && (
               <Card>
                 <CardHeader>
@@ -350,7 +446,7 @@ const ProjectDetail = () => {
             )}
           </div>
 
-          {/* Documents Section */}
+          {/* Documents Management Section */}
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
@@ -359,13 +455,13 @@ const ProjectDetail = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Document Upload */}
+              {/* Document Upload Component */}
               <DocumentUpload 
                 projectId={project.id_project} 
                 onDocumentSubmit={handleDocumentSubmit}
               />
 
-              {/* Documents List */}
+              {/* Documents List Display */}
               {documentsLoading ? (
                 <div className="flex justify-center py-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-tiro-primary"></div>
@@ -406,7 +502,7 @@ const ProjectDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Review Section */}
+          {/* Review Section - Only shown for completed projects with assigned students */}
           {project.student && project.selected_student && (
             <Card>
               <CardContent className="p-0">

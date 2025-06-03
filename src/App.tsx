@@ -1,4 +1,33 @@
 
+/**
+ * App Component - Main Application Entry Point
+ * 
+ * This is the root component of the application that sets up the overall structure
+ * and provides essential context providers and routing configuration.
+ * 
+ * Key Features:
+ * - React Router for client-side navigation
+ * - React Query for server state management and caching
+ * - Multiple context providers for application state
+ * - Comprehensive routing with protected routes
+ * - Global toast notifications
+ * - Authentication flow management
+ * 
+ * Context Providers:
+ * - QueryClientProvider: Manages server state and caching
+ * - AuthProvider: Handles user authentication state
+ * - ProjectProvider: Manages project-related state
+ * - MessageProvider: Handles messaging functionality
+ * 
+ * Route Structure:
+ * - Public routes: /, /login, /register, /reset-password, /create-admin
+ * - Protected routes: All other routes require authentication
+ * - 404 handling: Redirects to NotFound component for unknown routes
+ * 
+ * The application uses a hierarchical context structure where each provider
+ * wraps the next, ensuring all components have access to the necessary state.
+ */
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -6,6 +35,8 @@ import { AuthProvider } from "@/context/auth-context";
 import { ProjectProvider } from "@/context/project-context";
 import { MessageProvider } from "@/context/message-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
+
+// Import all page components
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -22,10 +53,39 @@ import PackSelection from "@/pages/PackSelection";
 import AcceptedStudents from "@/pages/AcceptedStudents";
 import CreateAdminAccount from "@/pages/CreateAdminAccount";
 import NotFound from "@/pages/NotFound";
+
+// Import global styles
 import "./App.css";
 
+/**
+ * React Query configuration
+ * 
+ * Creates a QueryClient instance with default settings for:
+ * - Stale time: How long data is considered fresh
+ * - Cache time: How long unused data stays in cache
+ * - Retry logic: Automatic retry on failed requests
+ * - Background refetching: Automatic data updates
+ */
 const queryClient = new QueryClient();
 
+/**
+ * App Component
+ * 
+ * The root component that structures the entire application with providers and routing
+ * 
+ * Provider Hierarchy:
+ * 1. QueryClientProvider - Server state management
+ * 2. Router - Client-side routing
+ * 3. AuthProvider - Authentication state
+ * 4. ProjectProvider - Project-related state
+ * 5. MessageProvider - Messaging functionality
+ * 
+ * Route Categories:
+ * - Landing/Auth routes: Public access for login/registration
+ * - Application routes: Protected routes requiring authentication
+ * - Admin routes: Special access for administrative functions
+ * - Fallback route: 404 handling for unknown paths
+ */
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -34,11 +94,14 @@ function App() {
           <ProjectProvider>
             <MessageProvider>
               <Routes>
+                {/* Public Routes - Accessible without authentication */}
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/create-admin" element={<CreateAdminAccount />} />
+                
+                {/* Protected Routes - Require authentication */}
                 <Route
                   path="/dashboard"
                   element={
@@ -119,8 +182,12 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                
+                {/* Fallback Route - 404 handling */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              
+              {/* Global Toast Notifications */}
               <Toaster />
             </MessageProvider>
           </ProjectProvider>
