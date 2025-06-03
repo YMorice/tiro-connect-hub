@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
-import { Plus, Search, Eye, MessageCircle, Filter, Calendar, User } from "lucide-react";
+import { Plus, Search, Eye, MessageCircle, Filter, Calendar, User, DollarSign } from "lucide-react";
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
 
 interface Project {
@@ -32,7 +33,7 @@ const convertDbStatusToDisplay = (dbStatus: string): string => {
     'STEP3': 'Selection',
     'STEP4': 'Payment',
     'STEP5': 'Active',
-    'STEP6': 'In progress'
+    'STEP6': 'In Progress'
   };
   return statusMap[dbStatus] || dbStatus;
 };
@@ -45,7 +46,8 @@ const getStatusColor = (status: string): string => {
     case 'Selection': return 'bg-purple-100 text-purple-800';
     case 'Payment': return 'bg-orange-100 text-orange-800';
     case 'Active': return 'bg-green-100 text-green-800';
-    case 'In progress': return 'bg-indigo-100 text-indigo-800';
+    case 'In Progress': return 'bg-indigo-100 text-indigo-800';
+    case 'Completed': return 'bg-emerald-100 text-emerald-800';
     default: return 'bg-gray-100 text-gray-800';
   }
 };
@@ -58,8 +60,8 @@ const getStatusOrder = (status: string): number => {
     'Selection': 3,
     'Payment': 4,
     'Active': 5,
-    'In progress': 6,
-    'completed': 7
+    'In Progress': 6,
+    'Completed': 7
   };
   return statusOrder[status] || 999;
 };
@@ -245,42 +247,47 @@ const Projects = () => {
     fetchProjects();
   };
 
-  const statusOptions = ['New', 'Proposals', 'Selection', 'Payment', 'Active', 'In progress'];
+  const statusOptions = ['New', 'Proposals', 'Selection', 'Payment', 'Active', 'In Progress', 'Completed'];
 
   return (
     <AppLayout>
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <div className="flex-1 overflow-auto p-4">
-          <div className="max-w-7xl mx-auto space-y-4">
-            <div className="flex flex-col gap-3">
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
               <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">My Projects</h1>
-                <p className="text-muted-foreground text-sm">Manage and track your projects</p>
+                <h1 className="text-2xl lg:text-3xl font-bold">My Projects</h1>
+                <p className="text-muted-foreground">Manage and track your projects</p>
               </div>
-              <Button onClick={() => navigate('/pack-selection')} className="flex items-center w-fit text-sm h-9" size="sm">
-                <Plus className="h-4 w-4 mr-1" />
+              <Button 
+                onClick={() => navigate('/pack-selection')} 
+                className="w-fit"
+                size="default"
+              >
+                <Plus className="h-4 w-4 mr-2" />
                 Create New Project
               </Button>
             </div>
 
             {/* Filters */}
             <Card>
-              <CardHeader className="p-4">
+              <CardHeader className="pb-4">
                 <CardTitle className="text-lg">Filter Projects</CardTitle>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                  <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="text"
                       placeholder="Search projects..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-8 text-sm h-9"
+                      className="pl-9"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[150px] h-9 text-sm">
+                      <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="All statuses" />
                       </SelectTrigger>
                       <SelectContent>
@@ -293,8 +300,8 @@ const Projects = () => {
                       </SelectContent>
                     </Select>
                     {(searchQuery || statusFilter) && (
-                      <Button variant="outline" size="sm" onClick={clearFilters} className="h-9 text-sm">
-                        <Filter className="h-4 w-4 mr-1" />
+                      <Button variant="outline" onClick={clearFilters}>
+                        <Filter className="h-4 w-4 mr-2" />
                         Clear
                       </Button>
                     )}
@@ -305,32 +312,33 @@ const Projects = () => {
 
             {/* Projects List */}
             {loading ? (
-              <div className="flex justify-center py-8">
+              <div className="flex justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
               </div>
             ) : (
-              <div className="space-y-4 pb-4">
+              <div className="space-y-6">
                 {filteredProjects.length > 0 ? (
                   filteredProjects.map(project => (
-                    <div key={project.id} className="space-y-3">
-                      <Card className="hover:shadow-md transition-shadow">
-                        <CardHeader className="p-4">
-                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div key={project.id} className="space-y-4">
+                      <Card className="hover:shadow-lg transition-shadow">
+                        <CardHeader className="pb-4">
+                          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
-                              <CardTitle className="text-lg truncate">{project.title}</CardTitle>
-                              <CardDescription className="text-sm mt-1">
+                              <CardTitle className="text-xl mb-2 break-words">{project.title}</CardTitle>
+                              <CardDescription className="mb-3 line-clamp-2">
                                 {project.description || "No description provided"}
                               </CardDescription>
-                              <div className="flex flex-wrap items-center gap-2 mt-2">
-                                <Badge className={`${getStatusColor(project.status)} text-xs`}>
+                              <div className="flex flex-wrap items-center gap-3">
+                                <Badge className={`${getStatusColor(project.status)}`}>
                                   {project.status}
                                 </Badge>
-                                <div className="flex items-center text-xs text-muted-foreground">
-                                  <Calendar className="h-3 w-3 mr-1" />
+                                <div className="flex items-center text-sm text-muted-foreground">
+                                  <Calendar className="h-4 w-4 mr-1" />
                                   {new Date(project.created_at).toLocaleDateString()}
                                 </div>
                                 {project.pack && (
-                                  <div className="flex items-center text-xs text-muted-foreground">
+                                  <div className="flex items-center text-sm text-muted-foreground">
+                                    <DollarSign className="h-4 w-4 mr-1" />
                                     <span>{project.pack.name}</span>
                                     {project.pack.price && (
                                       <span className="ml-1">- €{project.pack.price}</span>
@@ -339,23 +347,21 @@ const Projects = () => {
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex flex-wrap items-center gap-2">
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => handleViewConversation(project.id, project.title)}
-                                className="text-xs h-8"
                               >
-                                <MessageCircle className="h-3 w-3 mr-1" />
+                                <MessageCircle className="h-4 w-4 mr-2" />
                                 Chat
                               </Button>
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => handleViewProject(project.id)}
-                                className="text-xs h-8"
                               >
-                                <Eye className="h-3 w-3 mr-1" />
+                                <Eye className="h-4 w-4 mr-2" />
                                 View
                               </Button>
                               {(project.status === 'Selection' || project.status === 'Proposals') && (
@@ -363,9 +369,8 @@ const Projects = () => {
                                   variant="default" 
                                   size="sm"
                                   onClick={() => toggleProjectExpansion(project.id)}
-                                  className="text-xs h-8"
                                 >
-                                  <User className="h-3 w-3 mr-1" />
+                                  <User className="h-4 w-4 mr-2" />
                                   {expandedProject === project.id ? 'Hide' : 'Show'} Students
                                 </Button>
                               )}
@@ -387,8 +392,8 @@ const Projects = () => {
                   ))
                 ) : (
                   <Card>
-                    <CardContent className="text-center py-8">
-                      <p className="text-muted-foreground text-sm">
+                    <CardContent className="text-center py-12">
+                      <p className="text-muted-foreground mb-4">
                         {projects.length > 0 
                           ? "No projects match your search criteria" 
                           : "You haven't created any projects yet"}
@@ -396,10 +401,9 @@ const Projects = () => {
                       {projects.length === 0 && (
                         <Button 
                           onClick={() => navigate('/pack-selection')} 
-                          className="mt-3 text-sm h-9"
-                          size="sm"
+                          size="lg"
                         >
-                          <Plus className="h-4 w-4 mr-1" />
+                          <Plus className="h-4 w-4 mr-2" />
                           Create Your First Project
                         </Button>
                       )}

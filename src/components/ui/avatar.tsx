@@ -32,7 +32,7 @@ const AvatarImage = React.forwardRef<
     }}
     onError={(e) => {
       console.error("Failed to load avatar image:", props.src);
-      e.currentTarget.style.display = 'none';
+      // Don't hide the image, let fallback handle it
     }}
   />
 ))
