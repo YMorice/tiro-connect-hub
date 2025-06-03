@@ -1,8 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from './auth-context';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { Message } from '@/types';
 
 interface MessageContextType {
@@ -23,7 +24,7 @@ export const useMessage = () => {
   return context;
 };
 
-const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -81,7 +82,7 @@ const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) 
     try {
       const { error } = await supabase
         .from('projects')
-        .update({ status: 'completed' }) // Changed from 'review' to 'completed'
+        .update({ status: 'completed' })
         .eq('id', projectId);
 
       if (error) throw error;
