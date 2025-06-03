@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from './auth-context';
@@ -31,9 +32,17 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const sendMessage = async (message: Message) => {
     try {
+      // Map Message type to database schema
+      const dbMessage = {
+        content: message.content,
+        sender_id: message.sender,
+        group_id: message.groupId,
+        read: message.read
+      };
+
       const { data, error } = await supabase
         .from('messages')
-        .insert([message])
+        .insert([dbMessage])
         .select()
         .single();
 
@@ -43,7 +52,19 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
-      setMessages(prevMessages => [...prevMessages, data]);
+      // Map database response back to Message type
+      const mappedMessage: Message = {
+        id: data.id_message,
+        sender: data.sender_id,
+        recipient: '', // This might need to be handled differently based on your use case
+        content: data.content,
+        read: data.read,
+        projectId: message.projectId,
+        createdAt: new Date(data.created_at),
+        groupId: data.group_id
+      };
+
+      setMessages(prevMessages => [...prevMessages, mappedMessage]);
       toast.success("Message sent!");
       queryClient.invalidateQueries({ queryKey: ['messages', message.projectId] });
     } catch (error) {
@@ -61,9 +82,12 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
-        .eq('projectId', projectId)
-        .order('createdAt', { ascending: true });
+        .select(`
+          *,
+          message_groups!inner(id_project)
+        `)
+        .eq('message_groups.id_project', projectId)
+        .order('created_at', { ascending: true });
 
       if (error) {
         console.error("Error fetching messages:", error);
@@ -71,7 +95,19 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
-      setMessages(data || []);
+      // Map database response to Message type
+      const mappedMessages: Message[] = (data || []).map(dbMessage => ({
+        id: dbMessage.id_message,
+        sender: dbMessage.sender_id,
+        recipient: '', // This might need to be handled differently
+        content: dbMessage.content,
+        read: dbMessage.read,
+        projectId: projectId,
+        createdAt: new Date(dbMessage.created_at),
+        groupId: dbMessage.group_id
+      }));
+
+      setMessages(mappedMessages);
     } catch (error) {
       console.error("Error fetching messages:", error);
       toast.error("Failed to fetch messages.");
@@ -83,7 +119,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const { error } = await supabase
         .from('projects')
         .update({ status: 'completed' })
-        .eq('id', projectId);
+        .eq('id_project', projectId);
 
       if (error) throw error;
 
@@ -113,3 +149,4 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
 };
 
 export default MessageProvider;
+
