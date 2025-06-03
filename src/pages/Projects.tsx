@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -49,6 +48,20 @@ const getStatusColor = (status: string): string => {
     case 'In progress': return 'bg-indigo-100 text-indigo-800';
     default: return 'bg-gray-100 text-gray-800';
   }
+};
+
+// Helper function to get status order for sorting
+const getStatusOrder = (status: string): number => {
+  const statusOrder: { [key: string]: number } = {
+    'New': 1,
+    'Proposals': 2,
+    'Selection': 3,
+    'Payment': 4,
+    'Active': 5,
+    'In progress': 6,
+    'completed': 7
+  };
+  return statusOrder[status] || 999;
 };
 
 const Projects = () => {
@@ -112,7 +125,20 @@ const Projects = () => {
           } : undefined
         }));
         
-        setProjects(formattedProjects);
+        // Sort projects by status order (New -> Completed)
+        const sortedProjects = formattedProjects.sort((a, b) => {
+          const statusOrderA = getStatusOrder(a.status);
+          const statusOrderB = getStatusOrder(b.status);
+          
+          if (statusOrderA !== statusOrderB) {
+            return statusOrderA - statusOrderB;
+          }
+          
+          // If same status, sort by creation date (newest first)
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        
+        setProjects(sortedProjects);
       } catch (error) {
         console.error('Error fetching projects:', error);
         toast.error("Failed to load projects");
@@ -196,7 +222,20 @@ const Projects = () => {
             } : undefined
           }));
           
-          setProjects(formattedProjects);
+          // Sort projects by status order (New -> Completed)
+          const sortedProjects = formattedProjects.sort((a, b) => {
+            const statusOrderA = getStatusOrder(a.status);
+            const statusOrderB = getStatusOrder(b.status);
+            
+            if (statusOrderA !== statusOrderB) {
+              return statusOrderA - statusOrderB;
+            }
+            
+            // If same status, sort by creation date (newest first)
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          });
+          
+          setProjects(sortedProjects);
         }
       } catch (error) {
         console.error('Error refreshing projects:', error);

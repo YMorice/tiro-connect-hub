@@ -50,7 +50,7 @@ const Messages = () => {
             entrepreneurs (
               users!inner (name, pp_link)
             ),
-            students (
+            students!projects_selected_student_fkey (
               users!inner (name, pp_link)
             )
           )
