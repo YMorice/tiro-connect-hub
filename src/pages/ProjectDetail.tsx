@@ -119,6 +119,13 @@ const ProjectDetail = () => {
   }, [user, id]);
 
   /**
+   * Handles proposal status changes and refetches proposal status
+   */
+  const handleProposalStatusChange = () => {
+    checkProposalStatus();
+  };
+
+  /**
    * Fetches comprehensive project data including related entities
    * 
    * This function:

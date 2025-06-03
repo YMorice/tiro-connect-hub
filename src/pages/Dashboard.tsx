@@ -184,7 +184,7 @@ const Dashboard = () => {
           
           const proposalProjects = proposalData?.map(p => ({
             ...p.projects,
-            proposalStatus: p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined')
+            proposalStatus: p.accepted === null ? 'pending' as const : (p.accepted ? 'accepted' as const : 'declined' as const)
           })).filter(Boolean) || [];
           
           const totalProjects = proposalProjects.length;

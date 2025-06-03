@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import AppLayout from "@/components/AppLayout";
@@ -125,7 +124,7 @@ const Projects = () => {
 
           const projectsWithProposals = proposalData?.map(p => ({
             ...p.projects,
-            proposalStatus: p.accepted === null ? 'pending' : (p.accepted ? 'accepted' : 'declined')
+            proposalStatus: p.accepted === null ? 'pending' as const : (p.accepted ? 'accepted' as const : 'declined' as const)
           })).filter(Boolean) || [];
 
           console.log("Student projects fetched:", projectsWithProposals.length);
