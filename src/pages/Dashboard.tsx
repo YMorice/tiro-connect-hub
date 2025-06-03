@@ -59,7 +59,7 @@ const convertDbStatusToDisplay = (dbStatus: string): string => {
     'STEP3': 'Selection',
     'STEP4': 'Payment',
     'STEP5': 'Active',
-    'STEP6': 'In progress'
+    'STEP6': 'Completed'
   };
   return statusMap[dbStatus] || dbStatus;
 };

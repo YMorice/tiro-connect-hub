@@ -23,7 +23,7 @@ export interface Project {
   description: string;
   ownerId: string; // entrepreneur ID
   assigneeId?: string; // student ID
-  status: "draft" | "open" | "in_progress" | "review" | "completed" | "New" | "Proposals" | "Selection" | "Payment" | "Active" | "In progress"; // Updated to include new status names
+  status: "completed" | "New" | "Proposals" | "Selection" | "Payment" | "Active" | "In progress"; // Updated to include new status names
   tasks: Task[];
   documents: Document[];
   packId?: string; // reference to the project pack
@@ -93,28 +93,6 @@ export interface RegistrationFormValues {
   skills?: string[];
   avatar?: string;
   acceptTerms?: boolean;
-}
-
-// Add these types if they don't exist already
-export interface DatabaseProject {
-  id_project: string;
-  name: string;
-  description: string | null;
-  state: 'draft' | 'open' | 'in progress' | 'completed';
-  created_at: string;
-  id_entrepreneur: string | null;
-  id_student: string | null;
-  id_pack: string | null;
-  deadline: string | null;
-}
-
-export interface DatabaseDocument {
-  id_document: string;
-  id_project: string | null;
-  name: string | null;
-  type: 'proposal' | 'final_proposal' | null;
-  link: string | null;
-  created_at: string;
 }
 
 // Added for proposed students
