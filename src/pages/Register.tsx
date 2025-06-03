@@ -399,11 +399,9 @@ const Register = () => {
     try {
       setIsSubmitting(true);
       
-      const name = values.firstName && values.lastName 
-        ? `${values.firstName} ${values.lastName}` 
-        : "New User";
+      const name = values.firstName?.trim() || "New User";
       
-      const surname = values.lastName || "User";
+      const surname = values.lastName?.trim() || "User";
         
       console.log("Submitting registration data:", {
         email: values.email,
