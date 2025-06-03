@@ -1,4 +1,3 @@
-
 /**
  * Messages Page Component
  * 
@@ -86,7 +85,7 @@ const Messages = () => {
    * 2. For each group, fetches the latest message and other participants
    * 3. Determines the appropriate display name based on user role
    * 4. Checks for unread messages
-   * 5. Sorts conversations by last message time
+   * 5. Sorts conversations by unread status first, then by last message time
    */
   const fetchConversations = useCallback(async () => {
     if (!user?.id) return;
@@ -205,10 +204,15 @@ const Messages = () => {
         }
       }
 
-      // Sort conversations by most recent message first
-      const conversationsArray = Array.from(conversationsMap.values()).sort((a, b) => 
-        new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
-      );
+      // Sort conversations: unread first, then by most recent message
+      const conversationsArray = Array.from(conversationsMap.values()).sort((a, b) => {
+        // First, prioritize conversations with unread messages
+        if (a.hasUnreadMessages && !b.hasUnreadMessages) return -1;
+        if (!a.hasUnreadMessages && b.hasUnreadMessages) return 1;
+        
+        // Then sort by most recent message time
+        return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
+      });
       
       console.log("Final conversations:", conversationsArray.length);
       setConversations(conversationsArray);
@@ -327,24 +331,29 @@ const Messages = () => {
                   key={conversation.id}
                   onClick={() => setSelectedConversation(conversation)}
                   className={cn(
-                    "p-3 lg:p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors",
+                    "p-3 lg:p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors relative",
                     selectedConversation?.id === conversation.id && "bg-blue-50 border-l-4 border-l-tiro-primary",
-                    conversation.hasUnreadMessages && "bg-blue-25"
+                    conversation.hasUnreadMessages && "bg-blue-25 border-l-4 border-l-blue-500"
                   )}
                 >
                   <div className="flex items-center space-x-3">
-                    <Avatar className="w-8 h-8 lg:w-10 lg:h-10 flex-shrink-0">
-                      {conversation.otherParticipantAvatar ? (
-                        <AvatarImage 
-                          src={conversation.otherParticipantAvatar}
-                          alt={conversation.otherParticipant}
-                        />
-                      ) : (
-                        <AvatarFallback className="bg-tiro-primary text-white text-xs lg:text-sm">
-                          {conversation.otherParticipant.charAt(0).toUpperCase()}
-                        </AvatarFallback>
+                    <div className="relative">
+                      <Avatar className="w-8 h-8 lg:w-10 lg:h-10 flex-shrink-0">
+                        {conversation.otherParticipantAvatar ? (
+                          <AvatarImage 
+                            src={conversation.otherParticipantAvatar}
+                            alt={conversation.otherParticipant}
+                          />
+                        ) : (
+                          <AvatarFallback className="bg-tiro-primary text-white text-xs lg:text-sm">
+                            {conversation.otherParticipant.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      {conversation.hasUnreadMessages && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
                       )}
-                    </Avatar>
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <h3 className={cn(
@@ -353,9 +362,6 @@ const Messages = () => {
                         )}>
                           {conversation.otherParticipant}
                         </h3>
-                        {conversation.hasUnreadMessages && (
-                          <div className="w-2 h-2 bg-tiro-primary rounded-full flex-shrink-0"></div>
-                        )}
                       </div>
                       <p className="text-xs text-gray-500 truncate mb-1">
                         {conversation.projectTitle}

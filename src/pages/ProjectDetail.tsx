@@ -1,4 +1,3 @@
-
 /**
  * Project Detail Page Component
  * 
@@ -20,7 +19,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
 import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +30,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DocumentUpload from "@/components/DocumentUpload";
 import ProjectReviewSection from "@/components/reviews/ProjectReviewSection";
-import { Download, FileText, Calendar, User, DollarSign } from "lucide-react";
+import { Download, FileText, Calendar, User, DollarSign, MessageCircle } from "lucide-react";
 
 /**
  * Interface for project document data structure
@@ -103,11 +102,13 @@ const ProjectDetail = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   // Fetch project data when component mounts or dependencies change
   useEffect(() => {
     if (user && id) {
       fetchProject();
+      checkUnreadMessages();
     }
   }, [user, id]);
 
@@ -296,6 +297,37 @@ const ProjectDetail = () => {
     return statusMap[status] || status?.replace('_', ' ').toUpperCase() || 'Unknown';
   };
 
+  // Checks if there are unread messages in this project's conversation
+  const checkUnreadMessages = async () => {
+    if (!user?.id || !id) return;
+
+    try {
+      // Get the message group for this project that includes the current user
+      const { data: userGroup, error: groupError } = await supabase
+        .from('message_groups')
+        .select('id_group')
+        .eq('id_project', id)
+        .eq('id_user', user.id)
+        .maybeSingle();
+
+      if (groupError || !userGroup) return;
+
+      // Check for unread messages in this group (not sent by current user)
+      const { count: unreadCount, error: unreadError } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('group_id', userGroup.id_group)
+        .eq('read', false)
+        .neq('sender_id', user.id);
+
+      if (!unreadError && unreadCount && unreadCount > 0) {
+        setHasUnreadMessages(true);
+      }
+    } catch (error) {
+      console.error("Error checking unread messages:", error);
+    }
+  };
+
   // Redirect to login if user is not authenticated
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -330,7 +362,7 @@ const ProjectDetail = () => {
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
-          {/* Project Header Card - Contains title, status, and price */}
+          {/* Project Header Card - Contains title, status, price, and discussion link */}
           <Card className="mb-6">
             <CardHeader className="pb-4">
               <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
@@ -346,6 +378,16 @@ const ProjectDetail = () => {
                       <Calendar className="h-4 w-4 mr-1" />
                       Created {new Date(project.created_at).toLocaleDateString()}
                     </div>
+                    {/* Discussion Link */}
+                    <Link to="/messages" className="flex items-center">
+                      <Button variant="outline" size="sm" className="relative">
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Discussion
+                        {hasUnreadMessages && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                        )}
+                      </Button>
+                    </Link>
                   </div>
                 </div>
                 {/* Project price display */}

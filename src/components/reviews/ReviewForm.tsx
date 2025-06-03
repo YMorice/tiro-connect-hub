@@ -12,6 +12,7 @@
  * - Integration with Supabase for data persistence
  * - Loading states and error handling
  * - Accessible form controls with proper labeling
+ * - Prevention of duplicate reviews
  * 
  * The component uses react-hook-form for form state management and validation,
  * and integrates with the authentication context to identify the reviewing entrepreneur.
@@ -93,9 +94,10 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
    * This function:
    * 1. Validates that a rating has been selected
    * 2. Gets the entrepreneur ID for the current user
-   * 3. Submits the review to the database
-   * 4. Shows success/error feedback
-   * 5. Calls the success callback if submission succeeds
+   * 3. Checks if a review already exists to prevent duplicates
+   * 4. Submits the review to the database
+   * 5. Shows success/error feedback
+   * 6. Calls the success callback if submission succeeds
    * 
    * @param data - Form data containing the comment
    */
@@ -112,6 +114,23 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         .single();
 
       if (entrepreneurError) throw entrepreneurError;
+
+      // Check if a review already exists for this project/entrepreneur/student combination
+      const { data: existingReview, error: checkError } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('entrepreneur_id', entrepreneurData.id_entrepreneur)
+        .eq('student_id', studentId)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingReview) {
+        toast.error("You have already submitted a review for this student on this project");
+        setIsSubmitting(false);
+        return;
+      }
 
       // Submit the review to the database
       const { error: reviewError } = await supabase
