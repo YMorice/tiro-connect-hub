@@ -106,11 +106,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <div className="flex items-center justify-between h-full px-4 lg:px-6">
           {/* Logo */}
           <div className="flex items-center">
-            <img 
-              src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
-              alt="Tiro Logo" 
-              className="h-8" 
-            />
+            <Link to="https://tiro.agency">
+              <img 
+                src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
+                alt="Tiro Logo" 
+                className="h-8" 
+              />
           </div>
 
           {/* Desktop Navigation */}
