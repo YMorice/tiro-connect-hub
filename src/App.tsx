@@ -95,7 +95,7 @@ function App() {
             <MessageProvider>
               <Routes>
                 {/* Public Routes - Accessible without authentication */}
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<Login />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
