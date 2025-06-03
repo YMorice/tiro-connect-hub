@@ -49,9 +49,6 @@ const Messages = () => {
             title,
             entrepreneurs (
               users!inner (name, pp_link)
-            ),
-            students!projects_selected_student_fkey (
-              users!inner (name, pp_link)
             )
           )
         `)
@@ -83,12 +80,30 @@ const Messages = () => {
         let otherParticipant = null;
         let otherParticipantAvatar = null;
         
-        if (isEntrepreneur && group.projects.students?.users) {
-          otherParticipant = group.projects.students.users.name;
-          otherParticipantAvatar = group.projects.students.users.pp_link;
-        } else if (isStudent && group.projects.entrepreneurs?.users) {
-          otherParticipant = group.projects.entrepreneurs.users.name;
-          otherParticipantAvatar = group.projects.entrepreneurs.users.pp_link;
+        // For entrepreneurs, show all users in the project group
+        if (isEntrepreneur) {
+          // Get all other users in this message group
+          const { data: otherUsers, error: usersError } = await supabase
+            .from('message_groups')
+            .select(`
+              users!inner (name, pp_link, role)
+            `)
+            .eq('id_group', group.id_group)
+            .neq('id_user', user.id);
+
+          if (!usersError && otherUsers && otherUsers.length > 0) {
+            // Show student if available, otherwise show first user
+            const studentUser = otherUsers.find(u => (u.users as any).role === 'student');
+            const targetUser = studentUser || otherUsers[0];
+            otherParticipant = (targetUser.users as any).name;
+            otherParticipantAvatar = (targetUser.users as any).pp_link;
+          }
+        } else if (isStudent) {
+          // For students, show the entrepreneur
+          if (group.projects.entrepreneurs?.users) {
+            otherParticipant = group.projects.entrepreneurs.users.name;
+            otherParticipantAvatar = group.projects.entrepreneurs.users.pp_link;
+          }
         }
 
         if (otherParticipant) {
@@ -212,14 +227,14 @@ const Messages = () => {
 
   return (
     <AppLayout>
-      <div className="h-full flex flex-col lg:flex-row overflow-hidden">
+      <div className="h-screen flex flex-col lg:flex-row overflow-hidden bg-gray-50">
         {/* Conversations List */}
         <div className={cn(
-          "w-full lg:w-1/3 border-r border-gray-200 flex flex-col",
+          "w-full lg:w-1/3 border-r border-gray-200 flex flex-col bg-white",
           selectedConversation && "hidden lg:flex"
         )}>
           <div className="p-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold">Messages</h2>
+            <h2 className="text-lg sm:text-xl font-semibold">Messages</h2>
           </div>
           
           <div className="flex-1 overflow-y-auto">
@@ -258,7 +273,7 @@ const Messages = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h3 className={cn(
-                          "font-medium text-gray-900 truncate",
+                          "font-medium text-gray-900 truncate text-sm sm:text-base",
                           conversation.hasUnreadMessages && "font-bold"
                         )}>
                           {conversation.otherParticipant}
@@ -267,11 +282,11 @@ const Messages = () => {
                           <div className="w-2 h-2 bg-tiro-primary rounded-full"></div>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500 truncate">
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">
                         {conversation.projectTitle}
                       </p>
                       <p className={cn(
-                        "text-sm text-gray-400 truncate",
+                        "text-xs sm:text-sm text-gray-400 truncate",
                         conversation.hasUnreadMessages && "text-gray-600 font-medium"
                       )}>
                         {conversation.lastMessage}
@@ -289,7 +304,7 @@ const Messages = () => {
 
         {/* Chat Area */}
         <div className={cn(
-          "flex-1 flex flex-col",
+          "flex-1 flex flex-col bg-white",
           !selectedConversation && "hidden lg:flex"
         )}>
           {selectedConversation ? (
@@ -318,8 +333,8 @@ const Messages = () => {
                     )}
                   </Avatar>
                   <div>
-                    <h3 className="font-medium">{selectedConversation.otherParticipant}</h3>
-                    <p className="text-sm text-gray-500">{selectedConversation.projectTitle}</p>
+                    <h3 className="font-medium text-sm sm:text-base">{selectedConversation.otherParticipant}</h3>
+                    <p className="text-xs sm:text-sm text-gray-500">{selectedConversation.projectTitle}</p>
                   </div>
                 </div>
               </div>
@@ -376,7 +391,7 @@ const Messages = () => {
                               ? "bg-tiro-primary text-white" 
                               : "bg-gray-100 text-gray-900"
                           )}>
-                            <p className="text-sm">{message.content}</p>
+                            <p className="text-xs sm:text-sm">{message.content}</p>
                           </div>
                           <p className="text-xs text-gray-500 mt-1">
                             {new Date(message.created_at).toLocaleTimeString()}
@@ -411,7 +426,7 @@ const Messages = () => {
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                     placeholder="Type your message..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tiro-primary focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tiro-primary focus:border-transparent text-sm"
                   />
                   <Button 
                     onClick={sendMessage}

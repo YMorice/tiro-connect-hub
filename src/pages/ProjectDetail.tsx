@@ -54,29 +54,44 @@ const ProjectDetail = () => {
     if (!id) return;
 
     try {
-      const { data, error } = await supabase
+      // First get the basic project data
+      const { data: projectData, error: projectError } = await supabase
         .from("projects")
         .select(`
           *,
           entrepreneurs!inner (
-            users!inner (name, email, pp_link)
-          ),
-          students (
             users!inner (name, email, pp_link)
           )
         `)
         .eq("id_project", id)
         .single();
 
-      if (error) throw error;
+      if (projectError) throw projectError;
 
-      const projectData = {
-        ...data,
-        entrepreneur: data.entrepreneurs,
-        student: data.students
+      let studentData = null;
+      
+      // If there's a selected student, fetch their data separately
+      if (projectData.selected_student) {
+        const { data: studentInfo, error: studentError } = await supabase
+          .from("students")
+          .select(`
+            users!inner (name, email, pp_link)
+          `)
+          .eq("id_student", projectData.selected_student)
+          .single();
+
+        if (!studentError && studentInfo) {
+          studentData = studentInfo;
+        }
+      }
+
+      const formattedProject = {
+        ...projectData,
+        entrepreneur: projectData.entrepreneurs,
+        student: studentData
       };
 
-      setProject(projectData);
+      setProject(formattedProject);
     } catch (error: any) {
       console.error("Error fetching project:", error);
       toast.error("Failed to load project details");
@@ -92,7 +107,6 @@ const ProjectDetail = () => {
   }) => {
     console.log("Document uploaded:", documentDetails);
     toast.success(`Document "${documentDetails.documentName}" uploaded successfully`);
-    // You can add additional logic here if needed, like refreshing document list
   };
 
   if (!user) {
@@ -130,100 +144,102 @@ const ProjectDetail = () => {
 
   return (
     <AppLayout>
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {project.title}
-              </h1>
-              <Badge className={getStatusColor(project.status)}>
-                {project.status?.replace('_', ' ').toUpperCase()}
-              </Badge>
-            </div>
-            {project.price && (
-              <div className="text-right">
-                <p className="text-sm text-gray-500">Project Value</p>
-                <p className="text-2xl font-bold text-tiro-primary">
-                  €{project.price.toLocaleString()}
-                </p>
+      <div className="min-h-screen bg-gray-50">
+        <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-6 gap-4">
+              <div className="flex-1">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                  {project.title}
+                </h1>
+                <Badge className={getStatusColor(project.status)}>
+                  {project.status?.replace('_', ' ').toUpperCase()}
+                </Badge>
               </div>
-            )}
-          </div>
-
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-3">Description</h2>
-            <p className="text-gray-700 leading-relaxed">
-              {project.description || "No description provided."}
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Entrepreneur</h3>
-              <div className="flex items-center space-x-3">
-                <Avatar className="w-12 h-12">
-                  {project.entrepreneur?.users?.pp_link ? (
-                    <AvatarImage 
-                      src={`${project.entrepreneur.users.pp_link}?t=${Date.now()}`}
-                      alt={project.entrepreneur.users.name}
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-tiro-primary text-white">
-                      {project.entrepreneur?.users?.name?.charAt(0) || "E"}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div>
-                  <p className="font-medium">{project.entrepreneur?.users?.name}</p>
-                  <p className="text-sm text-gray-500">{project.entrepreneur?.users?.email}</p>
+              {project.price && (
+                <div className="text-right">
+                  <p className="text-sm text-gray-500">Project Value</p>
+                  <p className="text-xl sm:text-2xl font-bold text-tiro-primary">
+                    €{project.price.toLocaleString()}
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
 
-            {project.student && (
+            <div className="mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-3">Description</h2>
+              <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
+                {project.description || "No description provided."}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <h3 className="text-lg font-semibold mb-3">Assigned Student</h3>
+                <h3 className="text-base sm:text-lg font-semibold mb-3">Entrepreneur</h3>
                 <div className="flex items-center space-x-3">
-                  <Avatar className="w-12 h-12">
-                    {project.student?.users?.pp_link ? (
+                  <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
+                    {project.entrepreneur?.users?.pp_link ? (
                       <AvatarImage 
-                        src={`${project.student.users.pp_link}?t=${Date.now()}`}
-                        alt={project.student.users.name}
+                        src={`${project.entrepreneur.users.pp_link}?t=${Date.now()}`}
+                        alt={project.entrepreneur.users.name}
                       />
                     ) : (
                       <AvatarFallback className="bg-tiro-primary text-white">
-                        {project.student?.users?.name?.charAt(0) || "S"}
+                        {project.entrepreneur?.users?.name?.charAt(0) || "E"}
                       </AvatarFallback>
                     )}
                   </Avatar>
                   <div>
-                    <p className="font-medium">{project.student?.users?.name}</p>
-                    <p className="text-sm text-gray-500">{project.student?.users?.email}</p>
+                    <p className="font-medium text-sm sm:text-base">{project.entrepreneur?.users?.name}</p>
+                    <p className="text-xs sm:text-sm text-gray-500">{project.entrepreneur?.users?.email}</p>
                   </div>
                 </div>
               </div>
+
+              {project.student && (
+                <div>
+                  <h3 className="text-base sm:text-lg font-semibold mb-3">Assigned Student</h3>
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
+                      {project.student?.users?.pp_link ? (
+                        <AvatarImage 
+                          src={`${project.student.users.pp_link}?t=${Date.now()}`}
+                          alt={project.student.users.name}
+                        />
+                      ) : (
+                        <AvatarFallback className="bg-tiro-primary text-white">
+                          {project.student?.users?.name?.charAt(0) || "S"}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-sm sm:text-base">{project.student?.users?.name}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">{project.student?.users?.email}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-base sm:text-lg font-semibold mb-3">Project Documents</h3>
+              <DocumentUpload 
+                projectId={project.id_project} 
+                onDocumentSubmit={handleDocumentSubmit}
+              />
+            </div>
+
+            {project.student && project.selected_student && (
+              <ProjectReviewSection
+                projectId={project.id_project}
+                studentId={project.selected_student}
+                projectStatus={project.status}
+              />
             )}
-          </div>
 
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Project Documents</h3>
-            <DocumentUpload 
-              projectId={project.id_project} 
-              onDocumentSubmit={handleDocumentSubmit}
-            />
-          </div>
-
-          {project.student && project.selected_student && (
-            <ProjectReviewSection
-              projectId={project.id_project}
-              studentId={project.selected_student}
-              projectStatus={project.status}
-            />
-          )}
-
-          <div className="mt-6 text-sm text-gray-500">
-            <p>Created on: {new Date(project.created_at).toLocaleDateString()}</p>
+            <div className="mt-6 text-xs sm:text-sm text-gray-500">
+              <p>Created on: {new Date(project.created_at).toLocaleDateString()}</p>
+            </div>
           </div>
         </div>
       </div>
