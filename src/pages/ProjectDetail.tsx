@@ -31,7 +31,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DocumentUpload from "@/components/DocumentUpload";
 import ProjectReviewSection from "@/components/reviews/ProjectReviewSection";
 import StudentProposalActions from "@/components/student/StudentProposalActions";
-import { Download, FileText, Calendar, User, DollarSign, MessageCircle } from "lucide-react";
+import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
+import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users } from "lucide-react";
 
 /**
  * Interface for project document data structure
@@ -410,13 +411,21 @@ const ProjectDetail = () => {
   }
 
   const userRole = (user as any)?.role;
+  const isEntrepreneur = userRole === 'entrepreneur';
+  const isStudent = userRole === 'student';
+
+  // Check if this is the entrepreneur's project and if student selection is needed
+  const showStudentSelection = isEntrepreneur && 
+    project?.id_entrepreneur === user?.id && 
+    !project?.selected_student && 
+    (project?.status === 'STEP2' || project?.status === 'STEP3');
 
   return (
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
           {/* Student Proposal Actions - Show for students with pending proposals */}
-          {userRole === 'student' && proposalStatus && studentId && (
+          {isStudent && proposalStatus && studentId && (
             <div className="mb-6">
               <StudentProposalActions
                 projectId={project.id_project}
@@ -425,6 +434,24 @@ const ProjectDetail = () => {
                 onStatusChange={handleProposalStatusChange}
               />
             </div>
+          )}
+
+          {/* Student Selection Section - Show for entrepreneurs */}
+          {showStudentSelection && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <Users className="h-5 w-5 mr-2" />
+                  Student Selection
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <StudentSelectionView
+                  projectId={project.id_project}
+                  onStudentSelected={handleStudentSelected}
+                />
+              </CardContent>
+            </Card>
           )}
 
           {/* Project Header Card - Contains title, status, price, and discussion link */}
