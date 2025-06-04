@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
@@ -125,23 +124,31 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     
     setLoading(true);
     try {
-      // Get entrepreneur ID first
-      const { data: entrepreneurData } = await supabase
-        .from('entrepreneurs')
-        .select('id_entrepreneur')
-        .eq('id_user', user.id)
-        .single();
+      let entrepreneurId = null;
+      
+      // Only fetch entrepreneur ID for entrepreneurs
+      if ((user as any)?.role === 'entrepreneur') {
+        const { data: entrepreneurData } = await supabase
+          .from('entrepreneurs')
+          .select('id_entrepreneur')
+          .eq('id_user', user.id)
+          .single();
 
-      if (!entrepreneurData) {
-        setLoading(false);
-        return;
+        if (!entrepreneurData) {
+          setLoading(false);
+          return;
+        }
+        entrepreneurId = entrepreneurData.id_entrepreneur;
       }
 
-      // Fetch projects for this entrepreneur
-      const { data: projectsData, error: projectsError } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id_entrepreneur', entrepreneurData.id_entrepreneur);
+      // Fetch projects based on user role
+      let projectsQuery = supabase.from('projects').select('*');
+      
+      if ((user as any)?.role === 'entrepreneur' && entrepreneurId) {
+        projectsQuery = projectsQuery.eq('id_entrepreneur', entrepreneurId);
+      }
+
+      const { data: projectsData, error: projectsError } = await projectsQuery;
 
       if (projectsError) {
         console.error('Error fetching projects:', projectsError);
@@ -170,7 +177,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             url: doc.link,
             type: doc.type,
             projectId: doc.id_project,
-            uploadedBy: entrepreneurData.id_entrepreneur,
+            uploadedBy: entrepreneurId || user.id,
             createdAt: new Date(doc.created_at),
           }));
 
@@ -208,8 +215,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         })
       );
 
-      // Combine with mock projects
-      setProjects([...mockProjects, ...convertedProjects]);
+      // For entrepreneurs, combine with mock projects
+      if ((user as any)?.role === 'entrepreneur') {
+        setProjects([...mockProjects, ...convertedProjects]);
+      } else {
+        setProjects(convertedProjects);
+      }
     } catch (error) {
       console.error('Error loading projects:', error);
       toast.error('Failed to load projects');

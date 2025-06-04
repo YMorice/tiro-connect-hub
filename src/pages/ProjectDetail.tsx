@@ -120,6 +120,7 @@ const ProjectDetail = () => {
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [proposalStatus, setProposalStatus] = useState<'pending' | 'accepted' | 'declined' | null>(null);
   const [studentId, setStudentId] = useState<string | null>(null);
+  const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
 
   // Fetch project data when component mounts or dependencies change
   useEffect(() => {
@@ -129,8 +130,32 @@ const ProjectDetail = () => {
       if ((user as any)?.role === 'student') {
         checkProposalStatus();
       }
+      if ((user as any)?.role === 'entrepreneur') {
+        fetchEntrepreneurId();
+      }
     }
   }, [user, id, isValidUUID]);
+
+  /**
+   * Fetches entrepreneur ID for the current user
+   */
+  const fetchEntrepreneurId = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: entrepreneurData } = await supabase
+        .from('entrepreneurs')
+        .select('id_entrepreneur')
+        .eq('id_user', user.id)
+        .single();
+
+      if (entrepreneurData) {
+        setEntrepreneurId(entrepreneurData.id_entrepreneur);
+      }
+    } catch (error) {
+      console.error('Error fetching entrepreneur ID:', error);
+    }
+  };
 
   /**
    * Handles proposal status changes and refetches proposal status
@@ -437,15 +462,26 @@ const ProjectDetail = () => {
 
   // Check if this is the entrepreneur's project and if student selection is needed
   const showStudentSelection = isEntrepreneur && 
-    project?.id_entrepreneur === user?.id && 
+    entrepreneurId && 
+    project?.id_entrepreneur === entrepreneurId && 
     !project?.selected_student && 
     (project?.status === 'STEP2' || project?.status === 'STEP3');
 
   // Check if we should show proposed students (for Selection status)
   const showProposedStudents = isEntrepreneur && 
-    project?.id_entrepreneur === user?.id && 
+    entrepreneurId &&
+    project?.id_entrepreneur === entrepreneurId && 
     project?.status === 'STEP3' && // Selection status
     !project?.selected_student;
+
+  console.log("Debug info:", {
+    isEntrepreneur,
+    entrepreneurId,
+    projectEntrepreneurId: project?.id_entrepreneur,
+    projectStatus: project?.status,
+    selectedStudent: project?.selected_student,
+    showProposedStudents
+  });
 
   return (
     <AppLayout>
