@@ -89,7 +89,7 @@ const NewProject = () => {
   // Redirect to pack selection if no pack is selected
   React.useEffect(() => {
     if (!selectedPack) {
-      navigate("/projects/pack-selection");
+      navigate("/projects/pack-selection", { replace: true });
     }
   }, [selectedPack, navigate]);
 
@@ -247,8 +247,8 @@ const NewProject = () => {
       
       toast.success("Project created successfully!");
       
-      // Navigate to projects page after successful creation
-      navigate("/projects");
+      // Navigate to the specific project page instead of projects list
+      navigate(`/projects/${projectId}`);
     } catch (error) {
       console.error("Error creating project:", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

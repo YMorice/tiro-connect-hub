@@ -101,6 +101,18 @@ const ProjectDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   
+  // Check if the ID is a valid UUID format, if not redirect to appropriate page
+  const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || '');
+  
+  if (!isValidUUID) {
+    // Handle special routes that aren't project IDs
+    if (id === 'pack-selection') {
+      return <Navigate to="/projects/pack-selection" replace />;
+    }
+    // For any other invalid UUID, redirect to projects page
+    return <Navigate to="/projects" replace />;
+  }
+  
   // State management
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,14 +123,14 @@ const ProjectDetail = () => {
 
   // Fetch project data when component mounts or dependencies change
   useEffect(() => {
-    if (user && id) {
+    if (user && id && isValidUUID) {
       fetchProject();
       checkUnreadMessages();
       if ((user as any)?.role === 'student') {
         checkProposalStatus();
       }
     }
-  }, [user, id]);
+  }, [user, id, isValidUUID]);
 
   /**
    * Handles proposal status changes and refetches proposal status
@@ -454,17 +466,25 @@ const ProjectDetail = () => {
           {/* Proposed Students Section - Show for entrepreneurs when project is in Selection */}
           {showProposedStudents && (
             <div className="mb-6">
-              <ProposedStudentsDisplay
-                projectId={project.id_project}
-                projectStatus="Selection"
-                isEntrepreneur={true}
-                onStudentSelected={handleStudentSelected}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <Users className="h-5 w-5 mr-2" />
+                    Proposed Students - Make Your Selection
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <StudentSelectionView
+                    projectId={project.id_project}
+                    onStudentSelected={handleStudentSelected}
+                  />
+                </CardContent>
+              </Card>
             </div>
           )}
 
           {/* Student Selection Section - Show for entrepreneurs */}
-          {showStudentSelection && (
+          {showStudentSelection && !showProposedStudents && (
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
@@ -473,10 +493,10 @@ const ProjectDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <StudentSelectionView
-                  projectId={project.id_project}
-                  onStudentSelected={handleStudentSelected}
-                />
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Waiting for admin to propose students for your project.</p>
+                  <p className="text-sm text-gray-400 mt-2">You will be able to select from proposed students once they are available.</p>
+                </div>
               </CardContent>
             </Card>
           )}
