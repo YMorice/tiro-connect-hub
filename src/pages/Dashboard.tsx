@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useProjects } from "@/context/project-context";
@@ -31,7 +30,7 @@ const Dashboard = () => {
   // Calculate dashboard metrics
   const totalProjects = projects.length;
   const activeProjects = projects.filter(p => p.status === "Active" || p.status === "In progress").length;
-  const completedProjects = projects.filter(p => p.status === "Completed").length;
+  const completedProjects = projects.filter(p => p.status === "completed").length;
   const pendingProjects = projects.filter(p => p.status === "New" || p.status === "Proposals").length;
 
   // Get recent projects (last 5)
