@@ -46,13 +46,12 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
       setLoading(true);
       console.log('Fetching proposed students for project:', projectId);
 
-      // Get students proposed for this project
-      const { data: proposalData, error: proposalError } = await supabase
-        .from('proposal_to_student')
+      // Get students from proposed_student table for this project
+      const { data: proposedData, error: proposedError } = await supabase
+        .from('proposed_student')
         .select(`
-          id_student,
-          accepted,
-          students (
+          student_id,
+          students!inner (
             id_student,
             available,
             biography,
@@ -67,15 +66,14 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
             )
           )
         `)
-        .eq('id_project', projectId)
-        .eq('accepted', true); // Only get students who accepted the proposal
+        .eq('project_id', projectId);
 
-      if (proposalError) {
-        console.error('Error fetching proposed students:', proposalError);
-        throw proposalError;
+      if (proposedError) {
+        console.error('Error fetching proposed students:', proposedError);
+        throw proposedError;
       }
 
-      const students = proposalData?.map(p => ({
+      const students = proposedData?.map(p => ({
         id_student: p.students.id_student,
         users: p.students.users,
         biography: p.students.biography,
@@ -162,7 +160,7 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
     return (
       <div className="text-center py-8">
         <p className="text-gray-500">No students have been proposed for this project yet.</p>
-        <p className="text-sm text-gray-400 mt-2">Students who accept your project proposal will appear here.</p>
+        <p className="text-sm text-gray-400 mt-2">The admin will propose students for you to choose from.</p>
       </div>
     );
   }
@@ -171,7 +169,7 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900">Select a Student</h3>
       <p className="text-sm text-gray-600 mb-4">
-        Choose from students who have accepted your project proposal:
+        Choose from students proposed by the admin:
       </p>
       
       <div className="grid gap-4">
