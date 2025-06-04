@@ -127,6 +127,14 @@ const ProjectDetail = () => {
   };
 
   /**
+   * Handles when a student is selected by the entrepreneur
+   * Refreshes the project data to reflect the changes
+   */
+  const handleStudentSelected = () => {
+    fetchProject();
+  };
+
+  /**
    * Fetches comprehensive project data including related entities
    * 
    * This function:
