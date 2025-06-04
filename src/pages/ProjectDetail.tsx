@@ -32,6 +32,7 @@ import DocumentUpload from "@/components/DocumentUpload";
 import ProjectReviewSection from "@/components/reviews/ProjectReviewSection";
 import StudentProposalActions from "@/components/student/StudentProposalActions";
 import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
+import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
 import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users } from "lucide-react";
 
 /**
@@ -428,6 +429,12 @@ const ProjectDetail = () => {
     !project?.selected_student && 
     (project?.status === 'STEP2' || project?.status === 'STEP3');
 
+  // Check if we should show proposed students (for Selection status)
+  const showProposedStudents = isEntrepreneur && 
+    project?.id_entrepreneur === user?.id && 
+    project?.status === 'STEP3' && // Selection status
+    !project?.selected_student;
+
   return (
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
@@ -440,6 +447,18 @@ const ProjectDetail = () => {
                 studentId={studentId}
                 proposalStatus={proposalStatus}
                 onStatusChange={handleProposalStatusChange}
+              />
+            </div>
+          )}
+
+          {/* Proposed Students Section - Show for entrepreneurs when project is in Selection */}
+          {showProposedStudents && (
+            <div className="mb-6">
+              <ProposedStudentsDisplay
+                projectId={project.id_project}
+                projectStatus="Selection"
+                isEntrepreneur={true}
+                onStudentSelected={handleStudentSelected}
               />
             </div>
           )}
