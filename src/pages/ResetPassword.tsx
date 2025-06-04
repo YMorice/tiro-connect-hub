@@ -36,8 +36,11 @@ const ResetPassword = () => {
       setIsSubmitting(true);
       console.log("Sending password reset email to:", values.email);
       
+      // Use the current origin for the redirect URL
+      const redirectUrl = `${window.location.origin}/login`;
+      
       const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: `${window.location.origin}/login`,
+        redirectTo: redirectUrl,
       });
       
       if (error) {
@@ -88,6 +91,7 @@ const ResetPassword = () => {
                   <p className="text-amber-800">
                     <strong>Important:</strong> The email may take a few minutes to arrive. 
                     Don't forget to check your spam folder if you don't see it in your inbox.
+                    Also, make sure the Site URL and Redirect URLs are properly configured in your Supabase settings.
                   </p>
                 </div>
               </div>

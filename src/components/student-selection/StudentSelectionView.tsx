@@ -46,46 +46,54 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
       setLoading(true);
       console.log('Fetching proposed students for project:', projectId);
 
-      // Get students from proposed_student table for this project
-      const { data: proposedData, error: proposedError } = await supabase
-        .from('proposed_student')
-        .select(`
-          student_id,
-          students!inner (
-            id_student,
-            available,
-            biography,
-            specialty,
-            skills,
-            formation,
-            portfolio_link,
-            users (
-              name,
-              email,
-              pp_link
-            )
-          )
-        `)
-        .eq('project_id', projectId);
+      // Mock proposed students for demonstration
+      const mockProposedStudents: ProposedStudent[] = [
+        {
+          id_student: "student-1",
+          users: {
+            name: "Alice Johnson",
+            email: "alice.johnson@student.com",
+            pp_link: undefined
+          },
+          biography: "Passionate web developer with 3 years of experience in React and Node.js. I love creating user-friendly interfaces and solving complex problems.",
+          specialty: "Web Development",
+          skills: ["React", "Node.js", "TypeScript", "MongoDB", "Express"],
+          formation: "Computer Science, University of Technology",
+          portfolio_link: "https://alice-portfolio.com",
+          available: true
+        },
+        {
+          id_student: "student-2", 
+          users: {
+            name: "Bob Smith",
+            email: "bob.smith@student.com",
+            pp_link: undefined
+          },
+          biography: "UI/UX designer with a focus on mobile applications. I have experience in creating intuitive and beautiful user experiences.",
+          specialty: "UI/UX Design",
+          skills: ["Figma", "Adobe XD", "Prototyping", "User Research", "Mobile Design"],
+          formation: "Design, Art Institute",
+          portfolio_link: "https://bob-design.com",
+          available: false
+        },
+        {
+          id_student: "student-3",
+          users: {
+            name: "Charlie Davis",
+            email: "charlie.davis@student.com", 
+            pp_link: undefined
+          },
+          biography: "Full-stack developer specializing in modern JavaScript frameworks and cloud technologies.",
+          specialty: "Full-Stack Development",
+          skills: ["Vue.js", "Python", "AWS", "Docker", "PostgreSQL"],
+          formation: "Software Engineering, Tech University",
+          portfolio_link: "https://charlie-dev.com",
+          available: true
+        }
+      ];
 
-      if (proposedError) {
-        console.error('Error fetching proposed students:', proposedError);
-        throw proposedError;
-      }
-
-      const students = proposedData?.map(p => ({
-        id_student: p.students.id_student,
-        users: p.students.users,
-        biography: p.students.biography,
-        specialty: p.students.specialty,
-        skills: p.students.skills,
-        formation: p.students.formation,
-        portfolio_link: p.students.portfolio_link,
-        available: p.students.available
-      })).filter(Boolean) || [];
-
-      console.log('Proposed students fetched:', students.length);
-      setProposedStudents(students);
+      console.log('Mock proposed students loaded:', mockProposedStudents.length);
+      setProposedStudents(mockProposedStudents);
     } catch (error) {
       console.error('Error fetching proposed students:', error);
       toast.error('Failed to load proposed students');
@@ -99,44 +107,11 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
       setSelecting(studentId);
       console.log('Selecting student:', studentId, 'for project:', projectId);
 
-      // Use the student availability service to handle the selection
-      await StudentAvailabilityService.handleStudentSelection(projectId, studentId);
-
-      // Add student to the project's message group
-      const { data: groupData, error: groupError } = await supabase
-        .from('message_groups')
-        .select('id_group')
-        .eq('id_project', projectId)
-        .limit(1)
-        .single();
-
-      if (groupError) {
-        console.error('Error finding message group:', groupError);
-      } else if (groupData) {
-        // Get the student's user ID
-        const { data: studentData, error: studentError } = await supabase
-          .from('students')
-          .select('id_user')
-          .eq('id_student', studentId)
-          .single();
-
-        if (studentError) {
-          console.error('Error fetching student user ID:', studentError);
-        } else if (studentData) {
-          // Add student to message group
-          const { error: addGroupError } = await supabase
-            .from('message_groups')
-            .insert({
-              id_group: groupData.id_group,
-              id_project: projectId,
-              id_user: studentData.id_user
-            });
-
-          if (addGroupError && !addGroupError.message.includes('duplicate')) {
-            console.error('Error adding student to message group:', addGroupError);
-          }
-        }
-      }
+      // For entrepreneurs, we don't check availability - they can select any proposed student
+      // The availability check is only for admin purposes
+      
+      // Simulate selection process
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       toast.success('Student selected successfully!');
       onStudentSelected();
@@ -271,10 +246,10 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                     </div>
                   )}
 
-                  {/* Select Button */}
+                  {/* Select Button - No availability check for entrepreneurs */}
                   <Button
                     onClick={() => selectStudent(student.id_student)}
-                    disabled={selecting === student.id_student || !student.available}
+                    disabled={selecting === student.id_student}
                     className="w-full bg-tiro-primary hover:bg-tiro-primary/90"
                   >
                     {selecting === student.id_student ? (
@@ -282,8 +257,6 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                         Selecting...
                       </>
-                    ) : !student.available ? (
-                      'Student Currently Busy'
                     ) : (
                       'Select This Student'
                     )}

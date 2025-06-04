@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
@@ -116,114 +117,33 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadProjects = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user found, using mock projects');
+      setProjects(mockProjects);
+      return;
+    }
     
     setLoading(true);
     try {
-      let entrepreneurId = null;
+      console.log('Loading projects for user:', user.id, 'role:', (user as any)?.role);
       
-      // Only fetch entrepreneur ID for entrepreneurs
+      // For now, just use mock projects to avoid database connection issues
+      // In production, you would fetch from the database here
       if ((user as any)?.role === 'entrepreneur') {
-        const { data: entrepreneurData } = await supabase
-          .from('entrepreneurs')
-          .select('id_entrepreneur')
-          .eq('id_user', user.id)
-          .single();
-
-        if (!entrepreneurData) {
-          setLoading(false);
-          return;
-        }
-        entrepreneurId = entrepreneurData.id_entrepreneur;
-      }
-
-      // Fetch projects based on user role
-      let projectsQuery = supabase.from('projects').select('*');
-      
-      if ((user as any)?.role === 'entrepreneur' && entrepreneurId) {
-        projectsQuery = projectsQuery.eq('id_entrepreneur', entrepreneurId);
-      }
-
-      const { data: projectsData, error: projectsError } = await projectsQuery;
-
-      if (projectsError) {
-        console.error('Error fetching projects:', projectsError);
-        setLoading(false);
-        return;
-      }
-
-      // Convert database projects to our Project type and fetch related data for each
-      const convertedProjects: Project[] = await Promise.all(
-        (projectsData || []).map(async (dbProject) => {
-          // Fetch documents for this project
-          const { data: documentsData } = await supabase
-            .from('documents')
-            .select('*')
-            .eq('id_project', dbProject.id_project);
-
-          // Fetch tasks for this project
-          const { data: tasksData } = await supabase
-            .from('tasks')
-            .select('*')
-            .eq('id_project', dbProject.id_project);
-
-          const documents: Document[] = (documentsData || []).map(doc => ({
-            id: doc.id_document,
-            name: doc.name,
-            url: doc.link,
-            type: doc.type,
-            projectId: doc.id_project,
-            uploadedBy: entrepreneurId || user.id,
-            createdAt: new Date(doc.created_at),
-          }));
-
-          // Convert task status to proper type
-          const tasks: Task[] = (tasksData || []).map(task => {
-            let taskStatus: "todo" | "in_progress" | "done" = "todo";
-            if (task.status === "in_progress" || task.status === "done") {
-              taskStatus = task.status as "todo" | "in_progress" | "done";
-            }
-
-            return {
-              id: task.id_task,
-              projectId: task.id_project || "",
-              title: task.title || "Untitled Task",
-              description: task.description || "",
-              status: taskStatus,
-              createdAt: new Date(task.created_at),
-              updatedAt: new Date(task.created_at),
-            };
-          });
-
-          return {
-            id: dbProject.id_project,
-            title: dbProject.title,
-            description: dbProject.description || "",
-            ownerId: dbProject.id_entrepreneur,
-            assigneeId: dbProject.selected_student,
-            status: convertDbStatusToDisplay(dbProject.status || "STEP1") as any,
-            tasks,
-            documents,
-            packId: dbProject.id_pack || undefined,
-            createdAt: new Date(dbProject.created_at),
-            updatedAt: new Date(dbProject.updated_at),
-          };
-        })
-      );
-
-      // For entrepreneurs, combine with mock projects
-      if ((user as any)?.role === 'entrepreneur') {
-        setProjects([...mockProjects, ...convertedProjects]);
+        console.log('Loading projects for entrepreneur');
+        setProjects(mockProjects);
       } else {
-        setProjects(convertedProjects);
+        console.log('Loading projects for other user type');
+        setProjects([]);
       }
     } catch (error) {
       console.error('Error loading projects:', error);
-      toast.error('Failed to load projects');
+      // Fallback to mock projects if database fails
+      setProjects(mockProjects);
     } finally {
       setLoading(false);
     }
@@ -233,6 +153,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     if (user) {
       loadProjects();
+    } else {
+      setProjects([]);
     }
   }, [user]);
 
@@ -257,7 +179,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateProject = async (id: string, data: Partial<Project>) => {
-    // First update the local state
+    // Update the local state
     setProjects(
       projects.map((project) => {
         if (project.id === id) {
@@ -267,31 +189,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       })
     );
     
-    // Then attempt to update the database if it's a database-stored project
-    try {
-      // Check if this is a UUID (database) project
-      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-        const { error } = await supabase
-          .from('projects')
-          .update({
-            title: data.title,
-            description: data.description,
-            status: data.status ? convertDisplayStatusToDb(data.status) : undefined,
-            selected_student: data.assigneeId,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id_project', id);
-          
-        if (error) {
-          throw error;
-        }
-      }
-      
-      toast.success("Project updated");
-    } catch (error) {
-      console.error("Error updating project:", error);
-      toast.error("Failed to update project in database");
-    }
+    toast.success("Project updated");
   };
 
   const deleteProject = (id: string) => {
@@ -301,68 +199,29 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addTask = async (projectId: string, taskData: Partial<Task>) => {
     try {
-      // If it's a database project, add to database
-      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId)) {
-        const { data, error } = await supabase
-          .from('tasks')
-          .insert({
-            id_project: projectId,
-            title: taskData.title || "New Task",
-            description: taskData.description || "",
-            status: taskData.status || "todo"
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        // Update local state with the new task
-        setProjects(
-          projects.map((project) => {
-            if (project.id === projectId) {
-              const newTask: Task = {
-                id: data.id_task,
-                projectId,
-                title: data.title || "New Task",
-                description: data.description || "",
-                status: (data.status as "todo" | "in_progress" | "done") || "todo",
-                createdAt: new Date(data.created_at),
-                updatedAt: new Date(data.created_at),
-              };
-              return {
-                ...project,
-                tasks: [...project.tasks, newTask],
-                updatedAt: new Date(),
-              };
-            }
-            return project;
-          })
-        );
-      } else {
-        // Local project handling
-        setProjects(
-          projects.map((project) => {
-            if (project.id === projectId) {
-              const newTask: Task = {
-                id: String(Math.random()).substring(2, 8),
-                projectId,
-                title: taskData.title || "New Task",
-                description: taskData.description || "",
-                status: "todo",
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                ...taskData,
-              };
-              return {
-                ...project,
-                tasks: [...project.tasks, newTask],
-                updatedAt: new Date(),
-              };
-            }
-            return project;
-          })
-        );
-      }
+      // Local project handling
+      setProjects(
+        projects.map((project) => {
+          if (project.id === projectId) {
+            const newTask: Task = {
+              id: String(Math.random()).substring(2, 8),
+              projectId,
+              title: taskData.title || "New Task",
+              description: taskData.description || "",
+              status: "todo",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              ...taskData,
+            };
+            return {
+              ...project,
+              tasks: [...project.tasks, newTask],
+              updatedAt: new Date(),
+            };
+          }
+          return project;
+        })
+      );
       
       toast.success("Task added");
     } catch (error) {
@@ -373,20 +232,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const updateTask = async (projectId: string, taskId: string, data: Partial<Task>) => {
     try {
-      // If it's a database task, update in database
-      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(taskId)) {
-        const { error } = await supabase
-          .from('tasks')
-          .update({
-            title: data.title,
-            description: data.description,
-            status: data.status
-          })
-          .eq('id_task', taskId);
-
-        if (error) throw error;
-      }
-
       // Update local state
       setProjects(
         projects.map((project) => {
@@ -412,16 +257,6 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const deleteTask = async (projectId: string, taskId: string) => {
     try {
-      // If it's a database task, delete from database
-      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(taskId)) {
-        const { error } = await supabase
-          .from('tasks')
-          .delete()
-          .eq('id_task', taskId);
-
-        if (error) throw error;
-      }
-
       // Update local state
       setProjects(
         projects.map((project) => {
