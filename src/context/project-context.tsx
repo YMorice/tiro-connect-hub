@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
@@ -21,8 +20,8 @@ interface ProjectContextType {
 }
 
 // Helper function to convert database status to display status
-const convertDbStatusToDisplay = (dbStatus: string): string => {
-  const statusMap: { [key: string]: string } = {
+const convertDbStatusToDisplay = (dbStatus: string): Project['status'] => {
+  const statusMap: { [key: string]: Project['status'] } = {
     'STEP1': 'New',
     'STEP2': 'Proposals', 
     'STEP3': 'Selection',
@@ -30,7 +29,7 @@ const convertDbStatusToDisplay = (dbStatus: string): string => {
     'STEP5': 'Active',
     'STEP6': 'In progress'
   };
-  return statusMap[dbStatus] || dbStatus;
+  return statusMap[dbStatus] || 'New';
 };
 
 // Helper function to convert display status to database status
