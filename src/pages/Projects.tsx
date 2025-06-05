@@ -268,7 +268,7 @@ const Projects = () => {
             </div>
             {canCreateProject() && (
               <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/90">
-                <Link to="/new-project">
+                <Link to="/pack-selection">
                   <Plus className="h-4 w-4 mr-2" />
                   New Project
                 </Link>
@@ -325,7 +325,7 @@ const Projects = () => {
               </div>
               {canCreateProject() && !searchTerm && statusFilter === "all" && (
                 <Button asChild className="mt-4 bg-tiro-primary hover:bg-tiro-primary/90">
-                  <Link to="/new-project">
+                  <Link to="/pack-selection">
                     <Plus className="h-4 w-4 mr-2" />
                     Create Your First Project
                   </Link>
