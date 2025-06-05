@@ -183,7 +183,7 @@ const Dashboard = () => {
                     <div className="text-center py-8">
                       <FolderPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-500 mb-4">No projects yet</p>
-                      <Link to="/projects/pack-selection">
+                      <Link to="/pack-selection">
                         <Button className="bg-tiro-purple hover:bg-tiro-purple/90">
                           Create Your First Project
                         </Button>
@@ -204,7 +204,7 @@ const Dashboard = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Link to="/projects/pack-selection" className="block">
+                  <Link to="/pack-selection" className="block">
                     <Button className="w-full justify-start bg-tiro-purple hover:bg-tiro-purple/90">
                       <FolderPlus className="mr-2 h-4 w-4" />
                       New Project

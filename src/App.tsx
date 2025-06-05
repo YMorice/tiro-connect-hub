@@ -127,6 +127,22 @@ function App() {
                   }
                 />
                 <Route
+                  path="/projects/new"
+                  element={
+                    <ProtectedRoute>
+                      <NewProject />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/pack-selection"
+                  element={
+                    <ProtectedRoute>
+                      <PackSelection />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/profile"
                   element={
                     <ProtectedRoute>
@@ -163,14 +179,6 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <NewProject />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/pack-selection"
-                  element={
-                    <ProtectedRoute>
-                      <PackSelection />
                     </ProtectedRoute>
                   }
                 />
