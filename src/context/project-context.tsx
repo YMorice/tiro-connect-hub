@@ -46,73 +46,6 @@ const convertDisplayStatusToDb = (displayStatus: string): string => {
   return statusMap[displayStatus] || displayStatus;
 };
 
-// Mock projects for demonstration with updated status values
-const mockProjects: Project[] = [
-  {
-    id: "1",
-    title: "E-commerce Website Redesign",
-    description: "Complete overhaul of our online store with improved UX and mobile responsiveness.",
-    ownerId: "1", // entrepreneur
-    assigneeId: "2", // student
-    status: "Active",
-    tasks: [
-      {
-        id: "101",
-        projectId: "1",
-        title: "Create wireframes",
-        description: "Design initial wireframes for all key pages",
-        status: "done",
-        assigneeId: "2",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: "102",
-        projectId: "1",
-        title: "Implement landing page",
-        description: "Code the new landing page based on approved design",
-        status: "in_progress",
-        assigneeId: "2",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ],
-    documents: [
-      {
-        id: "201",
-        name: "Project Brief.pdf",
-        url: "#",
-        type: "pdf",
-        projectId: "1",
-        uploadedBy: "1",
-        createdAt: new Date(),
-      },
-      {
-        id: "202",
-        name: "Design Assets.zip",
-        url: "#",
-        type: "zip",
-        projectId: "1",
-        uploadedBy: "2",
-        createdAt: new Date(),
-      },
-    ],
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    title: "Mobile App UI Design",
-    description: "Design the user interface for a new fitness tracking app.",
-    ownerId: "1", // entrepreneur
-    status: "New",
-    tasks: [],
-    documents: [],
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-  },
-];
-
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -122,8 +55,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const loadProjects = async () => {
     if (!user) {
-      console.log('No user found, using mock projects');
-      setProjects(mockProjects);
+      console.log('No user found');
+      setProjects([]);
       return;
     }
     
@@ -131,19 +64,89 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       console.log('Loading projects for user:', user.id, 'role:', (user as any)?.role);
       
-      // For now, just use mock projects to avoid database connection issues
-      // In production, you would fetch from the database here
-      if ((user as any)?.role === 'entrepreneur') {
-        console.log('Loading projects for entrepreneur');
-        setProjects(mockProjects);
-      } else {
-        console.log('Loading projects for other user type');
-        setProjects([]);
+      const userRole = (user as any)?.role;
+      let projectsData: any[] = [];
+
+      if (userRole === 'entrepreneur') {
+        // Get entrepreneur ID first
+        const { data: entrepreneurData } = await supabase
+          .from('entrepreneurs')
+          .select('id_entrepreneur')
+          .eq('id_user', user.id)
+          .single();
+
+        if (entrepreneurData) {
+          // Fetch projects for entrepreneur
+          const { data, error } = await supabase
+            .from('projects')
+            .select(`
+              id_project,
+              title,
+              description,
+              status,
+              created_at,
+              updated_at,
+              price,
+              id_entrepreneur,
+              selected_student
+            `)
+            .eq('id_entrepreneur', entrepreneurData.id_entrepreneur)
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+          projectsData = data || [];
+        }
+      } else if (userRole === 'student') {
+        // Get student ID first
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('id_student')
+          .eq('id_user', user.id)
+          .single();
+
+        if (studentData) {
+          // Fetch projects where student is selected
+          const { data, error } = await supabase
+            .from('projects')
+            .select(`
+              id_project,
+              title,
+              description,
+              status,
+              created_at,
+              updated_at,
+              price,
+              id_entrepreneur,
+              selected_student
+            `)
+            .eq('selected_student', studentData.id_student)
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+          projectsData = data || [];
+        }
       }
+
+      // Convert to the format expected by the UI
+      const formattedProjects: Project[] = projectsData.map(project => ({
+        id: project.id_project,
+        title: project.title,
+        description: project.description || '',
+        ownerId: project.id_entrepreneur,
+        assigneeId: project.selected_student,
+        status: convertDbStatusToDisplay(project.status),
+        tasks: [], // Tasks would need separate fetch if needed
+        documents: [], // Documents would need separate fetch if needed
+        createdAt: new Date(project.created_at),
+        updatedAt: new Date(project.updated_at || project.created_at),
+      }));
+
+      console.log('Projects loaded:', formattedProjects.length);
+      setProjects(formattedProjects);
     } catch (error) {
       console.error('Error loading projects:', error);
-      // Fallback to mock projects if database fails
-      setProjects(mockProjects);
+      toast.error('Failed to load projects');
+      setProjects([]);
     } finally {
       setLoading(false);
     }
