@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useProjects } from "@/context/project-context";
@@ -19,7 +20,6 @@ import {
 const Dashboard = () => {
   const { user } = useAuth();
   const { projects, loading } = useProjects();
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   // Calculate dashboard metrics
   const totalProjects = projects.length;

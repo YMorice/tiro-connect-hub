@@ -27,7 +27,8 @@ const convertDbStatusToDisplay = (dbStatus: string): Project['status'] => {
     'STEP3': 'Selection',
     'STEP4': 'Payment',
     'STEP5': 'Active',
-    'STEP6': 'In progress'
+    'STEP6': 'In progress',
+    'completed': 'completed'
   };
   return statusMap[dbStatus] || 'New';
 };
@@ -40,7 +41,8 @@ const convertDisplayStatusToDb = (displayStatus: string): string => {
     'Selection': 'STEP3', 
     'Payment': 'STEP4',
     'Active': 'STEP5',
-    'In progress': 'STEP6'
+    'In progress': 'STEP6',
+    'completed': 'completed'
   };
   return statusMap[displayStatus] || displayStatus;
 };
@@ -174,7 +176,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } finally {
       setLoading(false);
     }
-  }, [userId, userRole, loading]);
+  }, [userId, userRole]);
 
   // Load projects only when user changes and prevent multiple calls
   useEffect(() => {
@@ -193,7 +195,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return () => {
       isMounted = false;
     };
-  }, [userId, userRole]); // Remove loadProjects from dependencies to prevent infinite loops
+  }, [userId, userRole]);
 
   const createProject = (data: Partial<Project>) => {
     if (!user) return;
