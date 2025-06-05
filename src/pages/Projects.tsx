@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import AppLayout from "@/components/AppLayout";
@@ -94,7 +95,7 @@ const Projects = () => {
           setProjects(sortedProjects);
         }
       } else if (userRole === "student") {
-        // Students see only projects proposed to them
+        // Students see only their projects and accepted proposals still in selection
         const { data: studentData } = await supabase
           .from("students")
           .select("id_student")
@@ -102,33 +103,61 @@ const Projects = () => {
           .single();
           
         if (studentData) {
-          // Get projects with proposals for this student
+          // Get projects where student is selected
+          const { data: selectedProjects, error: selectedError } = await supabase
+            .from("projects")
+            .select(`
+              *,
+              entrepreneurs (
+                users (name)
+              )
+            `)
+            .eq("selected_student", studentData.id_student)
+            .order("created_at", { ascending: false });
+
+          if (selectedError) {
+            console.error("Error fetching selected projects:", selectedError);
+            throw selectedError;
+          }
+
+          // Get projects where student accepted proposals but wasn't selected yet (status = STEP3 Selection)
           const { data: proposalData, error: proposalError } = await supabase
             .from('proposal_to_student')
             .select(`
               id_proposal,
               accepted,
-              projects (
+              projects!inner (
                 *,
                 entrepreneurs (
                   users (name)
                 )
               )
             `)
-            .eq('id_student', studentData.id_student);
-          
+            .eq('id_student', studentData.id_student)
+            .eq('accepted', true)
+            .eq('projects.status', 'STEP3'); // Only show projects still in selection phase
+
           if (proposalError) {
-            console.error("Error fetching student proposals:", proposalError);
+            console.error("Error fetching proposal projects:", proposalError);
             throw proposalError;
           }
 
-          const projectsWithProposals = proposalData?.map(p => ({
-            ...p.projects,
-            proposalStatus: p.accepted === null ? 'pending' as const : (p.accepted ? 'accepted' as const : 'declined' as const)
-          })).filter(Boolean) || [];
+          // Combine both sets of projects
+          const allProjects = [
+            ...(selectedProjects || []).map(p => ({ ...p, proposalStatus: undefined })),
+            ...(proposalData?.map(p => ({
+              ...p.projects,
+              proposalStatus: 'accepted' as const
+            })) || [])
+          ];
 
-          console.log("Student projects fetched:", projectsWithProposals.length);
-          const sortedProjects = sortProjectsByStatus(projectsWithProposals);
+          // Remove duplicates by id_project
+          const uniqueProjects = allProjects.filter((project, index, self) =>
+            index === self.findIndex(p => p.id_project === project.id_project)
+          );
+
+          console.log("Student projects fetched:", uniqueProjects.length);
+          const sortedProjects = sortProjectsByStatus(uniqueProjects);
           setProjects(sortedProjects);
         }
       } else if (userRole === "admin") {

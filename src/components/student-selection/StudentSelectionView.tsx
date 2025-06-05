@@ -119,6 +119,40 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
         throw updateError;
       }
 
+      // Add selected student to the project's message group
+      const { data: messageGroupData } = await supabase
+        .from('message_groups')
+        .select('id_group')
+        .eq('id_project', projectId)
+        .limit(1)
+        .single();
+
+      if (messageGroupData) {
+        // Get the student's user ID
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('id_user')
+          .eq('id_student', studentId)
+          .single();
+
+        if (studentData) {
+          // Add student to message group
+          const { error: messageGroupError } = await supabase
+            .from('message_groups')
+            .insert({
+              id_group: messageGroupData.id_group,
+              id_project: projectId,
+              id_user: studentData.id_user
+            });
+
+          if (messageGroupError) {
+            console.error('Error adding student to message group:', messageGroupError);
+          } else {
+            console.log('Student added to message group successfully');
+          }
+        }
+      }
+
       toast.success('Student selected successfully!');
       onStudentSelected();
     } catch (error) {

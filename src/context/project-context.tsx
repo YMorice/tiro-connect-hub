@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
@@ -128,8 +129,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
 
         if (studentData) {
-          // Fetch projects where student is selected
-          const { data, error } = await supabase
+          // Get projects where student is selected OR accepted proposals that are still in selection phase
+          const { data: selectedProjects, error: selectedError } = await supabase
             .from('projects')
             .select(`
               id_project,
@@ -145,11 +146,48 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             .eq('selected_student', studentData.id_student)
             .order('created_at', { ascending: false });
 
-          if (error) {
-            console.error('Error fetching projects:', error);
-            throw error;
+          if (selectedError) {
+            console.error('Error fetching selected projects:', selectedError);
+            throw selectedError;
           }
-          projectsData = data || [];
+
+          // Get projects where student accepted proposals but wasn't selected yet (status = STEP3 Selection)
+          const { data: proposalProjects, error: proposalError } = await supabase
+            .from('proposal_to_student')
+            .select(`
+              projects!inner (
+                id_project,
+                title,
+                description,
+                status,
+                created_at,
+                updated_at,
+                price,
+                id_entrepreneur,
+                selected_student
+              )
+            `)
+            .eq('id_student', studentData.id_student)
+            .eq('accepted', true)
+            .eq('projects.status', 'STEP3'); // Only show projects still in selection phase
+
+          if (proposalError) {
+            console.error('Error fetching proposal projects:', proposalError);
+            throw proposalError;
+          }
+
+          // Combine both sets of projects and remove duplicates
+          const allProjects = [
+            ...(selectedProjects || []),
+            ...(proposalProjects?.map(p => p.projects) || [])
+          ];
+
+          // Remove duplicates by id_project
+          const uniqueProjects = allProjects.filter((project, index, self) =>
+            index === self.findIndex(p => p.id_project === project.id_project)
+          );
+
+          projectsData = uniqueProjects;
         }
       }
 
