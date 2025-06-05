@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "./auth-context";
@@ -52,27 +52,41 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const loadProjects = async () => {
-    if (!user) {
-      console.log('No user found');
+  // Memoize user role to prevent unnecessary re-renders
+  const userRole = useMemo(() => (user as any)?.role, [user]);
+  const userId = useMemo(() => user?.id, [user]);
+
+  const loadProjects = useCallback(async () => {
+    if (!userId || !userRole) {
+      console.log('No user or role found');
       setProjects([]);
+      return;
+    }
+    
+    // Prevent multiple simultaneous requests
+    if (loading) {
+      console.log('Already loading projects, skipping...');
       return;
     }
     
     setLoading(true);
     try {
-      console.log('Loading projects for user:', user.id, 'role:', (user as any)?.role);
+      console.log('Loading projects for user:', userId, 'role:', userRole);
       
-      const userRole = (user as any)?.role;
       let projectsData: any[] = [];
 
       if (userRole === 'entrepreneur') {
         // Get entrepreneur ID first
-        const { data: entrepreneurData } = await supabase
+        const { data: entrepreneurData, error: entrepreneurError } = await supabase
           .from('entrepreneurs')
           .select('id_entrepreneur')
-          .eq('id_user', user.id)
+          .eq('id_user', userId)
           .single();
+
+        if (entrepreneurError) {
+          console.error('Error fetching entrepreneur:', entrepreneurError);
+          throw entrepreneurError;
+        }
 
         if (entrepreneurData) {
           // Fetch projects for entrepreneur
@@ -92,16 +106,24 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             .eq('id_entrepreneur', entrepreneurData.id_entrepreneur)
             .order('created_at', { ascending: false });
 
-          if (error) throw error;
+          if (error) {
+            console.error('Error fetching projects:', error);
+            throw error;
+          }
           projectsData = data || [];
         }
       } else if (userRole === 'student') {
         // Get student ID first
-        const { data: studentData } = await supabase
+        const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('id_student')
-          .eq('id_user', user.id)
+          .eq('id_user', userId)
           .single();
+
+        if (studentError) {
+          console.error('Error fetching student:', studentError);
+          throw studentError;
+        }
 
         if (studentData) {
           // Fetch projects where student is selected
@@ -121,7 +143,10 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
             .eq('selected_student', studentData.id_student)
             .order('created_at', { ascending: false });
 
-          if (error) throw error;
+          if (error) {
+            console.error('Error fetching projects:', error);
+            throw error;
+          }
           projectsData = data || [];
         }
       }
@@ -149,16 +174,26 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, userRole, loading]);
 
-  // Load projects when user changes
+  // Load projects only when user changes and prevent multiple calls
   useEffect(() => {
-    if (user) {
-      loadProjects();
+    let isMounted = true;
+    
+    if (userId && userRole) {
+      loadProjects().then(() => {
+        if (!isMounted) {
+          console.log('Component unmounted, ignoring result');
+        }
+      });
     } else {
       setProjects([]);
     }
-  }, [user]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId, userRole]); // Remove loadProjects from dependencies to prevent infinite loops
 
   const createProject = (data: Partial<Project>) => {
     if (!user) return;
@@ -341,23 +376,24 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     toast.success("Document deleted");
   };
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    projects,
+    loading,
+    setProjects,
+    createProject,
+    updateProject,
+    deleteProject,
+    addTask,
+    updateTask,
+    deleteTask,
+    addDocument,
+    deleteDocument,
+    loadProjects,
+  }), [projects, loading, loadProjects]);
+
   return (
-    <ProjectContext.Provider
-      value={{
-        projects,
-        loading,
-        setProjects,
-        createProject,
-        updateProject,
-        deleteProject,
-        addTask,
-        updateTask,
-        deleteTask,
-        addDocument,
-        deleteDocument,
-        loadProjects,
-      }}
-    >
+    <ProjectContext.Provider value={contextValue}>
       {children}
     </ProjectContext.Provider>
   );

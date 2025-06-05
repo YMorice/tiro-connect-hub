@@ -31,6 +31,12 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
       return;
     }
 
+    // Prevent multiple simultaneous requests
+    if (loading) {
+      console.log('Already loading students, skipping...');
+      return;
+    }
+
     try {
       setLoading(true);
       console.log(`Fetching students for project ${projectId} in mode: ${mode}`);
@@ -134,14 +140,27 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
     } finally {
       setLoading(false);
     }
-  }, [projectId, mode]);
+  }, [projectId, mode]); // Remove loading from dependencies to prevent infinite loops
 
   useEffect(() => {
+    let isMounted = true;
+    
     console.log('useStudentSelection effect triggered with:', { projectId, mode });
-    fetchStudents();
-  }, [fetchStudents]);
+    
+    if (projectId && mode) {
+      fetchStudents().then(() => {
+        if (!isMounted) {
+          console.log('Component unmounted, ignoring students result');
+        }
+      });
+    }
 
-  const toggleStudentSelection = (student: Student) => {
+    return () => {
+      isMounted = false;
+    };
+  }, [projectId, mode]); // Remove fetchStudents from dependencies
+
+  const toggleStudentSelection = useCallback((student: Student) => {
     console.log('Toggling selection for student:', student.name);
     setSelectedStudents(prevSelected => {
       const isSelected = prevSelected.some(s => s.id === student.id);
@@ -155,11 +174,11 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
         return newSelected;
       }
     });
-  };
+  }, []);
 
-  const isStudentSelected = (studentId: string) => {
+  const isStudentSelected = useCallback((studentId: string) => {
     return selectedStudents.some(s => s.id === studentId);
-  };
+  }, [selectedStudents]);
 
   return {
     students,

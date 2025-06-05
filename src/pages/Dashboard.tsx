@@ -18,14 +18,8 @@ import {
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { projects, loading, loadProjects } = useProjects();
+  const { projects, loading } = useProjects();
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (user) {
-      loadProjects();
-    }
-  }, [user, loadProjects]);
 
   // Calculate dashboard metrics
   const totalProjects = projects.length;
