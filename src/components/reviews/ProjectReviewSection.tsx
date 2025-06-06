@@ -1,27 +1,4 @@
 
-/**
- * Project Review Section Component
- * 
- * This component handles the review functionality for completed projects.
- * It allows entrepreneurs to rate and comment on their experience working with students.
- * 
- * Key Features:
- * - Only visible to entrepreneurs on completed projects
- * - Displays existing reviews if already submitted
- * - Provides a form to submit new reviews
- * - Star rating system with visual feedback
- * - Comment submission with validation
- * - Real-time state management for form visibility
- * 
- * The component integrates with the Supabase database to store and retrieve
- * review data, and includes proper error handling and user feedback.
- * 
- * Access Control:
- * - Only entrepreneurs can submit reviews
- * - Only visible when project status is 'completed'
- * - Each entrepreneur can only submit one review per project/student pair
- */
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
@@ -79,7 +56,7 @@ const ProjectReviewSection: React.FC<ProjectReviewSectionProps> = ({
   const [loading, setLoading] = useState(true);
 
   // Determine visibility and permissions
-  const isProjectCompleted = projectStatus === 'completed';
+  const isProjectCompleted = projectStatus.toLowerCase() === 'completed';
   const isEntrepreneur = (user as any)?.role === 'entrepreneur';
 
   // Fetch existing review when component mounts (if user is entrepreneur)

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { User, Mail, MapPin, GraduationCap, Star } from 'lucide-react';
+import StudentReviewBadge from '@/components/reviews/StudentReviewBadge';
 
 interface ProposedStudent {
   id_student: string;
@@ -217,6 +218,11 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                       <div className="flex items-center justify-center sm:justify-start text-sm text-gray-500 mt-1">
                         <Mail className="h-4 w-4 mr-1 flex-shrink-0" />
                         <span className="truncate">{student.users.email}</span>
+                      </div>
+                      
+                      {/* Add student review badge */}
+                      <div className="mt-1 flex justify-center sm:justify-start">
+                        <StudentReviewBadge studentId={student.id_student} />
                       </div>
                     </div>
                     

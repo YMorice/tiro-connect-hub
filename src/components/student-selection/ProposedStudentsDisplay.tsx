@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { User, Mail, MapPin, Award } from "lucide-react";
+import StudentReviewBadge from "@/components/reviews/StudentReviewBadge";
 
 interface ProposedStudent {
   id: string;
@@ -243,6 +244,11 @@ export const ProposedStudentsDisplay = ({
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Mail className="h-3 w-3" />
                       <span className="truncate">{student.email}</span>
+                    </div>
+                    
+                    {/* Add student review badge */}
+                    <div className="mt-1">
+                      <StudentReviewBadge studentId={student.id} />
                     </div>
                   </div>
                 </div>

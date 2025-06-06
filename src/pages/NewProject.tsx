@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
@@ -366,6 +365,7 @@ const NewProject = () => {
                             onSelect={field.onChange}
                             disabled={(date) => date < new Date()}
                             initialFocus
+                            className="p-3 pointer-events-auto"
                           />
                         </PopoverContent>
                       </Popover>
