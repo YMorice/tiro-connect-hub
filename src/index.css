@@ -3,87 +3,61 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    --background: 195 11% 98%; /* #F7FAFB - white */
-    --foreground: 210 28% 10%; /* #121A21 - black */
-
-    --card: 195 11% 98%; /* #F7FAFB - white */
-    --card-foreground: 210 28% 10%; /* #121A21 - black */
-
-    --popover: 195 11% 98%; /* #F7FAFB - white */
-    --popover-foreground: 210 28% 10%; /* #121A21 - black */
-
-    --primary: 6 78% 57%; /* #E74C3C - primary */
-    --primary-foreground: 195 11% 98%; /* #F7FAFB - white */
-
-    --secondary: 168 83% 35%; /* #16A085 - secondary */
-    --secondary-foreground: 195 11% 98%; /* #F7FAFB - white */
-
-    --muted: 192 10% 93%; /* #ECF0F1 - gray1 */
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 168 83% 35%; /* #16A085 - secondary */
-    --accent-foreground: 210 28% 10%; /* #121A21 - black */
-
-    --destructive: 6 78% 57%; /* #E74C3C - primary */
-    --destructive-foreground: 195 11% 98%; /* #F7FAFB - white */
-
-    --border: 192 10% 93%; /* #ECF0F1 - gray1 */
-    --input: 192 10% 93%; /* #ECF0F1 - gray1 */
-    --ring: 6 78% 57%; /* #E74C3C - primary */
-
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 9% 9.9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-
-    --sidebar-background: 195 11% 98%; /* #F7FAFB - white */
-    --sidebar-foreground: 210 28% 10%; /* #121A21 - black */
-    --sidebar-primary: 6 78% 57%; /* #E74C3C - primary */
-    --sidebar-primary-foreground: 195 11% 98%; /* #F7FAFB - white */
-    --sidebar-accent: 192 10% 93%; /* #ECF0F1 - gray1 */
-    --sidebar-accent-foreground: 210 28% 10%; /* #121A21 - black */
-    --sidebar-border: 192 10% 93%; /* #ECF0F1 - gray1 */
-    --sidebar-ring: 6 78% 57%; /* #E74C3C - primary */
+    --tiro-purple: 270 50% 40%;
   }
 
   .dark {
-    --background: 210 28% 10%; /* #121A21 - black */
-    --foreground: 195 11% 98%; /* #F7FAFB - white */
-
-    --card: 210 28% 10%; /* #121A21 - black */
-    --card-foreground: 195 11% 98%; /* #F7FAFB - white */
-
-    --popover: 210 28% 10%; /* #121A21 - black */
-    --popover-foreground: 195 11% 98%; /* #F7FAFB - white */
-
-    --primary: 6 78% 57%; /* #E74C3C - primary */
-    --primary-foreground: 195 11% 98%; /* #F7FAFB - white */
-
-    --secondary: 168 83% 35%; /* #16A085 - secondary */
-    --secondary-foreground: 195 11% 98%; /* #F7FAFB - white */
-
-    --muted: 223 5% 80%; /* #CACECF - gray2 */
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 168 83% 35%; /* #16A085 - secondary */
-    --accent-foreground: 195 11% 98%; /* #F7FAFB - white */
-
-    --destructive: 6 78% 57%; /* #E74C3C - primary */
-    --destructive-foreground: 195 11% 98%; /* #F7FAFB - white */
-
-    --border: 223 5% 80%; /* #CACECF - gray2 */
-    --input: 223 5% 80%; /* #CACECF - gray2 */
-    --ring: 6 78% 57%; /* #E74C3C - primary */
-    
-    --sidebar-background: 210 28% 10%; /* #121A21 - black */
-    --sidebar-foreground: 195 11% 98%; /* #F7FAFB - white */
-    --sidebar-primary: 6 78% 57%; /* #E74C3C - primary */
-    --sidebar-primary-foreground: 195 11% 98%; /* #F7FAFB - white */
-    --sidebar-accent: 223 5% 80%; /* #CACECF - gray2 */
-    --sidebar-accent-foreground: 210 28% 10%; /* #121A21 - black */
-    --sidebar-border: 223 5% 80%; /* #CACECF - gray2 */
-    --sidebar-ring: 6 78% 57%; /* #E74C3C - primary */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -91,37 +65,44 @@
   * {
     @apply border-border;
   }
-
-  body {
-    @apply bg-background text-foreground font-sans;
-    overflow-x: hidden; /* Prevent horizontal scroll */
+  
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
   }
-
-  /* Ensure responsive behavior */
-  html {
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
     overflow-x: hidden;
   }
-
-  /* Improve mobile touch targets */
-  @media (max-width: 768px) {
-    button, a, [role="button"] {
-      min-height: 44px;
-      min-width: 44px;
-    }
+  
+  #root {
+    display: flex;
+    flex-direction: column;
   }
+}
 
-  /* Glass morphism utility class */
-  .glass {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+/* Mobile viewport fixes */
+@supports (height: 100dvh) {
+  html, body, #root {
+    min-height: 100dvh;
   }
+}
 
-  .glass-dark {
-    background: rgba(18, 26, 33, 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+/* Ensure proper touch handling on mobile */
+@media (max-width: 768px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    overscroll-behavior: none;
   }
 }

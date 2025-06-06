@@ -1,231 +1,143 @@
 
-import React, { useState } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  MessageCircle, 
-  FolderOpen, 
-  UserRound,
-  Menu,
-  X,
-  Shield,
-  LogOut,
-  Home
-} from "lucide-react";
+import React from "react";
 import { useAuth } from "@/context/auth-context";
-import { cn } from "@/lib/utils";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { LogOut, User, MessageSquare, Briefcase, Settings, Home } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+const AppLayout = ({ children }: AppLayoutProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  
-  const isActive = (path: string) => location.pathname === path;
-
-  const navItems = [
-    {
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      href: "/dashboard",
-    },
-    {
-      label: "Projects",
-      icon: FolderOpen,
-      href: "/projects",
-    },
-    {
-      label: "Messages",
-      icon: MessageCircle,
-      href: "/messages",
-    },
-    {
-      label: "Profile",
-      icon: UserRound,
-      href: "/profile",
-    },
-    // Show admin link only for admin users
-    ...(user?.role === "admin" ? [
-      {
-        label: "Admin",
-        icon: Shield,
-        href: "/admin",
-      }
-    ] : [])
-  ];
 
   const handleLogout = async () => {
     try {
-      await logout();
-      navigate('/login');
+      await supabase.auth.signOut();
+      logout();
+      navigate("/login");
+      toast.success("Logged out successfully");
     } catch (error) {
       console.error("Error logging out:", error);
-      toast.error("Error logging out. Please try again.");
+      toast.error("Error logging out");
     }
   };
 
-  // Safely get user initials
-  const getUserInitials = () => {
-    if (user?.name) {
-      return user.name.charAt(0).toUpperCase();
-    }
-    if (user?.email) {
-      return user.email.charAt(0).toUpperCase();
-    }
-    return "U";
-  };
+  const navigationItems = [
+    { icon: Home, label: "Dashboard", path: "/dashboard" },
+    { icon: Briefcase, label: "Projects", path: "/projects" },
+    { icon: MessageSquare, label: "Messages", path: "/messages" },
+    { icon: User, label: "Profile", path: "/profile" },
+  ];
 
-  // Get avatar URL with cache busting
-  const getAvatarUrl = () => {
-    if (user?.avatar) {
-      return `${user.avatar}?t=${Date.now()}`;
+  const isActivePath = (path: string) => {
+    if (path === "/dashboard") {
+      return location.pathname === "/dashboard" || location.pathname === "/";
     }
-    return undefined;
+    return location.pathname.startsWith(path);
   };
-
-  // Close sidebar when route changes on mobile
-  React.useEffect(() => {
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
-  }, [location.pathname, isMobile]);
 
   return (
-    <div className="min-h-screen w-full bg-background">
-      {/* Glass Morphism Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/80 backdrop-blur-md border-b border-white/20 shadow-lg">
-        <div className="flex items-center justify-between h-full px-4 lg:px-6">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link to="https://tiro.agency">
-              <img 
-                src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
-                alt="Tiro Logo" 
-                className="h-8" 
-              />
-            </Link>
-          </div>
-
-          {/* Desktop Navigation */}
-          {!isMobile && (
-            <nav className="hidden md:flex items-center space-x-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center px-3 py-2 rounded-lg transition-all text-sm font-medium",
-                    isActive(item.href)
-                      ? "bg-tiro-primary/20 text-tiro-primary backdrop-blur-sm"
-                      : "hover:bg-white/10 text-foreground"
-                  )}
-                >
-                  <item.icon size={18} className="mr-2" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </nav>
-          )}
-
-          {/* User Section */}
-          <div className="flex items-center space-x-3">
+    <div className="min-h-screen min-h-dvh bg-background flex flex-col w-full">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Avatar className="w-8 h-8">
-                {getAvatarUrl() ? (
-                  <AvatarImage 
-                    src={getAvatarUrl()} 
-                    alt={user?.name || "User"}
-                    className="object-cover"
-                    onError={(e) => {
-                      console.error("Failed to load avatar image in header:", getAvatarUrl());
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <AvatarFallback className="bg-tiro-primary text-white text-sm">
-                    {getUserInitials()}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              {!isMobile && (
-                <div className="ml-3">
-                  <p className="font-medium text-foreground text-sm">
-                    {user?.name || "User"}
-                  </p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {user?.role || "user"}
-                  </p>
-                </div>
-              )}
+              <h1 className="text-xl font-bold text-tiro-purple cursor-pointer" onClick={() => navigate("/dashboard")}>
+                Tiro
+              </h1>
             </div>
 
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={handleLogout}
-              title="Logout"
-              className="h-8 w-8 hover:bg-white/10"
-            >
-              <LogOut size={16} />
-            </Button>
+            {/* Desktop Navigation */}
+            {!isMobile && (
+              <nav className="hidden md:flex space-x-8">
+                {navigationItems.map((item) => (
+                  <Button
+                    key={item.path}
+                    variant={isActivePath(item.path) ? "default" : "ghost"}
+                    onClick={() => navigate(item.path)}
+                    className={`flex items-center space-x-2 ${
+                      isActivePath(item.path) 
+                        ? "bg-tiro-purple text-white" 
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </Button>
+                ))}
+              </nav>
+            )}
+
+            {/* User Menu */}
+            <div className="flex items-center space-x-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">{user?.email}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content with top padding for fixed header */}
-      <main className={cn(
-        "w-full",
-        isMobile ? "pt-16 pb-20" : "pt-16" // Extra bottom padding on mobile for bottom nav
-      )}>
-        <div className="w-full min-h-[calc(100vh-4rem)] overflow-auto">
+      {/* Main Content */}
+      <main className="flex-1 overflow-x-hidden">
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           {children}
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Navigation */}
       {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-t border-white/20 shadow-lg">
-          <div className="flex items-center justify-around h-16 px-2">
-            {navItems.slice(0, 4).map((item) => ( // Show only first 4 items to prevent overflow
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1",
-                  isActive(item.href)
-                    ? "bg-tiro-primary/20 text-tiro-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/10"
-                )}
+        <nav className="md:hidden bg-white border-t shadow-lg flex-shrink-0 safe-area-bottom">
+          <div className="flex justify-around items-center h-16 px-4">
+            {navigationItems.map((item) => (
+              <Button
+                key={item.path}
+                variant="ghost"
+                onClick={() => navigate(item.path)}
+                className={`flex flex-col items-center justify-center space-y-1 p-2 min-w-0 flex-1 ${
+                  isActivePath(item.path) 
+                    ? "text-tiro-purple" 
+                    : "text-gray-600"
+                }`}
               >
-                <item.icon size={20} className="mb-1" />
-                <span className="text-xs font-medium truncate">{item.label}</span>
-              </Link>
+                <item.icon className={`h-5 w-5 ${isActivePath(item.path) ? "text-tiro-purple" : ""}`} />
+                <span className="text-xs truncate">{item.label}</span>
+              </Button>
             ))}
-            
-            {/* Show admin button if user is admin and we have space */}
-            {user?.role === "admin" && (
-              <Link
-                to="/admin"
-                className={cn(
-                  "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1",
-                  isActive("/admin")
-                    ? "bg-tiro-primary/20 text-tiro-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/10"
-                )}
-              >
-                <Shield size={20} className="mb-1" />
-                <span className="text-xs font-medium truncate">Admin</span>
-              </Link>
-            )}
           </div>
         </nav>
       )}
