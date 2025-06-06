@@ -32,7 +32,6 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Basic Profile Info */}
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
@@ -101,7 +100,6 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
         </CardContent>
       </Card>
       
-      {/* Student Reviews */}
       <StudentReviewsSection studentId={studentId} />
     </div>
   );

@@ -1,33 +1,4 @@
 
-/**
- * Review Form Component
- * 
- * This component provides a user interface for entrepreneurs to submit reviews
- * for students they have worked with on completed projects.
- * 
- * Key Features:
- * - Interactive star rating system with hover effects
- * - Text area for detailed comments
- * - Form validation for rating and comment requirements
- * - Integration with Supabase for data persistence
- * - Loading states and error handling
- * - Accessible form controls with proper labeling
- * - Prevention of duplicate reviews
- * 
- * The component uses react-hook-form for form state management and validation,
- * and integrates with the authentication context to identify the reviewing entrepreneur.
- * 
- * Form Validation:
- * - Rating: Required (must select 1-5 stars)
- * - Comment: Required, minimum 10 characters
- * 
- * User Experience:
- * - Hover effects on stars for visual feedback
- * - Disabled submit button until form is valid
- * - Loading state during submission
- * - Success/error feedback via toast notifications
- */
-
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -38,40 +9,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/auth-context";
 import { toast } from "@/components/ui/sonner";
 
-/**
- * Props interface for the ReviewForm component
- */
 interface ReviewFormProps {
-  /** ID of the project being reviewed */
   projectId: string;
-  /** ID of the student being reviewed */
   studentId: string;
-  /** Callback function called when review is successfully submitted */
   onReviewSubmitted: () => void;
-  /** Callback function called when user cancels the review */
   onCancel: () => void;
 }
 
-/**
- * Interface for the form data structure
- */
 interface ReviewFormData {
-  /** Star rating from 1-5 */
   rating: number;
-  /** Written comment/feedback */
   comment: string;
 }
 
-/**
- * ReviewForm Component
- * 
- * Renders a form for submitting student reviews with star rating and comments
- * 
- * @param projectId - ID of the project being reviewed
- * @param studentId - ID of the student being reviewed
- * @param onReviewSubmitted - Callback for successful submission
- * @param onCancel - Callback for form cancellation
- */
 const ReviewForm: React.FC<ReviewFormProps> = ({ 
   projectId, 
   studentId, 
@@ -80,33 +29,17 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 }) => {
   const { user } = useAuth();
   
-  // State for star rating interaction
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form management with validation
   const { register, handleSubmit, formState: { errors } } = useForm<ReviewFormData>();
 
-  /**
-   * Handles form submission
-   * 
-   * This function:
-   * 1. Validates that a rating has been selected
-   * 2. Gets the entrepreneur ID for the current user
-   * 3. Checks if a review already exists to prevent duplicates
-   * 4. Submits the review to the database
-   * 5. Shows success/error feedback
-   * 6. Calls the success callback if submission succeeds
-   * 
-   * @param data - Form data containing the comment
-   */
   const onSubmit = async (data: ReviewFormData) => {
     if (!user || rating === 0) return;
 
     setIsSubmitting(true);
     try {
-      // Get entrepreneur ID for the current user
       const { data: entrepreneurData, error: entrepreneurError } = await supabase
         .from('entrepreneurs')
         .select('id_entrepreneur')
@@ -115,7 +48,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
       if (entrepreneurError) throw entrepreneurError;
 
-      // Check if a review already exists for this project/entrepreneur/student combination
+      // Check if a review already exists
       const { data: existingReview, error: checkError } = await supabase
         .from('reviews')
         .select('id')
@@ -128,11 +61,9 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
       if (existingReview) {
         toast.error("You have already submitted a review for this student on this project");
-        setIsSubmitting(false);
         return;
       }
 
-      // Submit the review to the database
       const { error: reviewError } = await supabase
         .from('reviews')
         .insert({
@@ -145,7 +76,6 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
       if (reviewError) throw reviewError;
 
-      // Show success feedback and call success callback
       toast.success("Review submitted successfully!");
       onReviewSubmitted();
     } catch (error: any) {
@@ -161,7 +91,6 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
       <h3 className="font-semibold">Rate this student</h3>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Star Rating Section */}
         <div>
           <Label>Rating</Label>
           <div className="flex space-x-1 mt-1">
@@ -179,13 +108,11 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
               />
             ))}
           </div>
-          {/* Rating validation error */}
           {rating === 0 && (
             <p className="text-sm text-red-500 mt-1">Please select a rating</p>
           )}
         </div>
 
-        {/* Comment Section */}
         <div>
           <Label htmlFor="comment">Comment</Label>
           <Textarea
@@ -197,13 +124,11 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             })}
             className="mt-1"
           />
-          {/* Comment validation errors */}
           {errors.comment && (
             <p className="text-sm text-red-500 mt-1">{errors.comment.message}</p>
           )}
         </div>
 
-        {/* Form Action Buttons */}
         <div className="flex space-x-2">
           <Button 
             type="submit" 

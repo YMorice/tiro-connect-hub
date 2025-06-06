@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
@@ -93,7 +94,7 @@ const NewProject = () => {
   // Redirect to pack selection if no pack is selected
   React.useEffect(() => {
     if (!selectedPack) {
-      navigate("/projects/pack-selection", {
+      navigate("/pack-selection", {
         replace: true
       });
     }
@@ -260,7 +261,7 @@ const NewProject = () => {
         <div className="mb-8">
           <Button 
             variant="ghost" 
-            onClick={() => navigate("/projects/pack-selection")} 
+            onClick={() => navigate("/pack-selection")} 
             className="flex items-center text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to pack selection
