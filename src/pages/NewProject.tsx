@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
@@ -12,38 +13,45 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, Calendar } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { uploadFile, addDocumentToProject } from "@/services/document-service";
+import { format } from "date-fns";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 interface ProjectPack {
   id: string;
   name: string;
   description: string;
 }
+
 interface LocationState {
   selectedPack: ProjectPack;
 }
+
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  packId: z.string().uuid("Invalid pack ID")
+  packId: z.string().uuid("Invalid pack ID"),
+  deadline: z.date().optional()
 });
+
 type FormValues = z.infer<typeof formSchema>;
+
 const NewProject = () => {
-  const {
-    loadProjects
-  } = useProjects();
-  const {
-    user
-  } = useAuth();
+  const { loadProjects } = useProjects();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   // Get the selected pack from location state
   const locationState = location.state as LocationState | undefined;
@@ -91,47 +99,58 @@ const NewProject = () => {
       });
     }
   }, [selectedPack, navigate]);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
-      packId: selectedPack?.id || ""
+      packId: selectedPack?.id || "",
+      deadline: undefined
     }
   });
+
   const onSubmit = async (values: FormValues) => {
     if (!user) {
       toast.error("You need to be logged in to create a project");
       return;
     }
+    
     if (!entrepreneurId) {
       toast.error("No entrepreneur profile found. Please complete your profile first.");
       return;
     }
+    
     setIsSubmitting(true);
+    
     try {
       console.log("Creating project with values:", values);
       console.log("Entrepreneur ID:", entrepreneurId);
       console.log("User ID:", user.id);
 
       // Create the project with proper error handling
-      const {
-        data: projectData,
-        error: projectError
-      } = await supabase.from('projects').insert({
-        title: values.title,
-        description: values.description,
-        id_entrepreneur: entrepreneurId,
-        id_pack: values.packId,
-        status: 'STEP1'
-      }).select('id_project').single();
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          title: values.title,
+          description: values.description,
+          id_entrepreneur: entrepreneurId,
+          id_pack: values.packId,
+          status: 'STEP1',
+          deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null
+        })
+        .select('id_project')
+        .single();
+        
       if (projectError) {
         console.error("Project creation error:", projectError);
         throw new Error(`Failed to create project: ${projectError.message}`);
       }
+      
       if (!projectData) {
         throw new Error("No project data returned after creation");
       }
+      
       console.log("Project created successfully:", projectData);
       const projectId = projectData.id_project;
 
@@ -231,18 +250,25 @@ const NewProject = () => {
       setIsSubmitting(false);
     }
   };
+
   if (!selectedPack) {
     return null; // Will redirect to pack selection
   }
-  return <AppLayout>
-      <div className="max-w-3xl mx-auto pb-8">
+
+  return (
+    <AppLayout>
+      <div className="w-full max-w-3xl mx-auto pb-8 px-4 sm:px-6">
         <div className="mb-8">
-          <Button variant="ghost" onClick={() => navigate("/projects/pack-selection")} className="flex items-center text-muted-foreground hover:text-foreground">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate("/projects/pack-selection")} 
+            className="flex items-center text-muted-foreground hover:text-foreground"
+          >
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to pack selection
           </Button>
         </div>
 
-        <Card>
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-2xl">Create New Project</CardTitle>
             <CardDescription>
@@ -250,17 +276,21 @@ const NewProject = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {!entrepreneurId && <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+            {!entrepreneurId && (
+              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
                 <p className="text-yellow-800">
                   Loading your entrepreneur profile...
                 </p>
-              </div>}
+              </div>
+            )}
             
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField control={form.control} name="packId" render={({
-                field
-              }) => <FormItem>
+                <FormField
+                  control={form.control}
+                  name="packId"
+                  render={({ field }) => (
+                    <FormItem>
                       <FormLabel>Project Pack</FormLabel>
                       <Select defaultValue={field.value} onValueChange={field.onChange} disabled>
                         <FormControl>
@@ -275,27 +305,74 @@ const NewProject = () => {
                         </SelectContent>
                       </Select>
                       <FormMessage />
-                    </FormItem>} />
+                    </FormItem>
+                  )}
+                />
                 
-                <FormField control={form.control} name="title" render={({
-                field
-              }) => <FormItem>
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
                       <FormLabel>Project Title</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter project title" {...field} />
                       </FormControl>
                       <FormMessage />
-                    </FormItem>} />
+                    </FormItem>
+                  )}
+                />
                 
-                <FormField control={form.control} name="description" render={({
-                field
-              }) => <FormItem>
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
                       <FormLabel>Project Description</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Describe your project in detail and your specific needs for this pack" className="min-h-[200px]" {...field} />
+                        <Textarea 
+                          placeholder="Describe your project in detail and your specific needs for this pack" 
+                          className="min-h-[200px]" 
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
-                    </FormItem>} />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="deadline"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Project Deadline (optional)</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={`w-full justify-start text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                            >
+                              <Calendar className="mr-2 h-4 w-4" />
+                              {field.value ? format(field.value, "PPP") : "Select a deadline"}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="space-y-4 border p-4 rounded-md bg-gray-50">
                   <h3 className="font-medium">Initial Documents (Optional)</h3>
@@ -305,33 +382,57 @@ const NewProject = () => {
                   
                   <div className="space-y-2">
                     <Label>Project Documents</Label>
-                    <FileUpload onFileSelect={file => {
-                    setSelectedFiles(prev => [...prev, file]);
-                  }} buttonText="Add Document" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip" maxSize={20} />
+                    <FileUpload 
+                      onFileSelect={(file) => {
+                        setSelectedFiles(prev => [...prev, file]);
+                      }} 
+                      buttonText="Add Document" 
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip" 
+                      maxSize={20} 
+                    />
                     
-                    {selectedFiles.length > 0 && <div className="mt-2 space-y-2">
+                    {selectedFiles.length > 0 && (
+                      <div className="mt-2 space-y-2">
                         <Label>Selected Files:</Label>
                         <div className="space-y-1">
-                          {selectedFiles.map((file, index) => <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
-                              <span className="text-sm">{file.name}</span>
-                              <Button variant="ghost" size="sm" onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== index))}>
+                          {selectedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                              <span className="text-sm truncate max-w-[70%]">{file.name}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== index))}
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
-                            </div>)}
+                            </div>
+                          ))}
                         </div>
-                      </div>}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center justify-end space-x-4 pt-6 border-t">
-                  <Button type="button" variant="outline" onClick={() => navigate("/projects")} disabled={isSubmitting}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => navigate("/projects")} 
+                    disabled={isSubmitting}
+                  >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isSubmitting || !entrepreneurId} className="">
-                    {isSubmitting ? <div className="flex items-center">
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting || !entrepreneurId} 
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center">
                         <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
                         Creating...
-                      </div> : "Create Project"}
+                      </div>
+                    ) : "Create Project"}
                   </Button>
                 </div>
               </form>
@@ -339,6 +440,8 @@ const NewProject = () => {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>;
+    </AppLayout>
+  );
 };
+
 export default NewProject;
