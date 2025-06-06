@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,9 @@ import { toast } from "@/components/ui/sonner";
 import AppLayout from "@/components/AppLayout";
 import StudentReviewsTable from "@/components/student/StudentReviewsTable";
 import StudentProfileView from "@/components/profile/StudentProfileView";
+import ProfilePictureStep from "@/components/register/ProfilePictureStep";
 import { useParams } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -23,6 +26,30 @@ const Profile = () => {
   const [newSkill, setNewSkill] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+
+  // Predefined options
+  const specialtyOptions = [
+    "Web Development",
+    "Mobile Development", 
+    "Data Science",
+    "AI/Machine Learning",
+    "Cybersecurity",
+    "Cloud Computing",
+    "DevOps",
+    "UI/UX Design",
+    "Digital Marketing",
+    "Project Management"
+  ];
+
+  const skillOptions = [
+    "JavaScript", "TypeScript", "React", "Vue.js", "Angular", "Node.js",
+    "Python", "Java", "C#", "PHP", "Ruby", "Go", "Rust",
+    "HTML", "CSS", "SASS", "Tailwind CSS", "Bootstrap",
+    "MongoDB", "PostgreSQL", "MySQL", "Firebase", "Supabase",
+    "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes",
+    "Git", "GitHub", "GitLab", "Figma", "Adobe Creative Suite"
+  ];
 
   // If studentId is provided in URL, show student profile view
   useEffect(() => {
@@ -98,16 +125,18 @@ const Profile = () => {
         name: userData.name,
         surname: userData.surname,
         email: userData.email,
-        avatar: userData.pp_link,
-        bio: studentData?.biography || entrepreneurData?.biography || "",
-        specialty: studentData?.specialty || entrepreneurData?.specialty || "",
-        skills: studentData?.skills || entrepreneurData?.skills || [],
+        avatar: userData.pp_link || "",
+        bio: studentData?.biography || "",
+        specialty: studentData?.specialty || "",
+        skills: studentData?.skills || [],
         formation: studentData?.formation || "",
         portfolioLink: studentData?.portfolio_link || "",
-        linkedinLink: entrepreneurData?.linkedin_link || "",
-        githubLink: entrepreneurData?.github_link || ""
+        companyName: entrepreneurData?.company_name || "",
+        companyRole: entrepreneurData?.company_role || "",
+        companyAddress: entrepreneurData?.address || ""
       });
-      setSkills(studentData?.skills || entrepreneurData?.skills || []);
+      setSkills(studentData?.skills || []);
+      setAvatarUrl(userData.pp_link || "");
     } catch (error: any) {
       console.error("Error fetching profile:", error);
       toast.error("Failed to load profile");
@@ -127,54 +156,73 @@ const Profile = () => {
         .update({
           name: profile.name,
           surname: profile.surname,
-          pp_link: profile.avatar
+          pp_link: avatarUrl
         })
         .eq('id_users', user.id);
 
       if (userError) throw userError;
 
-      // Determine if the user is a student or entrepreneur and update accordingly
-      let tableName = '';
-      let updateData: any = {
-        biography: profile.bio,
-        skills: skills
-      };
-
+      // Update role-specific data
       if ((user as any).role === 'student') {
-        tableName = 'students';
-        updateData.formation = profile.formation;
-        updateData.portfolio_link = profile.portfolioLink;
+        const { data: existingStudent, error: selectError } = await supabase
+          .from('students')
+          .select('id_student')
+          .eq('id_user', user.id)
+          .maybeSingle();
+
+        if (selectError) throw selectError;
+
+        const updateData = {
+          biography: profile.bio,
+          specialty: profile.specialty,
+          skills: skills,
+          formation: profile.formation,
+          portfolio_link: profile.portfolioLink
+        };
+
+        if (existingStudent) {
+          const { error: profileError } = await supabase
+            .from('students')
+            .update(updateData)
+            .eq('id_user', user.id);
+
+          if (profileError) throw profileError;
+        } else {
+          const { error: profileError } = await supabase
+            .from('students')
+            .insert({ ...updateData, id_user: user.id });
+
+          if (profileError) throw profileError;
+        }
       } else if ((user as any).role === 'entrepreneur') {
-        tableName = 'entrepreneurs';
-        updateData.specialty = profile.specialty;
-        updateData.linkedin_link = profile.linkedinLink;
-        updateData.github_link = profile.githubLink;
-      }
+        const { data: existingEntrepreneur, error: selectError } = await supabase
+          .from('entrepreneurs')
+          .select('id_entrepreneur')
+          .eq('id_user', user.id)
+          .maybeSingle();
 
-      const { data: existingRecord, error: selectError } = await supabase
-        .from(tableName)
-        .select('id')
-        .eq('id_user', user.id)
-        .maybeSingle();
+        if (selectError) throw selectError;
 
-      if (selectError) throw selectError;
+        const updateData = {
+          company_name: profile.companyName,
+          company_role: profile.companyRole,
+          address: profile.companyAddress
+        };
 
-      if (existingRecord) {
-        // Update existing record
-        const { error: profileError } = await supabase
-          .from(tableName)
-          .update(updateData)
-          .eq('id_user', user.id);
+        if (existingEntrepreneur) {
+          const { error: profileError } = await supabase
+            .from('entrepreneurs')
+            .update(updateData)
+            .eq('id_user', user.id);
 
-        if (profileError) throw profileError;
-      } else {
-        // Insert new record
-        updateData.id_user = user.id;
-        const { error: profileError } = await supabase
-          .from(tableName)
-          .insert(updateData);
+          if (profileError) throw profileError;
+        } else {
+          const { error: profileError } = await supabase
+            .from('entrepreneurs')
+            .insert({ ...updateData, id_user: user.id });
 
-        if (profileError) throw profileError;
+          if (profileError) throw profileError;
+        }
       }
 
       toast.success("Profile updated successfully!");
@@ -227,13 +275,14 @@ const Profile = () => {
     <AppLayout>
       <div className="container max-w-4xl py-4 px-4">
         <Tabs defaultValue="profile" className="w-full space-y-4">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             {(user as any).role === 'student' && (
               <TabsTrigger value="reviews">Reviews</TabsTrigger>
             )}
           </TabsList>
-          <TabsContent value="profile" className="space-y-4">
+          
+          <TabsContent value="profile" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Profile Information</CardTitle>
@@ -241,136 +290,186 @@ const Profile = () => {
                   Update your profile information
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4">
+              <CardContent className="space-y-6">
+                {/* Profile Picture Section */}
+                <div className="flex flex-col items-center space-y-4">
+                  <Avatar className="h-24 w-24">
+                    {avatarUrl ? (
+                      <AvatarImage src={avatarUrl} alt={`${profile.name} ${profile.surname}`} />
+                    ) : (
+                      <AvatarFallback className="text-lg">
+                        {profile.name?.charAt(0)}{profile.surname?.charAt(0)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <ProfilePictureStep
+                    form={null as any}
+                    avatarUrl={avatarUrl}
+                    setAvatarUrl={setAvatarUrl}
+                    formData={profile}
+                  />
+                </div>
+
+                {/* Basic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name">First Name</Label>
                     <Input
                       id="name"
-                      value={profile.name}
+                      value={profile.name || ""}
                       onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="surname">Surname</Label>
+                    <Label htmlFor="surname">Last Name</Label>
                     <Input
                       id="surname"
-                      value={profile.surname}
+                      value={profile.surname || ""}
                       onChange={(e) => setProfile({ ...profile, surname: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      value={profile.email}
-                      disabled
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="avatar">Avatar URL</Label>
-                    <Input
-                      id="avatar"
-                      value={profile.avatar}
-                      onChange={(e) => setProfile({ ...profile, avatar: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="bio">Bio</Label>
-                    <Textarea
-                      id="bio"
-                      value={profile.bio}
-                      onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                    />
-                  </div>
-                  {(user as any).role === 'student' && (
-                    <>
-                      <div>
-                        <Label htmlFor="specialty">Specialty</Label>
-                        <Input
-                          id="specialty"
-                          value={profile.specialty}
-                          onChange={(e) => setProfile({ ...profile, specialty: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="formation">Formation</Label>
-                        <Input
-                          id="formation"
-                          value={profile.formation}
-                          onChange={(e) => setProfile({ ...profile, formation: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="portfolioLink">Portfolio Link</Label>
-                        <Input
-                          id="portfolioLink"
-                          value={profile.portfolioLink}
-                          onChange={(e) => setProfile({ ...profile, portfolioLink: e.target.value })}
-                        />
-                      </div>
-                    </>
-                  )}
-                  {(user as any).role === 'entrepreneur' && (
-                    <>
-                      <div>
-                        <Label htmlFor="specialty">Specialty</Label>
-                        <Input
-                          id="specialty"
-                          value={profile.specialty}
-                          onChange={(e) => setProfile({ ...profile, specialty: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="linkedinLink">LinkedIn Link</Label>
-                        <Input
-                          id="linkedinLink"
-                          value={profile.linkedinLink}
-                          onChange={(e) => setProfile({ ...profile, linkedinLink: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="githubLink">GitHub Link</Label>
-                        <Input
-                          id="githubLink"
-                          value={profile.githubLink}
-                          onChange={(e) => setProfile({ ...profile, githubLink: e.target.value })}
-                        />
-                      </div>
-                    </>
-                  )}
-                  <div>
-                    <Label>Skills</Label>
-                    <div className="flex space-x-2">
-                      <Input
-                        type="text"
-                        placeholder="Add a skill"
-                        value={newSkill}
-                        onChange={(e) => setNewSkill(e.target.value)}
-                      />
-                      <Button type="button" onClick={addSkill}>Add</Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {skills.map((skill) => (
-                        <Badge key={skill} variant="secondary" className="text-xs">
-                          {skill}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="ml-1 -mr-1 h-4 w-4"
-                            onClick={() => removeSkill(skill)}
-                          >
-                            <span className="sr-only">Remove</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
-                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
                 </div>
-                <Button onClick={handleSaveProfile} disabled={saving}>
+
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    value={profile.email || ""}
+                    disabled
+                    className="bg-gray-100"
+                  />
+                </div>
+
+                {/* Role-specific fields */}
+                {(user as any).role === 'student' && (
+                  <>
+                    <div>
+                      <Label htmlFor="bio">Bio</Label>
+                      <Textarea
+                        id="bio"
+                        value={profile.bio || ""}
+                        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                        placeholder="Tell us about yourself..."
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="specialty">Specialty</Label>
+                      <Select value={profile.specialty || ""} onValueChange={(value) => setProfile({ ...profile, specialty: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your specialty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {specialtyOptions.map((specialty) => (
+                            <SelectItem key={specialty} value={specialty}>
+                              {specialty}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="formation">Education</Label>
+                      <Input
+                        id="formation"
+                        value={profile.formation || ""}
+                        onChange={(e) => setProfile({ ...profile, formation: e.target.value })}
+                        placeholder="Your educational background"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="portfolioLink">Portfolio Link</Label>
+                      <Input
+                        id="portfolioLink"
+                        value={profile.portfolioLink || ""}
+                        onChange={(e) => setProfile({ ...profile, portfolioLink: e.target.value })}
+                        placeholder="https://your-portfolio.com"
+                      />
+                    </div>
+
+                    {/* Skills Section */}
+                    <div>
+                      <Label>Skills</Label>
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap gap-2">
+                          {skills.map((skill) => (
+                            <Badge key={skill} variant="secondary" className="text-xs flex items-center gap-1">
+                              {skill}
+                              <button
+                                type="button"
+                                onClick={() => removeSkill(skill)}
+                                className="ml-1 hover:text-red-500"
+                              >
+                                ×
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Select value={newSkill} onValueChange={setNewSkill}>
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Select a skill to add" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {skillOptions
+                                .filter(skill => !skills.includes(skill))
+                                .map((skill) => (
+                                  <SelectItem key={skill} value={skill}>
+                                    {skill}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          <Button type="button" onClick={addSkill} disabled={!newSkill}>
+                            Add Skill
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {(user as any).role === 'entrepreneur' && (
+                  <>
+                    <div>
+                      <Label htmlFor="companyName">Company Name</Label>
+                      <Input
+                        id="companyName"
+                        value={profile.companyName || ""}
+                        onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
+                        placeholder="Your company name"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="companyRole">Role in Company</Label>
+                      <Input
+                        id="companyRole"
+                        value={profile.companyRole || ""}
+                        onChange={(e) => setProfile({ ...profile, companyRole: e.target.value })}
+                        placeholder="Your role/position"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="companyAddress">Company Address</Label>
+                      <Textarea
+                        id="companyAddress"
+                        value={profile.companyAddress || ""}
+                        onChange={(e) => setProfile({ ...profile, companyAddress: e.target.value })}
+                        placeholder="Company address"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <Button 
+                  onClick={handleSaveProfile} 
+                  disabled={saving}
+                  className="w-full sm:w-auto"
+                >
                   {saving ? (
                     <div className="flex items-center">
                       <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
@@ -381,19 +480,22 @@ const Profile = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="reviews">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Reviews</CardTitle>
-                <CardDescription>
-                  Here you can see all the reviews you have received.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <StudentReviewsTable />
-              </CardContent>
-            </Card>
-          </TabsContent>
+
+          {(user as any).role === 'student' && (
+            <TabsContent value="reviews">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Reviews</CardTitle>
+                  <CardDescription>
+                    Here you can see all the reviews you have received.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <StudentReviewsTable />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </AppLayout>
