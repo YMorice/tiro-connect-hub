@@ -13,16 +13,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Trash2, CalendarIcon } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import FileUpload from "@/components/FileUpload";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { uploadFile, addDocumentToProject } from "@/services/document-service";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 
 interface ProjectPack {
   id: string;
@@ -38,7 +34,6 @@ const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   packId: z.string().uuid("Invalid pack ID"),
-  deadline: z.date().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -94,7 +89,7 @@ const NewProject = () => {
   // Redirect to pack selection if no pack is selected
   React.useEffect(() => {
     if (!selectedPack) {
-      navigate("/pack-selection", { replace: true });
+      navigate("/projects/pack-selection", { replace: true });
     }
   }, [selectedPack, navigate]);
 
@@ -104,7 +99,6 @@ const NewProject = () => {
       title: "",
       description: "",
       packId: selectedPack?.id || "",
-      deadline: undefined,
     },
   });
 
@@ -134,8 +128,7 @@ const NewProject = () => {
           description: values.description,
           id_entrepreneur: entrepreneurId,
           id_pack: values.packId,
-          status: 'STEP1',
-          deadline: values.deadline ? values.deadline.toISOString().split('T')[0] : null
+          status: 'STEP1'
         })
         .select('id_project')
         .single();
@@ -156,7 +149,9 @@ const NewProject = () => {
       try {
         console.log("Creating message group for project:", projectId);
         
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // The database trigger should handle message group creation automatically
+        // But let's verify it was created and create manually if needed
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for trigger
         
         const { data: existingGroup, error: groupCheckError } = await supabase
           .from('message_groups')
@@ -172,8 +167,10 @@ const NewProject = () => {
         if (!existingGroup) {
           console.log("No message group found, creating manually...");
           
+          // Create message group manually
           const groupId = crypto.randomUUID();
           
+          // Add entrepreneur to the group
           const { error: groupError } = await supabase
             .from('message_groups')
             .insert({
@@ -188,6 +185,7 @@ const NewProject = () => {
             console.log("Message group created manually");
           }
           
+          // Add admin users to the group
           const { data: adminUsers } = await supabase
             .from('users')
             .select('id_users')
@@ -215,16 +213,20 @@ const NewProject = () => {
         }
       } catch (messageError) {
         console.error("Error with message group creation:", messageError);
+        // Don't fail the whole project creation for message group issues
         toast.warning("Project created but there may be an issue with messaging setup");
       }
       
+      // Handle file uploads if any were selected
       if (selectedFiles.length > 0) {
         console.log("Uploading files:", selectedFiles.length);
         for (const file of selectedFiles) {
           try {
+            // Upload file to storage
             const fileUrl = await uploadFile(file, projectId);
             
             if (fileUrl) {
+              // Add document metadata to database
               await addDocumentToProject(
                 projectId,
                 file.name,
@@ -240,10 +242,12 @@ const NewProject = () => {
         }
       }
       
+      // Reload projects to get the latest data
       await loadProjects();
       
       toast.success("Project created successfully!");
       
+      // Navigate to the specific project page instead of projects list
       navigate(`/projects/${projectId}`);
     } catch (error) {
       console.error("Error creating project:", error);
@@ -255,16 +259,16 @@ const NewProject = () => {
   };
 
   if (!selectedPack) {
-    return null;
+    return null; // Will redirect to pack selection
   }
 
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto pb-8 px-4">
+      <div className="max-w-3xl mx-auto pb-8">
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => navigate("/pack-selection")}
+            onClick={() => navigate("/projects/pack-selection")}
             className="flex items-center text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to pack selection
@@ -351,49 +355,6 @@ const NewProject = () => {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="deadline"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Project Deadline (Optional)</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a deadline date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date()
-                            }
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <div className="space-y-4 border p-4 rounded-md bg-gray-50">
                   <h3 className="font-medium">Initial Documents (Optional)</h3>
                   <p className="text-sm text-muted-foreground">
@@ -433,23 +394,22 @@ const NewProject = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-2 sm:space-y-0 sm:space-x-4 pt-6 border-t">
+                <div className="flex items-center justify-end space-x-4 pt-6 border-t">
                   <Button 
                     type="button" 
                     variant="outline"
                     onClick={() => navigate("/projects")}
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
                   <Button 
                     type="submit"
-                    className="bg-tiro-purple hover:bg-tiro-purple/90 min-w-[140px] w-full sm:w-auto z-10 relative"
+                    className="bg-tiro-purple hover:bg-tiro-purple/90 min-w-[140px]"
                     disabled={isSubmitting || !entrepreneurId}
                   >
                     {isSubmitting ? (
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center">
                         <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
                         Creating...
                       </div>

@@ -196,7 +196,6 @@ export type Database = {
       projects: {
         Row: {
           created_at: string
-          deadline: string | null
           description: string | null
           id_entrepreneur: string
           id_pack: string | null
@@ -209,7 +208,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          deadline?: string | null
           description?: string | null
           id_entrepreneur: string
           id_pack?: string | null
@@ -222,7 +220,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          deadline?: string | null
           description?: string | null
           id_entrepreneur?: string
           id_pack?: string | null
