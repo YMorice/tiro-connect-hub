@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useProjects } from "@/context/project-context";
@@ -7,19 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { 
-  Calendar, 
-  FolderPlus, 
-  MessageCircle, 
-  TrendingUp,
-  CheckCircle,
-  Clock,
-  AlertCircle
-} from "lucide-react";
-
+import { Calendar, FolderPlus, MessageCircle, TrendingUp, CheckCircle, Clock, AlertCircle } from "lucide-react";
 const Dashboard = () => {
-  const { user } = useAuth();
-  const { projects, loading } = useProjects();
+  const {
+    user
+  } = useAuth();
+  const {
+    projects,
+    loading
+  } = useProjects();
 
   // Calculate dashboard metrics
   const totalProjects = projects.length;
@@ -28,31 +23,29 @@ const Dashboard = () => {
   const pendingProjects = projects.filter(p => p.status === "New" || p.status === "Proposals").length;
 
   // Get recent projects (last 5)
-  const recentProjects = projects
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 5);
-
+  const recentProjects = projects.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 5);
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case "completed": return "bg-green-100 text-green-800";
-      case "active": case "in progress": return "bg-blue-100 text-blue-800";
-      case "new": case "proposals": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "active":
+      case "in progress":
+        return "bg-blue-100 text-blue-800";
+      case "new":
+      case "proposals":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
-
   if (loading) {
-    return (
-      <AppLayout>
+    return <AppLayout>
         <div className="min-h-screen bg-gray-50 flex justify-center items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tiro-primary"></div>
         </div>
-      </AppLayout>
-    );
+      </AppLayout>;
   }
-
-  return (
-    <AppLayout>
+  return <AppLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 max-w-7xl">
           {/* Header */}
@@ -149,17 +142,9 @@ const Dashboard = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {recentProjects.length > 0 ? (
-                    recentProjects.map((project) => (
-                      <div
-                        key={project.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                      >
+                  {recentProjects.length > 0 ? recentProjects.map(project => <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                         <div className="flex-1 min-w-0">
-                          <Link 
-                            to={`/projects/${project.id}`}
-                            className="font-medium text-gray-900 hover:text-tiro-primary transition-colors truncate block"
-                          >
+                          <Link to={`/projects/${project.id}`} className="font-medium text-gray-900 hover:text-tiro-primary transition-colors truncate block">
                             {project.title}
                           </Link>
                           <div className="flex items-center mt-1 space-x-2">
@@ -177,10 +162,7 @@ const Dashboard = () => {
                             View
                           </Button>
                         </Link>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
+                      </div>) : <div className="text-center py-8">
                       <FolderPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-500 mb-4">No projects yet</p>
                       <Link to="/pack-selection">
@@ -188,8 +170,7 @@ const Dashboard = () => {
                           Create Your First Project
                         </Button>
                       </Link>
-                    </div>
-                  )}
+                    </div>}
                 </CardContent>
               </Card>
             </div>
@@ -205,7 +186,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Link to="/pack-selection" className="block">
-                    <Button className="w-full justify-start bg-tiro-purple hover:bg-tiro-purple/90">
+                    <Button className="">
                       <FolderPlus className="mr-2 h-4 w-4" />
                       New Project
                     </Button>
@@ -259,8 +240,6 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </AppLayout>
-  );
+    </AppLayout>;
 };
-
 export default Dashboard;
