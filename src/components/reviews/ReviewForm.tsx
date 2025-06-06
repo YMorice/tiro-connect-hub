@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,11 +32,49 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasExistingReview, setHasExistingReview] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<ReviewFormData>();
 
+  // Check for existing review on component mount
+  useEffect(() => {
+    checkExistingReview();
+  }, [projectId, studentId, user]);
+
+  const checkExistingReview = async () => {
+    if (!user) return;
+
+    try {
+      const { data: entrepreneurData, error: entrepreneurError } = await supabase
+        .from('entrepreneurs')
+        .select('id_entrepreneur')
+        .eq('id_user', user.id)
+        .single();
+
+      if (entrepreneurError) return;
+
+      const { data: existingReview, error: checkError } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('entrepreneur_id', entrepreneurData.id_entrepreneur)
+        .eq('student_id', studentId)
+        .maybeSingle();
+
+      if (checkError) return;
+
+      if (existingReview) {
+        setHasExistingReview(true);
+        toast.error("You have already submitted a review for this student on this project");
+        onCancel();
+      }
+    } catch (error) {
+      console.error("Error checking existing review:", error);
+    }
+  };
+
   const onSubmit = async (data: ReviewFormData) => {
-    if (!user || rating === 0) return;
+    if (!user || rating === 0 || hasExistingReview) return;
 
     setIsSubmitting(true);
     try {
@@ -48,7 +86,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
       if (entrepreneurError) throw entrepreneurError;
 
-      // Check if a review already exists
+      // Double check if a review already exists before inserting
       const { data: existingReview, error: checkError } = await supabase
         .from('reviews')
         .select('id')
@@ -61,6 +99,8 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
       if (existingReview) {
         toast.error("You have already submitted a review for this student on this project");
+        setHasExistingReview(true);
+        onCancel();
         return;
       }
 
@@ -85,6 +125,10 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  if (hasExistingReview) {
+    return null;
+  }
 
   return (
     <div className="space-y-4 p-4 border rounded-lg bg-white">
@@ -132,7 +176,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         <div className="flex space-x-2">
           <Button 
             type="submit" 
-            disabled={isSubmitting || rating === 0}
+            disabled={isSubmitting || rating === 0 || hasExistingReview}
             className="bg-tiro-primary hover:bg-tiro-primary/90"
           >
             {isSubmitting ? "Submitting..." : "Submit Review"}

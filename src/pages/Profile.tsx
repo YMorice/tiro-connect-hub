@@ -14,7 +14,7 @@ import { toast } from "@/components/ui/sonner";
 import AppLayout from "@/components/AppLayout";
 import StudentReviewsTable from "@/components/student/StudentReviewsTable";
 import StudentProfileView from "@/components/profile/StudentProfileView";
-import ProfilePictureStep from "@/components/register/ProfilePictureStep";
+import FileUpload from "@/components/FileUpload";
 import { useParams } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -27,8 +27,9 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
-  // Predefined options
+  // Specialty options matching signup
   const specialtyOptions = [
     "Web Development",
     "Mobile Development", 
@@ -42,13 +43,21 @@ const Profile = () => {
     "Project Management"
   ];
 
+  // Skills options matching signup
   const skillOptions = [
-    "JavaScript", "TypeScript", "React", "Vue.js", "Angular", "Node.js",
-    "Python", "Java", "C#", "PHP", "Ruby", "Go", "Rust",
-    "HTML", "CSS", "SASS", "Tailwind CSS", "Bootstrap",
-    "MongoDB", "PostgreSQL", "MySQL", "Firebase", "Supabase",
-    "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes",
-    "Git", "GitHub", "GitLab", "Figma", "Adobe Creative Suite"
+    "After Effects",
+    "Illustrator", 
+    "InDesign", 
+    "Photoshop",
+    "Premiere Pro", 
+    "Adobe XD", 
+    "Canva", 
+    "CorelDRAW", 
+    "DaVinci Resolve",
+    "Figma",
+    "Final Cut Pro",
+    "Framer",
+    "Sketch"
   ];
 
   // If studentId is provided in URL, show student profile view
@@ -142,6 +151,39 @@ const Profile = () => {
       toast.error("Failed to load profile");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    setIsUploadingAvatar(true);
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('pp')
+        .upload(filePath, file, {
+          contentType: file.type,
+          upsert: true,
+        });
+        
+      if (uploadError) throw uploadError;
+      
+      const { data: urlData } = supabase.storage
+        .from('pp')
+        .getPublicUrl(filePath);
+        
+      const newAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      setAvatarUrl(newAvatarUrl);
+      toast.success("Profile picture uploaded successfully");
+      
+    } catch (error: any) {
+      console.error("Error uploading profile picture:", error);
+      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -248,10 +290,8 @@ const Profile = () => {
   if (loading) {
     return (
       <AppLayout>
-        <div className="container max-w-4xl py-4 px-4">
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       </AppLayout>
     );
@@ -261,11 +301,13 @@ const Profile = () => {
   if (studentId && profile) {
     return (
       <AppLayout>
-        <div className="container max-w-4xl py-4 px-4">
-          <StudentProfileView 
-            studentId={studentId}
-            studentProfile={profile}
-          />
+        <div className="min-h-screen bg-gray-50 py-8">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <StudentProfileView 
+              studentId={studentId}
+              studentProfile={profile}
+            />
+          </div>
         </div>
       </AppLayout>
     );
@@ -273,230 +315,245 @@ const Profile = () => {
 
   return (
     <AppLayout>
-      <div className="container max-w-4xl py-4 px-4">
-        <Tabs defaultValue="profile" className="w-full space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            {(user as any).role === 'student' && (
-              <TabsTrigger value="reviews">Reviews</TabsTrigger>
-            )}
-          </TabsList>
-          
-          <TabsContent value="profile" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>
-                  Update your profile information
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Profile Picture Section */}
-                <div className="flex flex-col items-center space-y-4">
-                  <Avatar className="h-24 w-24">
-                    {avatarUrl ? (
-                      <AvatarImage src={avatarUrl} alt={`${profile.name} ${profile.surname}`} />
-                    ) : (
-                      <AvatarFallback className="text-lg">
-                        {profile.name?.charAt(0)}{profile.surname?.charAt(0)}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <ProfilePictureStep
-                    form={null as any}
-                    avatarUrl={avatarUrl}
-                    setAvatarUrl={setAvatarUrl}
-                    formData={profile}
-                  />
-                </div>
-
-                {/* Basic Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="name">First Name</Label>
-                    <Input
-                      id="name"
-                      value={profile.name || ""}
-                      onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="surname">Last Name</Label>
-                    <Input
-                      id="surname"
-                      value={profile.surname || ""}
-                      onChange={(e) => setProfile({ ...profile, surname: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    value={profile.email || ""}
-                    disabled
-                    className="bg-gray-100"
-                  />
-                </div>
-
-                {/* Role-specific fields */}
-                {(user as any).role === 'student' && (
-                  <>
-                    <div>
-                      <Label htmlFor="bio">Bio</Label>
-                      <Textarea
-                        id="bio"
-                        value={profile.bio || ""}
-                        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                        placeholder="Tell us about yourself..."
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="specialty">Specialty</Label>
-                      <Select value={profile.specialty || ""} onValueChange={(value) => setProfile({ ...profile, specialty: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your specialty" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {specialtyOptions.map((specialty) => (
-                            <SelectItem key={specialty} value={specialty}>
-                              {specialty}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="formation">Education</Label>
-                      <Input
-                        id="formation"
-                        value={profile.formation || ""}
-                        onChange={(e) => setProfile({ ...profile, formation: e.target.value })}
-                        placeholder="Your educational background"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="portfolioLink">Portfolio Link</Label>
-                      <Input
-                        id="portfolioLink"
-                        value={profile.portfolioLink || ""}
-                        onChange={(e) => setProfile({ ...profile, portfolioLink: e.target.value })}
-                        placeholder="https://your-portfolio.com"
-                      />
-                    </div>
-
-                    {/* Skills Section */}
-                    <div>
-                      <Label>Skills</Label>
-                      <div className="space-y-3">
-                        <div className="flex flex-wrap gap-2">
-                          {skills.map((skill) => (
-                            <Badge key={skill} variant="secondary" className="text-xs flex items-center gap-1">
-                              {skill}
-                              <button
-                                type="button"
-                                onClick={() => removeSkill(skill)}
-                                className="ml-1 hover:text-red-500"
-                              >
-                                ×
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <Select value={newSkill} onValueChange={setNewSkill}>
-                            <SelectTrigger className="flex-1">
-                              <SelectValue placeholder="Select a skill to add" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {skillOptions
-                                .filter(skill => !skills.includes(skill))
-                                .map((skill) => (
-                                  <SelectItem key={skill} value={skill}>
-                                    {skill}
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
-                          <Button type="button" onClick={addSkill} disabled={!newSkill}>
-                            Add Skill
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {(user as any).role === 'entrepreneur' && (
-                  <>
-                    <div>
-                      <Label htmlFor="companyName">Company Name</Label>
-                      <Input
-                        id="companyName"
-                        value={profile.companyName || ""}
-                        onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
-                        placeholder="Your company name"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="companyRole">Role in Company</Label>
-                      <Input
-                        id="companyRole"
-                        value={profile.companyRole || ""}
-                        onChange={(e) => setProfile({ ...profile, companyRole: e.target.value })}
-                        placeholder="Your role/position"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="companyAddress">Company Address</Label>
-                      <Textarea
-                        id="companyAddress"
-                        value={profile.companyAddress || ""}
-                        onChange={(e) => setProfile({ ...profile, companyAddress: e.target.value })}
-                        placeholder="Company address"
-                      />
-                    </div>
-                  </>
-                )}
-
-                <Button 
-                  onClick={handleSaveProfile} 
-                  disabled={saving}
-                  className="w-full sm:w-auto"
-                >
-                  {saving ? (
-                    <div className="flex items-center">
-                      <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
-                      Saving...
-                    </div>
-                  ) : "Save Profile"}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {(user as any).role === 'student' && (
-            <TabsContent value="reviews">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Reviews</CardTitle>
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Tabs defaultValue="profile" className="w-full space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+              {(user as any).role === 'student' && (
+                <TabsTrigger value="reviews">Reviews</TabsTrigger>
+              )}
+            </TabsList>
+            
+            <TabsContent value="profile" className="space-y-6">
+              <Card className="shadow-sm">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl">Profile Information</CardTitle>
                   <CardDescription>
-                    Here you can see all the reviews you have received.
+                    Update your profile information
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <StudentReviewsTable />
+                <CardContent className="space-y-8">
+                  {/* Profile Picture Section */}
+                  <div className="flex flex-col items-center space-y-4">
+                    <Avatar className="h-32 w-32">
+                      {avatarUrl ? (
+                        <AvatarImage 
+                          src={avatarUrl} 
+                          alt={`${profile.name} ${profile.surname}`}
+                          className="object-cover"
+                        />
+                      ) : (
+                        <AvatarFallback className="text-2xl bg-primary text-white">
+                          {profile.name?.charAt(0)}{profile.surname?.charAt(0)}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <FileUpload 
+                      onFileSelect={handleAvatarUpload} 
+                      accept="image/*"
+                      buttonText={isUploadingAvatar ? "Uploading..." : "Change Profile Picture"}
+                    />
+                  </div>
+
+                  {/* Basic Information */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">First Name</Label>
+                      <Input
+                        id="name"
+                        value={profile.name || ""}
+                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="surname">Last Name</Label>
+                      <Input
+                        id="surname"
+                        value={profile.surname || ""}
+                        onChange={(e) => setProfile({ ...profile, surname: e.target.value })}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      value={profile.email || ""}
+                      disabled
+                      className="bg-gray-100 w-full"
+                    />
+                  </div>
+
+                  {/* Role-specific fields */}
+                  {(user as any).role === 'student' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="bio">Bio</Label>
+                        <Textarea
+                          id="bio"
+                          value={profile.bio || ""}
+                          onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                          placeholder="Tell us about yourself..."
+                          className="min-h-[100px] w-full"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="specialty">Specialty</Label>
+                        <Select value={profile.specialty || ""} onValueChange={(value) => setProfile({ ...profile, specialty: value })}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select your specialty" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {specialtyOptions.map((specialty) => (
+                              <SelectItem key={specialty} value={specialty}>
+                                {specialty}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="formation">Education</Label>
+                        <Input
+                          id="formation"
+                          value={profile.formation || ""}
+                          onChange={(e) => setProfile({ ...profile, formation: e.target.value })}
+                          placeholder="Your educational background"
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="portfolioLink">Portfolio Link</Label>
+                        <Input
+                          id="portfolioLink"
+                          value={profile.portfolioLink || ""}
+                          onChange={(e) => setProfile({ ...profile, portfolioLink: e.target.value })}
+                          placeholder="https://your-portfolio.com"
+                          className="w-full"
+                        />
+                      </div>
+
+                      {/* Skills Section */}
+                      <div className="space-y-4">
+                        <Label>Skills</Label>
+                        <div className="space-y-4">
+                          <div className="flex flex-wrap gap-2">
+                            {skills.map((skill) => (
+                              <Badge key={skill} variant="secondary" className="text-sm flex items-center gap-2">
+                                {skill}
+                                <button
+                                  type="button"
+                                  onClick={() => removeSkill(skill)}
+                                  className="ml-1 hover:text-red-500 text-lg"
+                                >
+                                  ×
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            <Select value={newSkill} onValueChange={setNewSkill}>
+                              <SelectTrigger className="flex-1">
+                                <SelectValue placeholder="Select a skill to add" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {skillOptions
+                                  .filter(skill => !skills.includes(skill))
+                                  .map((skill) => (
+                                    <SelectItem key={skill} value={skill}>
+                                      {skill}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                            <Button type="button" onClick={addSkill} disabled={!newSkill} className="sm:w-auto w-full">
+                              Add Skill
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {(user as any).role === 'entrepreneur' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="companyName">Company Name</Label>
+                        <Input
+                          id="companyName"
+                          value={profile.companyName || ""}
+                          onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
+                          placeholder="Your company name"
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="companyRole">Role in Company</Label>
+                        <Input
+                          id="companyRole"
+                          value={profile.companyRole || ""}
+                          onChange={(e) => setProfile({ ...profile, companyRole: e.target.value })}
+                          placeholder="Your role/position"
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="companyAddress">Company Address</Label>
+                        <Textarea
+                          id="companyAddress"
+                          value={profile.companyAddress || ""}
+                          onChange={(e) => setProfile({ ...profile, companyAddress: e.target.value })}
+                          placeholder="Company address"
+                          className="min-h-[100px] w-full"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <div className="flex justify-center pt-6">
+                    <Button 
+                      onClick={handleSaveProfile} 
+                      disabled={saving}
+                      className="w-full sm:w-auto px-8 py-3"
+                    >
+                      {saving ? (
+                        <div className="flex items-center">
+                          <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
+                          Saving...
+                        </div>
+                      ) : "Save Profile"}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
-          )}
-        </Tabs>
+
+            {(user as any).role === 'student' && (
+              <TabsContent value="reviews">
+                <Card className="shadow-sm">
+                  <CardHeader>
+                    <CardTitle>Your Reviews</CardTitle>
+                    <CardDescription>
+                      Here you can see all the reviews you have received.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <StudentReviewsTable />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+          </Tabs>
+        </div>
       </div>
     </AppLayout>
   );
