@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Plus, Calendar, DollarSign, User } from "lucide-react";
+import { Search, Plus, Calendar, DollarSign, User, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getStudentProposals } from "@/services/proposal-service";
 
 interface Project {
   id_project: string;
@@ -22,6 +23,7 @@ interface Project {
   entrepreneur?: {
     users: {
       name: string;
+      surname: string;
     };
   };
 }
@@ -35,6 +37,8 @@ const Projects = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  const userRole = (user as any)?.role;
+
   const statusOptions = [
     { value: "all", label: "All Projects" },
     { value: "STEP1", label: "New" },
@@ -44,6 +48,15 @@ const Projects = () => {
     { value: "STEP5", label: "Active" },
     { value: "STEP6", label: "In Progress" },
     { value: "completed", label: "Completed" }
+  ];
+
+  // Add proposal status filter options for students
+  const studentStatusOptions = [
+    { value: "all", label: "All" },
+    { value: "pending", label: "Pending Response" },
+    { value: "accepted", label: "Interested" },
+    { value: "declined", label: "Declined" },
+    { value: "assigned", label: "Assigned" }
   ];
 
   useEffect(() => {
@@ -61,9 +74,7 @@ const Projects = () => {
 
     setLoading(true);
     try {
-      console.log("Fetching projects for user:", user.id, "role:", (user as any)?.role);
-      
-      const userRole = (user as any)?.role;
+      console.log("Fetching projects for user:", user.id, "role:", userRole);
       
       if (userRole === "entrepreneur") {
         // Entrepreneurs see only their own projects
@@ -79,7 +90,7 @@ const Projects = () => {
             .select(`
               *,
               entrepreneurs (
-                users (name)
+                users (name, surname)
               )
             `)
             .eq("id_entrepreneur", entrepreneurData.id_entrepreneur)
@@ -95,7 +106,7 @@ const Projects = () => {
           setProjects(sortedProjects);
         }
       } else if (userRole === "student") {
-        // Students see only their projects and accepted proposals still in selection
+        // Students see both assigned projects and proposals
         const { data: studentData } = await supabase
           .from("students")
           .select("id_student")
@@ -103,55 +114,45 @@ const Projects = () => {
           .single();
           
         if (studentData) {
-          // Get projects where student is selected
-          const { data: selectedProjects, error: selectedError } = await supabase
+          // Get all proposals for this student
+          const proposals = await getStudentProposals(studentData.id_student);
+          
+          // Transform proposals into project format
+          const projectsFromProposals: Project[] = proposals.map(proposal => ({
+            id_project: proposal.projects.id_project,
+            title: proposal.projects.title,
+            description: proposal.projects.description,
+            status: proposal.projects.status,
+            created_at: proposal.created_at,
+            price: proposal.projects.price,
+            proposalStatus: proposal.accepted === null ? 'pending' : (proposal.accepted ? 'accepted' : 'declined'),
+            entrepreneur: proposal.projects.entrepreneurs
+          }));
+
+          // Get projects where student is assigned
+          const { data: assignedProjects, error: assignedError } = await supabase
             .from("projects")
             .select(`
               *,
               entrepreneurs (
-                users (name)
+                users (name, surname)
               )
             `)
             .eq("selected_student", studentData.id_student)
             .order("created_at", { ascending: false });
 
-          if (selectedError) {
-            console.error("Error fetching selected projects:", selectedError);
-            throw selectedError;
+          if (assignedError) {
+            console.error("Error fetching assigned projects:", assignedError);
           }
 
-          // Get projects where student accepted proposals but wasn't selected yet (status = STEP3 Selection)
-          const { data: proposalData, error: proposalError } = await supabase
-            .from('proposal_to_student')
-            .select(`
-              id_proposal,
-              accepted,
-              projects!inner (
-                *,
-                entrepreneurs (
-                  users (name)
-                )
-              )
-            `)
-            .eq('id_student', studentData.id_student)
-            .eq('accepted', true)
-            .eq('projects.status', 'STEP3'); // Only show projects still in selection phase
+          // Mark assigned projects
+          const assignedProjectsWithStatus = (assignedProjects || []).map(project => ({
+            ...project,
+            proposalStatus: 'assigned' as const
+          }));
 
-          if (proposalError) {
-            console.error("Error fetching proposal projects:", proposalError);
-            throw proposalError;
-          }
-
-          // Combine both sets of projects
-          const allProjects = [
-            ...(selectedProjects || []).map(p => ({ ...p, proposalStatus: undefined })),
-            ...(proposalData?.map(p => ({
-              ...p.projects,
-              proposalStatus: 'accepted' as const
-            })) || [])
-          ];
-
-          // Remove duplicates by id_project
+          // Combine all projects and remove duplicates
+          const allProjects = [...projectsFromProposals, ...assignedProjectsWithStatus];
           const uniqueProjects = allProjects.filter((project, index, self) =>
             index === self.findIndex(p => p.id_project === project.id_project)
           );
@@ -167,7 +168,7 @@ const Projects = () => {
           .select(`
             *,
             entrepreneurs (
-              users (name)
+              users (name, surname)
             )
           `)
           .order("created_at", { ascending: false });
@@ -204,6 +205,12 @@ const Projects = () => {
     };
 
     return [...projectsList].sort((a, b) => {
+      // For students, prioritize pending proposals first
+      if (userRole === 'student') {
+        if (a.proposalStatus === 'pending' && b.proposalStatus !== 'pending') return -1;
+        if (b.proposalStatus === 'pending' && a.proposalStatus !== 'pending') return 1;
+      }
+
       const aPriority = statusPriority[a.status] || 999;
       const bPriority = statusPriority[b.status] || 999;
       
@@ -231,7 +238,17 @@ const Projects = () => {
 
     // Apply status filter
     if (statusFilter !== "all") {
-      filtered = filtered.filter(project => project.status === statusFilter);
+      if (userRole === 'student') {
+        // For students, filter by proposal status
+        if (statusFilter === 'assigned') {
+          filtered = filtered.filter(project => project.proposalStatus === 'assigned');
+        } else {
+          filtered = filtered.filter(project => project.proposalStatus === statusFilter);
+        }
+      } else {
+        // For entrepreneurs and admins, filter by project status
+        filtered = filtered.filter(project => project.status === statusFilter);
+      }
     }
 
     setFilteredProjects(filtered);
@@ -260,6 +277,36 @@ const Projects = () => {
     }
   };
 
+  const getProposalStatusColor = (proposalStatus: string) => {
+    switch (proposalStatus) {
+      case 'pending':
+        return "bg-yellow-100 text-yellow-800";
+      case 'accepted':
+        return "bg-blue-100 text-blue-800";
+      case 'declined':
+        return "bg-red-100 text-red-800";
+      case 'assigned':
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getProposalStatusIcon = (proposalStatus: string) => {
+    switch (proposalStatus) {
+      case 'pending':
+        return <Clock className="h-3 w-3" />;
+      case 'accepted':
+        return <CheckCircle className="h-3 w-3" />;
+      case 'declined':
+        return <XCircle className="h-3 w-3" />;
+      case 'assigned':
+        return <CheckCircle className="h-3 w-3" />;
+      default:
+        return null;
+    }
+  };
+
   const getStatusDisplay = (status: string) => {
     const statusMap: { [key: string]: string } = {
       'STEP1': 'New',
@@ -275,11 +322,21 @@ const Projects = () => {
     return statusMap[status] || status?.replace('_', ' ').toUpperCase() || 'Unknown';
   };
 
-  const canCreateProject = () => {
-    return (user as any)?.role === "entrepreneur";
+  const getProposalStatusDisplay = (proposalStatus: string) => {
+    const statusMap: { [key: string]: string } = {
+      'pending': 'Pending Response',
+      'accepted': 'Interested',
+      'declined': 'Declined',
+      'assigned': 'Assigned'
+    };
+    return statusMap[proposalStatus] || proposalStatus;
   };
 
-  const userRole = (user as any)?.role;
+  const canCreateProject = () => {
+    return userRole === "entrepreneur";
+  };
+
+  const currentStatusOptions = userRole === 'student' ? studentStatusOptions : statusOptions;
 
   return (
     <AppLayout>
@@ -290,7 +347,7 @@ const Projects = () => {
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Projects</h1>
               <p className="text-gray-600 mt-1">
-                {userRole === "student" && "Projects proposed to you"}
+                {userRole === "student" && "Project proposals and assignments"}
                 {userRole === "entrepreneur" && "Your projects"}
                 {userRole === "admin" && "All projects in the system"}
               </p>
@@ -326,7 +383,7 @@ const Projects = () => {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tiro-primary focus:border-transparent bg-white min-w-[160px]"
               >
-                {statusOptions.map(option => (
+                {currentStatusOptions.map(option => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -348,7 +405,7 @@ const Projects = () => {
                 {searchTerm || statusFilter !== "all" 
                   ? "No projects match your filters" 
                   : userRole === "student"
-                  ? "No projects have been proposed to you yet"
+                  ? "No projects or proposals yet"
                   : "No projects found"
                 }
               </div>
@@ -379,11 +436,10 @@ const Projects = () => {
                           </Badge>
                           {project.proposalStatus && (
                             <Badge 
-                              variant={project.proposalStatus === 'pending' ? 'default' : 
-                                      project.proposalStatus === 'accepted' ? 'secondary' : 'destructive'}
-                              className="text-xs"
+                              className={`${getProposalStatusColor(project.proposalStatus)} text-xs flex items-center gap-1`}
                             >
-                              {project.proposalStatus}
+                              {getProposalStatusIcon(project.proposalStatus)}
+                              {getProposalStatusDisplay(project.proposalStatus)}
                             </Badge>
                           )}
                         </div>
@@ -407,10 +463,10 @@ const Projects = () => {
                           <Calendar className="h-3 w-3 mr-1" />
                           {new Date(project.created_at).toLocaleDateString()}
                         </div>
-                        {project.entrepreneur?.users?.name && (
+                        {project.entrepreneur?.users && (
                           <div className="flex items-center">
                             <User className="h-3 w-3 mr-1" />
-                            {project.entrepreneur.users.name}
+                            {project.entrepreneur.users.name} {project.entrepreneur.users.surname}
                           </div>
                         )}
                       </div>
