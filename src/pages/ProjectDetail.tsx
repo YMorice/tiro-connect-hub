@@ -1,3 +1,4 @@
+
 /**
  * Project Detail Page Component
  * 
@@ -33,6 +34,7 @@ import ProjectReviewSection from "@/components/reviews/ProjectReviewSection";
 import StudentProposalActions from "@/components/student/StudentProposalActions";
 import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
+import PaymentStatusMessage from "@/components/PaymentStatusMessage";
 import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users } from "lucide-react";
 
 /**
@@ -486,10 +488,13 @@ const ProjectDetail = () => {
   return (
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
+          {/* Payment Status Message - Show for Payment status */}
+          <PaymentStatusMessage projectStatus={project.status} />
+
           {/* Student Proposal Actions - Show for students with pending proposals */}
           {isStudent && proposalStatus && studentId && (
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6">
               <StudentProposalActions
                 projectId={project.id_project}
                 studentId={studentId}
@@ -501,11 +506,11 @@ const ProjectDetail = () => {
 
           {/* Proposed Students Section - Show for entrepreneurs when project is in Selection */}
           {showProposedStudents && (
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6">
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <Users className="h-5 w-5 mr-2" />
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="text-base sm:text-lg flex items-center">
+                    <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                     Proposed Students - Make Your Selection
                   </CardTitle>
                 </CardHeader>
@@ -521,45 +526,47 @@ const ProjectDetail = () => {
 
           {/* Student Selection Section - Show for entrepreneurs */}
           {showStudentSelection && !showProposedStudents && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
+            <Card className="mb-4 sm:mb-6">
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-base sm:text-lg flex items-center">
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Student Selection
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Waiting for admin to propose students for your project.</p>
-                  <p className="text-sm text-gray-400 mt-2">You will be able to select from proposed students once they are available.</p>
+                <div className="text-center py-6 sm:py-8">
+                  <p className="text-gray-500 text-sm sm:text-base">Waiting for admin to propose students for your project.</p>
+                  <p className="text-xs sm:text-sm text-gray-400 mt-2">You will be able to select from proposed students once they are available.</p>
                 </div>
               </CardContent>
             </Card>
           )}
 
           {/* Project Header Card - Contains title, status, price, and discussion link */}
-          <Card className="mb-6">
-            <CardHeader className="pb-4">
-              <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+          <Card className="mb-4 sm:mb-6">
+            <CardHeader className="pb-3 sm:pb-4">
+              <div className="flex flex-col gap-4">
                 <div className="flex-1 min-w-0">
-                  <CardTitle className="text-2xl lg:text-3xl font-bold text-gray-900 mb-3 break-words">
+                  <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 break-words leading-tight">
                     {project.title}
                   </CardTitle>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Badge className={`${getStatusColor(project.status)} text-sm`}>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
                       {getStatusDisplay(project.status)}
                     </Badge>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      Created {new Date(project.created_at).toLocaleDateString()}
+                    <div className="flex items-center text-xs sm:text-sm text-gray-500">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                      <span className="hidden sm:inline">Created </span>
+                      {new Date(project.created_at).toLocaleDateString()}
                     </div>
                     {/* Discussion Link */}
                     <Link to="/messages" className="flex items-center">
-                      <Button variant="outline" size="sm" className="relative">
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Discussion
+                      <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
+                        <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Discussion</span>
+                        <span className="sm:hidden">Chat</span>
                         {hasUnreadMessages && (
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                          <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
                         )}
                       </Button>
                     </Link>
@@ -567,11 +574,11 @@ const ProjectDetail = () => {
                 </div>
                 {/* Project price display */}
                 {project.price && (
-                  <div className="flex items-center bg-gray-50 px-4 py-3 rounded-lg">
-                    <DollarSign className="h-5 w-5 text-tiro-primary mr-2" />
+                  <div className="flex items-center bg-gray-50 px-3 sm:px-4 py-2 sm:py-3 rounded-lg self-start">
+                    <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-tiro-primary mr-2 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-gray-600">Project Value</p>
-                      <p className="text-xl font-bold text-tiro-primary">
+                      <p className="text-xs sm:text-sm text-gray-600">Project Value</p>
+                      <p className="text-lg sm:text-xl font-bold text-tiro-primary">
                         €{project.price.toLocaleString()}
                       </p>
                     </div>
@@ -583,15 +590,15 @@ const ProjectDetail = () => {
 
           {/* Project Description Card */}
           {project.description && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <FileText className="h-5 w-5 mr-2" />
+            <Card className="mb-4 sm:mb-6">
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-base sm:text-lg flex items-center">
+                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Description
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
                   {project.description}
                 </p>
               </CardContent>
@@ -599,32 +606,32 @@ const ProjectDetail = () => {
           )}
 
           {/* People Information Cards - Entrepreneur and Student */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
             {/* Entrepreneur Information Card */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <User className="h-5 w-5 mr-2" />
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-base sm:text-lg flex items-center">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Entrepreneur
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-4">
-                  <Avatar className="w-12 h-12">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
                     {project.entrepreneur?.users?.pp_link ? (
                       <AvatarImage 
                         src={project.entrepreneur.users.pp_link}
                         alt={project.entrepreneur.users.name}
                       />
                     ) : (
-                      <AvatarFallback className="bg-tiro-primary text-white">
+                      <AvatarFallback className="bg-tiro-primary text-white text-sm sm:text-base">
                         {project.entrepreneur?.users?.name?.charAt(0) || "E"}
                       </AvatarFallback>
                     )}
                   </Avatar>
-                  <div>
-                    <p className="font-medium text-gray-900">{project.entrepreneur?.users?.name}</p>
-                    <p className="text-sm text-gray-500">{project.entrepreneur?.users?.email}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{project.entrepreneur?.users?.name}</p>
+                    <p className="text-xs sm:text-sm text-gray-500 truncate">{project.entrepreneur?.users?.email}</p>
                   </div>
                 </div>
               </CardContent>
@@ -633,29 +640,29 @@ const ProjectDetail = () => {
             {/* Student Information Card - Only shown if a student is assigned */}
             {project.student && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <User className="h-5 w-5 mr-2" />
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="text-base sm:text-lg flex items-center">
+                    <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                     Assigned Student
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="w-12 h-12">
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
                       {project.student?.users?.pp_link ? (
                         <AvatarImage 
                           src={project.student.users.pp_link}
                           alt={project.student.users.name}
                         />
                       ) : (
-                        <AvatarFallback className="bg-tiro-primary text-white">
+                        <AvatarFallback className="bg-tiro-primary text-white text-sm sm:text-base">
                           {project.student?.users?.name?.charAt(0) || "S"}
                         </AvatarFallback>
                       )}
                     </Avatar>
-                    <div>
-                      <p className="font-medium text-gray-900">{project.student?.users?.name}</p>
-                      <p className="text-sm text-gray-500">{project.student?.users?.email}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{project.student?.users?.name}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">{project.student?.users?.email}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -664,10 +671,10 @@ const ProjectDetail = () => {
           </div>
 
           {/* Documents Management Section */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <FileText className="h-5 w-5 mr-2" />
+          <Card className="mb-4 sm:mb-6">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg flex items-center">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Project Documents
               </CardTitle>
             </CardHeader>
@@ -685,18 +692,18 @@ const ProjectDetail = () => {
                 </div>
               ) : project.documents && project.documents.length > 0 ? (
                 <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900">Uploaded Documents</h4>
-                  <div className="grid gap-3">
+                  <h4 className="font-medium text-gray-900 text-sm sm:text-base">Uploaded Documents</h4>
+                  <div className="grid gap-2 sm:gap-3">
                     {project.documents.map((doc) => (
                       <div 
                         key={doc.id_document}
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                       >
-                        <div className="flex items-center space-x-3 min-w-0">
-                          <FileText className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                          <div className="min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{doc.name}</p>
-                            <p className="text-sm text-gray-500">
+                        <div className="flex items-center space-x-3 min-w-0 flex-1">
+                          <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-gray-900 truncate text-sm sm:text-base">{doc.name}</p>
+                            <p className="text-xs sm:text-sm text-gray-500">
                               {doc.type} • {new Date(doc.created_at).toLocaleDateString()}
                             </p>
                           </div>
@@ -705,16 +712,16 @@ const ProjectDetail = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => downloadDocument(doc)}
-                          className="flex-shrink-0"
+                          className="flex-shrink-0 p-2"
                         >
-                          <Download className="h-4 w-4" />
+                          <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">No documents uploaded yet.</p>
+                <p className="text-gray-500 text-center py-4 text-sm sm:text-base">No documents uploaded yet.</p>
               )}
             </CardContent>
           </Card>

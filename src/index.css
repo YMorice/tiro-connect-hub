@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -91,21 +92,45 @@
     @apply border-border;
   }
 
+  html {
+    overflow-x: hidden;
+    height: 100%;
+    width: 100%;
+    /* Prevent iOS bounce scrolling */
+    -webkit-overflow-scrolling: touch;
+    /* Ensure proper touch handling */
+    touch-action: manipulation;
+  }
+
   body {
     @apply bg-background text-foreground font-sans;
     overflow-x: hidden; /* Prevent horizontal scroll */
     min-height: 100vh;
     min-height: 100dvh; /* Use dynamic viewport height for mobile */
     width: 100vw;
+    width: 100dvw; /* Use dynamic viewport width for mobile */
     margin: 0;
     padding: 0;
+    /* Prevent iOS text size adjustment */
+    -webkit-text-size-adjust: 100%;
+    /* Improve font rendering on mobile */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent bounce scrolling on iOS */
+    overscroll-behavior: none;
+    /* Fix for mobile viewport issues */
+    position: relative;
   }
 
-  /* Ensure responsive behavior */
-  html {
+  /* Ensure all containers respect viewport boundaries */
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100vw;
+    width: 100dvw;
     overflow-x: hidden;
-    height: 100%;
-    width: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   /* Improve mobile touch targets */
@@ -113,6 +138,31 @@
     button, a, [role="button"] {
       min-height: 44px;
       min-width: 44px;
+    }
+    
+    /* Ensure proper spacing on mobile */
+    .container {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+    
+    /* Prevent zoom on input focus on iOS */
+    input, select, textarea {
+      font-size: 16px;
+    }
+    
+    /* Fix for iOS Safari viewport issues */
+    .min-h-screen {
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+  }
+
+  /* Fix for very small screens */
+  @media (max-width: 320px) {
+    .container {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
     }
   }
 
@@ -129,5 +179,31 @@
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Prevent horizontal scroll on all elements */
+  * {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  /* Ensure images and media don't overflow */
+  img, video, svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Fix for flex containers that might overflow */
+  .flex {
+    min-width: 0;
+  }
+
+  /* Responsive text utilities */
+  .text-responsive {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+
+  .title-responsive {
+    font-size: clamp(1.25rem, 4vw, 2rem);
   }
 }
