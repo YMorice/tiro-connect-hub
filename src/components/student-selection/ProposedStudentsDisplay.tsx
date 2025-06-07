@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { User, Mail, MapPin, Award } from "lucide-react";
 import StudentReviewBadge from "@/components/reviews/StudentReviewBadge";
+import { StudentAvailabilityService } from "@/services/student-availability-service";
 
 interface ProposedStudent {
   id: string;
@@ -134,34 +135,18 @@ export const ProposedStudentsDisplay = ({
       setSelecting(true);
       console.log('Entrepreneur selecting student:', studentId, 'for project:', projectId);
       
-      // Update project with selected student and change status to Payment
+      // Use the StudentAvailabilityService to handle the selection properly
+      await StudentAvailabilityService.handleStudentSelection(projectId, studentId);
+      
+      // Update project status to Payment (STEP4)
       const { error: updateError } = await supabase
         .from('projects')
         .update({ 
-          selected_student: studentId,
           status: 'STEP4' // Payment status
         })
         .eq('id_project', projectId);
         
       if (updateError) throw updateError;
-      
-      // Set all proposed students as available except the selected one
-      const otherStudentIds = proposedStudents
-        .filter(s => s.id !== studentId)
-        .map(s => s.id);
-        
-      if (otherStudentIds.length > 0) {
-        await supabase
-          .from('students')
-          .update({ available: true })
-          .in('id_student', otherStudentIds);
-      }
-      
-      // Set selected student as unavailable
-      await supabase
-        .from('students')
-        .update({ available: false })
-        .eq('id_student', studentId);
       
       toast.success("Student selected successfully! Project status updated to Payment.");
       

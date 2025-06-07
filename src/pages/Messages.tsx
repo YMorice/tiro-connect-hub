@@ -67,12 +67,13 @@ const Messages = () => {
           .select(`
             id_group,
             id_project,
-            projects!inner (
+            projects (
               title,
+              id_entrepreneur,
+              selected_student,
               entrepreneurs (
                 users (name, pp_link)
               ),
-              selected_student,
               students (
                 users (name, pp_link)
               )
@@ -96,13 +97,13 @@ const Messages = () => {
           .select(`
             id_group,
             id_project,
-            projects!inner (
+            projects (
               title,
               id_entrepreneur,
+              selected_student,
               entrepreneurs (
                 users (name, pp_link)
               ),
-              selected_student,
               students (
                 users (name, pp_link)
               )
@@ -144,7 +145,7 @@ const Messages = () => {
             .select(`
               id_group,
               id_project,
-              projects!inner (
+              projects (
                 title,
                 entrepreneurs (
                   users (name, pp_link)
