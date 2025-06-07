@@ -1,6 +1,6 @@
 
 /**
- * Messages Page Component - Optimized for performance
+ * Messages Page Component - Optimized for performance with proper access control
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
@@ -50,7 +50,7 @@ const Messages = () => {
   }), [user?.id, (user as any)?.role, (user as any)?.pp_link]);
 
   /**
-   * Optimized conversation fetching with reduced database calls
+   * Enhanced conversation fetching with proper access control
    */
   const fetchConversations = useCallback(async () => {
     if (!userInfo.id) return;
@@ -59,24 +59,91 @@ const Messages = () => {
     try {
       console.log("Fetching conversations for user:", userInfo.id, "role:", userInfo.role);
       
-      // Single query to get user groups with project info
-      const { data: userGroups, error: groupsError } = await supabase
-        .from('message_groups')
-        .select(`
-          id_group,
-          id_project,
-          projects!inner (
-            title,
-            entrepreneurs (
-              users (name, pp_link)
+      let userGroups: any[] = [];
+      
+      if (userInfo.role === 'admin') {
+        // Admins have access to ALL discussions
+        const { data, error } = await supabase
+          .from('message_groups')
+          .select(`
+            id_group,
+            id_project,
+            projects!inner (
+              title,
+              entrepreneurs (
+                users (name, pp_link)
+              ),
+              students (
+                users (name, pp_link)
+              )
             )
-          )
-        `)
-        .eq('id_user', userInfo.id);
+          `);
+          
+        if (error) throw error;
+        userGroups = data || [];
+      } else if (userInfo.role === 'entrepreneur') {
+        // Entrepreneurs can access their own project discussions
+        const { data, error } = await supabase
+          .from('message_groups')
+          .select(`
+            id_group,
+            id_project,
+            projects!inner (
+              title,
+              entrepreneurs (
+                users (name, pp_link)
+              ),
+              students (
+                users (name, pp_link)
+              )
+            )
+          `)
+          .eq('id_user', userInfo.id);
+          
+        if (error) throw error;
+        userGroups = data || [];
+      } else if (userInfo.role === 'student') {
+        // Students can access discussions for projects where they are selected
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('id_student')
+          .eq('id_user', userInfo.id)
+          .single();
 
-      if (groupsError) {
-        console.error('Error fetching user groups:', groupsError);
-        throw groupsError;
+        if (studentError) throw studentError;
+
+        // Get projects where student is selected
+        const { data: selectedProjects, error: projectsError } = await supabase
+          .from('projects')
+          .select('id_project')
+          .eq('selected_student', studentData.id_student);
+
+        if (projectsError) throw projectsError;
+
+        if (selectedProjects && selectedProjects.length > 0) {
+          const projectIds = selectedProjects.map(p => p.id_project);
+          
+          const { data, error } = await supabase
+            .from('message_groups')
+            .select(`
+              id_group,
+              id_project,
+              projects!inner (
+                title,
+                entrepreneurs (
+                  users (name, pp_link)
+                ),
+                students (
+                  users (name, pp_link)
+                )
+              )
+            `)
+            .in('id_project', projectIds)
+            .eq('id_user', userInfo.id);
+            
+          if (error) throw error;
+          userGroups = data || [];
+        }
       }
 
       if (!userGroups || userGroups.length === 0) {
@@ -121,29 +188,31 @@ const Messages = () => {
         unreadByGroup.set(msg.group_id, (unreadByGroup.get(msg.group_id) || 0) + 1);
       });
 
-      // Batch fetch other participants for all groups
-      const { data: allParticipants, error: participantsError } = await supabase
-        .from('message_groups')
-        .select(`
-          id_group,
-          id_user,
-          users (name, pp_link, role)
-        `)
-        .in('id_group', groupIds)
-        .neq('id_user', userInfo.id);
+      // Batch fetch other participants for all groups (only for non-admin users)
+      let participantsByGroup = new Map();
+      if (userInfo.role !== 'admin') {
+        const { data: allParticipants, error: participantsError } = await supabase
+          .from('message_groups')
+          .select(`
+            id_group,
+            id_user,
+            users (name, pp_link, role)
+          `)
+          .in('id_group', groupIds)
+          .neq('id_user', userInfo.id);
 
-      if (participantsError) {
-        console.error('Error fetching participants:', participantsError);
-      }
-
-      // Group participants by group_id
-      const participantsByGroup = new Map();
-      allParticipants?.forEach(p => {
-        if (!participantsByGroup.has(p.id_group)) {
-          participantsByGroup.set(p.id_group, []);
+        if (participantsError) {
+          console.error('Error fetching participants:', participantsError);
         }
-        participantsByGroup.get(p.id_group).push(p);
-      });
+
+        // Group participants by group_id
+        allParticipants?.forEach(p => {
+          if (!participantsByGroup.has(p.id_group)) {
+            participantsByGroup.set(p.id_group, []);
+          }
+          participantsByGroup.get(p.id_group).push(p);
+        });
+      }
 
       const conversationsArray: Conversation[] = [];
       
@@ -152,27 +221,39 @@ const Messages = () => {
         if (!group.projects) continue;
         
         const latestMessage = messagesByGroup.get(group.id_group);
-        const participants = participantsByGroup.get(group.id_group) || [];
         const unreadCount = unreadByGroup.get(group.id_group) || 0;
 
         // Determine who to display as the "other participant"
         let otherParticipant = null;
         let otherParticipantAvatar = null;
         
-        if (userInfo.role === 'entrepreneur' && participants.length > 0) {
+        if (userInfo.role === 'admin') {
+          // For admins, show project title with entrepreneur name
+          if (group.projects.entrepreneurs?.users) {
+            otherParticipant = `${group.projects.title} (${group.projects.entrepreneurs.users.name})`;
+            otherParticipantAvatar = group.projects.entrepreneurs.users.pp_link;
+          } else {
+            otherParticipant = group.projects.title;
+          }
+        } else if (userInfo.role === 'entrepreneur') {
           // For entrepreneurs, prioritize showing students
+          const participants = participantsByGroup.get(group.id_group) || [];
           const studentParticipant = participants.find(p => (p.users as any)?.role === 'student');
           const targetParticipant = studentParticipant || participants[0];
-          otherParticipant = (targetParticipant.users as any)?.name;
-          otherParticipantAvatar = (targetParticipant.users as any)?.pp_link;
-        } else if (group.projects.entrepreneurs?.users) {
-          // For students/others, show the entrepreneur
-          otherParticipant = group.projects.entrepreneurs.users.name;
-          otherParticipantAvatar = group.projects.entrepreneurs.users.pp_link;
-        } else if (participants.length > 0) {
-          // Fallback to first available participant
-          otherParticipant = (participants[0].users as any)?.name;
-          otherParticipantAvatar = (participants[0].users as any)?.pp_link;
+          
+          if (targetParticipant) {
+            otherParticipant = (targetParticipant.users as any)?.name;
+            otherParticipantAvatar = (targetParticipant.users as any)?.pp_link;
+          } else if (group.projects.students?.users) {
+            otherParticipant = group.projects.students.users.name;
+            otherParticipantAvatar = group.projects.students.users.pp_link;
+          }
+        } else if (userInfo.role === 'student') {
+          // For students, show the entrepreneur
+          if (group.projects.entrepreneurs?.users) {
+            otherParticipant = group.projects.entrepreneurs.users.name;
+            otherParticipantAvatar = group.projects.entrepreneurs.users.pp_link;
+          }
         }
 
         if (otherParticipant) {
@@ -193,11 +274,8 @@ const Messages = () => {
 
       // Sort conversations: unread first, then by most recent message
       const sortedConversations = conversationsArray.sort((a, b) => {
-        // First, prioritize conversations with unread messages
         if (a.hasUnreadMessages && !b.hasUnreadMessages) return -1;
         if (!a.hasUnreadMessages && b.hasUnreadMessages) return 1;
-        
-        // Then sort by most recent message time
         return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
       });
       
@@ -217,7 +295,6 @@ const Messages = () => {
   const fetchMessages = useCallback(async (groupId: string) => {
     setLoadingMessages(true);
     try {
-      // Fetch all messages for this group in chronological order
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -226,7 +303,6 @@ const Messages = () => {
 
       if (error) throw error;
 
-      // Mark all messages in this group as read (except those sent by current user)
       await supabase
         .from('messages')
         .update({ read: true })
@@ -242,14 +318,10 @@ const Messages = () => {
     }
   }, [userInfo.id]);
 
-  /**
-   * Optimized message sending
-   */
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || !selectedConversation || !userInfo.id) return;
 
     try {
-      // Insert the new message into the database
       const { error } = await supabase
         .from('messages')
         .insert({
@@ -261,10 +333,7 @@ const Messages = () => {
 
       if (error) throw error;
 
-      // Clear the input field
       setNewMessage('');
-      
-      // Refresh the messages and conversations to show the new message
       fetchMessages(selectedConversation.id);
       fetchConversations();
     } catch (error: any) {
@@ -278,14 +347,12 @@ const Messages = () => {
     fetchConversations();
   }, [fetchConversations]);
 
-  // Effect to fetch messages when a conversation is selected
   useEffect(() => {
     if (selectedConversation) {
       fetchMessages(selectedConversation.id);
     }
   }, [selectedConversation, fetchMessages]);
 
-  // Memoize the conversation list to prevent unnecessary re-renders
   const conversationList = useMemo(() => {
     return conversations.map((conversation) => (
       <div

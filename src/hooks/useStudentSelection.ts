@@ -31,12 +31,6 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
       return;
     }
 
-    // Prevent multiple simultaneous requests
-    if (loading) {
-      console.log('Already loading students, skipping...');
-      return;
-    }
-
     try {
       setLoading(true);
       console.log(`Fetching students for project ${projectId} in mode: ${mode}`);
@@ -70,7 +64,6 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
           throw error;
         }
         
-        console.log('Raw students data:', data);
         studentsData = data || [];
       } else if (mode === 'proposals') {
         // Fetch only students who accepted the proposal for this project
@@ -102,25 +95,19 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
           throw error;
         }
         
-        console.log('Raw proposal data:', data);
         studentsData = data?.map(proposal => proposal.students) || [];
       }
       
-      console.log('Students data to process:', studentsData);
-      
       // Transform the data to match the Student type
-      const formattedStudents: Student[] = studentsData.map(student => {
-        console.log('Processing student:', student);
-        return {
-          id: student.id_student,
-          email: student.users.email,
-          name: `${student.users.name} ${student.users.surname}`,
-          bio: student.biography || undefined,
-          skills: Array.isArray(student.skills) ? student.skills : [],
-          specialty: student.specialty || undefined,
-          available: student.available !== false, // Default to true if null/undefined
-        };
-      });
+      const formattedStudents: Student[] = studentsData.map(student => ({
+        id: student.id_student,
+        email: student.users.email,
+        name: `${student.users.name} ${student.users.surname}`,
+        bio: student.biography || undefined,
+        skills: Array.isArray(student.skills) ? student.skills : [],
+        specialty: student.specialty || undefined,
+        available: student.available !== false,
+      }));
       
       console.log('Formatted students:', formattedStudents);
       setStudents(formattedStudents);
@@ -130,7 +117,6 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
         new Set(studentsData.map(student => student.specialty).filter(Boolean))
       ) as string[];
       
-      console.log('Unique specialties:', uniqueSpecialties);
       setSpecialties(uniqueSpecialties);
     } catch (error) {
       console.error('Error in fetchStudents:', error);
@@ -140,38 +126,23 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
     } finally {
       setLoading(false);
     }
-  }, [projectId, mode]); // Remove loading from dependencies to prevent infinite loops
+  }, [projectId, mode]);
 
   useEffect(() => {
-    let isMounted = true;
-    
-    console.log('useStudentSelection effect triggered with:', { projectId, mode });
-    
     if (projectId && mode) {
-      fetchStudents().then(() => {
-        if (!isMounted) {
-          console.log('Component unmounted, ignoring students result');
-        }
-      });
+      fetchStudents();
+    } else {
+      setLoading(false);
     }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [projectId, mode]); // Remove fetchStudents from dependencies
+  }, [fetchStudents]);
 
   const toggleStudentSelection = useCallback((student: Student) => {
-    console.log('Toggling selection for student:', student.name);
     setSelectedStudents(prevSelected => {
       const isSelected = prevSelected.some(s => s.id === student.id);
       if (isSelected) {
-        const newSelected = prevSelected.filter(s => s.id !== student.id);
-        console.log('Student deselected, new selection:', newSelected.map(s => s.name));
-        return newSelected;
+        return prevSelected.filter(s => s.id !== student.id);
       } else {
-        const newSelected = [...prevSelected, student];
-        console.log('Student selected, new selection:', newSelected.map(s => s.name));
-        return newSelected;
+        return [...prevSelected, student];
       }
     });
   }, []);
