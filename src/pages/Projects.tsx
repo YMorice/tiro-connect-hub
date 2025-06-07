@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import AppLayout from "@/components/AppLayout";
@@ -11,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Plus, Calendar, DollarSign, User, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getStudentProposals } from "@/services/proposal-service";
+import { StudentProject } from "@/types";
 
 interface Project {
   id_project: string;
@@ -31,8 +31,8 @@ interface Project {
 const Projects = () => {
   const { user } = useAuth();
   
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<StudentProject[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<StudentProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -102,7 +102,21 @@ const Projects = () => {
           }
 
           console.log("Entrepreneur projects fetched:", data?.length || 0);
-          const sortedProjects = sortProjectsByStatus(data || []);
+          const transformedProjects = (data || []).map(project => ({
+            id: project.id_project,
+            title: project.title,
+            description: project.description || '',
+            ownerId: project.id_entrepreneur,
+            assigneeId: project.selected_student,
+            status: project.status,
+            tasks: [],
+            documents: [],
+            createdAt: new Date(project.created_at),
+            updatedAt: new Date(project.updated_at || project.created_at),
+            price: project.price,
+            entrepreneur: project.entrepreneurs
+          }));
+          const sortedProjects = sortProjectsByStatus(transformedProjects);
           setProjects(sortedProjects);
         }
       } else if (userRole === "student") {
@@ -118,12 +132,17 @@ const Projects = () => {
           const proposals = await getStudentProposals(studentData.id_student);
           
           // Transform proposals into project format
-          const projectsFromProposals: Project[] = proposals.map(proposal => ({
-            id_project: proposal.projects.id_project,
+          const projectsFromProposals: StudentProject[] = proposals.map(proposal => ({
+            id: proposal.projects.id_project,
             title: proposal.projects.title,
-            description: proposal.projects.description,
+            description: proposal.projects.description || '',
+            ownerId: proposal.projects.id_entrepreneur,
+            assigneeId: proposal.projects.selected_student,
             status: proposal.projects.status,
-            created_at: proposal.created_at,
+            tasks: [],
+            documents: [],
+            createdAt: new Date(proposal.created_at),
+            updatedAt: new Date(proposal.projects.updated_at || proposal.created_at),
             price: proposal.projects.price,
             proposalStatus: proposal.accepted === null ? 'pending' : (proposal.accepted ? 'accepted' : 'declined'),
             entrepreneur: proposal.projects.entrepreneurs
@@ -146,15 +165,26 @@ const Projects = () => {
           }
 
           // Mark assigned projects
-          const assignedProjectsWithStatus = (assignedProjects || []).map(project => ({
-            ...project,
-            proposalStatus: 'assigned' as const
+          const assignedProjectsWithStatus: StudentProject[] = (assignedProjects || []).map(project => ({
+            id: project.id_project,
+            title: project.title,
+            description: project.description || '',
+            ownerId: project.id_entrepreneur,
+            assigneeId: project.selected_student,
+            status: project.status,
+            tasks: [],
+            documents: [],
+            createdAt: new Date(project.created_at),
+            updatedAt: new Date(project.updated_at || project.created_at),
+            price: project.price,
+            proposalStatus: 'assigned' as const,
+            entrepreneur: project.entrepreneurs
           }));
 
           // Combine all projects and remove duplicates
           const allProjects = [...projectsFromProposals, ...assignedProjectsWithStatus];
           const uniqueProjects = allProjects.filter((project, index, self) =>
-            index === self.findIndex(p => p.id_project === project.id_project)
+            index === self.findIndex(p => p.id === project.id)
           );
 
           console.log("Student projects fetched:", uniqueProjects.length);
@@ -179,7 +209,21 @@ const Projects = () => {
         }
 
         console.log("Admin projects fetched:", data?.length || 0);
-        const sortedProjects = sortProjectsByStatus(data || []);
+        const transformedProjects = (data || []).map(project => ({
+          id: project.id_project,
+          title: project.title,
+          description: project.description || '',
+          ownerId: project.id_entrepreneur,
+          assigneeId: project.selected_student,
+          status: project.status,
+          tasks: [],
+          documents: [],
+          createdAt: new Date(project.created_at),
+          updatedAt: new Date(project.updated_at || project.created_at),
+          price: project.price,
+          entrepreneur: project.entrepreneurs
+        }));
+        const sortedProjects = sortProjectsByStatus(transformedProjects);
         setProjects(sortedProjects);
       }
       
@@ -191,7 +235,7 @@ const Projects = () => {
     }
   };
 
-  const sortProjectsByStatus = (projectsList: Project[]) => {
+  const sortProjectsByStatus = (projectsList: StudentProject[]) => {
     const statusPriority: { [key: string]: number } = {
       'STEP1': 1,  // New
       'STEP2': 2,  // Proposals
@@ -220,7 +264,7 @@ const Projects = () => {
       }
       
       // Then sort by creation date (newest first) within the same status
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   };
 
@@ -240,11 +284,7 @@ const Projects = () => {
     if (statusFilter !== "all") {
       if (userRole === 'student') {
         // For students, filter by proposal status
-        if (statusFilter === 'assigned') {
-          filtered = filtered.filter(project => project.proposalStatus === 'assigned');
-        } else {
-          filtered = filtered.filter(project => project.proposalStatus === statusFilter);
-        }
+        filtered = filtered.filter(project => project.proposalStatus === statusFilter);
       } else {
         // For entrepreneurs and admins, filter by project status
         filtered = filtered.filter(project => project.status === statusFilter);
@@ -423,8 +463,8 @@ const Projects = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProjects.map((project) => (
                 <Link
-                  key={project.id_project}
-                  to={`/projects/${project.id_project}`}
+                  key={project.id}
+                  to={`/projects/${project.id}`}
                   className="block"
                 >
                   <Card className="h-full hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer">
@@ -461,7 +501,7 @@ const Projects = () => {
                       <div className="flex flex-wrap gap-2 text-xs text-gray-500">
                         <div className="flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {new Date(project.created_at).toLocaleDateString()}
+                          {new Date(project.createdAt).toLocaleDateString()}
                         </div>
                         {project.entrepreneur?.users && (
                           <div className="flex items-center">

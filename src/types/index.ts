@@ -101,3 +101,14 @@ export interface DatabaseProposedStudent {
   student_id: string;
   created_at: string;
 }
+
+// Extended project interface for student view with proposal status
+export interface StudentProject extends Project {
+  proposalStatus?: 'pending' | 'accepted' | 'declined' | 'assigned';
+  entrepreneur?: {
+    users: {
+      name: string;
+      surname: string;
+    };
+  };
+}
