@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import StudentReviewsSection from '@/components/reviews/StudentReviewsSection';
+import { useAuth } from '@/context/auth-context';
 
 interface StudentProfileViewProps {
   studentId: string;
@@ -24,11 +25,15 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
   studentId, 
   studentProfile 
 }) => {
+  const { user } = useAuth();
   const { name, surname, email, avatar, bio, specialty, skills, formation, portfolioLink } = studentProfile;
   
   const getInitials = (name: string, surname: string) => {
     return `${name.charAt(0)}${surname.charAt(0)}`.toUpperCase();
   };
+
+  // Only show reviews section for students and admins viewing student profiles
+  const showReviewsSection = (user as any)?.role === 'student' || (user as any)?.role === 'admin';
 
   return (
     <div className="space-y-6">
@@ -100,7 +105,7 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
         </CardContent>
       </Card>
       
-      <StudentReviewsSection studentId={studentId} />
+      {showReviewsSection && <StudentReviewsSection studentId={studentId} />}
     </div>
   );
 };

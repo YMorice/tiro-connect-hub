@@ -1,4 +1,3 @@
-
 /**
  * Messages Page Component - Optimized for performance with proper access control
  */
@@ -62,7 +61,7 @@ const Messages = () => {
       let userGroups: any[] = [];
       
       if (userInfo.role === 'admin') {
-        // Admins have access to ALL discussions
+        // Admins have access to ALL message groups
         const { data, error } = await supabase
           .from('message_groups')
           .select(`
@@ -73,6 +72,7 @@ const Messages = () => {
               entrepreneurs (
                 users (name, pp_link)
               ),
+              selected_student,
               students (
                 users (name, pp_link)
               )
@@ -82,7 +82,15 @@ const Messages = () => {
         if (error) throw error;
         userGroups = data || [];
       } else if (userInfo.role === 'entrepreneur') {
-        // Entrepreneurs can access their own project discussions
+        // Entrepreneurs can access message groups for their projects
+        const { data: entrepreneurData, error: entrepreneurError } = await supabase
+          .from('entrepreneurs')
+          .select('id_entrepreneur')
+          .eq('id_user', userInfo.id)
+          .single();
+
+        if (entrepreneurError) throw entrepreneurError;
+
         const { data, error } = await supabase
           .from('message_groups')
           .select(`
@@ -90,15 +98,17 @@ const Messages = () => {
             id_project,
             projects!inner (
               title,
+              id_entrepreneur,
               entrepreneurs (
                 users (name, pp_link)
               ),
+              selected_student,
               students (
                 users (name, pp_link)
               )
             )
           `)
-          .eq('id_user', userInfo.id);
+          .eq('projects.id_entrepreneur', entrepreneurData.id_entrepreneur);
           
         if (error) throw error;
         userGroups = data || [];
@@ -112,10 +122,16 @@ const Messages = () => {
 
         if (studentError) throw studentError;
 
-        // Get projects where student is selected
+        // Get projects where this student is selected
         const { data: selectedProjects, error: projectsError } = await supabase
           .from('projects')
-          .select('id_project')
+          .select(`
+            id_project,
+            title,
+            entrepreneurs (
+              users (name, pp_link)
+            )
+          `)
           .eq('selected_student', studentData.id_student);
 
         if (projectsError) throw projectsError;
@@ -133,13 +149,10 @@ const Messages = () => {
                 entrepreneurs (
                   users (name, pp_link)
                 ),
-                students (
-                  users (name, pp_link)
-                )
+                selected_student
               )
             `)
-            .in('id_project', projectIds)
-            .eq('id_user', userInfo.id);
+            .in('id_project', projectIds);
             
           if (error) throw error;
           userGroups = data || [];
@@ -188,32 +201,6 @@ const Messages = () => {
         unreadByGroup.set(msg.group_id, (unreadByGroup.get(msg.group_id) || 0) + 1);
       });
 
-      // Batch fetch other participants for all groups (only for non-admin users)
-      let participantsByGroup = new Map();
-      if (userInfo.role !== 'admin') {
-        const { data: allParticipants, error: participantsError } = await supabase
-          .from('message_groups')
-          .select(`
-            id_group,
-            id_user,
-            users (name, pp_link, role)
-          `)
-          .in('id_group', groupIds)
-          .neq('id_user', userInfo.id);
-
-        if (participantsError) {
-          console.error('Error fetching participants:', participantsError);
-        }
-
-        // Group participants by group_id
-        allParticipants?.forEach(p => {
-          if (!participantsByGroup.has(p.id_group)) {
-            participantsByGroup.set(p.id_group, []);
-          }
-          participantsByGroup.get(p.id_group).push(p);
-        });
-      }
-
       const conversationsArray: Conversation[] = [];
       
       // Process each group to create conversation objects
@@ -236,17 +223,12 @@ const Messages = () => {
             otherParticipant = group.projects.title;
           }
         } else if (userInfo.role === 'entrepreneur') {
-          // For entrepreneurs, prioritize showing students
-          const participants = participantsByGroup.get(group.id_group) || [];
-          const studentParticipant = participants.find(p => (p.users as any)?.role === 'student');
-          const targetParticipant = studentParticipant || participants[0];
-          
-          if (targetParticipant) {
-            otherParticipant = (targetParticipant.users as any)?.name;
-            otherParticipantAvatar = (targetParticipant.users as any)?.pp_link;
-          } else if (group.projects.students?.users) {
+          // For entrepreneurs, show the selected student if any
+          if (group.projects.students?.users) {
             otherParticipant = group.projects.students.users.name;
             otherParticipantAvatar = group.projects.students.users.pp_link;
+          } else {
+            otherParticipant = `${group.projects.title} (No student selected)`;
           }
         } else if (userInfo.role === 'student') {
           // For students, show the entrepreneur

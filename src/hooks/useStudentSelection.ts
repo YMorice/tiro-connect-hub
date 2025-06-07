@@ -66,7 +66,7 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
         
         studentsData = data || [];
       } else if (mode === 'proposals') {
-        // Fetch only students who accepted the proposal for this project
+        // Fetch students who have been proposed to and accepted for this project
         console.log('Fetching students who accepted proposals for project:', projectId);
         const { data, error } = await supabase
           .from('proposal_to_student')
