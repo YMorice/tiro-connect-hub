@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import AppLayout from "@/components/AppLayout";
@@ -11,22 +12,6 @@ import { Search, Plus, Calendar, DollarSign, User, Clock, CheckCircle, XCircle }
 import { Link } from "react-router-dom";
 import { getStudentProposals } from "@/services/proposal-service";
 import { StudentProject } from "@/types";
-
-interface Project {
-  id_project: string;
-  title: string;
-  description: string;
-  status: string;
-  created_at: string;
-  price: number;
-  proposalStatus?: 'pending' | 'accepted' | 'declined';
-  entrepreneur?: {
-    users: {
-      name: string;
-      surname: string;
-    };
-  };
-}
 
 const Projects = () => {
   const { user } = useAuth();
@@ -88,7 +73,15 @@ const Projects = () => {
           const { data, error } = await supabase
             .from("projects")
             .select(`
-              *,
+              id_project,
+              title,
+              description,
+              status,
+              created_at,
+              updated_at,
+              price,
+              id_entrepreneur,
+              selected_student,
               entrepreneurs (
                 users (name, surname)
               )
@@ -102,13 +95,13 @@ const Projects = () => {
           }
 
           console.log("Entrepreneur projects fetched:", data?.length || 0);
-          const transformedProjects = (data || []).map(project => ({
+          const transformedProjects: StudentProject[] = (data || []).map(project => ({
             id: project.id_project,
             title: project.title,
             description: project.description || '',
             ownerId: project.id_entrepreneur,
             assigneeId: project.selected_student,
-            status: project.status,
+            status: project.status as StudentProject['status'],
             tasks: [],
             documents: [],
             createdAt: new Date(project.created_at),
@@ -138,7 +131,7 @@ const Projects = () => {
             description: proposal.projects.description || '',
             ownerId: proposal.projects.id_entrepreneur,
             assigneeId: proposal.projects.selected_student,
-            status: proposal.projects.status,
+            status: proposal.projects.status as StudentProject['status'],
             tasks: [],
             documents: [],
             createdAt: new Date(proposal.created_at),
@@ -152,7 +145,15 @@ const Projects = () => {
           const { data: assignedProjects, error: assignedError } = await supabase
             .from("projects")
             .select(`
-              *,
+              id_project,
+              title,
+              description,
+              status,
+              created_at,
+              updated_at,
+              price,
+              id_entrepreneur,
+              selected_student,
               entrepreneurs (
                 users (name, surname)
               )
@@ -171,7 +172,7 @@ const Projects = () => {
             description: project.description || '',
             ownerId: project.id_entrepreneur,
             assigneeId: project.selected_student,
-            status: project.status,
+            status: project.status as StudentProject['status'],
             tasks: [],
             documents: [],
             createdAt: new Date(project.created_at),
@@ -196,7 +197,15 @@ const Projects = () => {
         const { data, error } = await supabase
           .from("projects")
           .select(`
-            *,
+            id_project,
+            title,
+            description,
+            status,
+            created_at,
+            updated_at,
+            price,
+            id_entrepreneur,
+            selected_student,
             entrepreneurs (
               users (name, surname)
             )
@@ -209,13 +218,13 @@ const Projects = () => {
         }
 
         console.log("Admin projects fetched:", data?.length || 0);
-        const transformedProjects = (data || []).map(project => ({
+        const transformedProjects: StudentProject[] = (data || []).map(project => ({
           id: project.id_project,
           title: project.title,
           description: project.description || '',
           ownerId: project.id_entrepreneur,
           assigneeId: project.selected_student,
-          status: project.status,
+          status: project.status as StudentProject['status'],
           tasks: [],
           documents: [],
           createdAt: new Date(project.created_at),
