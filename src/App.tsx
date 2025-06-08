@@ -1,4 +1,3 @@
-
 /**
  * App Component - Main Application Entry Point
  * 
@@ -20,7 +19,7 @@
  * - MessageProvider: Handles messaging functionality
  * 
  * Route Structure:
- * - Public routes: /, /login, /register, /reset-password, /create-admin
+ * - Public routes: /, /login, /register, /reset-password, /update-password, /create-admin
  * - Protected routes: All other routes require authentication
  * - 404 handling: Redirects to NotFound component for unknown routes
  * 
@@ -53,6 +52,7 @@ import PackSelection from "@/pages/PackSelection";
 import AcceptedStudents from "@/pages/AcceptedStudents";
 import CreateAdminAccount from "@/pages/CreateAdminAccount";
 import NotFound from "@/pages/NotFound";
+import UpdatePassword from "@/pages/UpdatePassword";
 
 // Import global styles
 import "./App.css";
@@ -99,6 +99,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/update-password" element={<UpdatePassword />} />
                 <Route path="/create-admin" element={<CreateAdminAccount />} />
                 
                 {/* Protected Routes - Require authentication */}

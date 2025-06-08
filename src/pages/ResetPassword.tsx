@@ -36,8 +36,8 @@ const ResetPassword = () => {
       setIsSubmitting(true);
       console.log("Sending password reset email to:", values.email);
       
-      // Use the current origin for the redirect URL
-      const redirectUrl = `${window.location.origin}/login`;
+      // Use the correct redirect URL for password reset
+      const redirectUrl = `${window.location.origin}/update-password`;
       
       const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
         redirectTo: redirectUrl,
