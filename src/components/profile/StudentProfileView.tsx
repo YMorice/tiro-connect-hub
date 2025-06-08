@@ -32,14 +32,14 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
     return `${name.charAt(0)}${surname.charAt(0)}`.toUpperCase();
   };
 
-  // Only show reviews section for students and admins viewing student profiles
+  // Afficher la section avis seulement pour les étudiants et admins visualisant les profils d'étudiants
   const showReviewsSection = (user as any)?.role === 'student' || (user as any)?.role === 'admin';
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
+          <CardTitle>Informations du Profil</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
@@ -62,21 +62,21 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
               
               {bio && (
                 <div>
-                  <h3 className="text-sm font-semibold mb-1">About</h3>
+                  <h3 className="text-sm font-semibold mb-1">À propos</h3>
                   <p className="text-sm text-muted-foreground">{bio}</p>
                 </div>
               )}
               
               {formation && (
                 <div>
-                  <h3 className="text-sm font-semibold mb-1">Education</h3>
+                  <h3 className="text-sm font-semibold mb-1">Formation</h3>
                   <p className="text-sm">{formation}</p>
                 </div>
               )}
               
               {skills && skills.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold mb-1">Skills</h3>
+                  <h3 className="text-sm font-semibold mb-1">Compétences</h3>
                   <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                     {skills.map((skill, index) => (
                       <Badge key={index} variant="secondary" className="text-xs">
@@ -96,7 +96,7 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                     rel="noopener noreferrer" 
                     className="text-tiro-primary hover:underline"
                   >
-                    View Portfolio
+                    Voir le Portfolio
                   </a>
                 </div>
               )}

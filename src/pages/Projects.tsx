@@ -25,23 +25,23 @@ const Projects = () => {
   const userRole = (user as any)?.role;
 
   const statusOptions = [
-    { value: "all", label: "All Projects" },
-    { value: "STEP1", label: "New" },
-    { value: "STEP2", label: "Proposals" },
-    { value: "STEP3", label: "Selection" },
-    { value: "STEP4", label: "Payment" },
-    { value: "STEP5", label: "Active" },
-    { value: "STEP6", label: "In Progress" },
-    { value: "completed", label: "Completed" }
+    { value: "all", label: "Tous les Projets" },
+    { value: "STEP1", label: "Nouveau" },
+    { value: "STEP2", label: "Propositions" },
+    { value: "STEP3", label: "Sélection" },
+    { value: "STEP4", label: "Paiement" },
+    { value: "STEP5", label: "Actif" },
+    { value: "STEP6", label: "En Cours" },
+    { value: "completed", label: "Terminé" }
   ];
 
-  // Add proposal status filter options for students
+  // Ajouter les options de filtre de statut de proposition pour les étudiants
   const studentStatusOptions = [
-    { value: "all", label: "All" },
-    { value: "pending", label: "Pending Response" },
-    { value: "accepted", label: "Interested" },
-    { value: "declined", label: "Declined" },
-    { value: "assigned", label: "Assigned" }
+    { value: "all", label: "Tous" },
+    { value: "pending", label: "Réponse en Attente" },
+    { value: "accepted", label: "Intéressé" },
+    { value: "declined", label: "Refusé" },
+    { value: "assigned", label: "Assigné" }
   ];
 
   useEffect(() => {
@@ -59,10 +59,10 @@ const Projects = () => {
 
     setLoading(true);
     try {
-      console.log("Fetching projects for user:", user.id, "role:", userRole);
+      console.log("Récupération des projets pour l'utilisateur:", user.id, "rôle:", userRole);
       
       if (userRole === "entrepreneur") {
-        // Entrepreneurs see only their own projects
+        // Les entrepreneurs ne voient que leurs propres projets
         const { data: entrepreneurData } = await supabase
           .from("entrepreneurs")
           .select("id_entrepreneur")
@@ -90,11 +90,11 @@ const Projects = () => {
             .order("created_at", { ascending: false });
 
           if (error) {
-            console.error("Error fetching entrepreneur projects:", error);
+            console.error("Erreur lors de la récupération des projets d'entrepreneur:", error);
             throw error;
           }
 
-          console.log("Entrepreneur projects fetched:", data?.length || 0);
+          console.log("Projets d'entrepreneur récupérés:", data?.length || 0);
           const transformedProjects: StudentProject[] = (data || []).map(project => ({
             id: project.id_project,
             title: project.title,
@@ -113,7 +113,7 @@ const Projects = () => {
           setProjects(sortedProjects);
         }
       } else if (userRole === "student") {
-        // Students see both assigned projects and proposals
+        // Les étudiants voient à la fois les projets assignés et les propositions
         const { data: studentData } = await supabase
           .from("students")
           .select("id_student")
@@ -121,10 +121,10 @@ const Projects = () => {
           .single();
           
         if (studentData) {
-          // Get all proposals for this student
+          // Obtenir toutes les propositions pour cet étudiant
           const proposals = await getStudentProposals(studentData.id_student);
           
-          // Transform proposals into project format
+          // Transformer les propositions en format de projet
           const projectsFromProposals: StudentProject[] = proposals.map(proposal => ({
             id: proposal.projects.id_project,
             title: proposal.projects.title,
@@ -141,7 +141,7 @@ const Projects = () => {
             entrepreneur: proposal.projects.entrepreneurs
           }));
 
-          // Get projects where student is assigned
+          // Obtenir les projets où l'étudiant est assigné
           const { data: assignedProjects, error: assignedError } = await supabase
             .from("projects")
             .select(`
@@ -162,10 +162,10 @@ const Projects = () => {
             .order("created_at", { ascending: false });
 
           if (assignedError) {
-            console.error("Error fetching assigned projects:", assignedError);
+            console.error("Erreur lors de la récupération des projets assignés:", assignedError);
           }
 
-          // Mark assigned projects
+          // Marquer les projets assignés
           const assignedProjectsWithStatus: StudentProject[] = (assignedProjects || []).map(project => ({
             id: project.id_project,
             title: project.title,
@@ -182,18 +182,18 @@ const Projects = () => {
             entrepreneur: project.entrepreneurs
           }));
 
-          // Combine all projects and remove duplicates
+          // Combiner tous les projets et supprimer les doublons
           const allProjects = [...projectsFromProposals, ...assignedProjectsWithStatus];
           const uniqueProjects = allProjects.filter((project, index, self) =>
             index === self.findIndex(p => p.id === project.id)
           );
 
-          console.log("Student projects fetched:", uniqueProjects.length);
+          console.log("Projets d'étudiant récupérés:", uniqueProjects.length);
           const sortedProjects = sortProjectsByStatus(uniqueProjects);
           setProjects(sortedProjects);
         }
       } else if (userRole === "admin") {
-        // Admins see all projects
+        // Les admins voient tous les projets
         const { data, error } = await supabase
           .from("projects")
           .select(`
@@ -213,11 +213,11 @@ const Projects = () => {
           .order("created_at", { ascending: false });
 
         if (error) {
-          console.error("Error fetching admin projects:", error);
+          console.error("Erreur lors de la récupération des projets d'admin:", error);
           throw error;
         }
 
-        console.log("Admin projects fetched:", data?.length || 0);
+        console.log("Projets d'admin récupérés:", data?.length || 0);
         const transformedProjects: StudentProject[] = (data || []).map(project => ({
           id: project.id_project,
           title: project.title,
@@ -237,8 +237,8 @@ const Projects = () => {
       }
       
     } catch (error: any) {
-      console.error("Error fetching projects:", error);
-      toast.error("Failed to load projects");
+      console.error("Erreur lors de la récupération des projets:", error);
+      toast.error("Échec du chargement des projets");
     } finally {
       setLoading(false);
     }
@@ -246,19 +246,19 @@ const Projects = () => {
 
   const sortProjectsByStatus = (projectsList: StudentProject[]) => {
     const statusPriority: { [key: string]: number } = {
-      'STEP1': 1,  // New
-      'STEP2': 2,  // Proposals
-      'STEP3': 3,  // Selection
-      'STEP4': 4,  // Payment
-      'STEP5': 5,  // Active
-      'STEP6': 6,  // In Progress
+      'STEP1': 1,  // Nouveau
+      'STEP2': 2,  // Propositions
+      'STEP3': 3,  // Sélection
+      'STEP4': 4,  // Paiement
+      'STEP5': 5,  // Actif
+      'STEP6': 6,  // En Cours
       'completed': 7,
-      'open': 1,   // Fallback for legacy status
-      'in_progress': 6,  // Fallback for legacy status
+      'open': 1,   // Fallback pour statut legacy
+      'in_progress': 6,  // Fallback pour statut legacy
     };
 
     return [...projectsList].sort((a, b) => {
-      // For students, prioritize pending proposals first
+      // Pour les étudiants, prioriser d'abord les propositions en attente
       if (userRole === 'student') {
         if (a.proposalStatus === 'pending' && b.proposalStatus !== 'pending') return -1;
         if (b.proposalStatus === 'pending' && a.proposalStatus !== 'pending') return 1;
@@ -267,12 +267,12 @@ const Projects = () => {
       const aPriority = statusPriority[a.status] || 999;
       const bPriority = statusPriority[b.status] || 999;
       
-      // First sort by status priority
+      // Trier d'abord par priorité de statut
       if (aPriority !== bPriority) {
         return aPriority - bPriority;
       }
       
-      // Then sort by creation date (newest first) within the same status
+      // Puis trier par date de création (plus récent en premier) dans le même statut
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   };
@@ -280,7 +280,7 @@ const Projects = () => {
   const applyFilters = () => {
     let filtered = projects;
 
-    // Apply search filter
+    // Appliquer le filtre de recherche
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(project =>
@@ -289,13 +289,13 @@ const Projects = () => {
       );
     }
 
-    // Apply status filter
+    // Appliquer le filtre de statut
     if (statusFilter !== "all") {
       if (userRole === 'student') {
-        // For students, filter by proposal status
+        // Pour les étudiants, filtrer par statut de proposition
         filtered = filtered.filter(project => project.proposalStatus === statusFilter);
       } else {
-        // For entrepreneurs and admins, filter by project status
+        // Pour les entrepreneurs et admins, filtrer par statut de projet
         filtered = filtered.filter(project => project.status === statusFilter);
       }
     }
@@ -358,25 +358,25 @@ const Projects = () => {
 
   const getStatusDisplay = (status: string) => {
     const statusMap: { [key: string]: string } = {
-      'STEP1': 'New',
-      'STEP2': 'Proposals',
-      'STEP3': 'Selection',
-      'STEP4': 'Payment',
-      'STEP5': 'Active',
-      'STEP6': 'In Progress',
-      'open': 'Open',
-      'in_progress': 'In Progress',
-      'completed': 'Completed'
+      'STEP1': 'Nouveau',
+      'STEP2': 'Propositions',
+      'STEP3': 'Sélection',
+      'STEP4': 'Paiement',
+      'STEP5': 'Actif',
+      'STEP6': 'En Cours',
+      'open': 'Ouvert',
+      'in_progress': 'En Cours',
+      'completed': 'Terminé'
     };
-    return statusMap[status] || status?.replace('_', ' ').toUpperCase() || 'Unknown';
+    return statusMap[status] || status?.replace('_', ' ').toUpperCase() || 'Inconnu';
   };
 
   const getProposalStatusDisplay = (proposalStatus: string) => {
     const statusMap: { [key: string]: string } = {
-      'pending': 'Pending Response',
-      'accepted': 'Interested',
-      'declined': 'Declined',
-      'assigned': 'Assigned'
+      'pending': 'Réponse en Attente',
+      'accepted': 'Intéressé',
+      'declined': 'Refusé',
+      'assigned': 'Assigné'
     };
     return statusMap[proposalStatus] || proposalStatus;
   };
@@ -391,42 +391,42 @@ const Projects = () => {
     <AppLayout>
       <div className="min-h-screen bg-gray-50 py-6">
         <div className="container mx-auto px-4 max-w-7xl">
-          {/* Page Header with Title and Create Button */}
+          {/* En-tête de Page avec Titre et Bouton Créer */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Projects</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Projets</h1>
               <p className="text-gray-600 mt-1">
-                {userRole === "student" && "Project proposals and assignments"}
-                {userRole === "entrepreneur" && "Your projects"}
-                {userRole === "admin" && "All projects in the system"}
+                {userRole === "student" && "Propositions de projets et assignations"}
+                {userRole === "entrepreneur" && "Vos projets"}
+                {userRole === "admin" && "Tous les projets du système"}
               </p>
             </div>
             {canCreateProject() && (
               <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/90">
                 <Link to="/pack-selection">
                   <Plus className="h-4 w-4 mr-2" />
-                  New Project
+                  Nouveau Projet
                 </Link>
               </Button>
             )}
           </div>
 
-          {/* Search and Filter Controls */}
+          {/* Contrôles de Recherche et Filtre */}
           <div className="mb-6 space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
-              {/* Search Input */}
+              {/* Input de Recherche */}
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   type="text"
-                  placeholder="Search projects..."
+                  placeholder="Rechercher des projets..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
               
-              {/* Status Filter Dropdown */}
+              {/* Menu Déroulant de Filtre de Statut */}
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -441,34 +441,34 @@ const Projects = () => {
             </div>
           </div>
 
-          {/* Projects Grid */}
+          {/* Grille de Projets */}
           {loading ? (
-            /* Loading State */
+            /* État de Chargement */
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tiro-primary"></div>
             </div>
           ) : filteredProjects.length === 0 ? (
-            /* Empty State */
+            /* État Vide */
             <div className="text-center py-12">
               <div className="text-gray-500 text-lg mb-2">
                 {searchTerm || statusFilter !== "all" 
-                  ? "No projects match your filters" 
+                  ? "Aucun projet ne correspond à vos filtres" 
                   : userRole === "student"
-                  ? "No projects or proposals yet"
-                  : "No projects found"
+                  ? "Aucun projet ou proposition pour le moment"
+                  : "Aucun projet trouvé"
                 }
               </div>
               {canCreateProject() && !searchTerm && statusFilter === "all" && (
                 <Button asChild className="mt-4 bg-tiro-primary hover:bg-tiro-primary/90">
                   <Link to="/pack-selection">
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Your First Project
+                    Créer Votre Premier Projet
                   </Link>
                 </Button>
               )}
             </div>
           ) : (
-            /* Projects Grid */
+            /* Grille de Projets */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProjects.map((project) => (
                 <Link
@@ -510,7 +510,7 @@ const Projects = () => {
                       <div className="flex flex-wrap gap-2 text-xs text-gray-500">
                         <div className="flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {new Date(project.createdAt).toLocaleDateString()}
+                          {new Date(project.createdAt).toLocaleDateString('fr-FR')}
                         </div>
                         {project.entrepreneur?.users && (
                           <div className="flex items-center">

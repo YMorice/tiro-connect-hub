@@ -19,13 +19,13 @@ const Dashboard = () => {
 
   const userRole = (user as any)?.role;
 
-  // Fetch student proposals if user is a student
+  // Récupérer les propositions d'étudiants si l'utilisateur est un étudiant
   useEffect(() => {
     const fetchStudentProposals = async () => {
       if (userRole === 'student' && user?.id) {
         setProposalsLoading(true);
         try {
-          // Get student ID first
+          // Obtenir d'abord l'ID de l'étudiant
           const { data: studentData } = await supabase
             .from('students')
             .select('id_student')
@@ -37,7 +37,7 @@ const Dashboard = () => {
             setStudentProposals(proposals);
           }
         } catch (error) {
-          console.error('Error fetching student proposals:', error);
+          console.error('Erreur lors de la récupération des propositions d\'étudiant:', error);
         } finally {
           setProposalsLoading(false);
         }
@@ -47,16 +47,16 @@ const Dashboard = () => {
     fetchStudentProposals();
   }, [user, userRole]);
 
-  // Calculate dashboard metrics
+  // Calculer les métriques du tableau de bord
   const totalProjects = projects.length;
   const activeProjects = projects.filter(p => p.status === "Active" || p.status === "In progress").length;
   const completedProjects = projects.filter(p => p.status === "completed").length;
   const pendingProjects = projects.filter(p => p.status === "New" || p.status === "Proposals").length;
 
-  // Get recent projects (last 5)
+  // Obtenir les projets récents (5 derniers)
   const recentProjects = projects.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 5);
   
-  // Get pending proposals for students
+  // Obtenir les propositions en attente pour les étudiants
   const pendingProposals = studentProposals.filter(p => p.accepted === null);
 
   const getStatusColor = (status: string) => {
@@ -88,28 +88,28 @@ const Dashboard = () => {
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-6 max-w-7xl">
-          {/* Header */}
+          {/* En-tête */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome back, {user?.user_metadata?.name || "User"}!
+              Bon retour, {user?.user_metadata?.name || "Utilisateur"} !
             </h1>
             <p className="text-gray-600">
-              Here's an overview of your projects and recent activity.
+              Voici un aperçu de vos projets et de votre activité récente.
             </p>
           </div>
 
-          {/* Student Proposals Section */}
+          {/* Section Propositions d'Étudiants */}
           {userRole === 'student' && pendingProposals.length > 0 && (
             <div className="mb-8">
               <Card className="border-l-4 border-l-orange-500">
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center gap-2">
                     <AlertCircle className="h-5 w-5 text-orange-500" />
-                    New Project Proposals
+                    Nouvelles Propositions de Projets
                     <Badge variant="secondary">{pendingProposals.length}</Badge>
                   </CardTitle>
                   <CardDescription>
-                    You have new project proposals waiting for your response
+                    Vous avez de nouvelles propositions de projets en attente de votre réponse
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -124,17 +124,17 @@ const Dashboard = () => {
                         </Link>
                         <div className="flex items-center mt-1 space-x-2">
                           <span className="text-xs text-gray-500">
-                            From: {proposal.projects.entrepreneurs?.users?.name} {proposal.projects.entrepreneurs?.users?.surname}
+                            De : {proposal.projects.entrepreneurs?.users?.name} {proposal.projects.entrepreneurs?.users?.surname}
                           </span>
                           <span className="text-xs text-gray-500">
                             <Calendar className="h-3 w-3 inline mr-1" />
-                            {new Date(proposal.created_at).toLocaleDateString()}
+                            {new Date(proposal.created_at).toLocaleDateString('fr-FR')}
                           </span>
                         </div>
                       </div>
                       <Link to={`/projects/${proposal.projects.id_project}`}>
                         <Button variant="outline" size="sm">
-                          View & Respond
+                          Voir et Répondre
                         </Button>
                       </Link>
                     </div>
@@ -143,7 +143,7 @@ const Dashboard = () => {
                     <div className="text-center pt-4">
                       <Link to="/projects">
                         <Button variant="outline">
-                          View All Proposals ({pendingProposals.length})
+                          Voir Toutes les Propositions ({pendingProposals.length})
                         </Button>
                       </Link>
                     </div>
@@ -153,19 +153,19 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Metrics Cards */}
+          {/* Cartes de Métriques */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">
-                  {userRole === 'student' ? 'Available Projects' : 'Total Projects'}
+                  {userRole === 'student' ? 'Projets Disponibles' : 'Total des Projets'}
                 </CardTitle>
                 <FolderPlus className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-900">{totalProjects}</div>
                 <p className="text-xs text-muted-foreground">
-                  {userRole === 'student' ? 'Projects you can work on' : 'All your projects'}
+                  {userRole === 'student' ? 'Projets sur lesquels vous pouvez travailler' : 'Tous vos projets'}
                 </p>
               </CardContent>
             </Card>
@@ -174,14 +174,14 @@ const Dashboard = () => {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-600">
-                    Pending Proposals
+                    Propositions en Attente
                   </CardTitle>
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-orange-600">{pendingProposals.length}</div>
                   <p className="text-xs text-muted-foreground">
-                    Waiting for your response
+                    En attente de votre réponse
                   </p>
                 </CardContent>
               </Card>
@@ -190,14 +190,14 @@ const Dashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">
-                  Active Projects
+                  Projets Actifs
                 </CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">{activeProjects}</div>
                 <p className="text-xs text-muted-foreground">
-                  Currently in progress
+                  Actuellement en cours
                 </p>
               </CardContent>
             </Card>
@@ -205,14 +205,14 @@ const Dashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">
-                  Completed
+                  Terminés
                 </CardTitle>
                 <CheckCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">{completedProjects}</div>
                 <p className="text-xs text-muted-foreground">
-                  Successfully finished
+                  Terminés avec succès
                 </p>
               </CardContent>
             </Card>
@@ -221,36 +221,36 @@ const Dashboard = () => {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-600">
-                    Pending
+                    En Attente
                   </CardTitle>
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-yellow-600">{pendingProjects}</div>
                   <p className="text-xs text-muted-foreground">
-                    Awaiting action
+                    En attente d'action
                   </p>
                 </CardContent>
               </Card>
             )}
           </div>
 
-          {/* Main Content Grid */}
+          {/* Grille de Contenu Principal */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Recent Projects */}
+            {/* Projets Récents */}
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-xl">Recent Projects</CardTitle>
+                      <CardTitle className="text-xl">Projets Récents</CardTitle>
                       <CardDescription>
-                        Your latest project activity
+                        Votre dernière activité de projet
                       </CardDescription>
                     </div>
                     <Link to="/projects">
                       <Button variant="outline" size="sm">
-                        View All
+                        Voir Tout
                       </Button>
                     </Link>
                   </div>
@@ -269,13 +269,13 @@ const Dashboard = () => {
                             </Badge>
                             <span className="text-xs text-gray-500">
                               <Calendar className="h-3 w-3 inline mr-1" />
-                              {new Date(project.updatedAt).toLocaleDateString()}
+                              {new Date(project.updatedAt).toLocaleDateString('fr-FR')}
                             </span>
                           </div>
                         </div>
                         <Link to={`/projects/${project.id}`}>
                           <Button variant="ghost" size="sm">
-                            View
+                            Voir
                           </Button>
                         </Link>
                       </div>
@@ -284,12 +284,12 @@ const Dashboard = () => {
                     <div className="text-center py-8">
                       <FolderPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-500 mb-4">
-                        {userRole === 'student' ? 'No projects assigned yet' : 'No projects yet'}
+                        {userRole === 'student' ? 'Aucun projet assigné pour le moment' : 'Aucun projet pour le moment'}
                       </p>
                       {userRole === 'entrepreneur' && (
                         <Link to="/pack-selection">
                           <Button className="bg-tiro-purple hover:bg-tiro-purple/90">
-                            Create Your First Project
+                            Créer Votre Premier Projet
                           </Button>
                         </Link>
                       )}
@@ -299,13 +299,13 @@ const Dashboard = () => {
               </Card>
             </div>
 
-            {/* Quick Actions */}
+            {/* Actions Rapides */}
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-xl">Quick Actions</CardTitle>
+                  <CardTitle className="text-xl">Actions Rapides</CardTitle>
                   <CardDescription>
-                    Common tasks and shortcuts
+                    Tâches courantes et raccourcis
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -313,14 +313,14 @@ const Dashboard = () => {
                     <Link to="/pack-selection" className="block">
                       <Button className="w-full justify-start">
                         <FolderPlus className="mr-2 h-4 w-4" />
-                        New Project
+                        Nouveau Projet
                       </Button>
                     </Link>
                   )}
                   <Link to="/projects" className="block">
                     <Button variant="outline" className="w-full justify-start">
                       <Calendar className="mr-2 h-4 w-4" />
-                      View All Projects
+                      Voir Tous les Projets
                     </Button>
                   </Link>
                   <Link to="/messages" className="block">
@@ -332,22 +332,22 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              {/* Tips Card */}
+              {/* Carte Conseils */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Tips & Insights</CardTitle>
+                  <CardTitle className="text-lg">Conseils et Insights</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-start space-x-3">
                     <AlertCircle className="h-5 w-5 text-tiro-primary mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {userRole === 'student' ? 'Respond Promptly' : 'Stay Connected'}
+                        {userRole === 'student' ? 'Répondez Rapidement' : 'Restez Connecté'}
                       </p>
                       <p className="text-xs text-gray-600">
                         {userRole === 'student' 
-                          ? 'Quick responses to proposals increase your chances of being selected.'
-                          : 'Regular communication with your student leads to better project outcomes.'
+                          ? 'Des réponses rapides aux propositions augmentent vos chances d\'être sélectionné.'
+                          : 'Une communication régulière avec votre étudiant mène à de meilleurs résultats de projet.'
                         }
                       </p>
                     </div>
@@ -356,12 +356,12 @@ const Dashboard = () => {
                     <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {userRole === 'student' ? 'Update Your Profile' : 'Clear Requirements'}
+                        {userRole === 'student' ? 'Mettez à Jour Votre Profil' : 'Exigences Claires'}
                       </p>
                       <p className="text-xs text-gray-600">
                         {userRole === 'student'
-                          ? 'Keep your skills and portfolio updated to attract more project proposals.'
-                          : 'Detailed project descriptions help students deliver exactly what you need.'
+                          ? 'Gardez vos compétences et portfolio à jour pour attirer plus de propositions de projets.'
+                          : 'Des descriptions de projet détaillées aident les étudiants à livrer exactement ce dont vous avez besoin.'
                         }
                       </p>
                     </div>

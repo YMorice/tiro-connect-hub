@@ -29,21 +29,21 @@ const Profile = () => {
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
-  // Specialty options matching signup
+  // Options de spécialité correspondant à l'inscription
   const specialtyOptions = [
-    "Web Development",
-    "Mobile Development", 
-    "Data Science",
-    "AI/Machine Learning",
-    "Cybersecurity",
+    "Développement Web",
+    "Développement Mobile", 
+    "Science des Données",
+    "IA/Apprentissage Automatique",
+    "Cybersécurité",
     "Cloud Computing",
     "DevOps",
-    "UI/UX Design",
-    "Digital Marketing",
-    "Project Management"
+    "Design UI/UX",
+    "Marketing Digital",
+    "Gestion de Projet"
   ];
 
-  // Skills options matching signup
+  // Options de compétences correspondant à l'inscription
   const skillOptions = [
     "After Effects",
     "Illustrator", 
@@ -60,7 +60,7 @@ const Profile = () => {
     "Sketch"
   ];
 
-  // If studentId is provided in URL, show student profile view
+  // Si studentId est fourni dans l'URL, afficher la vue de profil d'étudiant
   useEffect(() => {
     if (studentId) {
       fetchStudentProfile();
@@ -94,8 +94,8 @@ const Profile = () => {
         portfolioLink: data.portfolio_link
       });
     } catch (error) {
-      console.error("Error fetching student profile:", error);
-      toast.error("Failed to load student profile");
+      console.error("Erreur lors de la récupération du profil d'étudiant:", error);
+      toast.error("Échec du chargement du profil d'étudiant");
     } finally {
       setLoading(false);
     }
@@ -147,8 +147,8 @@ const Profile = () => {
       setSkills(studentData?.skills || []);
       setAvatarUrl(userData.pp_link || "");
     } catch (error: any) {
-      console.error("Error fetching profile:", error);
-      toast.error("Failed to load profile");
+      console.error("Erreur lors de la récupération du profil:", error);
+      toast.error("Échec du chargement du profil");
     } finally {
       setLoading(false);
     }
@@ -177,11 +177,11 @@ const Profile = () => {
         
       const newAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       setAvatarUrl(newAvatarUrl);
-      toast.success("Profile picture uploaded successfully");
+      toast.success("Photo de profil téléchargée avec succès");
       
     } catch (error: any) {
-      console.error("Error uploading profile picture:", error);
-      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
+      console.error("Erreur lors du téléchargement de la photo de profil:", error);
+      toast.error(`Échec du téléchargement: ${error.message || "Erreur inconnue"}`);
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -192,7 +192,7 @@ const Profile = () => {
 
     setSaving(true);
     try {
-      // Update user data
+      // Mettre à jour les données utilisateur
       const { error: userError } = await supabase
         .from('users')
         .update({
@@ -204,7 +204,7 @@ const Profile = () => {
 
       if (userError) throw userError;
 
-      // Update role-specific data
+      // Mettre à jour les données spécifiques au rôle
       if ((user as any).role === 'student') {
         const { data: existingStudent, error: selectError } = await supabase
           .from('students')
@@ -267,10 +267,10 @@ const Profile = () => {
         }
       }
 
-      toast.success("Profile updated successfully!");
+      toast.success("Profil mis à jour avec succès !");
     } catch (error: any) {
-      console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+      console.error("Erreur lors de la mise à jour du profil:", error);
+      toast.error("Échec de la mise à jour du profil");
     } finally {
       setSaving(false);
     }
@@ -297,7 +297,7 @@ const Profile = () => {
     );
   }
 
-  // If viewing a specific student profile, use StudentProfileView
+  // Si on visualise un profil d'étudiant spécifique, utiliser StudentProfileView
   if (studentId && profile) {
     return (
       <AppLayout>
@@ -319,22 +319,22 @@ const Profile = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Tabs defaultValue="profile" className="w-full space-y-6">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="profile">Profil</TabsTrigger>
               {(user as any).role === 'student' && (
-                <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                <TabsTrigger value="reviews">Avis</TabsTrigger>
               )}
             </TabsList>
             
             <TabsContent value="profile" className="space-y-6">
               <Card className="shadow-sm">
                 <CardHeader className="text-center">
-                  <CardTitle className="text-2xl">Profile Information</CardTitle>
+                  <CardTitle className="text-2xl">Informations du Profil</CardTitle>
                   <CardDescription>
-                    Update your profile information
+                    Mettez à jour vos informations de profil
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
-                  {/* Profile Picture Section */}
+                  {/* Section Photo de Profil */}
                   <div className="flex flex-col items-center space-y-4">
                     <Avatar className="h-32 w-32">
                       {avatarUrl ? (
@@ -352,14 +352,14 @@ const Profile = () => {
                     <FileUpload 
                       onFileSelect={handleAvatarUpload} 
                       accept="image/*"
-                      buttonText={isUploadingAvatar ? "Uploading..." : "Change Profile Picture"}
+                      buttonText={isUploadingAvatar ? "Téléchargement..." : "Changer la Photo de Profil"}
                     />
                   </div>
 
-                  {/* Basic Information */}
+                  {/* Informations de Base */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="name">First Name</Label>
+                      <Label htmlFor="name">Prénom</Label>
                       <Input
                         id="name"
                         value={profile.name || ""}
@@ -368,7 +368,7 @@ const Profile = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="surname">Last Name</Label>
+                      <Label htmlFor="surname">Nom</Label>
                       <Input
                         id="surname"
                         value={profile.surname || ""}
@@ -388,7 +388,7 @@ const Profile = () => {
                     />
                   </div>
 
-                  {/* Role-specific fields */}
+                  {/* Champs spécifiques au rôle */}
                   {(user as any).role === 'student' && (
                     <>
                       <div className="space-y-2">
@@ -397,16 +397,16 @@ const Profile = () => {
                           id="bio"
                           value={profile.bio || ""}
                           onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                          placeholder="Tell us about yourself..."
+                          placeholder="Parlez-nous de vous..."
                           className="min-h-[100px] w-full"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="specialty">Specialty</Label>
+                        <Label htmlFor="specialty">Spécialité</Label>
                         <Select value={profile.specialty || ""} onValueChange={(value) => setProfile({ ...profile, specialty: value })}>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select your specialty" />
+                            <SelectValue placeholder="Sélectionnez votre spécialité" />
                           </SelectTrigger>
                           <SelectContent>
                             {specialtyOptions.map((specialty) => (
@@ -419,30 +419,30 @@ const Profile = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="formation">Education</Label>
+                        <Label htmlFor="formation">Formation</Label>
                         <Input
                           id="formation"
                           value={profile.formation || ""}
                           onChange={(e) => setProfile({ ...profile, formation: e.target.value })}
-                          placeholder="Your educational background"
+                          placeholder="Votre parcours éducatif"
                           className="w-full"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="portfolioLink">Portfolio Link</Label>
+                        <Label htmlFor="portfolioLink">Lien Portfolio</Label>
                         <Input
                           id="portfolioLink"
                           value={profile.portfolioLink || ""}
                           onChange={(e) => setProfile({ ...profile, portfolioLink: e.target.value })}
-                          placeholder="https://your-portfolio.com"
+                          placeholder="https://votre-portfolio.com"
                           className="w-full"
                         />
                       </div>
 
-                      {/* Skills Section */}
+                      {/* Section Compétences */}
                       <div className="space-y-4">
-                        <Label>Skills</Label>
+                        <Label>Compétences</Label>
                         <div className="space-y-4">
                           <div className="flex flex-wrap gap-2">
                             {skills.map((skill) => (
@@ -461,7 +461,7 @@ const Profile = () => {
                           <div className="flex flex-col sm:flex-row gap-3">
                             <Select value={newSkill} onValueChange={setNewSkill}>
                               <SelectTrigger className="flex-1">
-                                <SelectValue placeholder="Select a skill to add" />
+                                <SelectValue placeholder="Sélectionner une compétence à ajouter" />
                               </SelectTrigger>
                               <SelectContent>
                                 {skillOptions
@@ -474,7 +474,7 @@ const Profile = () => {
                               </SelectContent>
                             </Select>
                             <Button type="button" onClick={addSkill} disabled={!newSkill} className="sm:w-auto w-full">
-                              Add Skill
+                              Ajouter Compétence
                             </Button>
                           </div>
                         </div>
@@ -485,34 +485,34 @@ const Profile = () => {
                   {(user as any).role === 'entrepreneur' && (
                     <>
                       <div className="space-y-2">
-                        <Label htmlFor="companyName">Company Name</Label>
+                        <Label htmlFor="companyName">Nom de l'Entreprise</Label>
                         <Input
                           id="companyName"
                           value={profile.companyName || ""}
                           onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
-                          placeholder="Your company name"
+                          placeholder="Le nom de votre entreprise"
                           className="w-full"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="companyRole">Role in Company</Label>
+                        <Label htmlFor="companyRole">Rôle dans l'Entreprise</Label>
                         <Input
                           id="companyRole"
                           value={profile.companyRole || ""}
                           onChange={(e) => setProfile({ ...profile, companyRole: e.target.value })}
-                          placeholder="Your role/position"
+                          placeholder="Votre rôle/poste"
                           className="w-full"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="companyAddress">Company Address</Label>
+                        <Label htmlFor="companyAddress">Adresse de l'Entreprise</Label>
                         <Textarea
                           id="companyAddress"
                           value={profile.companyAddress || ""}
                           onChange={(e) => setProfile({ ...profile, companyAddress: e.target.value })}
-                          placeholder="Company address"
+                          placeholder="Adresse de l'entreprise"
                           className="min-h-[100px] w-full"
                         />
                       </div>
@@ -528,9 +528,9 @@ const Profile = () => {
                       {saving ? (
                         <div className="flex items-center">
                           <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
-                          Saving...
+                          Sauvegarde...
                         </div>
-                      ) : "Save Profile"}
+                      ) : "Sauvegarder le Profil"}
                     </Button>
                   </div>
                 </CardContent>
@@ -541,9 +541,9 @@ const Profile = () => {
               <TabsContent value="reviews">
                 <Card className="shadow-sm">
                   <CardHeader>
-                    <CardTitle>Your Reviews</CardTitle>
+                    <CardTitle>Vos Avis</CardTitle>
                     <CardDescription>
-                      Here you can see all the reviews you have received.
+                      Ici vous pouvez voir tous les avis que vous avez reçus.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
