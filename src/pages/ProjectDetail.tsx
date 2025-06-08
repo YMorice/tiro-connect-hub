@@ -1,9 +1,8 @@
-
 /**
  * Project Detail Page Component
  * 
  * This component displays comprehensive information about a specific project including:
- * - Project metadata (title, description, status, price)
+ * - Project metadata (title, description, status, price, deadline)
  * - Entrepreneur and student information with avatars
  * - Project documents with upload functionality
  * - Review system for completed projects
@@ -35,7 +34,7 @@ import StudentProposalActions from "@/components/student/StudentProposalActions"
 import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
 import PaymentStatusMessage from "@/components/PaymentStatusMessage";
-import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users } from "lucide-react";
+import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users, Clock } from "lucide-react";
 
 /**
  * Interface for project document data structure
@@ -71,6 +70,8 @@ interface Project {
   created_at: string;
   /** Project budget/price in euros */
   price: number;
+  /** Project deadline */
+  deadline?: string;
   /** ID of the entrepreneur who owns the project */
   id_entrepreneur: string;
   /** ID of the selected student (if any) */
@@ -542,7 +543,7 @@ const ProjectDetail = () => {
             </Card>
           )}
 
-          {/* Project Header Card - Contains title, status, price, and discussion link */}
+          {/* Project Header Card - Contains title, status, price, deadline, and discussion link */}
           <Card className="mb-4 sm:mb-6">
             <CardHeader className="pb-3 sm:pb-4">
               <div className="flex flex-col gap-4">
@@ -559,6 +560,14 @@ const ProjectDetail = () => {
                       <span className="hidden sm:inline">Created </span>
                       {new Date(project.created_at).toLocaleDateString()}
                     </div>
+                    {/* Deadline Display */}
+                    {project.deadline && (
+                      <div className="flex items-center text-xs sm:text-sm text-gray-500">
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                        <span className="hidden sm:inline">Due </span>
+                        {new Date(project.deadline).toLocaleDateString()}
+                      </div>
+                    )}
                     {/* Discussion Link */}
                     <Link to="/messages" className="flex items-center">
                       <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">

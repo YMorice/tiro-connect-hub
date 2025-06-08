@@ -1,4 +1,3 @@
-
 /**
  * Messages Page Component - Optimized for performance with proper access control
  */
@@ -77,7 +76,7 @@ const Messages = () => {
               entrepreneurs (
                 users (name, pp_link)
               ),
-              students (
+              students!projects_selected_student_fkey (
                 users (name, pp_link)
               )
             )
@@ -120,7 +119,7 @@ const Messages = () => {
                 entrepreneurs (
                   users (name, pp_link)
                 ),
-                students (
+                students!projects_selected_student_fkey (
                   users (name, pp_link)
                 )
               )
