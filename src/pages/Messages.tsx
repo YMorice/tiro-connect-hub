@@ -1,3 +1,4 @@
+
 /**
  * Messages Page Component - Optimized for performance with proper access control
  */
@@ -21,6 +22,7 @@ interface Conversation {
   lastMessage: string;
   lastMessageTime: string;
   hasUnreadMessages: boolean;
+  projectStatus: string;
 }
 
 interface Message {
@@ -58,7 +60,7 @@ const Messages = () => {
     try {
       console.log("Fetching conversations for user:", userInfo.id, "role:", userInfo.role);
       
-      let userGroups: any[] = [];
+      let conversationsData: any[] = [];
       
       if (userInfo.role === 'admin') {
         // Admins have access to ALL message groups
@@ -69,6 +71,7 @@ const Messages = () => {
             id_project,
             projects (
               title,
+              status,
               id_entrepreneur,
               selected_student,
               entrepreneurs (
@@ -80,8 +83,14 @@ const Messages = () => {
             )
           `);
           
-        if (error) throw error;
-        userGroups = data || [];
+        if (error) {
+          console.error('Error fetching conversations for admin:', error);
+          throw error;
+        }
+        
+        console.log('Admin conversations data:', data);
+        conversationsData = data || [];
+        
       } else if (userInfo.role === 'entrepreneur') {
         // Entrepreneurs can access message groups for their projects
         const { data: entrepreneurData, error: entrepreneurError } = await supabase
@@ -90,84 +99,97 @@ const Messages = () => {
           .eq('id_user', userInfo.id)
           .single();
 
-        if (entrepreneurError) throw entrepreneurError;
+        if (entrepreneurError) {
+          console.error('Error fetching entrepreneur:', entrepreneurError);
+          throw entrepreneurError;
+        }
 
-        const { data, error } = await supabase
-          .from('message_groups')
-          .select(`
-            id_group,
-            id_project,
-            projects (
-              title,
-              id_entrepreneur,
-              selected_student,
-              entrepreneurs (
-                users (name, pp_link)
-              ),
-              students (
-                users (name, pp_link)
+        console.log('Entrepreneur data:', entrepreneurData);
+
+        if (entrepreneurData) {
+          const { data, error } = await supabase
+            .from('message_groups')
+            .select(`
+              id_group,
+              id_project,
+              projects!inner (
+                title,
+                status,
+                id_entrepreneur,
+                selected_student,
+                entrepreneurs (
+                  users (name, pp_link)
+                ),
+                students (
+                  users (name, pp_link)
+                )
               )
-            )
-          `)
-          .eq('projects.id_entrepreneur', entrepreneurData.id_entrepreneur);
+            `)
+            .eq('projects.id_entrepreneur', entrepreneurData.id_entrepreneur);
+            
+          if (error) {
+            console.error('Error fetching entrepreneur conversations:', error);
+            throw error;
+          }
           
-        if (error) throw error;
-        userGroups = data || [];
+          console.log('Entrepreneur conversations data:', data);
+          conversationsData = data || [];
+        }
+        
       } else if (userInfo.role === 'student') {
-        // Students can access discussions for projects where they are selected
+        // Students can access discussions for projects where they are selected AND project is active
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('id_student')
           .eq('id_user', userInfo.id)
           .single();
 
-        if (studentError) throw studentError;
+        if (studentError) {
+          console.error('Error fetching student:', studentError);
+          throw studentError;
+        }
 
-        // Get projects where this student is selected
-        const { data: selectedProjects, error: projectsError } = await supabase
-          .from('projects')
-          .select(`
-            id_project,
-            title,
-            entrepreneurs (
-              users (name, pp_link)
-            )
-          `)
-          .eq('selected_student', studentData.id_student);
+        console.log('Student data:', studentData);
 
-        if (projectsError) throw projectsError;
-
-        if (selectedProjects && selectedProjects.length > 0) {
-          const projectIds = selectedProjects.map(p => p.id_project);
-          
+        if (studentData) {
+          // Get message groups for projects where this student is selected AND project is active
           const { data, error } = await supabase
             .from('message_groups')
             .select(`
               id_group,
               id_project,
-              projects (
+              projects!inner (
                 title,
+                status,
+                selected_student,
                 entrepreneurs (
                   users (name, pp_link)
-                ),
-                selected_student
+                )
               )
             `)
-            .in('id_project', projectIds);
+            .eq('projects.selected_student', studentData.id_student)
+            .in('projects.status', ['STEP5', 'STEP6', 'completed']); // Active, In Progress, or Completed
             
-          if (error) throw error;
-          userGroups = data || [];
+          if (error) {
+            console.error('Error fetching student conversations:', error);
+            throw error;
+          }
+          
+          console.log('Student conversations data:', data);
+          conversationsData = data || [];
         }
       }
 
-      if (!userGroups || userGroups.length === 0) {
+      if (!conversationsData || conversationsData.length === 0) {
+        console.log('No conversations found');
         setConversations([]);
         setLoading(false);
         return;
       }
 
       // Get all group IDs for batch processing
-      const groupIds = userGroups.map(g => g.id_group);
+      const groupIds = conversationsData.map(g => g.id_group);
+      console.log('Group IDs:', groupIds);
       
       // Batch fetch latest messages for all groups
       const { data: latestMessages, error: messagesError } = await supabase
@@ -188,6 +210,10 @@ const Messages = () => {
         .eq('read', false)
         .neq('sender_id', userInfo.id);
 
+      if (unreadError) {
+        console.error('Error fetching unread counts:', unreadError);
+      }
+
       // Process messages and unread counts
       const messagesByGroup = new Map();
       const unreadByGroup = new Map();
@@ -205,8 +231,11 @@ const Messages = () => {
       const conversationsArray: Conversation[] = [];
       
       // Process each group to create conversation objects
-      for (const group of userGroups) {
-        if (!group.projects) continue;
+      for (const group of conversationsData) {
+        if (!group.projects) {
+          console.log('Skipping group without project data:', group);
+          continue;
+        }
         
         const latestMessage = messagesByGroup.get(group.id_group);
         const unreadCount = unreadByGroup.get(group.id_group) || 0;
@@ -224,18 +253,24 @@ const Messages = () => {
             otherParticipant = group.projects.title;
           }
         } else if (userInfo.role === 'entrepreneur') {
-          // For entrepreneurs, show the selected student if any
-          if (group.projects.students?.users) {
-            otherParticipant = group.projects.students.users.name;
-            otherParticipantAvatar = group.projects.students.users.pp_link;
+          // For entrepreneurs, show "Admin" if no student is selected, or student name if selected and active
+          if (group.projects.selected_student && group.projects.status === 'STEP5') {
+            if (group.projects.students?.users) {
+              otherParticipant = `${group.projects.title} - ${group.projects.students.users.name}`;
+              otherParticipantAvatar = group.projects.students.users.pp_link;
+            } else {
+              otherParticipant = `${group.projects.title} - Admin`;
+            }
           } else {
-            otherParticipant = `${group.projects.title} (No student selected)`;
+            otherParticipant = `${group.projects.title} - Admin`;
           }
         } else if (userInfo.role === 'student') {
           // For students, show the entrepreneur
           if (group.projects.entrepreneurs?.users) {
-            otherParticipant = group.projects.entrepreneurs.users.name;
+            otherParticipant = `${group.projects.title} - ${group.projects.entrepreneurs.users.name}`;
             otherParticipantAvatar = group.projects.entrepreneurs.users.pp_link;
+          } else {
+            otherParticipant = group.projects.title;
           }
         }
 
@@ -244,6 +279,7 @@ const Messages = () => {
             id: group.id_group,
             projectId: group.id_project,
             projectTitle: group.projects.title,
+            projectStatus: group.projects.status,
             otherParticipant,
             otherParticipantAvatar,
             lastMessage: latestMessage?.content || 'No messages yet',
@@ -262,7 +298,7 @@ const Messages = () => {
         return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
       });
       
-      console.log("Final conversations:", sortedConversations.length);
+      console.log("Final conversations:", sortedConversations);
       setConversations(sortedConversations);
     } catch (error: any) {
       console.error("Error fetching conversations:", error);
@@ -286,6 +322,7 @@ const Messages = () => {
 
       if (error) throw error;
 
+      // Mark messages as read
       await supabase
         .from('messages')
         .update({ read: true })
@@ -374,9 +411,6 @@ const Messages = () => {
                 {conversation.otherParticipant}
               </h3>
             </div>
-            <p className="text-xs text-gray-500 truncate mb-1">
-              {conversation.projectTitle}
-            </p>
             <p className={cn(
               "text-xs text-gray-400 truncate",
               conversation.hasUnreadMessages && "text-gray-600 font-medium"
@@ -448,7 +482,7 @@ const Messages = () => {
                   </Avatar>
                   <div className="min-w-0">
                     <h3 className="font-medium text-sm truncate">{selectedConversation.otherParticipant}</h3>
-                    <p className="text-xs text-gray-500 truncate">{selectedConversation.projectTitle}</p>
+                    <p className="text-xs text-gray-500 truncate">Project: {selectedConversation.projectTitle}</p>
                   </div>
                 </div>
               </div>
