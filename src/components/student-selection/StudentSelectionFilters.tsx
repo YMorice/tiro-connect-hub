@@ -31,18 +31,18 @@ export const StudentSelectionFilters = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Filters</CardTitle>
+        <CardTitle>Filtres</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <label htmlFor="search" className="text-sm font-medium">Search by name or bio</label>
+            <label htmlFor="search" className="text-sm font-medium">Rechercher par nom ou bio</label>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 id="search"
                 type="text"
-                placeholder="Search students..."
+                placeholder="Rechercher des étudiants..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8"
@@ -50,26 +50,26 @@ export const StudentSelectionFilters = ({
             </div>
           </div>
           <div className="space-y-2">
-            <label htmlFor="skill" className="text-sm font-medium">Filter by skill</label>
+            <label htmlFor="skill" className="text-sm font-medium">Filtrer par compétence</label>
             <Input
               id="skill"
               type="text"
-              placeholder="Enter a skill..."
+              placeholder="Entrez une compétence..."
               value={skillFilter}
               onChange={(e) => setSkillFilter(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="specialty" className="text-sm font-medium">Filter by specialty</label>
+            <label htmlFor="specialty" className="text-sm font-medium">Filtrer par spécialité</label>
             <Select
               value={specialtyFilter}
               onValueChange={setSpecialtyFilter}
             >
               <SelectTrigger>
-                <SelectValue placeholder="All specialties" />
+                <SelectValue placeholder="Toutes les spécialités" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All specialties</SelectItem>
+                <SelectItem value="">Toutes les spécialités</SelectItem>
                 {specialties.map((specialty) => (
                   <SelectItem key={specialty} value={specialty.toLowerCase()}>
                     {specialty}
@@ -88,7 +88,7 @@ export const StudentSelectionFilters = ({
               className="flex items-center"
             >
               <FilterX className="h-4 w-4 mr-1" />
-              Clear Filters
+              Effacer les filtres
             </Button>
           </div>
         )}

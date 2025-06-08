@@ -25,7 +25,7 @@ const CreateAdminAccount = () => {
         if (error) throw error;
         setAdminExists(!!data);
       } catch (error) {
-        console.error("Error checking admin account:", error);
+        console.error("Erreur lors de la vérification du compte administrateur :", error);
       }
     };
 
@@ -56,13 +56,13 @@ const CreateAdminAccount = () => {
 
       if (authData.user) {
         // The handle_new_user trigger should take care of creating the user record
-        toast.success("Admin account created successfully!");
-        toast.info(`Temporary password: ${password}`);
+        toast.success("Compte administrateur créé avec succès !");
+        toast.info(`Mot de passe temporaire : ${password}`);
         setAdminExists(true);
       }
     } catch (error: any) {
-      console.error("Error creating admin account:", error);
-      toast.error(error.message || "Failed to create admin account");
+      console.error("Erreur lors de la création du compte administrateur :", error);
+      toast.error(error.message || "Échec de la création du compte administrateur");
     } finally {
       setLoading(false);
     }
@@ -73,23 +73,23 @@ const CreateAdminAccount = () => {
       <div className="max-w-md mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>Admin Account Creation</CardTitle>
+            <CardTitle>Création du compte administrateur</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               {adminExists ? (
-                <p className="text-green-600">Admin account with email {adminEmail} already exists.</p>
+                <p className="text-green-600">Un compte administrateur avec l'email {adminEmail} existe déjà.</p>
               ) : (
                 <>
                   <p className="mb-4">
-                    Create an admin account with the email address {adminEmail}
+                    Créer un compte administrateur avec l'adresse email {adminEmail}
                   </p>
                   <Button 
                     onClick={createAdminAccount} 
                     disabled={loading || adminExists}
                     className="bg-tiro-purple hover:bg-tiro-purple/90"
                   >
-                    {loading ? "Creating..." : "Create Admin Account"}
+                    {loading ? "Création..." : "Créer le compte administrateur"}
                   </Button>
                 </>
               )}

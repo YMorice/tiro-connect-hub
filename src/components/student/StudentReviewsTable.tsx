@@ -65,15 +65,15 @@ export const StudentReviewsTable = () => {
           .single();
           
         if (entrepreneurError) {
-          console.error('Error fetching entrepreneur reviews:', entrepreneurError);
+          console.error('Erreur lors de la récupération des avis entrepreneur:', entrepreneurError);
           return;
         }
         
         if (entrepreneurData?.reviews) {
           reviewsData = entrepreneurData.reviews.map((review: any) => ({
             ...review,
-            student_name: review.students?.users?.name || 'Unknown Student',
-            project_title: review.projects?.title || 'Unknown Project'
+            student_name: review.students?.users?.name || 'Étudiant inconnu',
+            project_title: review.projects?.title || 'Projet inconnu'
           }));
         }
       } else if ((user as any).role === 'student') {
@@ -103,15 +103,15 @@ export const StudentReviewsTable = () => {
           .single();
           
         if (studentError) {
-          console.error('Error fetching student reviews:', studentError);
+          console.error('Erreur lors de la récupération des avis étudiant:', studentError);
           return;
         }
         
         if (studentData?.reviews) {
           reviewsData = studentData.reviews.map((review: any) => ({
             ...review,
-            entrepreneur_name: review.entrepreneurs?.users?.name || 'Unknown Entrepreneur',
-            project_title: review.projects?.title || 'Unknown Project'
+            entrepreneur_name: review.entrepreneurs?.users?.name || 'Entrepreneur inconnu',
+            project_title: review.projects?.title || 'Projet inconnu'
           }));
         }
       } else if ((user as any).role === 'admin') {
@@ -134,24 +134,24 @@ export const StudentReviewsTable = () => {
           `);
         
         if (error) {
-          console.error('Error fetching admin reviews:', error);
+          console.error('Erreur lors de la récupération des avis admin:', error);
           return;
         }
         
         if (data) {
           reviewsData = data.map((review: any) => ({
             ...review,
-            student_name: review.students?.users?.name || 'Unknown Student',
-            entrepreneur_name: review.entrepreneurs?.users?.name || 'Unknown Entrepreneur',
-            project_title: review.projects?.title || 'Unknown Project'
+            student_name: review.students?.users?.name || 'Étudiant inconnu',
+            entrepreneur_name: review.entrepreneurs?.users?.name || 'Entrepreneur inconnu',
+            project_title: review.projects?.title || 'Projet inconnu'
           }));
         }
       }
       
       setReviews(reviewsData);
     } catch (error) {
-      console.error("Error fetching reviews:", error);
-      toast.error("Failed to load reviews");
+      console.error("Erreur lors de la récupération des avis:", error);
+      toast.error("Échec du chargement des avis");
     } finally {
       setLoading(false);
     }
@@ -164,9 +164,9 @@ export const StudentReviewsTable = () => {
   // Memoize the table headers based on user role
   const tableHeaders = useMemo(() => {
     if ((user as any)?.role === 'student') {
-      return ['Entrepreneur', 'Project', 'Rating', 'Comment', 'Date'];
+      return ['Entrepreneur', 'Projet', 'Note', 'Commentaire', 'Date'];
     } else {
-      return ['Student', 'Project', 'Rating', 'Comment', 'Date'];
+      return ['Étudiant', 'Projet', 'Note', 'Commentaire', 'Date'];
     }
   }, [(user as any)?.role]);
   
@@ -181,7 +181,7 @@ export const StudentReviewsTable = () => {
   if (reviews.length === 0) {
     return (
       <p className="text-muted-foreground text-center p-4">
-        No reviews found.
+        Aucun avis trouvé.
       </p>
     );
   }
@@ -220,7 +220,7 @@ export const StudentReviewsTable = () => {
             </TableCell>
             <TableCell className="max-w-xs truncate">{review.comment}</TableCell>
             <TableCell>
-              {new Date(review.created_at).toLocaleDateString()}
+              {new Date(review.created_at).toLocaleDateString('fr-FR')}
             </TableCell>
           </TableRow>
         ))}

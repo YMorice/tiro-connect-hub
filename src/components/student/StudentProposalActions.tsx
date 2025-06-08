@@ -25,7 +25,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
   const handleProposalResponse = async (accepted: boolean) => {
     try {
       setLoading(true);
-      console.log('Updating proposal status:', { projectId, studentId, accepted });
+      console.log('Mise à jour du statut de la proposition:', { projectId, studentId, accepted });
 
       const { error } = await supabase
         .from('proposal_to_student')
@@ -34,15 +34,15 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
         .eq('id_student', studentId);
 
       if (error) {
-        console.error('Error updating proposal status:', error);
+        console.error('Erreur lors de la mise à jour du statut de la proposition:', error);
         throw error;
       }
 
-      toast.success(accepted ? 'Interest shown successfully!' : 'Proposal declined');
+      toast.success(accepted ? 'Intérêt exprimé avec succès !' : 'Proposition refusée');
       onStatusChange();
     } catch (error) {
-      console.error('Error updating proposal:', error);
-      toast.error('Failed to update proposal status');
+      console.error('Erreur lors de la mise à jour de la proposition:', error);
+      toast.error('Échec de la mise à jour du statut de la proposition');
     } finally {
       setLoading(false);
     }
@@ -54,19 +54,19 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
         return {
           icon: Clock,
           color: 'bg-yellow-100 text-yellow-800',
-          message: 'This project has been proposed to you. Would you like to show interest?'
+          message: 'Ce projet vous a été proposé. Souhaitez-vous exprimer votre intérêt ?'
         };
       case 'accepted':
         return {
           icon: CheckCircle,
           color: 'bg-green-100 text-green-800',
-          message: 'You have shown interest in this project. The entrepreneur will review and may select you.'
+          message: 'Vous avez exprimé votre intérêt pour ce projet. L\'entrepreneur examinera et pourra vous sélectionner.'
         };
       case 'declined':
         return {
           icon: XCircle,
           color: 'bg-red-100 text-red-800',
-          message: 'You have declined this project proposal.'
+          message: 'Vous avez refusé cette proposition de projet.'
         };
     }
   };
@@ -79,9 +79,10 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <StatusIcon className="h-5 w-5" />
-          Project Proposal
+          Proposition de projet
           <Badge className={statusInfo.color}>
-            {proposalStatus.charAt(0).toUpperCase() + proposalStatus.slice(1)}
+            {proposalStatus === 'pending' ? 'En attente' : 
+             proposalStatus === 'accepted' ? 'Accepté' : 'Refusé'}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -89,12 +90,12 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
         <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
           <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-blue-700">
-            <p className="font-medium mb-1">How it works:</p>
+            <p className="font-medium mb-1">Comment ça fonctionne :</p>
             <ul className="list-disc list-inside space-y-1 text-xs">
-              <li>Showing interest indicates you're available for this project</li>
-              <li>The entrepreneur will review interested students</li>
-              <li>If selected, you'll be assigned and added to the project conversation</li>
-              <li>Only one student will be selected per project</li>
+              <li>Exprimer votre intérêt indique que vous êtes disponible pour ce projet</li>
+              <li>L'entrepreneur examinera les étudiants intéressés</li>
+              <li>Si sélectionné, vous serez assigné et ajouté à la conversation du projet</li>
+              <li>Un seul étudiant sera sélectionné par projet</li>
             </ul>
           </div>
         </div>
@@ -111,12 +112,12 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Processing...
+                  Traitement...
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Show Interest
+                  Exprimer l'intérêt
                 </>
               )}
             </Button>
@@ -129,12 +130,12 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
-                  Processing...
+                  Traitement...
                 </>
               ) : (
                 <>
                   <XCircle className="h-4 w-4 mr-2" />
-                  Decline
+                  Refuser
                 </>
               )}
             </Button>
@@ -144,7 +145,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
         {proposalStatus === 'accepted' && (
           <div className="p-3 bg-green-50 rounded-lg">
             <p className="text-sm text-green-700">
-              <strong>Next steps:</strong> Wait for the entrepreneur to review all interested students and make their selection. You'll be notified if you're chosen for the project.
+              <strong>Prochaines étapes :</strong> Attendez que l'entrepreneur examine tous les étudiants intéressés et fasse sa sélection. Vous serez notifié si vous êtes choisi pour le projet.
             </p>
           </div>
         )}

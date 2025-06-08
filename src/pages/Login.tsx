@@ -11,8 +11,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useAuth } from "@/context/auth-context";
 
 const formSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters")
+  email: z.string().email("Adresse email invalide"),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères")
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -65,7 +65,7 @@ const Login = () => {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tiro-primary mx-auto mb-4"></div>
-          <p className="text-sm">Loading...</p>
+          <p className="text-sm">Chargement...</p>
         </div>
       </div>
     );
@@ -84,12 +84,12 @@ const Login = () => {
             <div className="flex justify-center mb-3">
               <img 
                 src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
-                alt="Tiro Logo" 
+                alt="Logo Tiro" 
                 className="h-8" 
               />
             </div>
             <CardDescription className="text-sm">
-              Sign in to your account
+              Connectez-vous à votre compte
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4">
@@ -103,7 +103,7 @@ const Login = () => {
                       <FormLabel className="text-sm">Email</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="example@email.com" 
+                          placeholder="exemple@email.com" 
                           {...field} 
                           autoComplete="email" 
                           disabled={isSubmitting}
@@ -119,7 +119,7 @@ const Login = () => {
                   name="password" 
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm">Password</FormLabel>
+                      <FormLabel className="text-sm">Mot de passe</FormLabel>
                       <FormControl>
                         <Input 
                           type="password" 
@@ -139,7 +139,7 @@ const Login = () => {
                     to="/reset-password" 
                     className="text-xs text-tiro-primary hover:underline"
                   >
-                    Forgot your password?
+                    Mot de passe oublié ?
                   </Link>
                 </div>
                 <Button 
@@ -147,16 +147,16 @@ const Login = () => {
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white text-sm h-10" 
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Signing in..." : "Sign In"}
+                  {isSubmitting ? "Connexion..." : "Se connecter"}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-2 p-4 pt-0">
             <div className="text-xs text-center">
-              <span className="text-muted-foreground">New to Tiro? </span>
+              <span className="text-muted-foreground">Nouveau sur Tiro ? </span>
               <Link to="/register" className="text-tiro-primary hover:underline">
-                Create an account
+                Créer un compte
               </Link>
             </div>
           </CardFooter>

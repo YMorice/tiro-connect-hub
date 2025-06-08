@@ -30,8 +30,8 @@ const PackSelection = () => {
         
         setPacks(data || []);
       } catch (error) {
-        console.error("Error fetching packs:", error);
-        toast.error("Failed to load project packs");
+        console.error("Erreur lors du chargement des packs :", error);
+        toast.error("Échec du chargement des packs de projet");
       } finally {
         setLoading(false);
       }
@@ -63,7 +63,7 @@ const PackSelection = () => {
     return (
       <AppLayout>
         <div className="container max-w-6xl py-4 px-4">
-          <h1 className="text-xl sm:text-2xl font-bold mb-6">Loading project packs...</h1>
+          <h1 className="text-xl sm:text-2xl font-bold mb-6">Chargement des packs de projet...</h1>
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
@@ -76,9 +76,9 @@ const PackSelection = () => {
     <AppLayout>
       <div className="container max-w-6xl py-4 px-4">
         <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">Choose a Project Pack</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">Choisissez un pack de projet</h1>
           <p className="text-muted-foreground text-sm">
-            Select the package that best suits your project needs.
+            Sélectionnez le package qui convient le mieux aux besoins de votre projet.
           </p>
         </div>
 
@@ -96,15 +96,15 @@ const PackSelection = () => {
                       ""
                     ) : (
                       <>
-                        {pack.from === true && "from "}
+                        {pack.from === true && "à partir de "}
                         {pack.price.toFixed(2)} €
                       </>
                     )}
                   </p>
                 ) : (
-                  <p className="text-xl sm:text-2xl font-bold mb-3">Contact us for pricing</p>
+                  <p className="text-xl sm:text-2xl font-bold mb-3">Contactez-nous pour le prix</p>
                 )}
-                <h3 className="font-semibold mb-2 text-sm">Features:</h3>
+                <h3 className="font-semibold mb-2 text-sm">Fonctionnalités :</h3>
                 <ul className="space-y-1">
                   {pack.features?.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
@@ -119,7 +119,7 @@ const PackSelection = () => {
                   className="w-full text-sm h-9" 
                   onClick={() => handleSelectPack(pack.id_pack)}
                 >
-                  Select This Pack
+                  Sélectionner ce pack
                 </Button>
               </CardFooter>
             </Card>

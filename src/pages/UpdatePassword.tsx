@@ -13,10 +13,10 @@ import { toast } from "@/components/ui/sonner";
 import { Eye, EyeOff } from "lucide-react";
 
 const formSchema = z.object({
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Password must be at least 6 characters")
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  confirmPassword: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères")
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
+  message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
 });
 
@@ -44,7 +44,7 @@ const UpdatePassword = () => {
     
     if (!accessToken || !refreshToken) {
       console.log("Missing tokens, redirecting to login");
-      toast.error("Invalid or expired reset link");
+      toast.error("Lien de réinitialisation invalide ou expiré");
       navigate("/login");
       return;
     }
@@ -59,12 +59,12 @@ const UpdatePassword = () => {
         
         if (error) {
           console.error("Error setting session:", error);
-          toast.error("Invalid or expired reset link");
+          toast.error("Lien de réinitialisation invalide ou expiré");
           navigate("/login");
         }
       } catch (error) {
         console.error("Error setting session:", error);
-        toast.error("Invalid or expired reset link");
+        toast.error("Lien de réinitialisation invalide ou expiré");
         navigate("/login");
       }
     };
@@ -85,15 +85,15 @@ const UpdatePassword = () => {
       
       if (error) {
         console.error("Password update error:", error);
-        toast.error(error.message || "Failed to update password");
+        toast.error(error.message || "Échec de la mise à jour du mot de passe");
       } else {
         console.log("Password updated successfully");
-        toast.success("Password updated successfully!");
+        toast.success("Mot de passe mis à jour avec succès !");
         navigate("/login");
       }
     } catch (error) {
       console.error("Password update error:", error);
-      toast.error("Failed to update password");
+      toast.error("Échec de la mise à jour du mot de passe");
     } finally {
       setIsSubmitting(false);
     }
@@ -105,10 +105,10 @@ const UpdatePassword = () => {
         <Card className="shadow-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
-              <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-10" />
+              <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Logo Tiro" className="h-10" />
             </div>
             <CardDescription>
-              Set your new password
+              Définissez votre nouveau mot de passe
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -119,12 +119,12 @@ const UpdatePassword = () => {
                   name="password" 
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Password</FormLabel>
+                      <FormLabel>Nouveau mot de passe</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input 
                             type={showPassword ? "text" : "password"}
-                            placeholder="Enter your new password" 
+                            placeholder="Entrez votre nouveau mot de passe" 
                             {...field} 
                             disabled={isSubmitting}
                           />
@@ -154,12 +154,12 @@ const UpdatePassword = () => {
                   name="confirmPassword" 
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormLabel>Confirmer le nouveau mot de passe</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input 
                             type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Confirm your new password" 
+                            placeholder="Confirmez votre nouveau mot de passe" 
                             {...field} 
                             disabled={isSubmitting}
                           />
@@ -189,7 +189,7 @@ const UpdatePassword = () => {
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Updating..." : "Update Password"}
+                  {isSubmitting ? "Mise à jour..." : "Mettre à jour le mot de passe"}
                 </Button>
               </form>
             </Form>

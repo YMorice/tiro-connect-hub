@@ -13,7 +13,7 @@ import { toast } from "@/components/ui/sonner";
 import { ArrowLeft } from "lucide-react";
 
 const formSchema = z.object({
-  email: z.string().email("Invalid email address")
+  email: z.string().email("Adresse email invalide")
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -45,15 +45,15 @@ const ResetPassword = () => {
       
       if (error) {
         console.error("Reset password error:", error);
-        toast.error(error.message || "Failed to send reset email");
+        toast.error(error.message || "Échec de l'envoi de l'email de réinitialisation");
       } else {
         console.log("Reset email sent successfully");
         setEmailSent(true);
-        toast.success("Password reset email sent!");
+        toast.success("Email de réinitialisation du mot de passe envoyé !");
       }
     } catch (error) {
       console.error("Reset password error:", error);
-      toast.error("Failed to send reset email");
+      toast.error("Échec de l'envoi de l'email de réinitialisation");
     } finally {
       setIsSubmitting(false);
     }
@@ -66,10 +66,10 @@ const ResetPassword = () => {
           <Card className="shadow-lg">
             <CardHeader className="space-y-1 text-center">
               <div className="flex justify-center mb-2">
-                <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-10" />
+                <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Logo Tiro" className="h-10" />
               </div>
               <CardDescription>
-                Check your email
+                Vérifiez votre email
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 text-center">
@@ -82,16 +82,16 @@ const ResetPassword = () => {
               
               <div className="space-y-3 text-muted-foreground">
                 <p>
-                  We've sent a password reset link to <strong className="text-foreground">{form.getValues("email")}</strong>
+                  Nous avons envoyé un lien de réinitialisation du mot de passe à <strong className="text-foreground">{form.getValues("email")}</strong>
                 </p>
                 <p>
-                  Please click the link in the email to reset your password.
+                  Veuillez cliquer sur le lien dans l'email pour réinitialiser votre mot de passe.
                 </p>
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
                   <p className="text-amber-800">
-                    <strong>Important:</strong> The email may take a few minutes to arrive. 
-                    Don't forget to check your spam folder if you don't see it in your inbox.
-                    Also, make sure the Site URL and Redirect URLs are properly configured in your Supabase settings.
+                    <strong>Important :</strong> L'email peut prendre quelques minutes à arriver. 
+                    N'oubliez pas de vérifier votre dossier spam si vous ne le voyez pas dans votre boîte de réception.
+                    Assurez-vous également que l'URL du site et les URL de redirection sont correctement configurées dans vos paramètres Supabase.
                   </p>
                 </div>
               </div>
@@ -101,7 +101,7 @@ const ResetPassword = () => {
                 className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white"
               >
                 <Link to="/login">
-                  Back to Login
+                  Retour à la connexion
                 </Link>
               </Button>
             </CardContent>
@@ -117,10 +117,10 @@ const ResetPassword = () => {
         <Card className="shadow-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
-              <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-10" />
+              <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Logo Tiro" className="h-10" />
             </div>
             <CardDescription>
-              Reset your password
+              Réinitialisez votre mot de passe
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -134,7 +134,7 @@ const ResetPassword = () => {
                       <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="Enter your email address" 
+                          placeholder="Entrez votre adresse email" 
                           {...field} 
                           autoComplete="email" 
                           disabled={isSubmitting}
@@ -146,7 +146,7 @@ const ResetPassword = () => {
                 />
                 
                 <p className="text-sm text-muted-foreground">
-                  Enter your email address and we'll send you a link to reset your password.
+                  Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
                 </p>
                 
                 <Button 
@@ -154,7 +154,7 @@ const ResetPassword = () => {
                   className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white" 
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Sending..." : "Send Reset Link"}
+                  {isSubmitting ? "Envoi en cours..." : "Envoyer le lien de réinitialisation"}
                 </Button>
                 
                 <Button 
@@ -165,7 +165,7 @@ const ResetPassword = () => {
                 >
                   <Link to="/login" className="flex items-center justify-center gap-2">
                     <ArrowLeft className="h-4 w-4" />
-                    Back to Login
+                    Retour à la connexion
                   </Link>
                 </Button>
               </form>
