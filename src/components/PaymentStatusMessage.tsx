@@ -16,7 +16,7 @@ const PaymentStatusMessage = ({ projectStatus }: PaymentStatusMessageProps) => {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center text-orange-800">
           <CreditCard className="h-5 w-5 mr-2" />
-          Payment Confirmation Pending
+          Confirmation de Paiement en Attente
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -24,10 +24,10 @@ const PaymentStatusMessage = ({ projectStatus }: PaymentStatusMessageProps) => {
           <Clock className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm text-orange-800 font-medium">
-              Waiting for Admin Payment Confirmation
+              En attente de la confirmation de paiement par l'administrateur
             </p>
             <p className="text-sm text-orange-700 mt-1">
-              Our admin team is currently reviewing and confirming your payment for this project.
+              Notre équipe d'administration examine et confirme actuellement votre paiement pour ce projet.
             </p>
           </div>
         </div>
@@ -36,10 +36,10 @@ const PaymentStatusMessage = ({ projectStatus }: PaymentStatusMessageProps) => {
           <CheckCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm text-orange-800 font-medium">
-              What happens next?
+              Que se passe-t-il ensuite ?
             </p>
             <p className="text-sm text-orange-700 mt-1">
-              Once payment is confirmed, your project will be activated and the selected student will be added to the project conversation.
+              Une fois le paiement confirmé, votre projet sera activé et l'étudiant sélectionné sera ajouté à la conversation du projet.
             </p>
           </div>
         </div>
@@ -48,17 +48,17 @@ const PaymentStatusMessage = ({ projectStatus }: PaymentStatusMessageProps) => {
           <Users className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm text-orange-800 font-medium">
-              Project Activation
+              Activation du Projet
             </p>
             <p className="text-sm text-orange-700 mt-1">
-              Your project status will change to "Active" and you'll be able to communicate directly with your selected student.
+              Le statut de votre projet passera à "Actif" et vous pourrez communiquer directement avec l'étudiant sélectionné.
             </p>
           </div>
         </div>
         
         <div className="bg-orange-100 p-3 rounded-lg">
           <p className="text-xs text-orange-800">
-            <strong>Estimated processing time:</strong> 1-2 business days. You'll receive an email notification once your payment is confirmed.
+            <strong>Temps de traitement estimé :</strong> 1-2 jours ouvrables. Vous recevrez une notification par email une fois votre paiement confirmé.
           </p>
         </div>
       </CardContent>

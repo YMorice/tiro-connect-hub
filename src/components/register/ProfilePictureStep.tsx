@@ -25,12 +25,12 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
     setIsUploading(true);
     
     try {
-      // Generate a unique filename
+      // Générer un nom de fichier unique
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = `${fileName}`;
       
-      // Upload the file to the pp bucket
+      // Télécharger le fichier vers le bucket pp
       const { error: uploadError } = await supabase
         .storage
         .from('pp')
@@ -41,7 +41,7 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
         
       if (uploadError) throw uploadError;
       
-      // Get the public URL with cache busting
+      // Obtenir l'URL publique avec cache busting
       const { data: urlData } = supabase
         .storage
         .from('pp')
@@ -49,13 +49,13 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
         
       const avatarUrlFromStorage = `${urlData.publicUrl}?t=${Date.now()}`;
       setAvatarUrl(avatarUrlFromStorage);
-      toast.success("Profile picture uploaded successfully");
+      toast.success("Photo de profil téléchargée avec succès");
       
     } catch (error: any) {
-      console.error("Error uploading profile picture:", error);
-      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
+      console.error("Erreur lors du téléchargement de la photo de profil:", error);
+      toast.error(`Échec du téléchargement: ${error.message || "Erreur inconnue"}`);
       
-      // Still create a temporary URL for preview
+      // Créer quand même une URL temporaire pour l'aperçu
       const tempUrl = URL.createObjectURL(file);
       setAvatarUrl(tempUrl);
     } finally {
@@ -63,7 +63,7 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
     }
   };
 
-  // Safely get user initials
+  // Obtenir les initiales de l'utilisateur en toute sécurité
   const getUserInitials = () => {
     if (formData.name) {
       return formData.name.charAt(0).toUpperCase();
@@ -73,19 +73,19 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Add a Profile Picture</h3>
+      <h3 className="text-lg font-medium">Ajouter une Photo de Profil</h3>
       <p className="text-sm text-muted-foreground">
-        Upload a profile picture to personalize your account
+        Téléchargez une photo de profil pour personnaliser votre compte
       </p>
       <div className="flex flex-col items-center gap-4">
         <Avatar className="w-24 h-24">
           {avatarUrl ? (
             <AvatarImage 
               src={avatarUrl} 
-              alt={formData.name || "User"}
+              alt={formData.name || "Utilisateur"}
               className="object-cover"
               onError={(e) => {
-                console.error("Failed to load avatar image:", avatarUrl);
+                console.error("Échec du chargement de l'image avatar:", avatarUrl);
                 e.currentTarget.style.display = 'none';
               }}
             />
@@ -98,7 +98,7 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
         <FileUpload 
           onFileSelect={handleFileSelect} 
           accept="image/*"
-          buttonText={isUploading ? "Uploading..." : "Upload Profile Picture"}
+          buttonText={isUploading ? "Téléchargement..." : "Télécharger Photo de Profil"}
         />
       </div>
     </div>

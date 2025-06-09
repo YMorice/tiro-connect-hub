@@ -7,7 +7,7 @@ import { toast } from "@/components/ui/sonner";
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
   accept?: string;
-  maxSize?: number; // in MB
+  maxSize?: number; // en MB
   buttonText?: string;
 }
 
@@ -15,7 +15,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   onFileSelect,
   accept = "*",
   maxSize = 10,
-  buttonText = "Upload File",
+  buttonText = "Télécharger un Fichier",
 }) => {
   const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -26,9 +26,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
     const file = files[0];
     
-    // Check file size
+    // Vérifier la taille du fichier
     if (file.size > maxSize * 1024 * 1024) {
-      toast.error(`File size exceeds ${maxSize}MB limit`);
+      toast.error(`La taille du fichier dépasse la limite de ${maxSize}MB`);
       return;
     }
 

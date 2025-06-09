@@ -40,12 +40,12 @@ interface Project {
 // Helper function to convert database status to display status
 const convertDbStatusToDisplay = (dbStatus: string): string => {
   const statusMap: { [key: string]: string } = {
-    'STEP1': 'New',
-    'STEP2': 'Proposals',
-    'STEP3': 'Selection',
-    'STEP4': 'Payment',
-    'STEP5': 'Active',
-    'STEP6': 'In progress'
+    'STEP1': 'Nouveau',
+    'STEP2': 'Propositions',
+    'STEP3': 'Sélection',
+    'STEP4': 'Paiement',
+    'STEP5': 'Actif',
+    'STEP6': 'En cours'
   };
   return statusMap[dbStatus] || dbStatus;
 };
@@ -53,12 +53,12 @@ const convertDbStatusToDisplay = (dbStatus: string): string => {
 // Helper function to convert display status to database status
 const convertDisplayStatusToDb = (displayStatus: string): string => {
   const statusMap: { [key: string]: string } = {
-    'New': 'STEP1',
-    'Proposals': 'STEP2',
-    'Selection': 'STEP3',
-    'Payment': 'STEP4',
-    'Active': 'STEP5',
-    'In progress': 'STEP6'
+    'Nouveau': 'STEP1',
+    'Propositions': 'STEP2',
+    'Sélection': 'STEP3',
+    'Paiement': 'STEP4',
+    'Actif': 'STEP5',
+    'En cours': 'STEP6'
   };
   return statusMap[displayStatus] || displayStatus;
 };
@@ -66,12 +66,12 @@ const convertDisplayStatusToDb = (displayStatus: string): string => {
 // Helper function to get status color
 const getStatusColor = (status: string): string => {
   switch (status) {
-    case 'New': return 'bg-blue-100 text-blue-800';
-    case 'Proposals': return 'bg-yellow-100 text-yellow-800';
-    case 'Selection': return 'bg-purple-100 text-purple-800';
-    case 'Payment': return 'bg-orange-100 text-orange-800';
-    case 'Active': return 'bg-green-100 text-green-800';
-    case 'In progress': return 'bg-indigo-100 text-indigo-800';
+    case 'Nouveau': return 'bg-blue-100 text-blue-800';
+    case 'Propositions': return 'bg-yellow-100 text-yellow-800';
+    case 'Sélection': return 'bg-purple-100 text-purple-800';
+    case 'Paiement': return 'bg-orange-100 text-orange-800';
+    case 'Actif': return 'bg-green-100 text-green-800';
+    case 'En cours': return 'bg-indigo-100 text-indigo-800';
     default: return 'bg-gray-100 text-gray-800';
   }
 };
@@ -88,7 +88,7 @@ const Admin = () => {
   useEffect(() => {
     if (user && (user as any).role !== "admin") {
       navigate("/dashboard");
-      toast.error("You don't have permission to access this page");
+      toast.error("Vous n'avez pas l'autorisation d'accéder à cette page");
     }
   }, [user, navigate]);
 
@@ -135,8 +135,8 @@ const Admin = () => {
         
         setProjects(formattedProjects);
       } catch (error) {
-        console.error('Error fetching projects:', error);
-        toast.error("Failed to load projects");
+        console.error('Erreur lors du chargement des projets:', error);
+        toast.error("Échec du chargement des projets");
       } finally {
         setLoading(false);
       }
@@ -160,12 +160,12 @@ const Admin = () => {
   });
 
   const handleViewConversation = (projectId: string, projectTitle: string) => {
-    console.log('Navigating to conversation for project:', projectId, projectTitle);
+    console.log('Navigation vers la conversation pour le projet:', projectId, projectTitle);
     navigate(`/messages?projectId=${projectId}&projectTitle=${encodeURIComponent(projectTitle)}`);
   };
 
   const handleSelectStudents = (projectId: string, projectTitle: string, status: string) => {
-    const mode = status === 'New' ? 'new' : 'proposals';
+    const mode = status === 'Nouveau' ? 'new' : 'proposals';
     navigate(`/student-selection?projectId=${projectId}&projectTitle=${encodeURIComponent(projectTitle)}&mode=${mode}`);
   };
 
@@ -206,7 +206,7 @@ const Admin = () => {
         setProjects(formattedProjects);
       }
     } catch (error) {
-      console.error('Error refreshing projects:', error);
+      console.error('Erreur lors de l\'actualisation des projets:', error);
     }
   };
 
@@ -214,16 +214,16 @@ const Admin = () => {
     try {
       const { error } = await supabase
         .from('projects')
-        .update({ status: convertDisplayStatusToDb('Active') })
+        .update({ status: convertDisplayStatusToDb('Actif') })
         .eq('id_project', projectId);
         
       if (error) throw error;
       
-      toast.success("Payment confirmed. Project is now active.");
+      toast.success("Paiement confirmé. Le projet est maintenant actif.");
       await refreshProjects();
     } catch (error) {
-      console.error('Error confirming payment:', error);
-      toast.error("Failed to confirm payment");
+      console.error('Erreur lors de la confirmation du paiement:', error);
+      toast.error("Échec de la confirmation du paiement");
     }
   };
 
@@ -240,11 +240,11 @@ const Admin = () => {
       // Handle student availability when project is completed
       await StudentAvailabilityService.handleProjectCompletion(projectId);
       
-      toast.success("Project marked as completed. Student is now available for new projects.");
+      toast.success("Projet marqué comme terminé. L'étudiant est maintenant disponible pour de nouveaux projets.");
       await refreshProjects();
     } catch (error) {
-      console.error('Error completing project:', error);
-      toast.error("Failed to complete project");
+      console.error('Erreur lors de la finalisation du projet:', error);
+      toast.error("Échec de la finalisation du projet");
     }
   };
 
@@ -253,7 +253,7 @@ const Admin = () => {
     setStatusFilter("");
   };
 
-  const statusOptions = ['New', 'Proposals', 'Selection', 'Payment', 'Active', 'In progress'];
+  const statusOptions = ['Nouveau', 'Propositions', 'Sélection', 'Paiement', 'Actif', 'En cours'];
 
   if (!user || (user as any).role !== "admin") {
     return null; // Will redirect in the useEffect
@@ -265,19 +265,19 @@ const Admin = () => {
         <div className="max-w-full p-4 space-y-4">
           <div className="flex flex-col gap-3">
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Admin Dashboard</h1>
-              <p className="text-muted-foreground text-sm">Manage projects and student assignments</p>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Tableau de Bord Admin</h1>
+              <p className="text-muted-foreground text-sm">Gérer les projets et les affectations d'étudiants</p>
             </div>
             <Button onClick={() => navigate('/new-project')} className="flex items-center w-fit text-sm h-9" size="sm">
               <Plus className="h-4 w-4 mr-1" />
-              Create New Project
+              Créer un Nouveau Projet
             </Button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
+                <CardTitle className="text-sm font-medium">Total des Projets</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent className="p-4 pt-0">
@@ -287,24 +287,24 @@ const Admin = () => {
             
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+                <CardTitle className="text-sm font-medium">Projets Actifs</CardTitle>
                 <MessageCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent className="p-4 pt-0">
                 <div className="text-xl font-bold">
-                  {projects.filter(p => p.status === 'Active' || p.status === 'In progress').length}
+                  {projects.filter(p => p.status === 'Actif' || p.status === 'En cours').length}
                 </div>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                <CardTitle className="text-sm font-medium">Pending Projects</CardTitle>
+                <CardTitle className="text-sm font-medium">Projets en Attente</CardTitle>
                 <Eye className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent className="p-4 pt-0">
                 <div className="text-xl font-bold">
-                  {projects.filter(p => p.status === 'New' || p.status === 'Proposals' || p.status === 'Selection').length}
+                  {projects.filter(p => p.status === 'Nouveau' || p.status === 'Propositions' || p.status === 'Sélection').length}
                 </div>
               </CardContent>
             </Card>
@@ -312,14 +312,14 @@ const Admin = () => {
 
           <Card>
             <CardHeader className="p-4">
-              <CardTitle className="text-lg">All Projects</CardTitle>
-              <CardDescription className="text-sm">Manage project statuses and student assignments</CardDescription>
+              <CardTitle className="text-lg">Tous les Projets</CardTitle>
+              <CardDescription className="text-sm">Gérer les statuts des projets et les affectations d'étudiants</CardDescription>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Search projects..."
+                    placeholder="Rechercher des projets..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-8 text-sm h-9"
@@ -328,10 +328,10 @@ const Admin = () => {
                 <div className="flex items-center gap-2">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-[150px] h-9 text-sm">
-                      <SelectValue placeholder="Filter by status" />
+                      <SelectValue placeholder="Filtrer par statut" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All statuses</SelectItem>
+                      <SelectItem value="">Tous les statuts</SelectItem>
                       {statusOptions.map((status) => (
                         <SelectItem key={status} value={status}>
                           {status}
@@ -342,7 +342,7 @@ const Admin = () => {
                   {(searchQuery || statusFilter) && (
                     <Button variant="outline" size="sm" onClick={clearFilters} className="h-9 text-sm">
                       <Filter className="h-4 w-4 mr-1" />
-                      Clear
+                      Effacer
                     </Button>
                   )}
                 </div>
@@ -358,10 +358,10 @@ const Admin = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-sm min-w-[200px]">Project Title</TableHead>
+                        <TableHead className="text-sm min-w-[200px]">Titre du Projet</TableHead>
                         <TableHead className="hidden md:table-cell text-sm min-w-[150px]">Entrepreneur</TableHead>
-                        <TableHead className="hidden sm:table-cell text-sm min-w-[100px]">Status</TableHead>
-                        <TableHead className="hidden lg:table-cell text-sm min-w-[100px]">Created</TableHead>
+                        <TableHead className="hidden sm:table-cell text-sm min-w-[100px]">Statut</TableHead>
+                        <TableHead className="hidden lg:table-cell text-sm min-w-[100px]">Créé</TableHead>
                         <TableHead className="text-sm min-w-[250px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -395,7 +395,7 @@ const Admin = () => {
                               </Badge>
                             </TableCell>
                             <TableCell className="hidden lg:table-cell text-xs">
-                              {new Date(project.created_at).toLocaleDateString()}
+                              {new Date(project.created_at).toLocaleDateString('fr-FR')}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1 flex-wrap">
@@ -406,11 +406,11 @@ const Admin = () => {
                                   className="flex items-center text-xs h-8"
                                 >
                                   <MessageCircle className="h-3 w-3 mr-1" />
-                                  <span className="hidden sm:inline">View Conversation</span>
+                                  <span className="hidden sm:inline">Voir Conversation</span>
                                   <span className="sm:hidden">Chat</span>
                                 </Button>
                                 
-                                {(project.status === 'New' || project.status === 'Proposals') && (
+                                {(project.status === 'Nouveau' || project.status === 'Propositions') && (
                                   <Button 
                                     variant="outline" 
                                     size="sm"
@@ -419,13 +419,13 @@ const Admin = () => {
                                   >
                                     <UserPlus className="h-3 w-3 mr-1" />
                                     <span className="hidden sm:inline">
-                                      {project.status === 'New' ? 'Select Students' : 'Select from Accepted'}
+                                      {project.status === 'Nouveau' ? 'Sélectionner Étudiants' : 'Sélectionner Acceptés'}
                                     </span>
-                                    <span className="sm:hidden">Select</span>
+                                    <span className="sm:hidden">Sélectionner</span>
                                   </Button>
                                 )}
                                 
-                                {project.status === 'Payment' && (
+                                {project.status === 'Paiement' && (
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                       <Button 
@@ -434,31 +434,31 @@ const Admin = () => {
                                         className="flex items-center bg-green-600 hover:bg-green-700 text-xs h-8"
                                       >
                                         <Eye className="h-3 w-3 mr-1" />
-                                        <span className="hidden sm:inline">Confirm Payment</span>
-                                        <span className="sm:hidden">Confirm</span>
+                                        <span className="hidden sm:inline">Confirmer Paiement</span>
+                                        <span className="sm:hidden">Confirmer</span>
                                       </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                       <AlertDialogHeader>
-                                        <AlertDialogTitle>Confirm Payment</AlertDialogTitle>
+                                        <AlertDialogTitle>Confirmer le Paiement</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                          Are you sure you want to confirm the payment for "{project.title}"? This will activate the project and notify all parties.
+                                          Êtes-vous sûr de vouloir confirmer le paiement pour "{project.title}" ? Cela activera le projet et notifiera toutes les parties.
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogCancel>Annuler</AlertDialogCancel>
                                         <AlertDialogAction 
                                           onClick={() => handleConfirmPayment(project.id)}
                                           className="bg-green-600 hover:bg-green-700"
                                         >
-                                          Confirm Payment
+                                          Confirmer le Paiement
                                         </AlertDialogAction>
                                       </AlertDialogFooter>
                                     </AlertDialogContent>
                                   </AlertDialog>
                                 )}
                                 
-                                {(project.status === 'Active' || project.status === 'In progress') && (
+                                {(project.status === 'Actif' || project.status === 'En cours') && (
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                       <Button 
@@ -467,24 +467,24 @@ const Admin = () => {
                                         className="flex items-center bg-purple-600 hover:bg-purple-700 text-xs h-8"
                                       >
                                         <Eye className="h-3 w-3 mr-1" />
-                                        <span className="hidden sm:inline">Complete Project</span>
-                                        <span className="sm:hidden">Complete</span>
+                                        <span className="hidden sm:inline">Terminer Projet</span>
+                                        <span className="sm:hidden">Terminer</span>
                                       </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                       <AlertDialogHeader>
-                                        <AlertDialogTitle>Complete Project</AlertDialogTitle>
+                                        <AlertDialogTitle>Terminer le Projet</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                          Are you sure you want to mark "{project.title}" as completed? This will make the assigned student available for new projects and cannot be undone.
+                                          Êtes-vous sûr de vouloir marquer "{project.title}" comme terminé ? Cela rendra l'étudiant assigné disponible pour de nouveaux projets et ne peut pas être annulé.
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogCancel>Annuler</AlertDialogCancel>
                                         <AlertDialogAction 
                                           onClick={() => handleCompleteProject(project.id)}
                                           className="bg-purple-600 hover:bg-purple-700"
                                         >
-                                          Complete Project
+                                          Terminer le Projet
                                         </AlertDialogAction>
                                       </AlertDialogFooter>
                                     </AlertDialogContent>
@@ -498,8 +498,8 @@ const Admin = () => {
                         <TableRow>
                           <TableCell colSpan={5} className="text-center py-4 text-sm">
                             {projects.length > 0 
-                              ? "No projects match the search criteria" 
-                              : "No projects found"}
+                              ? "Aucun projet ne correspond aux critères de recherche" 
+                              : "Aucun projet trouvé"}
                           </TableCell>
                         </TableRow>
                       )}

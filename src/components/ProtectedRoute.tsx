@@ -16,16 +16,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const location = useLocation();
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return <div className="flex items-center justify-center h-screen">Chargement...</div>;
   }
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If a specific role is required, check that the user has it
+  // Si un rôle spécifique est requis, vérifier que l'utilisateur l'a
   if (requiredRole && user.role !== requiredRole) {
-    console.log(`Access denied: User role ${user.role} does not match required role ${requiredRole}`);
+    console.log(`Accès refusé : Le rôle utilisateur ${user.role} ne correspond pas au rôle requis ${requiredRole}`);
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
 

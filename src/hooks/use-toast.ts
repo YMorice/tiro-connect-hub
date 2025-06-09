@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -90,8 +91,8 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
+      // ! Effets de bord ! - Ceci pourrait être extrait dans une action dismissToast(),
+      // mais je le garde ici pour la simplicité
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {

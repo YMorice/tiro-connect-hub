@@ -11,7 +11,7 @@ interface SkillsStepProps {
   setSelectedSkills: (skills: string[]) => void;
 }
 
-// Predefined list of skills for checkboxes
+// Liste prédéfinie de compétences pour les cases à cocher
 const AVAILABLE_SKILLS = [
   "After Effects",
   "Illustrator", 
@@ -39,9 +39,9 @@ const SkillsStep: React.FC<SkillsStepProps> = ({ selectedSkills, setSelectedSkil
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Select Your Skills</h3>
+      <h3 className="text-lg font-medium">Sélectionnez Vos Compétences</h3>
       <p className="text-sm text-muted-foreground">
-        Choose the skills that best represent your expertise
+        Choisissez les compétences qui représentent le mieux votre expertise
       </p>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
         {AVAILABLE_SKILLS.map((skill) => (

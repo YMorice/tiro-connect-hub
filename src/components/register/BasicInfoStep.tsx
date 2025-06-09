@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   FormField,
@@ -27,9 +28,9 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ form }) => {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Full Name</FormLabel>
+            <FormLabel>Nom Complet</FormLabel>
             <FormControl>
-              <Input placeholder="John Doe" {...field} />
+              <Input placeholder="Jean Dupont" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -43,7 +44,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ form }) => {
           <FormItem>
             <FormLabel>Email</FormLabel>
             <FormControl>
-              <Input placeholder="john@example.com" type="email" {...field} />
+              <Input placeholder="jean@exemple.com" type="email" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -55,7 +56,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ form }) => {
         name="password"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Password</FormLabel>
+            <FormLabel>Mot de Passe</FormLabel>
             <FormControl>
               <Input type="password" {...field} />
             </FormControl>
@@ -69,7 +70,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ form }) => {
         name="role"
         render={({ field }) => (
           <FormItem className="space-y-3">
-            <FormLabel>I am a...</FormLabel>
+            <FormLabel>Je suis un...</FormLabel>
             <FormControl>
               <RadioGroup
                 onValueChange={field.onChange}
@@ -78,7 +79,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ form }) => {
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="student" id="student" />
-                  <Label htmlFor="student">Student</Label>
+                  <Label htmlFor="student">Étudiant</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="entrepreneur" id="entrepreneur" />
@@ -97,10 +98,10 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ form }) => {
           name="formation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Education or Training</FormLabel>
+              <FormLabel>Éducation ou Formation</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Your education or training"
+                  placeholder="Votre éducation ou formation"
                   {...field}
                 />
               </FormControl>
@@ -124,9 +125,9 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ form }) => {
             </FormControl>
             <div className="space-y-1 leading-none">
               <FormLabel htmlFor="terms" className="font-normal">
-                I accept the{" "}
+                J'accepte les{" "}
                 <Link to="/terms" className="text-tiro-primary hover:underline">
-                  Terms of Use
+                  Conditions d'Utilisation
                 </Link>
               </FormLabel>
               <FormMessage />
