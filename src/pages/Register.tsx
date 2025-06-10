@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -48,14 +47,19 @@ const AVAILABLE_SKILLS = [
 // Step 1 schema - Basic registration information
 const step1Schema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string()
+    .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+    .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
+    .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
+    .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
+    .regex(/[^A-Za-z0-9]/, "Le mot de passe doit contenir au moins un caractère spécial"),
+  confirmPassword: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
   role: z.enum(["student", "entrepreneur"] as const),
   acceptTerms: z.boolean().refine(val => val === true, {
-    message: "You must accept the Terms of Use",
+    message: "Vous devez accepter les conditions d'utilisation",
   }),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
+  message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
 });
 

@@ -1,4 +1,3 @@
-
 /**
  * Document Service
  * 
@@ -23,6 +22,7 @@
  * - File uploads are authenticated through Supabase Auth
  * - Storage bucket permissions control access
  * - Document metadata includes creator information
+ * - File type and size restrictions are enforced
  * 
  * The service integrates with the toast notification system to provide
  * immediate feedback to users about operation success or failure.
@@ -30,6 +30,34 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
+
+// Configuration des types de fichiers autorisés
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'image/jpeg',
+  'image/png',
+  'image/gif'
+];
+
+// Taille maximale de fichier (10 MB)
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+// Validation du fichier
+const validateFile = (file: File) => {
+  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    throw new Error('Type de fichier non autorisé. Types acceptés : PDF, Word, Excel, images (JPEG, PNG, GIF)');
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error('Le fichier est trop volumineux. Taille maximale : 10 MB');
+  }
+
+  return true;
+};
 
 /**
  * Uploads a file to Supabase Storage
@@ -61,6 +89,9 @@ import { toast } from "@/components/ui/sonner";
  */
 export const uploadFile = async (file: File, projectId: string): Promise<string | null> => {
   try {
+    // Validation du fichier
+    validateFile(file);
+
     if (!file) {
       toast.error("No file selected");
       return null;
