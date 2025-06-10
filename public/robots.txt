@@ -11,4 +11,18 @@ User-agent: facebookexternalhit
 Allow: /
 
 User-agent: *
-Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /messages
+Disallow: /projects
+Disallow: /reset-password
+Disallow: /update-password
+Disallow: /create-admin
+
+# Autoriser l'accès aux pages publiques
+Allow: /$
+Allow: /login
+Allow: /register
+Allow: /about
+Allow: /contact

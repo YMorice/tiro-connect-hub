@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
@@ -214,32 +213,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = useCallback(async () => {
     try {
+      // Déconnecter de Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      // Nettoyer le state local
       setSession(null);
       setUser(null);
       
-      toast.success("Signed out successfully");
+      // Nettoyer le sessionStorage
+      sessionStorage.clear();
+      
+      // Nettoyer les cookies liés à l'authentification
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      
+      toast.success("Déconnexion réussie");
     } catch (error: any) {
-      console.error("Sign out error:", error);
-      toast.error(error.message || "Failed to sign out");
+      console.error("Erreur lors de la déconnexion:", error);
+      toast.error(error.message || "Erreur lors de la déconnexion");
       throw error;
     }
   }, []);
 
   const logout = useCallback(async () => {
     try {
+      // Déconnecter de Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      // Nettoyer le state local
       setSession(null);
       setUser(null);
       
-      toast.success("Logged out successfully");
+      // Nettoyer le sessionStorage
+      sessionStorage.clear();
+      
+      // Nettoyer les cookies liés à l'authentification
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      
+      toast.success("Déconnexion réussie");
     } catch (error: any) {
-      console.error("Logout error:", error);
-      toast.error(error.message || "Failed to log out");
+      console.error("Erreur lors de la déconnexion:", error);
+      toast.error(error.message || "Erreur lors de la déconnexion");
       throw error;
     }
   }, []);
