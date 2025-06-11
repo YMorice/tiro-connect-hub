@@ -359,30 +359,35 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-start space-x-3">
-                    <AlertCircle className="h-5 w-5 text-tiro-primary mt-0.5" />
+                    <AlertCircle className="h-5 w-5 text-tiro-primary mt-1" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {userRole === 'student' ? 'Répondez Rapidement' : 'Restez Connecté'}
+                        Restez Professionnel
                       </p>
                       <p className="text-xs text-gray-600">
-                        {userRole === 'student' 
-                          ? 'Des réponses rapides aux propositions augmentent vos chances d\'être sélectionné.'
-                          : 'Une communication régulière avec votre étudiant mène à de meilleurs résultats de projet.'
-                        }
+                        Adoptez une attitude et un ton pro, comme dans toute relation client.
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                    <MessageCircle className="h-5 w-5 text-blue-600 mt-1" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {userRole === 'student' ? 'Mettez à Jour Votre Profil' : 'Exigences Claires'}
+                        Restez Connecté
                       </p>
                       <p className="text-xs text-gray-600">
-                        {userRole === 'student'
-                          ? 'Gardez vos compétences et portfolio à jour pour attirer plus de propositions de projets.'
-                          : 'Des descriptions de projet détaillées aident les étudiants à livrer exactement ce dont vous avez besoin.'
-                        }
+                        Une communication régulière avec votre étudiant mène à de meilleurs résultats de projet.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-green-600 mt-1" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        Exigences Claires
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Des descriptions de projet détaillées aident les étudiants à livrer exactement ce dont vous avez besoin.
                       </p>
                     </div>
                   </div>
