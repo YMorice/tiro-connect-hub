@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useProjects } from "@/context/project-context";
@@ -352,6 +351,7 @@ const Dashboard = () => {
                   </Link>
                 </CardContent>
               </Card>
+
               {/* Carte Conseils */}
               <Card>
                 <CardHeader>
@@ -359,18 +359,21 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-start space-x-3">
-                    <AlertCircle className="h-5 w-5 text-tiro-primary mt-1" />
+                    <AlertCircle className="h-5 w-5 text-tiro-primary mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        Restez Professionnel
+                        {userRole === 'student' ? 'Répondez Rapidement' : 'Restez Professionnel'}
                       </p>
                       <p className="text-xs text-gray-600">
-                        Adoptez une attitude et un ton pro, comme dans toute relation client.
+                        {userRole === 'student' 
+                          ? 'Des réponses rapides aux propositions augmentent vos chances d\'être sélectionné.'
+                          : 'Adoptez une attitude et un ton pro, comme dans toute relation client.'
+                        }
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <MessageCircle className="h-5 w-5 text-blue-600 mt-1" />
+                    <MessageCircle className="h-5 w-5 text-blue-600 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         Restez Connecté
@@ -381,13 +384,16 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-600 mt-1" />
+                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        Exigences Claires
+                        {userRole === 'student' ? 'Mettez à Jour Votre Profil' : 'Exigences Claires'}
                       </p>
                       <p className="text-xs text-gray-600">
-                        Des descriptions de projet détaillées aident les étudiants à livrer exactement ce dont vous avez besoin.
+                        {userRole === 'student'
+                          ? 'Gardez vos compétences et portfolio à jour pour attirer plus de propositions de projets.'
+                          : 'Des descriptions de projet détaillées aident les étudiants à livrer exactement ce dont vous avez besoin.'
+                        }
                       </p>
                     </div>
                   </div>
