@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useProjects } from "@/context/project-context";
@@ -111,10 +110,10 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-6 max-w-7xl">
           {/* En-tête */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 text-left">
               Bon retour, {user?.user_metadata?.name || "Utilisateur"} !
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-left">
               Voici un aperçu de vos projets et de votre activité récente.
             </p>
           </div>
@@ -363,13 +362,24 @@ const Dashboard = () => {
                     <AlertCircle className="h-5 w-5 text-tiro-primary mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {userRole === 'student' ? 'Répondez Rapidement' : 'Restez Connecté'}
+                        {userRole === 'student' ? 'Répondez Rapidement' : 'Restez Professionnel'}
                       </p>
                       <p className="text-xs text-gray-600">
                         {userRole === 'student' 
                           ? 'Des réponses rapides aux propositions augmentent vos chances d\'être sélectionné.'
-                          : 'Une communication régulière avec votre étudiant mène à de meilleurs résultats de projet.'
+                          : 'Adoptez une attitude et un ton pro, comme dans toute relation client.'
                         }
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <MessageCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        Restez Connecté
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Une communication régulière avec votre étudiant mène à de meilleurs résultats de projet.
                       </p>
                     </div>
                   </div>
