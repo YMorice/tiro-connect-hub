@@ -111,10 +111,10 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-6 max-w-7xl">
           {/* En-tête */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 text-left">
               Bon retour, {user?.user_metadata?.name || "Utilisateur"} !
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-left">
               Voici un aperçu de vos projets et de votre activité récente.
             </p>
           </div>
@@ -352,7 +352,6 @@ const Dashboard = () => {
                   </Link>
                 </CardContent>
               </Card>
-
               {/* Carte Conseils */}
               <Card>
                 <CardHeader>
