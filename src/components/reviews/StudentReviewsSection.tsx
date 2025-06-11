@@ -98,7 +98,7 @@ const StudentReviewsSection: React.FC<StudentReviewsSectionProps> = ({ studentId
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center py-4">
-            No reviews available yet.
+            Aucun avis disponible actuellement.
           </p>
         </CardContent>
       </Card>

@@ -124,13 +124,13 @@ const ProjectReviewSection: React.FC<ProjectReviewSectionProps> = ({
           ) : (
             <div>
               <p className="text-gray-600 mb-3">
-                Share your experience working with this student by leaving a review.
+                Partagez votre expérience avec cet étudiant en laissant un avis.
               </p>
               <Button 
                 onClick={() => setShowReviewForm(true)}
                 className="bg-tiro-primary hover:bg-tiro-primary/90"
               >
-                Write a Review
+                Ecrire un avis
               </Button>
             </div>
           )}
