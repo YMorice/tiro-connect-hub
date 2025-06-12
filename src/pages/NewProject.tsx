@@ -35,9 +35,9 @@ interface LocationState {
 }
 
 const formSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  packId: z.string().uuid("Invalid pack ID"),
+  title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
+  description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
+  packId: z.string().uuid("Pack ID invalide"),
   deadline: z.date().optional()
 });
 
@@ -77,14 +77,14 @@ const NewProject = () => {
           } else if (error) {
             console.error("Error fetching entrepreneur ID:", error);
             if (error.code === 'PGRST116') {
-              toast.error("No entrepreneur profile found. Please complete your profile first.");
+              toast.error("Aucun profil d'entrepreneur n'a été trouvé, veuillez d'abord finir de compléter votre profil");
             } else {
-              toast.error("Failed to fetch your entrepreneur profile");
+              toast.error("La recherche de votre profil d'entrepreneur a échouée");
             }
           }
         } catch (error) {
           console.error("Error fetching entrepreneur ID:", error);
-          toast.error("Failed to fetch your entrepreneur profile");
+          toast.error("La recherche de votre profil d'entrepreneur n'a pas abouti");
         }
       }
     };
@@ -112,7 +112,7 @@ const NewProject = () => {
 
   const onSubmit = async (values: FormValues) => {
     if (!user) {
-      toast.error("You need to be logged in to create a project");
+      toast.error("Vous devez être connecté pour pouvoir créer un projet");
       return;
     }
     
@@ -264,22 +264,22 @@ const NewProject = () => {
             onClick={() => navigate("/pack-selection")} 
             className="flex items-center text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to pack selection
+            <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la sélection de pack
           </Button>
         </div>
 
         <Card className="w-full">
           <CardHeader>
-            <CardTitle className="text-2xl">Create New Project</CardTitle>
+            <CardTitle className="text-2xl">Créer nouveau projet</CardTitle>
             <CardDescription>
-              Provide the details for your new project
+              Détails pour votre nouveau projet
             </CardDescription>
           </CardHeader>
           <CardContent>
             {!entrepreneurId && (
               <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
                 <p className="text-yellow-800">
-                  Loading your entrepreneur profile...
+                  Chargement de votre profil d'entrepreneur
                 </p>
               </div>
             )}
@@ -291,11 +291,11 @@ const NewProject = () => {
                   name="packId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project Pack</FormLabel>
+                      <FormLabel>Pack de projet</FormLabel>
                       <Select defaultValue={field.value} onValueChange={field.onChange} disabled>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a pack" />
+                            <SelectValue placeholder="Sélectionnez un pack" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -314,9 +314,9 @@ const NewProject = () => {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project Title</FormLabel>
+                      <FormLabel>Titre du projet</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter project title" {...field} />
+                        <Input placeholder="Entrez le titre de votre projet" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -328,10 +328,10 @@ const NewProject = () => {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project Description</FormLabel>
+                      <FormLabel>Description du projet</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Describe your project in detail and your specific needs for this pack" 
+                          placeholder="Décrivez votre projet en détail et vos besoins spécifiques pour ce pack" 
                           className="min-h-[200px]" 
                           {...field} 
                         />
@@ -346,7 +346,7 @@ const NewProject = () => {
                   name="deadline"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Project Deadline (optional)</FormLabel>
+                      <FormLabel>Date limite du projet (optionnel)</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -376,25 +376,25 @@ const NewProject = () => {
                 />
 
                 <div className="space-y-4 border p-4 rounded-md bg-gray-50">
-                  <h3 className="font-medium">Initial Documents (Optional)</h3>
+                  <h3 className="font-medium">Documents initiaux (Optionnel)</h3>
                   <p className="text-sm text-muted-foreground">
-                    You can add documents to this project that will help the student understand your requirements.
+                  Vous pouvez ajouter à ce projet des documents qui aideront l'étudiant à comprendre vos exigences.
                   </p>
                   
                   <div className="space-y-2">
-                    <Label>Project Documents</Label>
+                    <Label>Documents du projet</Label>
                     <FileUpload 
                       onFileSelect={(file) => {
                         setSelectedFiles(prev => [...prev, file]);
                       }} 
-                      buttonText="Add Document" 
+                      buttonText="Ajouter un document" 
                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip" 
                       maxSize={20} 
                     />
                     
                     {selectedFiles.length > 0 && (
                       <div className="mt-2 space-y-2">
-                        <Label>Selected Files:</Label>
+                        <Label>Fichiers sélectionnés:</Label>
                         <div className="space-y-1">
                           {selectedFiles.map((file, index) => (
                             <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
@@ -421,7 +421,7 @@ const NewProject = () => {
                     onClick={() => navigate("/projects")} 
                     disabled={isSubmitting}
                   >
-                    Cancel
+                    Annuler
                   </Button>
                   <Button 
                     type="submit" 
@@ -431,9 +431,9 @@ const NewProject = () => {
                     {isSubmitting ? (
                       <div className="flex items-center">
                         <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
-                        Creating...
+                        Création...
                       </div>
-                    ) : "Create Project"}
+                    ) : "Création du projet"}
                   </Button>
                 </div>
               </form>

@@ -34,12 +34,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const navItems = [
     {
-      label: "Dashboard",
+      label: "Tableau de bord",
       icon: LayoutDashboard,
       href: "/dashboard",
     },
     {
-      label: "Projects",
+      label: "Projets",
       icon: FolderOpen,
       href: "/projects",
     },
@@ -49,7 +49,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       href: "/messages",
     },
     {
-      label: "Profile",
+      label: "Profil",
       icon: UserRound,
       href: "/profile",
     },

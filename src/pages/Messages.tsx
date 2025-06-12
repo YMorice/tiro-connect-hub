@@ -441,7 +441,7 @@ const Messages = () => {
               </div>
             ) : conversations.length === 0 ? (
               <div className="p-4 text-center text-gray-500 text-sm">
-                No conversations yet
+                Aucune conversation pour le moment
               </div>
             ) : (
               conversationList
@@ -494,7 +494,7 @@ const Messages = () => {
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="text-center text-gray-500 text-sm">
-                    No messages yet. Start the conversation!
+                    Pas de messages pour le moment, commencez une conversation!
                   </div>
                 ) : (
                   messages.map((message) => {
@@ -575,7 +575,7 @@ const Messages = () => {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Type your message..."
+                    placeholder="Ecrivez votre message..."
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tiro-primary focus:border-transparent text-sm min-w-0"
                   />
                   <Button 
@@ -592,7 +592,7 @@ const Messages = () => {
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500 p-4">
               <div className="text-center">
-                <p className="text-sm">Select a conversation to start messaging</p>
+                <p className="text-sm">Sélectionnez une conversation pour commencer à discuter</p>
               </div>
             </div>
           )}

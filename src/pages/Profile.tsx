@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { supabase } from "@/integrations/supabase/client";
@@ -358,55 +357,51 @@ const Profile = () => {
 
                   {/* Informations de Base */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                       <Label htmlFor="name">Prénom</Label>
                       <Input
                         id="name"
-                        value={profile.name || ""}
+                        value={profile.name}
                         onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                        className="w-full"
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                       <Label htmlFor="surname">Nom</Label>
                       <Input
                         id="surname"
-                        value={profile.surname || ""}
+                        value={profile.surname}
                         onChange={(e) => setProfile({ ...profile, surname: e.target.value })}
-                        className="w-full"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 text-left">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
-                      value={profile.email || ""}
+                      value={profile.email}
                       disabled
-                      className="bg-gray-100 w-full"
                     />
                   </div>
 
                   {/* Champs spécifiques au rôle */}
                   {(user as any).role === 'student' && (
                     <>
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="bio">Bio</Label>
                         <Textarea
                           id="bio"
-                          value={profile.bio || ""}
+                          value={profile.bio}
                           onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                          placeholder="Parlez-nous de vous..."
-                          className="min-h-[100px] w-full"
+                          className="min-h-[100px]"
                         />
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="specialty">Spécialité</Label>
                         <Select value={profile.specialty || ""} onValueChange={(value) => setProfile({ ...profile, specialty: value })}>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Sélectionnez votre spécialité" />
+                            <SelectValue placeholder="Sélectionnez une spécialité" />
                           </SelectTrigger>
                           <SelectContent>
                             {specialtyOptions.map((specialty) => (
@@ -418,14 +413,12 @@ const Profile = () => {
                         </Select>
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="formation">Formation</Label>
                         <Input
                           id="formation"
-                          value={profile.formation || ""}
+                          value={profile.formation}
                           onChange={(e) => setProfile({ ...profile, formation: e.target.value })}
-                          placeholder="Votre parcours éducatif"
-                          className="w-full"
                         />
                       </div>
 
@@ -484,36 +477,31 @@ const Profile = () => {
 
                   {(user as any).role === 'entrepreneur' && (
                     <>
-                      <div className="space-y-2">
-                        <Label htmlFor="companyName">Nom de l'Entreprise</Label>
+                      <div className="space-y-2 text-left">
+                        <Label htmlFor="companyName">Nom de l'entreprise</Label>
                         <Input
                           id="companyName"
-                          value={profile.companyName || ""}
+                          value={profile.companyName}
                           onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
-                          placeholder="Le nom de votre entreprise"
-                          className="w-full"
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="companyRole">Rôle dans l'Entreprise</Label>
+                      <div className="space-y-2 text-left">
+                        <Label htmlFor="companyRole">Votre rôle dans l'entreprise</Label>
                         <Input
                           id="companyRole"
-                          value={profile.companyRole || ""}
+                          value={profile.companyRole}
                           onChange={(e) => setProfile({ ...profile, companyRole: e.target.value })}
-                          placeholder="Votre rôle/poste"
-                          className="w-full"
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="companyAddress">Adresse de l'Entreprise</Label>
+                      <div className="space-y-2 text-left">
+                        <Label htmlFor="companyAddress">Adresse de l'entreprise</Label>
                         <Textarea
                           id="companyAddress"
-                          value={profile.companyAddress || ""}
+                          value={profile.companyAddress}
                           onChange={(e) => setProfile({ ...profile, companyAddress: e.target.value })}
-                          placeholder="Adresse de l'entreprise"
-                          className="min-h-[100px] w-full"
+                          className="min-h-[100px]"
                         />
                       </div>
                     </>
