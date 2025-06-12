@@ -508,7 +508,7 @@ const Register = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-left">Email</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="exemple@email.com" 
@@ -592,7 +592,7 @@ const Register = () => {
                 className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Processing..." : "Next"}
+                {isSubmitting ? "Processing..." : "Suivant"}
               </Button>
             </form>
           </Form>
@@ -617,25 +617,25 @@ const Register = () => {
                           <FormControl>
                             <RadioGroupItem value="ui_ux" />
                           </FormControl>
-                          <FormLabel className="font-normal">UI/UX Design</FormLabel>
+                          <FormLabel className="font-normal">UI/UX</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
                             <RadioGroupItem value="front_end" />
                           </FormControl>
-                          <FormLabel className="font-normal">Développement Frontend</FormLabel>
+                          <FormLabel className="font-normal">Motion Design</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
                             <RadioGroupItem value="full_stack" />
                           </FormControl>
-                          <FormLabel className="font-normal">Développement FullStack</FormLabel>
+                          <FormLabel className="font-normal">Identité Visuelle</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
                             <RadioGroupItem value="web_design" />
                           </FormControl>
-                          <FormLabel className="font-normal">Web Design</FormLabel>
+                          <FormLabel className="font-normal">Création de contenu</FormLabel>
                         </FormItem>
                       </RadioGroup>
                     </FormControl>
@@ -744,7 +744,7 @@ const Register = () => {
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prénom</FormLabel>
+                    <FormLabel className="text-left">Prénom</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="John" 
@@ -761,7 +761,7 @@ const Register = () => {
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nom</FormLabel>
+                    <FormLabel className="text-left">Nom</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="Doe" 
@@ -778,7 +778,7 @@ const Register = () => {
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Numéro de téléphone</FormLabel>
+                    <FormLabel className="text-left">Numéro de téléphone</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="+33612345678" 
@@ -840,7 +840,7 @@ const Register = () => {
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prénom</FormLabel>
+                    <FormLabel className="text-left">Prénom</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="John" 

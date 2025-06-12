@@ -69,7 +69,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       queryClient.invalidateQueries({ queryKey: ['messages', message.projectId] });
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Failed to send message.");
+      toast.error("Echec de l'envoi du message");
     }
   };
 
