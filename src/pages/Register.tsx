@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // List of available skills for checkboxes
 const AVAILABLE_SKILLS = [
-  "UI/UX Design", 
+  "Design UI/UX ", 
   "Figma",
   "Adobe XD", 
   "HTML", 
@@ -35,18 +35,18 @@ const AVAILABLE_SKILLS = [
   "Ruby on Rails",
   "PHP",
   "WordPress",
-  "Mobile Development",
+  "Développement Mobile",
   "React Native",
-  "iOS Development",
-  "Android Development",
-  "UX Research",
+  "Développment IOS",
+  "Développement Android",
+  "Recherche UX",
   "SEO",
-  "Digital Marketing"
+  "Marketing Digital"
 ];
 
 // Step 1 schema - Basic registration information
 const step1Schema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Adresse mail invalide"),
   password: z.string()
     .min(8, "Le mot de passe doit contenir au moins 8 caractères")
     .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
@@ -65,37 +65,37 @@ const step1Schema = z.object({
 
 // Step 2 schema - Role-specific information (part 1)
 const step2SchemaStudent = z.object({
-  specialty: z.string().min(1, "Please select a specialty"),
-  bio: z.string().min(10, "Please provide at least 10 characters about yourself"),
-  portfolioUrl: z.string().min(1, "Portfolio URL is required"),
-  formation: z.string().min(1, "Please provide your education or training information"),
+  specialty: z.string().min(1, "Veuillez sélectionner une spécialité"),
+  bio: z.string().min(10, "Veuillez fournir au moins 10 caractères sur vous-même"),
+  portfolioUrl: z.string().min(1, "L'URL du portfolio est obligatoire"),
+  formation: z.string().min(1, "Veuillez fournir des informations sur votre éducation ou votre formation"),
 });
 
 const step2SchemaEntrepreneur = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  phoneNumber: z.string().min(10, "Please enter a valid phone number"),
+  firstName: z.string().min(2, "Votre prénom doit contenir au moins 2 caractères"),
+  lastName: z.string().min(2, "Votre nom doit contenir au moins 2 caractères"),
+  phoneNumber: z.string().min(10, "Veuillez fournir un numéro de téléphone valide"),
 });
 
 // Step 3 schema - Role-specific information (part 2)
 const step3SchemaStudent = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  phoneNumber: z.string().min(10, "Please enter a valid phone number"),
+  firstName: z.string().min(2, "Votre prénom doit contenir au moins 2 caractères"),
+  lastName: z.string().min(2, "Votre nom doit contenir au moins 2 caractères"),
+  phoneNumber: z.string().min(10, "Veuillez fournir un numéro de téléphone valide"),
 });
 
 const step3SchemaEntrepreneur = z.object({
-  companyName: z.string().min(2, "Company name must be at least 2 characters"),
-  companyRole: z.string().min(2, "Your role must be at least 2 characters"),
-  siret: z.string().min(14, "SIRET number must be at least 14 characters"),
-  companyAddress: z.string().min(5, "Please enter a valid address"),
+  companyName: z.string().min(2, "Le nom de votre entreprise doit contenir au moins 2 caractères"),
+  companyRole: z.string().min(2, "Votre role doit contenir au moins 2 caractères"),
+  siret: z.string().min(14, "Votre numéro de SIRET doit contenir au moins 14 caractères"),
+  companyAddress: z.string().min(5, "Veuillez entrer une adresse valide"),
 });
 
 // Step 4 schema - Additional information
 const step4SchemaStudent = z.object({
   siret: z.string().optional(),
-  address: z.string().min(5, "Please enter a valid address"),
-  iban: z.string().min(15, "Please enter a valid IBAN"),
+  address: z.string().min(5, "Veuillez entrer une adresse valide"),
+  iban: z.string().min(15, "Veuillez entrer un IBAN valide"),
 });
 
 // Combined type for all form values
@@ -145,7 +145,7 @@ const Register = () => {
   // Redirect if user is already logged in
   useEffect(() => {
     if (user && session) {
-      console.log("User already logged in, redirecting to dashboard");
+      console.log("Utilisateur déjà connecté, redirection vers le dashboard");
       navigate("/dashboard", { replace: true });
     }
   }, [user, session, navigate]);
@@ -249,7 +249,7 @@ const Register = () => {
       const profilePictureUrl = urlData.publicUrl;
       setAvatarUrl(profilePictureUrl);
     } catch (error: any) {
-      console.error("Error uploading profile picture:", error);
+      console.error("Erreur du téléchargement de la photo de profil:", error);
       const tempUrl = URL.createObjectURL(file);
       setAvatarUrl(tempUrl);
     } finally {
@@ -403,11 +403,11 @@ const Register = () => {
     try {
       setIsSubmitting(true);
       
-      const name = values.firstName?.trim() || "New User";
+      const name = values.firstName?.trim() || "Nouvel utilisateur";
       
-      const surname = values.lastName?.trim() || "User";
+      const surname = values.lastName?.trim() || "Nouvel utilisateur";
         
-      console.log("Submitting registration data:", {
+      console.log("Soumission des données d'inscription:", {
         email: values.email,
         name,
         surname,
@@ -433,7 +433,7 @@ const Register = () => {
         avatar: avatarUrl || null,
       };
       
-      console.log("User metadata for registration:", userData);
+      console.log("Metadata utilisateur pour l'inscription:", userData);
       
       const result = await authRegister(
         values.email, 
@@ -447,10 +447,10 @@ const Register = () => {
           setStep(5);
         }
       } else {
-        console.error("Registration failed:", result.error);
+        console.error("Inscription échouée:", result.error);
       }
     } catch (error: any) {
-      console.error("Registration error:", error);
+      console.error("Erreur de l'inscription:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -474,7 +474,7 @@ const Register = () => {
                 name="role"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>I am a:</FormLabel>
+                    <FormLabel>Je suis un:</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
@@ -485,7 +485,7 @@ const Register = () => {
                             <RadioGroupItem value="student" />
                           </FormControl>
                           <FormLabel className="font-normal">
-                            Student - I want to work on web projects
+                            Etudiant - Je veux travailler sur des projets web
                           </FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
@@ -493,7 +493,7 @@ const Register = () => {
                             <RadioGroupItem value="entrepreneur" />
                           </FormControl>
                           <FormLabel className="font-normal">
-                            Entrepreneur - I need web design services
+                            Entrepreneur - J'ai besoin de services de web design
                           </FormLabel>
                         </FormItem>
                       </RadioGroup>
@@ -511,7 +511,7 @@ const Register = () => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="example@email.com" 
+                        placeholder="exemple@email.com" 
                         {...field} 
                         type="email"
                       />
@@ -526,7 +526,7 @@ const Register = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Mot de passe</FormLabel>
                     <FormControl>
                       <Input 
                         type="password" 
@@ -544,7 +544,7 @@ const Register = () => {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel>Confirmer mot de passe</FormLabel>
                     <FormControl>
                       <Input 
                         type="password" 
@@ -571,10 +571,15 @@ const Register = () => {
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel htmlFor="terms" className="font-normal">
-                        I accept the{" "}
-                        <Link to="/terms" className="text-tiro-purple hover:underline">
-                          Terms of Use
-                        </Link>
+                        J'accepte les{" "}
+                        <a 
+                          href="https://tiro.agency/conditions" 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-[#E74C3C] hover:underline"
+                        >
+                          Conditions d'utilisations
+                        </a>
                       </FormLabel>
                       <FormMessage />
                     </div>
@@ -602,7 +607,7 @@ const Register = () => {
                 name="specialty"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>What's your specialty?</FormLabel>
+                    <FormLabel>Quelle est votre spécialité ?</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
@@ -618,13 +623,13 @@ const Register = () => {
                           <FormControl>
                             <RadioGroupItem value="front_end" />
                           </FormControl>
-                          <FormLabel className="font-normal">Front-end Development</FormLabel>
+                          <FormLabel className="font-normal">Développement Frontend</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
                             <RadioGroupItem value="full_stack" />
                           </FormControl>
-                          <FormLabel className="font-normal">Full Stack Development</FormLabel>
+                          <FormLabel className="font-normal">Développement FullStack</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
@@ -644,10 +649,10 @@ const Register = () => {
                 name="bio"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>About You</FormLabel>
+                    <FormLabel>A propos de vous</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Tell us about your skills, experience, and interests..." 
+                        placeholder="Parlez nous de vos compétences, vos expériences et vos intérêts..." 
                         className="min-h-[100px]"
                         {...field} 
                       />
@@ -662,10 +667,10 @@ const Register = () => {
                 name="formation"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Education or Training</FormLabel>
+                    <FormLabel>Education ou formations</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Your education or training" 
+                        placeholder="Votre éducation ou formation" 
                         {...field} 
                       />
                     </FormControl>
@@ -682,7 +687,7 @@ const Register = () => {
                     <FormLabel>Portfolio URL</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="yourportfolio.com" 
+                        placeholder="votreportfolio.com" 
                         {...field}
                       />
                     </FormControl>
@@ -693,7 +698,7 @@ const Register = () => {
               
               {/* Skills selection with checkboxes */}
               <div className="space-y-2">
-                <Label>Skills (select all that apply)</Label>
+                <Label>Compétences (Sélectionnez ce qui vous correspond)</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">
                   {AVAILABLE_SKILLS.map((skill) => (
                     <div key={skill} className="flex items-center space-x-2">
@@ -719,14 +724,14 @@ const Register = () => {
                   variant="outline" 
                   onClick={goBack}
                 >
-                  Back
+                  Retour
                 </Button>
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                   disabled={isSubmitting}
                 >
-                  Next
+                  Suivant
                 </Button>
               </div>
             </form>
@@ -739,7 +744,7 @@ const Register = () => {
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>Prénom</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="John" 
@@ -756,7 +761,7 @@ const Register = () => {
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>Nom</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="Doe" 
@@ -773,7 +778,7 @@ const Register = () => {
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>Numéro de téléphone</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="+33612345678" 
@@ -791,14 +796,14 @@ const Register = () => {
                   variant="outline" 
                   onClick={goBack}
                 >
-                  Back
+                  Retour
                 </Button>
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                   disabled={isSubmitting}
                 >
-                  Next
+                  Suivant
                 </Button>
               </div>
             </form>
@@ -811,7 +816,7 @@ const Register = () => {
             <form onSubmit={step3StudentForm.handleSubmit(onSubmitStep3Student)} className="space-y-4">
               {/* Profile Picture Upload */}
               <div className="flex flex-col gap-4 items-center mb-4">
-                <Label className="self-start">Profile Picture</Label>
+                <Label className="self-start">Photo de profil</Label>
                 <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start">
                   <Avatar className="w-24 h-24">
                     {avatarUrl ? (
@@ -825,7 +830,7 @@ const Register = () => {
                   <FileUpload 
                     onFileSelect={handleFileSelect} 
                     accept="image/*"
-                    buttonText="Upload Profile Picture"
+                    buttonText="Télécharger une photo de profil"
                   />
                 </div>
               </div>
@@ -835,7 +840,7 @@ const Register = () => {
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>Prénom</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="John" 
@@ -852,7 +857,7 @@ const Register = () => {
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>Nom</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="Doe" 
@@ -869,7 +874,7 @@ const Register = () => {
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>Numéro de téléphone</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="+33612345678" 
@@ -887,14 +892,14 @@ const Register = () => {
                   variant="outline" 
                   onClick={goBack}
                 >
-                  Back
+                  Retour
                 </Button>
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                   disabled={isSubmitting}
                 >
-                  Next
+                  Suivant
                 </Button>
               </div>
             </form>
@@ -904,7 +909,7 @@ const Register = () => {
             <form onSubmit={step3EntrepreneurForm.handleSubmit(onSubmitStep3Entrepreneur)} className="space-y-4">
               {/* Profile Picture Upload */}
               <div className="flex flex-col gap-4 items-center mb-4">
-                <Label className="self-start">Profile Picture</Label>
+                <Label className="self-start">Photo de profil</Label>
                 <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start">
                   <Avatar className="w-24 h-24">
                     {avatarUrl ? (
@@ -918,7 +923,7 @@ const Register = () => {
                   <FileUpload 
                     onFileSelect={handleFileSelect} 
                     accept="image/*"
-                    buttonText="Upload Profile Picture"
+                    buttonText="Téléchager photo de profil"
                   />
                 </div>
               </div>
@@ -928,7 +933,7 @@ const Register = () => {
                 name="companyName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Company Name</FormLabel>
+                    <FormLabel>Nom de l'entreprise</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="ACME Inc." 
@@ -945,7 +950,7 @@ const Register = () => {
                 name="companyRole"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Your Role in the Company</FormLabel>
+                    <FormLabel>Votre rôle dans l'entreprise</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="CEO, CTO, Project Manager, etc." 
@@ -962,7 +967,7 @@ const Register = () => {
                 name="siret"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SIRET Number</FormLabel>
+                    <FormLabel>Numéro SIRET</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="12345678901234" 
@@ -979,10 +984,10 @@ const Register = () => {
                 name="companyAddress"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Company Address</FormLabel>
+                    <FormLabel>Adresse de l'entreprise</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Full address of your company" 
+                        placeholder="Adresse complète de l'entreprise" 
                         {...field} 
                       />
                     </FormControl>
@@ -997,14 +1002,14 @@ const Register = () => {
                   variant="outline" 
                   onClick={goBack}
                 >
-                  Back
+                  Retour
                 </Button>
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                   disabled={isSubmitting}
                 >
-                  Next
+                  Suivant
                 </Button>
               </div>
             </form>
@@ -1020,7 +1025,7 @@ const Register = () => {
                 name="siret"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SIRET Number (optional)</FormLabel>
+                    <FormLabel>Numéro SIRET (optionel)</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="12345678901234" 
@@ -1037,10 +1042,10 @@ const Register = () => {
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Address</FormLabel>
+                    <FormLabel>Adresse</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Your full address" 
+                        placeholder="Votre adresse complète" 
                         {...field} 
                       />
                     </FormControl>
@@ -1072,14 +1077,14 @@ const Register = () => {
                   variant="outline" 
                   onClick={goBack}
                 >
-                  Back
+                  Retour
                 </Button>
                 <Button 
                   type="submit" 
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                   disabled={isSubmitting}
                 >
-                  Complete Registration
+                  Terminer l'inscription
                 </Button>
               </div>
             </form>
@@ -1087,9 +1092,9 @@ const Register = () => {
         ) : (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-lg font-medium">Would you like to add a project now?</h3>
+              <h3 className="text-lg font-medium">Voulez-vous ajouter un projet maintenant ?</h3>
               <p className="text-sm text-muted-foreground mt-2">
-                You can also add projects later from your dashboard.
+                Vous pourrez également ajouter des projet sur votre tableau de bord
               </p>
             </div>
             
@@ -1099,14 +1104,14 @@ const Register = () => {
                 onClick={onSkipProject}
                 disabled={isSubmitting}
               >
-                Skip for now
+                Sauter pour le moment
               </Button>
               <Button 
                 onClick={onAddProject}
                 className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                 disabled={isSubmitting}
               >
-                Add Project
+                Ajouter un projet
               </Button>
             </div>
             
@@ -1117,7 +1122,7 @@ const Register = () => {
                 onClick={goBack}
                 disabled={isSubmitting}
               >
-                Back
+                Retour
               </Button>
             </div>
           </div>
@@ -1133,19 +1138,19 @@ const Register = () => {
               </svg>
             </div>
             
-            <h2 className="text-2xl font-bold">Check Your Email!</h2>
+            <h2 className="text-2xl font-bold">Regardez vos mails !</h2>
             
             <div className="space-y-3 text-muted-foreground">
               <p>
-                We've sent a confirmation email to <strong className="text-foreground">{formValues.email}</strong>
+                On vous a envoyés un mail au <strong className="text-foreground">{formValues.email}</strong>
               </p>
               <p>
-                Please click the confirmation link in the email to activate your account.
+              Veuillez cliquer sur le lien dans le mail de confirmation pour activer votre compte.
               </p>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
                 <p className="text-amber-800">
-                  <strong>Important:</strong> The email may take a few minutes to arrive. 
-                  Don't forget to check your spam folder if you don't see it in your inbox.
+                  <strong>Important:</strong> L'email peut mettre quelques minutes à arriver.
+                  N'hésiter pas à aller voir dans vos spam si vous ne le voyez pas dans votre boîte de récéption.
                 </p>
               </div>
             </div>
@@ -1174,7 +1179,7 @@ const Register = () => {
               <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-10" />
             </div>
             <CardDescription>
-              {step === 5 ? "Registration Complete" : "Create your account"}
+              {step === 5 ? "Inscription terminée" : "Créer votre compte"}
             </CardDescription>
           </CardHeader>
           
@@ -1185,9 +1190,9 @@ const Register = () => {
           {step !== 5 && (
             <CardFooter className="flex justify-center">
               <div className="text-sm text-center">
-                <span className="text-muted-foreground">Already have an account? </span>
+                <span className="text-muted-foreground">Vous possédez déjà un compte? </span>
                 <Link to="/login" className="text-tiro-primary hover:underline">
-                  Sign in
+                  Se connecter
                 </Link>
               </div>
             </CardFooter>

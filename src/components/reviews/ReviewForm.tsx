@@ -65,7 +65,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
       if (existingReview) {
         setHasExistingReview(true);
-        toast.error("You have already submitted a review for this student on this project");
+        toast.error("Vous avez déjà soumis un avis pour cet étudiant sur ce projet");
         onCancel();
       }
     } catch (error) {
@@ -98,7 +98,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
       if (checkError) throw checkError;
 
       if (existingReview) {
-        toast.error("You have already submitted a review for this student on this project");
+        toast.error("Vous avez déjà soumis un avis pour cet étudiant sur ce projet");
         setHasExistingReview(true);
         onCancel();
         return;
@@ -161,10 +161,10 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
           <Label htmlFor="comment">Comment</Label>
           <Textarea
             id="comment"
-            placeholder="Share your experience working with this student..."
+            placeholder="Partagez votre expérience avec cet étudiant..."
             {...register("comment", { 
-              required: "Comment is required",
-              minLength: { value: 10, message: "Comment must be at least 10 characters" }
+              required: "Un commentaire est requis",
+              minLength: { value: 10, message: "Le commentaire doit contenir au moins 10 caractères" }
             })}
             className="mt-1"
           />

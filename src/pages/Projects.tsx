@@ -394,7 +394,7 @@ const Projects = () => {
           {/* En-tête de Page avec Titre et Bouton Créer */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Projets</h1>
+              <h1 className="text-left text-2xl sm:text-3xl font-bold text-gray-900">Projets</h1>
               <p className="text-gray-600 mt-1">
                 {userRole === "student" && "Propositions de projets et assignations"}
                 {userRole === "entrepreneur" && "Vos projets"}
