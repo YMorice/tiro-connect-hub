@@ -16,6 +16,7 @@ import StudentProfileView from "@/components/profile/StudentProfileView";
 import FileUpload from "@/components/FileUpload";
 import { useParams } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -30,16 +31,10 @@ const Profile = () => {
 
   // Options de spécialité correspondant à l'inscription
   const specialtyOptions = [
-    "Développement Web",
-    "Développement Mobile", 
-    "Science des Données",
-    "IA/Apprentissage Automatique",
-    "Cybersécurité",
-    "Cloud Computing",
-    "DevOps",
-    "Design UI/UX",
-    "Marketing Digital",
-    "Gestion de Projet"
+    "UI/UX",
+    "Motion Design",
+    "Identité Visuelle",
+    "Création de contenu"
   ];
 
   // Options de compétences correspondant à l'inscription
@@ -135,7 +130,7 @@ const Profile = () => {
         email: userData.email,
         avatar: userData.pp_link || "",
         bio: studentData?.biography || "",
-        specialty: studentData?.specialty || "",
+        specialty: studentData?.specialty || [],
         skills: studentData?.skills || [],
         formation: studentData?.formation || "",
         portfolioLink: studentData?.portfolio_link || "",
@@ -398,19 +393,32 @@ const Profile = () => {
                       </div>
 
                       <div className="space-y-2 text-left">
-                        <Label htmlFor="specialty">Spécialité</Label>
-                        <Select value={profile.specialty || ""} onValueChange={(value) => setProfile({ ...profile, specialty: value })}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Sélectionnez une spécialité" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {specialtyOptions.map((specialty) => (
-                              <SelectItem key={specialty} value={specialty}>
+                        <Label>Spécialités</Label>
+                        <div className="flex flex-col space-y-2">
+                          {specialtyOptions.map((specialty) => (
+                            <div key={specialty} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`specialty-${specialty}`}
+                                checked={profile.specialty?.includes(specialty)}
+                                onCheckedChange={(checked) => {
+                                  const currentSpecialties = profile.specialty || [];
+                                  setProfile({
+                                    ...profile,
+                                    specialty: checked
+                                      ? [...currentSpecialties, specialty]
+                                      : currentSpecialties.filter(s => s !== specialty)
+                                  });
+                                }}
+                              />
+                              <Label
+                                htmlFor={`specialty-${specialty}`}
+                                className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
                                 {specialty}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="space-y-2 text-left">
