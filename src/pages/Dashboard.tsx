@@ -262,7 +262,7 @@ const Dashboard = () => {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="text-left">
                       <CardTitle className="text-xl">Projets Récents</CardTitle>
                       <CardDescription>
                         Votre dernière activité de projet
