@@ -6,15 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Calendar, FolderPlus, MessageCircle, TrendingUp, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Calendar, FolderPlus, MessageCircle, TrendingUp, CheckCircle, Clock, AlertCircle, HelpCircle, LifeBuoy } from "lucide-react";
 import { getStudentProposals } from "@/services/proposal-service";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "next-themes";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { projects, loading } = useProjects();
   const [studentProposals, setStudentProposals] = useState<any[]>([]);
   const [proposalsLoading, setProposalsLoading] = useState(false);
+  const { theme } = useTheme();
 
   const userRole = (user as any)?.role;
 
@@ -349,6 +351,16 @@ const Dashboard = () => {
                       Messages
                     </Button>
                   </Link>
+                  <a href="https://tiro.agency/support/" target="_blank" rel="noopener noreferrer" className="block">
+                    <Button variant="outline" className="w-full justify-start">
+                      <img 
+                        src={theme === 'dark' ? "/logo_tiro_resp_blanc.png" : "/tiro-logo.webp"} 
+                        alt="Logo Tiro" 
+                        className="h-4 w-4 mr-2" 
+                      />
+                      Contacter le Support
+                    </Button>
+                  </a>
                 </CardContent>
               </Card>
 
