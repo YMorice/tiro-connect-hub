@@ -65,35 +65,46 @@ const step1Schema = z.object({
 
 // Step 2 schema - Role-specific information (part 1)
 const step2SchemaStudent = z.object({
-  specialty: z.string().min(1, "Veuillez sélectionner une spécialité"),
-  bio: z.string().min(10, "Veuillez fournir au moins 10 caractères sur vous-même"),
-  portfolioUrl: z.string().min(1, "L'URL du portfolio est obligatoire"),
-  formation: z.string().min(1, "Veuillez fournir des informations sur votre éducation ou votre formation"),
+  specialty: z.array(z.string()).min(1, "Veuillez sélectionner au moins une spécialité"),
+  bio: z.string().min(10, "La bio doit contenir au moins 10 caractères"),
+  formation: z.string().min(1, "Veuillez indiquer votre formation"),
+  portfolioUrl: z.string().url("L'URL du portfolio doit être valide").optional().or(z.literal("")),
 });
 
 const step2SchemaEntrepreneur = z.object({
   firstName: z.string().min(2, "Votre prénom doit contenir au moins 2 caractères"),
   lastName: z.string().min(2, "Votre nom doit contenir au moins 2 caractères"),
-  phoneNumber: z.string().min(10, "Veuillez fournir un numéro de téléphone valide"),
+  phoneNumber: z.string()
+    .min(10, "Veuillez fournir un numéro de téléphone valide")
+    .regex(/^[0-9]+$/, "Le numéro de téléphone ne doit contenir que des chiffres"),
 });
 
 // Step 3 schema - Role-specific information (part 2)
 const step3SchemaStudent = z.object({
   firstName: z.string().min(2, "Votre prénom doit contenir au moins 2 caractères"),
   lastName: z.string().min(2, "Votre nom doit contenir au moins 2 caractères"),
-  phoneNumber: z.string().min(10, "Veuillez fournir un numéro de téléphone valide"),
+  phoneNumber: z.string()
+    .min(10, "Veuillez fournir un numéro de téléphone valide")
+    .regex(/^[0-9]+$/, "Le numéro de téléphone ne doit contenir que des chiffres"),
 });
 
 const step3SchemaEntrepreneur = z.object({
   companyName: z.string().min(2, "Le nom de votre entreprise doit contenir au moins 2 caractères"),
   companyRole: z.string().min(2, "Votre role doit contenir au moins 2 caractères"),
-  siret: z.string().min(14, "Votre numéro de SIRET doit contenir au moins 14 caractères"),
+  siret: z.string()
+    .min(14, "Votre numéro de SIRET doit contenir 14 chiffres")
+    .max(14, "Votre numéro de SIRET doit contenir 14 chiffres")
+    .regex(/^[0-9]+$/, "Le numéro SIRET ne doit contenir que des chiffres"),
   companyAddress: z.string().min(5, "Veuillez entrer une adresse valide"),
 });
 
 // Step 4 schema - Additional information
 const step4SchemaStudent = z.object({
-  siret: z.string().optional(),
+  siret: z.string()
+    .min(14, "Votre numéro de SIRET doit contenir 14 chiffres")
+    .max(14, "Votre numéro de SIRET doit contenir 14 chiffres")
+    .regex(/^[0-9]+$/, "Le numéro SIRET ne doit contenir que des chiffres")
+    .optional(),
   address: z.string().min(5, "Veuillez entrer une adresse valide"),
   iban: z.string().min(15, "Veuillez entrer un IBAN valide"),
 });
@@ -105,7 +116,7 @@ type FormValues = {
   confirmPassword: string;
   role: "student" | "entrepreneur";
   acceptTerms: boolean;
-  specialty?: string;
+  specialty?: string[];
   bio?: string;
   portfolioUrl?: string;
   firstName?: string;
@@ -166,7 +177,7 @@ const Register = () => {
   const step2StudentForm = useForm<z.infer<typeof step2SchemaStudent>>({
     resolver: zodResolver(step2SchemaStudent),
     defaultValues: {
-      specialty: "",
+      specialty: [],
       bio: "",
       portfolioUrl: "",
       formation: "", // Add the formation field default value
@@ -280,7 +291,7 @@ const Register = () => {
     // Reset step 2 forms based on role
     if (values.role === "student") {
       step2StudentForm.reset({
-        specialty: "",
+        specialty: [],
         bio: "",
         portfolioUrl: "",
       });
@@ -302,7 +313,7 @@ const Register = () => {
       specialty: values.specialty,
       bio: values.bio,
       portfolioUrl: values.portfolioUrl,
-      formation: values.formation, // Add formation to form values
+      formation: values.formation,
       skills: selectedSkills
     }));
     
@@ -607,37 +618,74 @@ const Register = () => {
                 name="specialty"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quelle est votre spécialité ?</FormLabel>
+                    <FormLabel>Quelles sont vos spécialités ?</FormLabel>
                     <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        className="flex flex-col space-y-1"
-                      >
+                      <div className="flex flex-col space-y-2">
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
-                            <RadioGroupItem value="ui_ux" />
+                            <Checkbox
+                              checked={field.value?.includes("ui_ux")}
+                              onCheckedChange={(checked) => {
+                                const currentValue = field.value || [];
+                                field.onChange(
+                                  checked
+                                    ? [...currentValue, "ui_ux"]
+                                    : currentValue.filter((value) => value !== "ui_ux")
+                                );
+                              }}
+                            />
                           </FormControl>
                           <FormLabel className="font-normal">UI/UX</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
-                            <RadioGroupItem value="front_end" />
+                            <Checkbox
+                              checked={field.value?.includes("motion_design")}
+                              onCheckedChange={(checked) => {
+                                const currentValue = field.value || [];
+                                field.onChange(
+                                  checked
+                                    ? [...currentValue, "motion_design"]
+                                    : currentValue.filter((value) => value !== "motion_design")
+                                );
+                              }}
+                            />
                           </FormControl>
                           <FormLabel className="font-normal">Motion Design</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
-                            <RadioGroupItem value="full_stack" />
+                            <Checkbox
+                              checked={field.value?.includes("identite_visuelle")}
+                              onCheckedChange={(checked) => {
+                                const currentValue = field.value || [];
+                                field.onChange(
+                                  checked
+                                    ? [...currentValue, "identite_visuelle"]
+                                    : currentValue.filter((value) => value !== "identite_visuelle")
+                                );
+                              }}
+                            />
                           </FormControl>
                           <FormLabel className="font-normal">Identité Visuelle</FormLabel>
                         </FormItem>
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
-                            <RadioGroupItem value="web_design" />
+                            <Checkbox
+                              checked={field.value?.includes("creation_contenu")}
+                              onCheckedChange={(checked) => {
+                                const currentValue = field.value || [];
+                                field.onChange(
+                                  checked
+                                    ? [...currentValue, "creation_contenu"]
+                                    : currentValue.filter((value) => value !== "creation_contenu")
+                                );
+                              }}
+                            />
                           </FormControl>
                           <FormLabel className="font-normal">Création de contenu</FormLabel>
                         </FormItem>
-                      </RadioGroup>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
