@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import {
@@ -13,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
 import { CreditCard, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
-// Corrected Stripe publishable key
+// Initialize Stripe promise
 const stripePromise = loadStripe('pk_live_51R2qYjGGl1QIS9OO0ReAahG8mkRzCC1xZPAaG4D3yhXt3qYoadMKNY7JIMlkfayxgvYsd3lfMnO5dobXxpFhB9iq00iArT15jL');
 
 interface ProjectPaymentProps {
@@ -37,15 +38,16 @@ const PaymentForm: React.FC<{
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Debug Stripe loading state
+  // Debug Stripe loading state avec plus de détails
   useEffect(() => {
-    console.log('Stripe loading state:', { 
-      stripe: !!stripe, 
-      elements: !!elements, 
-      clientSecret: !!clientSecret,
-      isLoading
-    });
-  }, [stripe, elements, clientSecret, isLoading]);
+    console.log('=== STRIPE DEBUG ===');
+    console.log('Stripe instance:', stripe);
+    console.log('Elements instance:', elements);
+    console.log('Client Secret:', clientSecret);
+    console.log('Loading state:', isLoading);
+    console.log('Can pay:', !!(stripe && elements && clientSecret && !isProcessing));
+    console.log('==================');
+  }, [stripe, elements, clientSecret, isLoading, isProcessing]);
 
   // Create payment intent when component mounts
   useEffect(() => {
@@ -92,9 +94,21 @@ const PaymentForm: React.FC<{
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!stripe || !elements || !clientSecret) {
-      console.log('Payment submission blocked:', { stripe: !!stripe, elements: !!elements, clientSecret: !!clientSecret });
-      toast.error('Le système de paiement n\'est pas encore prêt. Veuillez patienter.');
+    console.log('Form submitted - checking prerequisites:', {
+      stripe: !!stripe,
+      elements: !!elements,
+      clientSecret: !!clientSecret
+    });
+
+    if (!stripe || !elements) {
+      console.log('Stripe or Elements not ready yet');
+      toast.error('Le système de paiement n\'est pas encore prêt. Veuillez patienter quelques secondes.');
+      return;
+    }
+
+    if (!clientSecret) {
+      console.log('Client secret not available');
+      toast.error('Intention de paiement non créée. Veuillez recharger la page.');
       return;
     }
 
@@ -193,10 +207,20 @@ const PaymentForm: React.FC<{
     );
   }
 
+  // Show loading message if Stripe/Elements not ready
+  if (!stripe || !elements) {
+    return (
+      <div className="flex items-center justify-center p-6">
+        <Clock className="h-5 w-5 mr-2 animate-spin" />
+        <span>Chargement du système de paiement Stripe...</span>
+      </div>
+    );
+  }
+
   // Check if we can process payment
   const canPay = stripe && elements && clientSecret && !isProcessing;
   
-  console.log('Payment button state:', {
+  console.log('Final payment button state:', {
     stripe: !!stripe,
     elements: !!elements,
     clientSecret: !!clientSecret,
@@ -250,6 +274,25 @@ const ProjectPayment: React.FC<ProjectPaymentProps> = ({
   paymentStatus = 'pending',
   onPaymentSuccess
 }) => {
+  const [stripeReady, setStripeReady] = useState(false);
+
+  // Monitor Stripe Promise resolution
+  useEffect(() => {
+    const checkStripe = async () => {
+      try {
+        console.log('Checking Stripe promise...');
+        const stripeInstance = await stripePromise;
+        console.log('Stripe instance loaded:', !!stripeInstance);
+        setStripeReady(!!stripeInstance);
+      } catch (error) {
+        console.error('Error loading Stripe:', error);
+        setStripeReady(false);
+      }
+    };
+
+    checkStripe();
+  }, []);
+
   const getStatusDisplay = (status: string) => {
     switch (status) {
       case 'succeeded':
@@ -311,14 +354,21 @@ const ProjectPayment: React.FC<ProjectPaymentProps> = ({
           </Badge>
         </div>
 
-        <Elements stripe={stripePromise}>
-          <PaymentForm
-            projectId={projectId}
-            projectTitle={projectTitle}
-            amount={amount}
-            onPaymentSuccess={onPaymentSuccess}
-          />
-        </Elements>
+        {!stripeReady ? (
+          <div className="flex items-center justify-center p-6">
+            <Clock className="h-5 w-5 mr-2 animate-spin" />
+            <span>Initialisation de Stripe...</span>
+          </div>
+        ) : (
+          <Elements stripe={stripePromise}>
+            <PaymentForm
+              projectId={projectId}
+              projectTitle={projectTitle}
+              amount={amount}
+              onPaymentSuccess={onPaymentSuccess}
+            />
+          </Elements>
+        )}
       </CardContent>
     </Card>
   );
