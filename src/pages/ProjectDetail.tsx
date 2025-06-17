@@ -33,7 +33,7 @@ import ProjectReviewSection from "@/components/reviews/ProjectReviewSection";
 import StudentProposalActions from "@/components/student/StudentProposalActions";
 import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
-import PaymentStatusMessage from "@/components/PaymentStatusMessage";
+import ProjectPayment from "@/components/payment/ProjectPayment";
 import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users, Clock } from "lucide-react";
 
 /**
@@ -76,6 +76,12 @@ interface Project {
   id_entrepreneur: string;
   /** ID of the selected student (if any) */
   selected_student?: string;
+  /** Payment status of the project */
+  payment_status?: string;
+  /** Stripe payment intent ID */
+  stripe_payment_intent_id?: string;
+  /** Paid at timestamp */
+  paid_at?: string;
   /** Entrepreneur information with nested user data */
   entrepreneur?: {
     users: {
@@ -477,21 +483,40 @@ const ProjectDetail = () => {
     project?.status === 'STEP3' && // Selection status
     !project?.selected_student;
 
+  // Show payment section if user is entrepreneur, owns project, and project is in STEP4
+  const showPaymentSection = isEntrepreneur && 
+    entrepreneurId &&
+    project?.id_entrepreneur === entrepreneurId && 
+    project?.status === 'STEP4' &&
+    project?.price > 0;
+
   console.log("Debug info:", {
     isEntrepreneur,
     entrepreneurId,
     projectEntrepreneurId: project?.id_entrepreneur,
     projectStatus: project?.status,
     selectedStudent: project?.selected_student,
-    showProposedStudents
+    showProposedStudents,
+    showPaymentSection,
+    projectPrice: project?.price
   });
 
   return (
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
-          {/* Payment Status Message - Show for Payment status */}
-          <PaymentStatusMessage projectStatus={project.status} />
+          {/* Payment Section - Show for entrepreneurs when project is in STEP4 */}
+          {showPaymentSection && (
+            <div className="mb-4 sm:mb-6">
+              <ProjectPayment
+                projectId={project.id_project}
+                projectTitle={project.title}
+                amount={project.price}
+                paymentStatus={project.payment_status}
+                onPaymentSuccess={handlePaymentSuccess}
+              />
+            </div>
+          )}
 
           {/* Student Proposal Actions - Show for students with pending proposals */}
           {isStudent && proposalStatus && studentId && (
