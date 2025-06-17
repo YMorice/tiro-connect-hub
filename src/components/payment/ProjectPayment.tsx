@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import {
@@ -13,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
 import { CreditCard, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
-// Updated Stripe publishable key
+// Corrected Stripe publishable key
 const stripePromise = loadStripe('pk_live_51R2qYjGGl1QIS9OO0ReAahG8mkRzCC1xZPAaG4D3yhXt3qYoadMKNY7JIMlkfayxgvYsd3lfMnO5dobXxpFhB9iq00iArT15jL');
 
 interface ProjectPaymentProps {
@@ -36,22 +37,6 @@ const PaymentForm: React.FC<{
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [stripeReady, setStripeReady] = useState(false);
-
-  // Monitor Stripe readiness
-  useEffect(() => {
-    const checkStripeReady = () => {
-      if (stripe && elements) {
-        console.log('Stripe and Elements are now ready');
-        setStripeReady(true);
-      } else {
-        console.log('Waiting for Stripe and Elements...', { stripe: !!stripe, elements: !!elements });
-        setStripeReady(false);
-      }
-    };
-
-    checkStripeReady();
-  }, [stripe, elements]);
 
   // Create payment intent when component mounts
   useEffect(() => {
@@ -170,7 +155,7 @@ const PaymentForm: React.FC<{
     },
   };
 
-  // Show loading state
+  // Show loading state while creating payment intent
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-6">
@@ -180,12 +165,21 @@ const PaymentForm: React.FC<{
     );
   }
 
-  // Show Stripe loading state
-  if (!stripeReady) {
+  // Show error state if payment intent creation failed
+  if (paymentError && !clientSecret) {
     return (
-      <div className="flex items-center justify-center p-6">
-        <Clock className="h-5 w-5 mr-2 animate-spin" />
-        <span>Chargement du système de paiement...</span>
+      <div className="space-y-4">
+        <div className="flex items-center p-3 text-red-800 bg-red-100 rounded-lg">
+          <AlertCircle className="h-4 w-4 mr-2" />
+          <span className="text-sm">{paymentError}</span>
+        </div>
+        <Button 
+          onClick={() => window.location.reload()}
+          variant="outline"
+          className="w-full"
+        >
+          Réessayer
+        </Button>
       </div>
     );
   }
@@ -203,18 +197,9 @@ const PaymentForm: React.FC<{
         </div>
       )}
 
-      <div className="text-xs text-gray-500 space-y-1">
-        <p>Debug info:</p>
-        <p>Stripe loaded: {stripe ? '✓' : '✗'}</p>
-        <p>Elements loaded: {elements ? '✓' : '✗'}</p>
-        <p>Client secret: {clientSecret ? '✓' : '✗'}</p>
-        <p>Stripe ready: {stripeReady ? '✓' : '✗'}</p>
-        <p>Processing: {isProcessing ? 'Yes' : 'No'}</p>
-      </div>
-
       <Button 
         type="submit" 
-        disabled={!stripe || !elements || isProcessing || !clientSecret || isLoading || !stripeReady}
+        disabled={!stripe || !elements || isProcessing || !clientSecret}
         className="w-full bg-tiro-primary hover:bg-tiro-primary/90"
       >
         {isProcessing ? (
