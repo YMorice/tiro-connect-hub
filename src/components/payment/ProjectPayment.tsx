@@ -37,6 +37,22 @@ const PaymentForm: React.FC<{
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [stripeLoaded, setStripeLoaded] = useState(false);
+
+  // Monitor Stripe loading state
+  useEffect(() => {
+    console.log('Stripe loading state:', { 
+      stripe: !!stripe, 
+      elements: !!elements, 
+      stripeLoaded,
+      clientSecret: !!clientSecret 
+    });
+    
+    if (stripe && elements) {
+      setStripeLoaded(true);
+      console.log('Stripe and Elements are ready');
+    }
+  }, [stripe, elements, stripeLoaded, clientSecret]);
 
   // Create payment intent when component mounts
   useEffect(() => {
@@ -155,12 +171,12 @@ const PaymentForm: React.FC<{
     },
   };
 
-  // Show loading state while creating payment intent
-  if (isLoading) {
+  // Show loading state while creating payment intent or Stripe is loading
+  if (isLoading || !stripeLoaded) {
     return (
       <div className="flex items-center justify-center p-6">
         <Clock className="h-5 w-5 mr-2 animate-spin" />
-        <span>Préparation du paiement...</span>
+        <span>{isLoading ? 'Préparation du paiement...' : 'Chargement du système de paiement...'}</span>
       </div>
     );
   }
@@ -184,6 +200,17 @@ const PaymentForm: React.FC<{
     );
   }
 
+  // Debug information
+  const canPay = stripe && elements && clientSecret && !isProcessing && stripeLoaded;
+  console.log('Payment button state:', {
+    stripe: !!stripe,
+    elements: !!elements,
+    clientSecret: !!clientSecret,
+    isProcessing,
+    stripeLoaded,
+    canPay
+  });
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="p-4 border rounded-lg bg-gray-50">
@@ -197,9 +224,14 @@ const PaymentForm: React.FC<{
         </div>
       )}
 
+      {/* Debug information - à supprimer en production */}
+      <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
+        <p>Debug: Stripe={stripe ? '✓' : '✗'}, Elements={elements ? '✓' : '✗'}, ClientSecret={clientSecret ? '✓' : '✗'}, Processing={isProcessing ? '✓' : '✗'}, StripeLoaded={stripeLoaded ? '✓' : '✗'}</p>
+      </div>
+
       <Button 
         type="submit" 
-        disabled={!stripe || !elements || isProcessing || !clientSecret}
+        disabled={!canPay}
         className="w-full bg-tiro-primary hover:bg-tiro-primary/90"
       >
         {isProcessing ? (
