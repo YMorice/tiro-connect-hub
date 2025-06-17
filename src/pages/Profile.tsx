@@ -54,6 +54,15 @@ const Profile = () => {
     "Sketch"
   ];
 
+  // Fonction pour formater l'URL du portfolio
+  const formatPortfolioUrl = (url: string) => {
+    if (!url) return "";
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return `https://${url}`;
+  };
+
   // Si studentId est fourni dans l'URL, afficher la vue de profil d'étudiant
   useEffect(() => {
     if (studentId) {
@@ -213,7 +222,7 @@ const Profile = () => {
           specialty: profile.specialty,
           skills: skills,
           formation: profile.formation,
-          portfolio_link: profile.portfolioLink
+          portfolio_link: formatPortfolioUrl(profile.portfolioLink)
         };
 
         if (existingStudent) {
@@ -312,7 +321,7 @@ const Profile = () => {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Tabs defaultValue="profile" className="w-full space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className={`grid w-full ${(user as any).role === 'student' ? 'grid-cols-2' : 'grid-cols-1'}`}>
               <TabsTrigger value="profile">Profil</TabsTrigger>
               {(user as any).role === 'student' && (
                 <TabsTrigger value="reviews">Avis</TabsTrigger>
@@ -436,9 +445,12 @@ const Profile = () => {
                           id="portfolioLink"
                           value={profile.portfolioLink || ""}
                           onChange={(e) => setProfile({ ...profile, portfolioLink: e.target.value })}
-                          placeholder="https://votre-portfolio.com"
+                          placeholder="votre-portfolio.com"
                           className="w-full"
                         />
+                        <p className="text-xs text-muted-foreground">
+                          Entrez l'URL avec ou sans http:// ou https://
+                        </p>
                       </div>
 
                       {/* Section Compétences */}

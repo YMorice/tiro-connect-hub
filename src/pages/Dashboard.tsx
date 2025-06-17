@@ -353,11 +353,11 @@ const Dashboard = () => {
                   </Link>
                   <a href="https://tiro.agency/support/" target="_blank" rel="noopener noreferrer" className="block">
                     <Button variant="outline" className="w-full justify-start">
-                      <img 
-                        src={theme === 'dark' ? "/logo_tiro_resp_blanc.png" : "/tiro-logo.webp"} 
-                        alt="Logo Tiro" 
-                        className="h-4 w-4 mr-2" 
-                      />
+                      {theme === 'dark' ? (
+                        <LifeBuoy className="mr-2 h-4 w-4" />
+                      ) : (
+                        <HelpCircle className="mr-2 h-4 w-4" />
+                      )}
                       Contacter le Support
                     </Button>
                   </a>
