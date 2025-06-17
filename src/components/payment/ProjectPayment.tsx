@@ -14,6 +14,7 @@ import { toast } from '@/components/ui/sonner';
 import { CreditCard, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
 // Initialize Stripe - using test key for now
+// TODO: Replace with your actual Stripe publishable key
 const stripePromise = loadStripe('pk_test_51HdSGwDai9u72qeMPgHyLEKEqJ8Z4C2fYBj6uX9R9gXL3vMdG8gYqzG1Fa0YN2JhgTRIyZBU4DYSHAfyqzQ4k00Z00ZXwO7I3B');
 
 interface ProjectPaymentProps {
@@ -36,6 +37,22 @@ const PaymentForm: React.FC<{
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [stripeReady, setStripeReady] = useState(false);
+
+  // Monitor Stripe readiness
+  useEffect(() => {
+    const checkStripeReady = () => {
+      if (stripe && elements) {
+        console.log('Stripe and Elements are now ready');
+        setStripeReady(true);
+      } else {
+        console.log('Waiting for Stripe and Elements...', { stripe: !!stripe, elements: !!elements });
+        setStripeReady(false);
+      }
+    };
+
+    checkStripeReady();
+  }, [stripe, elements]);
 
   // Create payment intent when component mounts
   useEffect(() => {
@@ -84,6 +101,7 @@ const PaymentForm: React.FC<{
 
     if (!stripe || !elements || !clientSecret) {
       console.log('Payment submission blocked:', { stripe: !!stripe, elements: !!elements, clientSecret: !!clientSecret });
+      toast.error('Le système de paiement n\'est pas encore prêt. Veuillez patienter.');
       return;
     }
 
@@ -163,6 +181,16 @@ const PaymentForm: React.FC<{
     );
   }
 
+  // Show Stripe loading state
+  if (!stripeReady) {
+    return (
+      <div className="flex items-center justify-center p-6">
+        <Clock className="h-5 w-5 mr-2 animate-spin" />
+        <span>Chargement du système de paiement...</span>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="p-4 border rounded-lg bg-gray-50">
@@ -181,12 +209,13 @@ const PaymentForm: React.FC<{
         <p>Stripe loaded: {stripe ? '✓' : '✗'}</p>
         <p>Elements loaded: {elements ? '✓' : '✗'}</p>
         <p>Client secret: {clientSecret ? '✓' : '✗'}</p>
+        <p>Stripe ready: {stripeReady ? '✓' : '✗'}</p>
         <p>Processing: {isProcessing ? 'Yes' : 'No'}</p>
       </div>
 
       <Button 
         type="submit" 
-        disabled={!stripe || isProcessing || !clientSecret || isLoading}
+        disabled={!stripe || !elements || isProcessing || !clientSecret || isLoading || !stripeReady}
         className="w-full bg-tiro-primary hover:bg-tiro-primary/90"
       >
         {isProcessing ? (
