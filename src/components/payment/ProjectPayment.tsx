@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import {
@@ -37,22 +36,16 @@ const PaymentForm: React.FC<{
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [stripeLoaded, setStripeLoaded] = useState(false);
 
-  // Monitor Stripe loading state
+  // Debug Stripe loading state
   useEffect(() => {
     console.log('Stripe loading state:', { 
       stripe: !!stripe, 
       elements: !!elements, 
-      stripeLoaded,
-      clientSecret: !!clientSecret 
+      clientSecret: !!clientSecret,
+      isLoading
     });
-    
-    if (stripe && elements) {
-      setStripeLoaded(true);
-      console.log('Stripe and Elements are ready');
-    }
-  }, [stripe, elements, stripeLoaded, clientSecret]);
+  }, [stripe, elements, clientSecret, isLoading]);
 
   // Create payment intent when component mounts
   useEffect(() => {
@@ -171,12 +164,12 @@ const PaymentForm: React.FC<{
     },
   };
 
-  // Show loading state while creating payment intent or Stripe is loading
-  if (isLoading || !stripeLoaded) {
+  // Show loading state only while creating payment intent
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center p-6">
         <Clock className="h-5 w-5 mr-2 animate-spin" />
-        <span>{isLoading ? 'Préparation du paiement...' : 'Chargement du système de paiement...'}</span>
+        <span>Préparation du paiement...</span>
       </div>
     );
   }
@@ -200,14 +193,14 @@ const PaymentForm: React.FC<{
     );
   }
 
-  // Debug information
-  const canPay = stripe && elements && clientSecret && !isProcessing && stripeLoaded;
+  // Check if we can process payment
+  const canPay = stripe && elements && clientSecret && !isProcessing;
+  
   console.log('Payment button state:', {
     stripe: !!stripe,
     elements: !!elements,
     clientSecret: !!clientSecret,
     isProcessing,
-    stripeLoaded,
     canPay
   });
 
@@ -226,7 +219,7 @@ const PaymentForm: React.FC<{
 
       {/* Debug information - à supprimer en production */}
       <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
-        <p>Debug: Stripe={stripe ? '✓' : '✗'}, Elements={elements ? '✓' : '✗'}, ClientSecret={clientSecret ? '✓' : '✗'}, Processing={isProcessing ? '✓' : '✗'}, StripeLoaded={stripeLoaded ? '✓' : '✗'}</p>
+        <p>Debug: Stripe={stripe ? '✓' : '✗'}, Elements={elements ? '✓' : '✗'}, ClientSecret={clientSecret ? '✓' : '✗'}, Processing={isProcessing ? '✓' : '✗'}</p>
       </div>
 
       <Button 
