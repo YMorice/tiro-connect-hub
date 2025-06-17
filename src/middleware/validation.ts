@@ -1,6 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
+
 import { z } from 'zod';
-import { logger } from '@/services/logger-service';
 
 // Schémas de validation réutilisés depuis le frontend
 const userSchema = z.object({
@@ -21,84 +20,54 @@ const projectSchema = z.object({
   skills: z.array(z.string()),
 });
 
-// Middleware de validation générique
-export const validateRequest = (schema: z.ZodSchema) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // Valider les données de la requête
-      const validatedData = await schema.parseAsync({
-        ...req.body,
-        ...req.query,
-        ...req.params,
+// Frontend validation function
+export const validateData = async (schema: z.ZodSchema, data: any) => {
+  try {
+    const validatedData = await schema.parseAsync(data);
+    return { success: true, data: validatedData };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.warn('Erreur de validation', {
+        errors: error.errors,
       });
 
-      // Remplacer les données de la requête par les données validées
-      req.body = validatedData;
-      
-      next();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        // Journaliser l'erreur de validation
-        logger.warn('Erreur de validation', {
-          errors: error.errors,
-          path: req.path,
-          method: req.method,
-          ip: req.ip,
-        });
-
-        // Renvoyer une réponse d'erreur standardisée
-        return res.status(400).json({
-          status: 'error',
-          code: 'VALIDATION_ERROR',
-          message: 'Données invalides',
-          errors: error.errors.map(err => ({
-            path: err.path.join('.'),
-            message: err.message,
-          })),
-        });
-      }
-
-      // Journaliser les erreurs inattendues
-      logger.error('Erreur de validation inattendue', {
-        error,
-        path: req.path,
-        method: req.method,
-        ip: req.ip,
-      });
-
-      return res.status(500).json({
-        status: 'error',
-        code: 'INTERNAL_ERROR',
-        message: 'Une erreur est survenue lors de la validation',
-      });
+      return {
+        success: false,
+        errors: error.errors.map(err => ({
+          path: err.path.join('.'),
+          message: err.message,
+        })),
+      };
     }
-  };
+
+    console.error('Erreur de validation inattendue', { error });
+    return {
+      success: false,
+      error: 'Une erreur est survenue lors de la validation',
+    };
+  }
 };
 
-// Middlewares de validation spécifiques
-export const validateUser = validateRequest(userSchema);
-export const validateProject = validateRequest(projectSchema);
+// Validation helpers for specific schemas
+export const validateUser = (data: any) => validateData(userSchema, data);
+export const validateProject = (data: any) => validateData(projectSchema, data);
 
-// Middleware de validation des fichiers
-export const validateFile = (req: Request, res: Response, next: NextFunction) => {
-  const file = req.file;
-  
+// File validation function for frontend
+export const validateFile = (file: File) => {
   if (!file) {
-    return res.status(400).json({
-      status: 'error',
-      code: 'FILE_REQUIRED',
-      message: 'Aucun fichier n\'a été fourni',
-    });
+    return {
+      success: false,
+      error: 'Aucun fichier n\'a été fourni',
+    };
   }
 
   // Vérifier la taille du fichier (10 MB max)
   const maxSize = 10 * 1024 * 1024; // 10 MB
   if (file.size > maxSize) {
-    return res.status(400).json({
-      status: 'error',
-      code: 'FILE_TOO_LARGE',
-      message: 'Le fichier est trop volumineux (max 10 MB)',
-    });
+    return {
+      success: false,
+      error: 'Le fichier est trop volumineux (max 10 MB)',
+    };
   }
 
   // Vérifier le type de fichier
@@ -113,13 +82,12 @@ export const validateFile = (req: Request, res: Response, next: NextFunction) =>
     'image/gif'
   ];
 
-  if (!allowedTypes.includes(file.mimetype)) {
-    return res.status(400).json({
-      status: 'error',
-      code: 'INVALID_FILE_TYPE',
-      message: 'Type de fichier non autorisé',
-    });
+  if (!allowedTypes.includes(file.type)) {
+    return {
+      success: false,
+      error: 'Type de fichier non autorisé',
+    };
   }
 
-  next();
-}; 
+  return { success: true };
+};
