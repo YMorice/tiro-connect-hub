@@ -20,6 +20,8 @@ serve(async (req) => {
       throw new Error("Payment Intent ID is required");
     }
 
+    console.log("Confirming payment for intent:", paymentIntentId);
+
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
@@ -40,6 +42,7 @@ serve(async (req) => {
     }
 
     const projectId = paymentIntent.metadata.project_id;
+    console.log("Processing payment for project:", projectId);
 
     // Get project details
     const { data: project, error: projectError } = await supabaseAdmin
@@ -49,67 +52,65 @@ serve(async (req) => {
       .single();
 
     if (projectError || !project) {
+      console.error("Project not found:", projectError);
       throw new Error("Project not found");
     }
 
-    let updateData: any = {
-      payment_status: paymentIntent.status,
-    };
-
     // If payment succeeded, update project status to active
     if (paymentIntent.status === "succeeded") {
-      updateData.status = "STEP5"; // Active
-      updateData.paid_at = new Date().toISOString();
-      
-      console.log(`Payment succeeded for project ${projectId}, moving to STEP5`);
-    }
+      const { error: updateError } = await supabaseAdmin
+        .from("projects")
+        .update({
+          status: "STEP5", // Active
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id_project", projectId);
 
-    // Update project with payment status
-    const { error: updateError } = await supabaseAdmin
-      .from("projects")
-      .update(updateData)
-      .eq("id_project", projectId);
+      if (updateError) {
+        console.error("Error updating project:", updateError);
+        throw new Error("Failed to update project status");
+      }
 
-    if (updateError) {
-      console.error("Error updating project:", updateError);
-      throw new Error("Failed to update project status");
-    }
+      console.log(`Payment succeeded for project ${projectId}, moved to STEP5`);
 
-    // If payment succeeded and project has selected student, add student to message group
-    if (paymentIntent.status === "succeeded" && project.selected_student) {
-      try {
-        // Get the message group for this project
-        const { data: messageGroup } = await supabaseAdmin
-          .from("message_groups")
-          .select("id_group")
-          .eq("id_project", projectId)
-          .limit(1)
-          .single();
-
-        if (messageGroup) {
-          // Get student's user ID
-          const { data: studentData } = await supabaseAdmin
-            .from("students")
-            .select("id_user")
-            .eq("id_student", project.selected_student)
+      // If project has selected student, add student to message group
+      if (project.selected_student) {
+        try {
+          // Get the message group for this project
+          const { data: messageGroup } = await supabaseAdmin
+            .from("message_groups")
+            .select("id_group")
+            .eq("id_project", projectId)
+            .limit(1)
             .single();
 
-          if (studentData) {
-            // Add student to message group
-            await supabaseAdmin
-              .from("message_groups")
-              .insert({
-                id_group: messageGroup.id_group,
-                id_user: studentData.id_user,
-                id_project: projectId,
-              })
-              .onConflict("id_group,id_project")
-              .ignoreDuplicates();
+          if (messageGroup) {
+            // Get student's user ID
+            const { data: studentData } = await supabaseAdmin
+              .from("students")
+              .select("id_user")
+              .eq("id_student", project.selected_student)
+              .single();
+
+            if (studentData) {
+              // Add student to message group
+              await supabaseAdmin
+                .from("message_groups")
+                .insert({
+                  id_group: messageGroup.id_group,
+                  id_user: studentData.id_user,
+                  id_project: projectId,
+                })
+                .onConflict("id_group,id_project")
+                .ignoreDuplicates();
+
+              console.log("Added student to message group");
+            }
           }
+        } catch (error) {
+          console.error("Error adding student to message group:", error);
+          // Don't fail the whole operation if this fails
         }
-      } catch (error) {
-        console.error("Error adding student to message group:", error);
-        // Don't fail the whole operation if this fails
       }
     }
 
@@ -117,7 +118,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         payment_status: paymentIntent.status,
-        project_status: updateData.status || project.status,
+        project_status: paymentIntent.status === "succeeded" ? "STEP5" : project.status,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -126,8 +127,9 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Error confirming payment:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
