@@ -366,6 +366,14 @@ const ProjectDetail = () => {
     return statusMap[status] || status?.replace('_', ' ').toUpperCase() || 'Unknown';
   };
 
+  // Handles successful payment completion
+  // Refreshes the project data to reflect the payment status change
+  const handlePaymentSuccess = () => {
+    // Refresh project data to show updated status
+    fetchProject();
+    toast.success("Payment successful! Your project is now active.");
+  };
+
   // Checks if there are unread messages in this project's conversation
   const checkUnreadMessages = async () => {
     if (!user?.id || !id) return;
