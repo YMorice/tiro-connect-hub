@@ -13,9 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
 import { CreditCard, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
-// Initialize Stripe - using test key for now
-// TODO: Replace with your actual Stripe publishable key
-const stripePromise = loadStripe('pk_test_51HdSGwDai9u72qeMPgHyLEKEqJ8Z4C2fYBj6uX9R9gXL3vMdG8gYqzG1Fa0YN2JhgTRIyZBU4DYSHAfyqzQ4k00Z00ZXwO7I3B');
+// Updated Stripe publishable key
+const stripePromise = loadStripe('pk_live_51R2qYjGGl1QIS9OO0ReAahG8mkRzCC1xZPAaG4D3yhXt3qYoadMKNY7JIMlkfayxgvYsd3lfMnO5dobXxpFhB9iq00iArT15jL');
 
 interface ProjectPaymentProps {
   projectId: string;
