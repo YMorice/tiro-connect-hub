@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import {
@@ -36,32 +35,55 @@ const PaymentForm: React.FC<{
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Create payment intent when component mounts
   useEffect(() => {
     const createPaymentIntent = async () => {
       try {
+        setIsLoading(true);
+        setPaymentError(null);
+        
+        console.log('Creating payment intent for project:', projectId);
+        
         const { data, error } = await supabase.functions.invoke('create-payment-intent', {
           body: { projectId }
         });
 
-        if (error) throw error;
+        console.log('Payment intent response:', { data, error });
 
+        if (error) {
+          console.error('Supabase function error:', error);
+          throw new Error(error.message || 'Failed to create payment intent');
+        }
+
+        if (!data || !data.client_secret) {
+          console.error('Invalid response from create-payment-intent:', data);
+          throw new Error('Invalid response from payment service');
+        }
+
+        console.log('Payment intent created successfully, client_secret received');
         setClientSecret(data.client_secret);
       } catch (error) {
         console.error('Error creating payment intent:', error);
-        setPaymentError('Erreur lors de la création du paiement');
-        toast.error('Erreur lors de la création du paiement');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        setPaymentError(`Erreur lors de la création du paiement: ${errorMessage}`);
+        toast.error(`Erreur lors de la création du paiement: ${errorMessage}`);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    createPaymentIntent();
+    if (projectId) {
+      createPaymentIntent();
+    }
   }, [projectId]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!stripe || !elements || !clientSecret) {
+      console.log('Payment submission blocked:', { stripe: !!stripe, elements: !!elements, clientSecret: !!clientSecret });
       return;
     }
 
@@ -76,6 +98,8 @@ const PaymentForm: React.FC<{
     }
 
     try {
+      console.log('Confirming payment with Stripe...');
+      
       // Confirm payment with Stripe
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
@@ -84,17 +108,26 @@ const PaymentForm: React.FC<{
       });
 
       if (stripeError) {
+        console.error('Stripe payment error:', stripeError);
         throw new Error(stripeError.message);
       }
 
+      console.log('Payment confirmed with Stripe:', paymentIntent?.status);
+
       if (paymentIntent?.status === 'succeeded') {
+        console.log('Confirming payment on backend...');
+        
         // Confirm payment on our backend
         const { error: confirmError } = await supabase.functions.invoke('confirm-payment', {
           body: { paymentIntentId: paymentIntent.id }
         });
 
-        if (confirmError) throw confirmError;
+        if (confirmError) {
+          console.error('Backend confirmation error:', confirmError);
+          throw confirmError;
+        }
 
+        console.log('Payment fully processed successfully');
         toast.success('Paiement effectué avec succès ! Votre projet est maintenant actif.');
         onPaymentSuccess?.();
       }
@@ -120,6 +153,16 @@ const PaymentForm: React.FC<{
     },
   };
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-6">
+        <Clock className="h-5 w-5 mr-2 animate-spin" />
+        <span>Préparation du paiement...</span>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="p-4 border rounded-lg bg-gray-50">
@@ -133,9 +176,17 @@ const PaymentForm: React.FC<{
         </div>
       )}
 
+      <div className="text-xs text-gray-500 space-y-1">
+        <p>Debug info:</p>
+        <p>Stripe loaded: {stripe ? '✓' : '✗'}</p>
+        <p>Elements loaded: {elements ? '✓' : '✗'}</p>
+        <p>Client secret: {clientSecret ? '✓' : '✗'}</p>
+        <p>Processing: {isProcessing ? 'Yes' : 'No'}</p>
+      </div>
+
       <Button 
         type="submit" 
-        disabled={!stripe || isProcessing || !clientSecret}
+        disabled={!stripe || isProcessing || !clientSecret || isLoading}
         className="w-full bg-tiro-primary hover:bg-tiro-primary/90"
       >
         {isProcessing ? (
