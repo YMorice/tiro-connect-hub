@@ -59,7 +59,26 @@ const step2SchemaStudent = z.object({
   specialty: z.array(z.string()).min(1, "Veuillez sélectionner au moins une spécialité"),
   bio: z.string().min(10, "La bio doit contenir au moins 10 caractères"),
   formation: z.string().min(1, "Veuillez indiquer votre formation"),
-  portfolioUrl: z.string().url("L'URL du portfolio doit être valide").optional().or(z.literal("")),
+  portfolioUrl: z
+    .string()
+    .transform((val) => {
+      if (!val) return "";
+      return val.startsWith("http://") || val.startsWith("https://")
+        ? val
+        : `https://${val}`;
+    })
+    .refine((val) => {
+      if (!val) return true;
+      try {
+        new URL(val);
+        return true;
+      } catch {
+        return false;
+      }
+    }, {
+      message: "L'URL du portfolio doit être valide",
+    })
+    .optional(),
 });
 
 const step2SchemaEntrepreneur = z.object({
