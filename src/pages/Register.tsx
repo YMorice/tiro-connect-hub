@@ -20,28 +20,19 @@ import { supabase } from "@/integrations/supabase/client";
 
 // List of available skills for checkboxes
 const AVAILABLE_SKILLS = [
-  "Design UI/UX ", 
-  "Figma",
+  "Adobe After Effects",
+  "Adobe Illustrator", 
+  "Adobe InDesign", 
+  "Adobe Photoshop",
+  "Adobe Premiere Pro", 
   "Adobe XD", 
-  "HTML", 
-  "CSS",
-  "JavaScript", 
-  "React", 
-  "Vue.js", 
-  "TypeScript", 
-  "Node.js",
-  "Python",
-  "Django",
-  "Ruby on Rails",
-  "PHP",
-  "WordPress",
-  "Développement Mobile",
-  "React Native",
-  "Développment IOS",
-  "Développement Android",
-  "Recherche UX",
-  "SEO",
-  "Marketing Digital"
+  "Canva", 
+  "CorelDRAW", 
+  "DaVinci Resolve",
+  "Figma",
+  "Final Cut Pro",
+  "Framer",
+  "Sketch"
 ];
 
 // Step 1 schema - Basic registration information
