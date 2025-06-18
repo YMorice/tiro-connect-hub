@@ -16,7 +16,24 @@
     <meta name="twitter:site" content="@tiro_agency" />
     <meta name="twitter:image" content="/tiro-logo.webp" />
 
-    <link rel="icon" type="image/png" href="/tiro-logo.webp" />
+    <link id="favicon" rel="icon" type="image/png" href="/ColorDefault.webp" />
+    
+    <script>
+      function updateFavicon() {
+        const favicon = document.getElementById('favicon');
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          favicon.href = '/Logo_Tiro_Resp_Blanc.webp';
+        } else {
+          favicon.href = '/ColorDefault.webp';
+        }
+      }
+
+      // Mettre à jour au chargement
+      updateFavicon();
+
+      // Écouter les changements de thème
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateFavicon);
+    </script>
   </head>
 
   <body>

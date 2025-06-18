@@ -13,11 +13,11 @@ interface SkillsStepProps {
 
 // Liste prédéfinie de compétences pour les cases à cocher
 const AVAILABLE_SKILLS = [
-  "After Effects",
-  "Illustrator", 
-  "InDesign", 
-  "Photoshop",
-  "Premiere Pro", 
+  "Adobe After Effects",
+  "Adobe Illustrator", 
+  "Adobe InDesign", 
+  "Adobe Photoshop",
+  "Adobe Premiere Pro", 
   "Adobe XD", 
   "Canva", 
   "CorelDRAW", 
