@@ -17,6 +17,7 @@ import FileUpload from "@/components/FileUpload";
 import { useParams } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Camera, Loader2 } from "lucide-react";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -107,8 +108,8 @@ const Profile = () => {
   const fetchUserProfile = async () => {
     if (!user) return;
 
-    setLoading(true);
     try {
+      // Récupérer les données de base de l'utilisateur
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -117,76 +118,119 @@ const Profile = () => {
 
       if (userError) throw userError;
 
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('*')
-        .eq('id_user', user.id)
-        .single();
+      if (userData) {
+        setProfile({
+          name: userData.name,
+          surname: userData.surname,
+          email: userData.email,
+          phone: userData.phone,
+          bio: '',
+          specialty: '',
+          skills: [],
+          formation: '',
+          portfolioLink: ''
+        });
 
-      if (studentError && studentError.code !== 'PGRST116') throw studentError;
+        // Si l'utilisateur est un étudiant, récupérer les données supplémentaires
+        if (userData.role === 'student') {
+          const { data: studentData, error: studentError } = await supabase
+            .from('students')
+            .select('biography, specialty, skills, formation, portfolio_link')
+            .eq('id_user', user.id)
+            .single();
 
-      const { data: entrepreneurData, error: entrepreneurError } = await supabase
-        .from('entrepreneurs')
-        .select('*')
-        .eq('id_user', user.id)
-        .single();
+          if (studentError) {
+            console.error('Error fetching student data:', studentError);
+          } else if (studentData) {
+            setProfile(prev => ({
+              ...prev,
+              bio: studentData.biography || '',
+              specialty: studentData.specialty || '',
+              skills: studentData.skills || [],
+              formation: studentData.formation || '',
+              portfolioLink: studentData.portfolio_link || ''
+            }));
+          }
+        }
 
-      if (entrepreneurError && entrepreneurError.code !== 'PGRST116') throw entrepreneurError;
-
-      setProfile({
-        name: userData.name,
-        surname: userData.surname,
-        email: userData.email,
-        avatar: userData.pp_link || "",
-        bio: studentData?.biography || "",
-        specialty: studentData?.specialty || [],
-        skills: studentData?.skills || [],
-        formation: studentData?.formation || "",
-        portfolioLink: studentData?.portfolio_link || "",
-        companyName: entrepreneurData?.company_name || "",
-        companyRole: entrepreneurData?.company_role || "",
-        companyAddress: entrepreneurData?.address || ""
-      });
-      setSkills(studentData?.skills || []);
-      setAvatarUrl(userData.pp_link || "");
-    } catch (error: any) {
-      console.error("Erreur lors de la récupération du profil:", error);
-      toast.error("Échec du chargement du profil");
+        // Définir l'URL de l'avatar
+        if (userData.pp_link) {
+          setAvatarUrl(userData.pp_link);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast.error('Erreur lors du chargement du profil');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAvatarUpload = async (file: File) => {
-    setIsUploadingAvatar(true);
-    
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Vérifier le type de fichier
+    if (!file.type.startsWith('image/')) {
+      toast.error('Veuillez sélectionner une image valide');
+      return;
+    }
+
+    // Vérifier la taille du fichier (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('L\'image ne doit pas dépasser 5MB');
+      return;
+    }
+
     try {
+      setLoading(true);
+
+      // Supprimer l'ancienne photo si elle existe
+      if (avatarUrl) {
+        const oldPath = avatarUrl.split('/').pop()?.split('?')[0];
+        if (oldPath) {
+          await supabase.storage.from('avatars').remove([oldPath]);
+        }
+      }
+
+      // Générer un nom de fichier unique
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
-      
+
+      // Uploader la nouvelle photo
       const { error: uploadError } = await supabase.storage
-        .from('pp')
+        .from('avatars')
         .upload(filePath, file, {
-          contentType: file.type,
-          upsert: true,
+          cacheControl: '3600',
+          upsert: true
         });
-        
+
       if (uploadError) throw uploadError;
-      
-      const { data: urlData } = supabase.storage
-        .from('pp')
+
+      // Obtenir l'URL publique
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
         .getPublicUrl(filePath);
-        
-      const newAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-      setAvatarUrl(newAvatarUrl);
-      toast.success("Photo de profil téléchargée avec succès");
-      
-    } catch (error: any) {
-      console.error("Erreur lors du téléchargement de la photo de profil:", error);
-      toast.error(`Échec du téléchargement: ${error.message || "Erreur inconnue"}`);
+
+      console.log('Public URL:', publicUrl); // Debug log
+
+      // Mettre à jour l'URL dans la base de données
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ pp_link: publicUrl })
+        .eq('id_users', user.id);
+
+      if (updateError) throw updateError;
+
+      // Mettre à jour l'état local immédiatement
+      setAvatarUrl(publicUrl);
+      toast.success('Photo de profil mise à jour avec succès');
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour de la photo de profil:', error);
+      toast.error('Échec de la mise à jour de la photo de profil');
     } finally {
-      setIsUploadingAvatar(false);
+      setLoading(false);
     }
   };
 
@@ -339,24 +383,46 @@ const Profile = () => {
                 <CardContent className="space-y-8">
                   {/* Section Photo de Profil */}
                   <div className="flex flex-col items-center space-y-4">
-                    <Avatar className="h-32 w-32">
-                      {avatarUrl ? (
-                        <AvatarImage 
-                          src={avatarUrl} 
-                          alt={`${profile.name} ${profile.surname}`}
-                          className="object-cover"
-                        />
-                      ) : (
-                        <AvatarFallback className="text-2xl bg-primary text-white">
-                          {profile.name?.charAt(0)}{profile.surname?.charAt(0)}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <FileUpload 
-                      onFileSelect={handleAvatarUpload} 
-                      accept="image/*"
-                      buttonText={isUploadingAvatar ? "Téléchargement..." : "Changer la Photo de Profil"}
-                    />
+                    <div className="relative group">
+                      <Avatar className="w-32 h-32">
+                        {avatarUrl ? (
+                          <AvatarImage 
+                            src={avatarUrl} 
+                            alt={`${profile.name} ${profile.surname}`}
+                            className="object-cover"
+                            onError={(e) => {
+                              console.error('Error loading avatar:', e);
+                              console.log('Failed URL:', avatarUrl); // Debug log
+                              setAvatarUrl('');
+                            }}
+                          />
+                        ) : (
+                          <AvatarFallback className="text-2xl bg-primary text-white">
+                            {profile.name?.charAt(0)}
+                            {profile.surname?.charAt(0)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <label
+                        htmlFor="avatar-upload"
+                        className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                      >
+                        <Camera className="w-8 h-8 text-white" />
+                      </label>
+                      <input
+                        id="avatar-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAvatarUpload}
+                        disabled={loading}
+                      />
+                    </div>
+                    {loading && (
+                      <div className="mt-2">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Informations de Base */}

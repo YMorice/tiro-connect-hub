@@ -157,33 +157,76 @@ export const uploadFile = async (file: File, projectId: string): Promise<string 
  */
 export const addDocumentToProject = async (
   projectId: string,
-  name: string,
-  type: 'proposal' | 'final_proposal',
-  link: string
-) => {
+  documentName: string,
+  documentType: string,
+  documentUrl: string
+): Promise<void> => {
   try {
-    const { data, error } = await supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Utilisateur non connecté');
+
+    console.log('Current user:', user.id);
+    
+    // Vérifier la relation utilisateur-entrepreneur
+    const { data: entrepreneurData, error: entrepreneurError } = await supabase
+      .from('entrepreneurs')
+      .select('id_entrepreneur')
+      .eq('id_user', user.id)
+      .single();
+    
+    console.log('Entrepreneur data:', entrepreneurData);
+    console.log('Entrepreneur error:', entrepreneurError);
+
+    // Vérifier les données du projet
+    const { data: projectData, error: projectError } = await supabase
+      .from('projects')
+      .select('id_entrepreneur, selected_student')
+      .eq('id_project', projectId)
+      .single();
+
+    console.log('Project data:', projectData);
+    console.log('Project error:', projectError);
+
+    // Vérifier les étudiants proposés
+    const { data: proposedStudents, error: proposedError } = await supabase
+      .from('proposed_student')
+      .select('student_id')
+      .eq('project_id', projectId);
+
+    console.log('Proposed students:', proposedStudents);
+    console.log('Proposed error:', proposedError);
+
+    // Vérification des permissions
+    const isEntrepreneur = entrepreneurData?.id_entrepreneur === projectData?.id_entrepreneur;
+    const isSelectedStudent = user.id === projectData?.selected_student;
+    const isProposedStudent = proposedStudents?.some(ps => ps.student_id === user.id);
+
+    console.log('Permission check:', {
+      isEntrepreneur,
+      isSelectedStudent,
+      isProposedStudent,
+      userId: user.id,
+      projectEntrepreneur: projectData?.id_entrepreneur,
+      projectSelectedStudent: projectData?.selected_student,
+      entrepreneurId: entrepreneurData?.id_entrepreneur
+    });
+
+    const { error } = await supabase
       .from('documents')
       .insert({
         id_project: projectId,
-        name,
-        type,
-        link
-      })
-      .select('*')
-      .single();
+        name: documentName,
+        type: documentType,
+        link: documentUrl
+      });
 
     if (error) {
       console.error('Error adding document:', error);
-      toast.error(`Failed to add document: ${error.message}`);
-      return null;
+      throw error;
     }
-
-    return data;
   } catch (error) {
-    console.error('Error adding document:', error);
-    toast.error('Failed to add document');
-    return null;
+    console.error('Error in addDocumentToProject:', error);
+    throw error;
   }
 };
 

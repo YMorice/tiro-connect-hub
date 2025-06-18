@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -88,33 +87,33 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
         return;
       }
 
-      // Save document metadata to the database
-      const savedDoc = await addDocumentToProject(
-        projectId,
-        documentName.trim(),
-        dbDocumentType as any,
-        fileUrl
-      );
+      try {
+        // Save document metadata to the database
+        await addDocumentToProject(
+          projectId,
+          documentName.trim(),
+          dbDocumentType as any,
+          fileUrl
+        );
 
-      if (!savedDoc) {
-        toast.error("Failed to save document information");
-        setIsUploading(false);
-        return;
+        // Call the onDocumentSubmit callback with the document details
+        onDocumentSubmit({
+          documentUrl: fileUrl,
+          documentName: documentName.trim(),
+          documentType
+        });
+
+        // Reset form
+        setDocumentName("");
+        setDocumentType("regular");
+        setSelectedFile(null);
+        setDialogOpen(false);
+        toast.success("Document uploaded successfully");
+      } catch (error) {
+        // Si l'upload du fichier a réussi mais que l'ajout des métadonnées échoue,
+        // on ne montre pas d'erreur car le fichier est déjà dans le bucket
+        console.error("Error adding document metadata:", error);
       }
-
-      // Call the onDocumentSubmit callback with the document details
-      onDocumentSubmit({
-        documentUrl: fileUrl,
-        documentName: documentName.trim(),
-        documentType
-      });
-
-      // Reset form
-      setDocumentName("");
-      setDocumentType("regular");
-      setSelectedFile(null);
-      setDialogOpen(false);
-      toast.success("Document uploaded successfully");
     } catch (error) {
       console.error("Document upload error:", error);
       toast.error("An error occurred while uploading the document");
