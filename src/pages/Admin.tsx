@@ -136,8 +136,8 @@ const Admin = () => {
           price: project.price,
           packName: project.project_packs?.name || 'N/A',
           entrepreneur: {
-            name: `${project.entrepreneurs.users.name} ${project.entrepreneurs.users.surname}`,
-            companyName: project.entrepreneurs.company_name || undefined,
+            name: `${project.entrepreneurs?.users?.name || ""} ${project.entrepreneurs?.users?.surname || ""}`.trim() || "Nom inconnu",
+            companyName: project.entrepreneurs?.company_name || undefined,
           }
         }));
         
@@ -212,8 +212,8 @@ const Admin = () => {
           price: project.price,
           packName: project.project_packs?.name || 'N/A',
           entrepreneur: {
-            name: `${project.entrepreneurs.users.name} ${project.entrepreneurs.users.surname}`,
-            companyName: project.entrepreneurs.company_name || undefined,
+            name: `${project.entrepreneurs?.users?.name || ""} ${project.entrepreneurs?.users?.surname || ""}`.trim() || "Nom inconnu",
+            companyName: project.entrepreneurs?.company_name || undefined,
           }
         }));
         

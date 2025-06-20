@@ -103,7 +103,7 @@ export const uploadFile = async (file: File, projectId: string): Promise<string 
 
     // Upload file to 'documents' bucket
     const { data, error } = await supabase.storage
-      .from('documents')
+      .from('Documents')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false
@@ -117,7 +117,7 @@ export const uploadFile = async (file: File, projectId: string): Promise<string 
 
     // Generate a public URL for the file
     const { data: { publicUrl } } = supabase.storage
-      .from('documents')
+      .from('Documents')
       .getPublicUrl(data.path);
 
     return publicUrl;
@@ -324,7 +324,7 @@ export const deleteDocument = async (documentId: string) => {
       
       if (path) {
         const { error: storageError } = await supabase.storage
-          .from('documents')
+          .from('Documents')
           .remove([path]);
 
         if (storageError) {
