@@ -67,22 +67,23 @@ const Dashboard = () => {
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "completed":
-        return "bg-tiro-green text-white"; // ou bg-green-600
+        return "bg-green-100 text-green-700"; // ✅ vert
       case "active":
       case "in progress":
-        return "bg-tiro-primary text-white"; // orange vif
-      case "new":
-        return "bg-purple-100 text-purple-700"; // exemple plus doux
-      case "proposals":
-        return "bg-orange-100 text-orange-700";
-      case "selection":
-        return "bg-blue-100 text-blue-700";
+        return "bg-blue-100 text-blue-700"; // ✅ bleu
       case "payment":
-        return "bg-emerald-100 text-emerald-700";
+        return "bg-red-100 text-red-700"; // ✅ rouge
+      case "new":
+        return "bg-yellow-100 text-yellow-700"; // ✅ jaune
+      case "selection":
+        return "bg-purple-100 text-purple-700"; // ✅ violet
+      case "proposals":
+        return "bg-orange-100 text-orange-700"; // ✅ orange
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-700";
     }
   };
+
 
   const getStatusLabel = (status: string) => {
     switch (status?.toLowerCase()) {

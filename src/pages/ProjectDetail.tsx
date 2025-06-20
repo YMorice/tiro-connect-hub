@@ -376,14 +376,24 @@ const ProjectDetail = () => {
    * @param status - The project status string
    * @returns CSS classes for styling the status badge
    */
+  
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case "completed": return "bg-green-100 text-green-800";
-      case "in_progress": return "bg-blue-100 text-blue-800";
-      case "open": return "bg-yellow-100 text-yellow-800";
-      case "step5": return "bg-green-100 text-green-800";
-      case "step6": return "bg-blue-100 text-blue-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "completed":
+        return "bg-green-100 text-green-700"; // ✅ vert
+      case "step5":
+      case "in progress":
+        return "bg-blue-100 text-blue-700"; // ✅ bleu
+      case "step4":
+        return "bg-red-100 text-red-700"; // ✅ rouge
+      case "step1":
+        return "bg-yellow-100 text-yellow-700"; // ✅ jaune
+      case "step3":
+        return "bg-purple-100 text-purple-700"; // ✅ violet
+      case "step2":
+        return "bg-orange-100 text-orange-700"; // ✅ orange
+      default:
+        return "bg-gray-100 text-gray-700";
     }
   };
 

@@ -15,6 +15,7 @@ export const getStudentProposals = async (studentId: string) => {
         status,
         created_at,
         updated_at,
+        deadline,
         price,
         id_entrepreneur,
         selected_student,
