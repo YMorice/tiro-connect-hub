@@ -126,8 +126,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   className={cn(
                     "flex items-center px-3 py-2 rounded-lg transition-all text-sm font-medium",
                     isActive(item.href)
-                      ? "bg-tiro-primary/20 text-tiro-primary backdrop-blur-sm"
-                      : "hover:bg-white/10 text-foreground"
+                      ? "bg-tiro-primary text-white font-semibold"
                   )}
                 >
                   <item.icon size={18} className="mr-2" />
