@@ -103,7 +103,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     <div className="min-h-screen w-full bg-background">
       {/* Glass Morphism Header */}
       <header className="fixed top-4 inset-x-4 z-50">
-        <div className="w-full h-16 rounded-2xl bg-white/70 backdrop-blur-md border border-white/30 shadow-md flex items-center justify-between px-4 lg:px-6">
+        <div className="w-full h-16 rounded-2xl bg-white/70 backdrop-blur-md border border-white/80 shadow-md flex items-center justify-between px-4 lg:px-6">
 
           {/* Logo */}
           <div className="flex items-center">
@@ -111,7 +111,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <img 
                 src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
                 alt="Tiro Logo" 
-                className="h-10" 
+                className="h-12" 
               />
             </Link>
           </div>
