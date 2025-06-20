@@ -57,6 +57,10 @@ const Dashboard = () => {
   // Obtenir les projets récents (5 derniers)
   const recentProjects = projects.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 5);
   
+  // DEBUG : Afficher les projets reçus et les projets récents
+  console.log("Projets reçus dans Dashboard:", projects);
+  console.log("Projets récents:", recentProjects);
+  
   // Obtenir les propositions en attente pour les étudiants
   const pendingProposals = studentProposals.filter(p => p.accepted === null);
 

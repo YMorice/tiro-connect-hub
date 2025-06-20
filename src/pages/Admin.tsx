@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -128,8 +127,8 @@ const Admin = () => {
           status: convertDbStatusToDisplay(project.status || 'STEP1'),
           created_at: project.created_at,
           entrepreneur: {
-            name: `${project.entrepreneurs.users.name} ${project.entrepreneurs.users.surname}`,
-            companyName: project.entrepreneurs.company_name || undefined,
+            name: `${project.entrepreneurs?.users?.name || ""} ${project.entrepreneurs?.users?.surname || ""}`.trim() || "Nom inconnu",
+            companyName: project.entrepreneurs?.company_name || undefined,
           }
         }));
         
@@ -198,8 +197,8 @@ const Admin = () => {
           status: convertDbStatusToDisplay(project.status || 'STEP1'),
           created_at: project.created_at,
           entrepreneur: {
-            name: `${project.entrepreneurs.users.name} ${project.entrepreneurs.users.surname}`,
-            companyName: project.entrepreneurs.company_name || undefined,
+            name: `${project.entrepreneurs?.users?.name || ""} ${project.entrepreneurs?.users?.surname || ""}`.trim() || "Nom inconnu",
+            companyName: project.entrepreneurs?.company_name || undefined,
           }
         }));
         

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { Project, Task, Document } from "../types";
 import { toast } from "@/components/ui/sonner";
@@ -189,6 +188,28 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
           projectsData = uniqueProjects;
         }
+      } else if (userRole === 'admin') {
+        // Charger tous les projets pour l'admin
+        const { data, error } = await supabase
+          .from('projects')
+          .select(`
+            id_project,
+            title,
+            description,
+            status,
+            created_at,
+            updated_at,
+            price,
+            id_entrepreneur,
+            selected_student
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching projects for admin:', error);
+          throw error;
+        }
+        projectsData = data || [];
       }
 
       // Convert to the format expected by the UI

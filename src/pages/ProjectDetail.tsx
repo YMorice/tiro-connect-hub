@@ -321,8 +321,47 @@ const ProjectDetail = () => {
    * 
    * @param doc - The document object to download
    */
-  const downloadDocument = (doc: ProjectDocument) => {
-    window.open(doc.link, '_blank');
+  const downloadDocument = async (doc: ProjectDocument) => {
+    try {
+      // DEBUG : Afficher la valeur de doc.link
+      console.log('DEBUG doc.link:', doc.link);
+      const url = new URL(doc.link);
+      const parts = url.pathname.split('/');
+      console.log('DEBUG parts:', parts);
+      const documentsIndex = parts.findIndex(p => p.toLowerCase() === "documents");
+      console.log('DEBUG documentsIndex:', documentsIndex);
+      const filePath = documentsIndex !== -1 ? parts.slice(documentsIndex + 1).join('/') : null;
+      console.log('DEBUG filePath:', filePath);
+
+      if (!filePath) {
+        toast.error("Chemin du fichier introuvable dans le lien");
+        return;
+      }
+
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(filePath);
+
+      if (error) {
+        toast.error("Erreur lors du téléchargement du document");
+        return;
+      }
+
+      if (data) {
+        const url = URL.createObjectURL(data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = doc.name || 'document';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast.success("Téléchargement lancé !");
+      }
+    } catch (err) {
+      toast.error("Erreur inattendue lors du téléchargement");
+      console.error(err);
+    }
   };
 
   /**
