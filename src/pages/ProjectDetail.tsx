@@ -637,19 +637,6 @@ const ProjectDetail = () => {
                     <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
                       {getStatusDisplay(project.status)}
                     </Badge>
-                    <div className="flex items-center text-xs sm:text-sm text-gray-500">
-                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                      <span className="hidden sm:inline">Created </span>
-                      {new Date(project.created_at).toLocaleDateString()}
-                    </div>
-                    {/* Deadline Display */}
-                    {project.deadline && (
-                      <div className="flex items-center text-xs sm:text-sm text-gray-500">
-                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        <span className="hidden sm:inline">Due </span>
-                        {new Date(project.deadline).toLocaleDateString()}
-                      </div>
-                    )}
                     {/* Discussion Link */}
                     <Link to="/messages" className="flex items-center">
                       <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
@@ -688,13 +675,21 @@ const ProjectDetail = () => {
                   Description
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3 sm:space-y-4 text-left">
+                {project.deadline && (
+                  <p className="text-sm sm:text-base text-gray-800">
+                    <Clock className="inline-block h-4 w-4 mr-1 text-gray-500 align-middle" />
+                    <span className="font-semibold">Deadline :</span> {new Date(project.deadline).toLocaleDateString()}
+                  </p>
+                )}
                 <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
                   {project.description}
                 </p>
               </CardContent>
             </Card>
           )}
+
+
 
           {/* People Information Cards - Entrepreneur and Student */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
@@ -722,7 +717,6 @@ const ProjectDetail = () => {
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{project.entrepreneur?.users?.name}</p>
-                    <p className="text-xs sm:text-sm text-gray-500 truncate">{project.entrepreneur?.users?.email}</p>
                   </div>
                 </div>
               </CardContent>
@@ -753,7 +747,6 @@ const ProjectDetail = () => {
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{project.student?.users?.name}</p>
-                      <p className="text-xs sm:text-sm text-gray-500 truncate">{project.student?.users?.email}</p>
                     </div>
                   </div>
                 </CardContent>
