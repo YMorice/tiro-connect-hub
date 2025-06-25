@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
@@ -38,33 +37,48 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
       let studentsData: any[] = [];
       
       if (mode === 'new') {
-        // Fetch only available students for new projects
-        console.log('Fetching available students for new project');
-        const { data, error } = await supabase
+        // 1. Récupérer tous les étudiants
+        const { data: studentProfiles, error: studentError } = await supabase
           .from('students')
-          .select(`
-            id_student,
-            biography,
-            skills,
-            specialty,
-            formation,
-            available,
-            users!inner (
-              id_users,
-              email,
-              name,
-              surname,
-              role
-            )
-          `)
-          .eq('available', true);
-          
-        if (error) {
-          console.error('Error fetching students:', error);
-          throw error;
+          .select('*');
+        if (studentError) {
+          console.error('Error fetching student profiles:', studentError);
+          throw studentError;
         }
-        
-        studentsData = data || [];
+
+        // 2. Récupérer tous les users correspondants
+        const userIds = studentProfiles?.map(profile => profile.id_user) || [];
+        let usersData = [];
+        if (userIds.length > 0) {
+          const { data: users, error: usersError } = await supabase
+            .from('users')
+            .select('*')
+            .in('id_users', userIds);
+          if (usersError) {
+            console.error('Error fetching users:', usersError);
+            // On continue quand même, on affichera des placeholders
+          } else {
+            usersData = users;
+          }
+        }
+
+        // 3. Fusionner les données étudiants + users (robuste)
+        studentsData = studentProfiles.map(profile => {
+          const userData = usersData.find(u => u.id_users === profile.id_user);
+          // Si user trouvé, on prend le nom/prénom réel
+          // Sinon, on affiche un placeholder lisible
+          const name = userData ? `${userData.name} ${userData.surname}` : `Étudiant ${profile.id_student.slice(-4)}`;
+          const email = userData ? userData.email : 'Email non disponible';
+          return {
+            id: profile.id_student,
+            email,
+            name,
+            bio: profile.biography || undefined,
+            skills: Array.isArray(profile.skills) ? profile.skills : [],
+            specialty: profile.specialty || undefined,
+            available: profile.available !== false,
+          };
+        });
       } else if (mode === 'proposals') {
         // Fetch students who have been proposed to and accepted for this project
         console.log('Fetching students who accepted proposals for project:', projectId);
@@ -98,19 +112,8 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
         studentsData = data?.map(proposal => proposal.students) || [];
       }
       
-      // Transform the data to match the Student type
-      const formattedStudents: Student[] = studentsData.map(student => ({
-        id: student.id_student,
-        email: student.users.email,
-        name: `${student.users.name} ${student.users.surname}`,
-        bio: student.biography || undefined,
-        skills: Array.isArray(student.skills) ? student.skills : [],
-        specialty: student.specialty || undefined,
-        available: student.available !== false,
-      }));
-      
-      console.log('Formatted students:', formattedStudents);
-      setStudents(formattedStudents);
+      console.log('Formatted students:', studentsData);
+      setStudents(studentsData);
       
       // Extract unique specialties for filter dropdown
       const uniqueSpecialties = Array.from(
