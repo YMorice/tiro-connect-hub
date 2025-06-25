@@ -1,314 +1,49 @@
-
-import React, { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import {
-  Elements,
-  CardElement,
-  useStripe,
-  useElements
-} from '@stripe/react-stripe-js';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/sonner';
+import { useEffect, useState } from 'react';
+import { Elements }           from '@stripe/react-stripe-js';
+import { loadStripe }         from '@stripe/stripe-js';
+import { supabase }           from '@/integrations/supabase/client';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import { Button }             from '@/components/ui/button';
+import { Badge }              from '@/components/ui/badge';
 import { CreditCard, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { toast }              from '@/components/ui/sonner';
+import { PaymentForm }        from '@/components/payment/PaymentForm';
 
-// Initialize Stripe promise
-const stripePromise = loadStripe('pk_live_51R2qYjGGl1QIS9OO0ReAahG8mkRzCC1xZPAaG4D3yhXt3qYoadMKNY7JIMlkfayxgvYsd3lfMnO5dobXxpFhB9iq00iArT15jL');
+const stripePromise = loadStripe(import.meta.env.VITE_PUBLIC_STRIPE_PK_TEST!);
 
-interface ProjectPaymentProps {
+interface Props {
   projectId: string;
   projectTitle: string;
   amount: number;
-  paymentStatus?: string;
+  paymentStatus?: 'pending' | 'succeeded' | 'processing' | 'failed';
   onPaymentSuccess?: () => void;
 }
 
-const PaymentForm: React.FC<{
-  projectId: string;
-  projectTitle: string;
-  amount: number;
-  onPaymentSuccess?: () => void;
-}> = ({ projectId, projectTitle, amount, onPaymentSuccess }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Debug Stripe loading state avec plus de détails
-  useEffect(() => {
-    console.log('=== STRIPE DEBUG ===');
-    console.log('Stripe instance:', stripe);
-    console.log('Elements instance:', elements);
-    console.log('Client Secret:', clientSecret);
-    console.log('Loading state:', isLoading);
-    console.log('Can pay:', !!(stripe && elements && clientSecret && !isProcessing));
-    console.log('==================');
-  }, [stripe, elements, clientSecret, isLoading, isProcessing]);
-
-  // Create payment intent when component mounts
-  useEffect(() => {
-    const createPaymentIntent = async () => {
-      try {
-        setIsLoading(true);
-        setPaymentError(null);
-        
-        console.log('Creating payment intent for project:', projectId);
-        
-        const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-          body: { projectId }
-        });
-
-        console.log('Payment intent response:', { data, error });
-
-        if (error) {
-          console.error('Supabase function error:', error);
-          throw new Error(error.message || 'Failed to create payment intent');
-        }
-
-        if (!data || !data.client_secret) {
-          console.error('Invalid response from create-payment-intent:', data);
-          throw new Error('Invalid response from payment service');
-        }
-
-        console.log('Payment intent created successfully, client_secret received');
-        setClientSecret(data.client_secret);
-      } catch (error) {
-        console.error('Error creating payment intent:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        setPaymentError(`Erreur lors de la création du paiement: ${errorMessage}`);
-        toast.error(`Erreur lors de la création du paiement: ${errorMessage}`);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (projectId) {
-      createPaymentIntent();
-    }
-  }, [projectId]);
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    console.log('Form submitted - checking prerequisites:', {
-      stripe: !!stripe,
-      elements: !!elements,
-      clientSecret: !!clientSecret
-    });
-
-    if (!stripe || !elements) {
-      console.log('Stripe or Elements not ready yet');
-      toast.error('Le système de paiement n\'est pas encore prêt. Veuillez patienter quelques secondes.');
-      return;
-    }
-
-    if (!clientSecret) {
-      console.log('Client secret not available');
-      toast.error('Intention de paiement non créée. Veuillez recharger la page.');
-      return;
-    }
-
-    setIsProcessing(true);
-    setPaymentError(null);
-
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
-      setPaymentError('Élément de carte non trouvé');
-      setIsProcessing(false);
-      return;
-    }
-
-    try {
-      console.log('Confirming payment with Stripe...');
-      
-      // Confirm payment with Stripe
-      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: cardElement,
-        }
-      });
-
-      if (stripeError) {
-        console.error('Stripe payment error:', stripeError);
-        throw new Error(stripeError.message);
-      }
-
-      console.log('Payment confirmed with Stripe:', paymentIntent?.status);
-
-      if (paymentIntent?.status === 'succeeded') {
-        console.log('Confirming payment on backend...');
-        
-        // Confirm payment on our backend
-        const { error: confirmError } = await supabase.functions.invoke('confirm-payment', {
-          body: { paymentIntentId: paymentIntent.id }
-        });
-
-        if (confirmError) {
-          console.error('Backend confirmation error:', confirmError);
-          throw confirmError;
-        }
-
-        console.log('Payment fully processed successfully');
-        toast.success('Paiement effectué avec succès ! Votre projet est maintenant actif.');
-        onPaymentSuccess?.();
-      }
-    } catch (error) {
-      console.error('Payment error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erreur de paiement inconnue';
-      setPaymentError(errorMessage);
-      toast.error(`Erreur de paiement: ${errorMessage}`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const cardElementOptions = {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#424770',
-        '::placeholder': {
-          color: '#aab7c4',
-        },
-      },
-    },
-  };
-
-  // Show loading state only while creating payment intent
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-6">
-        <Clock className="h-5 w-5 mr-2 animate-spin" />
-        <span>Préparation du paiement...</span>
-      </div>
-    );
-  }
-
-  // Show error state if payment intent creation failed
-  if (paymentError && !clientSecret) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center p-3 text-red-800 bg-red-100 rounded-lg">
-          <AlertCircle className="h-4 w-4 mr-2" />
-          <span className="text-sm">{paymentError}</span>
-        </div>
-        <Button 
-          onClick={() => window.location.reload()}
-          variant="outline"
-          className="w-full"
-        >
-          Réessayer
-        </Button>
-      </div>
-    );
-  }
-
-  // Show loading message if Stripe/Elements not ready
-  if (!stripe || !elements) {
-    return (
-      <div className="flex items-center justify-center p-6">
-        <Clock className="h-5 w-5 mr-2 animate-spin" />
-        <span>Chargement du système de paiement Stripe...</span>
-      </div>
-    );
-  }
-
-  // Check if we can process payment
-  const canPay = stripe && elements && clientSecret && !isProcessing;
-  
-  console.log('Final payment button state:', {
-    stripe: !!stripe,
-    elements: !!elements,
-    clientSecret: !!clientSecret,
-    isProcessing,
-    canPay
-  });
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-4 border rounded-lg bg-gray-50">
-        <CardElement options={cardElementOptions} />
-      </div>
-      
-      {paymentError && (
-        <div className="flex items-center p-3 text-red-800 bg-red-100 rounded-lg">
-          <AlertCircle className="h-4 w-4 mr-2" />
-          <span className="text-sm">{paymentError}</span>
-        </div>
-      )}
-
-      {/* Debug information - à supprimer en production */}
-      <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
-        <p>Debug: Stripe={stripe ? '✓' : '✗'}, Elements={elements ? '✓' : '✗'}, ClientSecret={clientSecret ? '✓' : '✗'}, Processing={isProcessing ? '✓' : '✗'}</p>
-      </div>
-
-      <Button 
-        type="submit" 
-        disabled={!canPay}
-        className="w-full bg-tiro-primary hover:bg-tiro-primary/90"
-      >
-        {isProcessing ? (
-          <>
-            <Clock className="h-4 w-4 mr-2 animate-spin" />
-            Traitement en cours...
-          </>
-        ) : (
-          <>
-            <CreditCard className="h-4 w-4 mr-2" />
-            Payer {amount.toLocaleString('fr-FR')} €
-          </>
-        )}
-      </Button>
-    </form>
-  );
-};
-
-const ProjectPayment: React.FC<ProjectPaymentProps> = ({
+export const ProjectPayment = ({
   projectId,
   projectTitle,
   amount,
   paymentStatus = 'pending',
-  onPaymentSuccess
-}) => {
-  const [stripeReady, setStripeReady] = useState(false);
+  onPaymentSuccess,
+}: Props) => {
+  const [clientSecret, setSecret] = useState<string>();
+  const [loading, setLoad]        = useState(true);
+  const [error,   setError]       = useState<string>();
 
-  // Monitor Stripe Promise resolution
+  /* 1) Récupérer le client_secret à l’ouverture */
   useEffect(() => {
-    const checkStripe = async () => {
-      try {
-        console.log('Checking Stripe promise...');
-        const stripeInstance = await stripePromise;
-        console.log('Stripe instance loaded:', !!stripeInstance);
-        setStripeReady(!!stripeInstance);
-      } catch (error) {
-        console.error('Error loading Stripe:', error);
-        setStripeReady(false);
-      }
-    };
+    (async () => {
+      setLoad(true);
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: { projectId },
+      });
+      if (error) setError(error.message);
+      else setSecret(data.client_secret);
+      setLoad(false);
+    })();
+  }, [projectId]);
 
-    checkStripe();
-  }, []);
-
-  const getStatusDisplay = (status: string) => {
-    switch (status) {
-      case 'succeeded':
-        return { label: 'Payé', color: 'bg-green-100 text-green-800', icon: CheckCircle };
-      case 'processing':
-        return { label: 'En cours', color: 'bg-blue-100 text-blue-800', icon: Clock };
-      case 'failed':
-        return { label: 'Échec', color: 'bg-red-100 text-red-800', icon: AlertCircle };
-      default:
-        return { label: 'En attente', color: 'bg-yellow-100 text-yellow-800', icon: Clock };
-    }
-  };
-
-  const statusInfo = getStatusDisplay(paymentStatus);
-  const StatusIcon = statusInfo.icon;
-
+  /* 2) Affichage du status global (succès) */
   if (paymentStatus === 'succeeded') {
     return (
       <Card className="border-l-4 border-l-green-500">
@@ -318,22 +53,22 @@ const ProjectPayment: React.FC<ProjectPaymentProps> = ({
             Paiement Confirmé
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <p className="text-gray-600">
-              Le paiement de <strong>{amount.toLocaleString('fr-FR')} €</strong> pour le projet 
-              <strong> "{projectTitle}"</strong> a été effectué avec succès.
-            </p>
-            <Badge className={statusInfo.color}>
-              <StatusIcon className="h-3 w-3 mr-1" />
-              {statusInfo.label}
-            </Badge>
-          </div>
+        <CardContent className="space-y-2">
+          <p className="text-gray-600">
+            Le paiement de <strong>{amount.toLocaleString('fr-FR')} €</strong> pour le projet
+            <strong> "{projectTitle}"</strong> a été effectué avec succès.
+          </p>
+          <Badge className="bg-green-100 text-green-800">
+            <CheckCircle className="h-3 w-3 mr-1" /> Payé
+          </Badge>
         </CardContent>
       </Card>
     );
   }
 
+console.log('Client Secret:', clientSecret);
+
+  /* 3) Carte principale — paiement requis */
   return (
     <Card className="border-l-4 border-l-orange-500">
       <CardHeader>
@@ -342,30 +77,46 @@ const ProjectPayment: React.FC<ProjectPaymentProps> = ({
           Paiement Requis
         </CardTitle>
       </CardHeader>
+
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <p className="text-gray-600">
-            Pour activer votre projet <strong>"{projectTitle}"</strong>, 
+            Pour activer votre projet <strong>"{projectTitle}"</strong>,
             veuillez effectuer le paiement de <strong>{amount.toLocaleString('fr-FR')} €</strong>.
           </p>
-          <Badge className={statusInfo.color}>
-            <StatusIcon className="h-3 w-3 mr-1" />
-            {statusInfo.label}
+          <Badge className="bg-yellow-100 text-yellow-800">
+            <Clock className="h-3 w-3 mr-1" /> En attente
           </Badge>
         </div>
 
-        {!stripeReady ? (
+        {loading && (
           <div className="flex items-center justify-center p-6">
             <Clock className="h-5 w-5 mr-2 animate-spin" />
-            <span>Initialisation de Stripe...</span>
+            <span>Préparation du paiement…</span>
           </div>
-        ) : (
-          <Elements stripe={stripePromise}>
+        )}
+
+        {error && (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center p-3 text-red-800 bg-red-100 rounded-lg">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              <span className="text-sm">{error}</span>
+            </div>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Réessayer
+            </Button>
+          </div>
+        )}
+
+        {clientSecret && (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
             <PaymentForm
-              projectId={projectId}
-              projectTitle={projectTitle}
               amount={amount}
-              onPaymentSuccess={onPaymentSuccess}
+              clientSecret={clientSecret}
+              onPaymentSuccess={() => {
+                toast.success('Paiement effectué avec succès !');
+                onPaymentSuccess?.();
+              }}
             />
           </Elements>
         )}
@@ -373,5 +124,3 @@ const ProjectPayment: React.FC<ProjectPaymentProps> = ({
     </Card>
   );
 };
-
-export default ProjectPayment;

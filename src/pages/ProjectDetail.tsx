@@ -33,7 +33,7 @@ import ProjectReviewSection from "@/components/reviews/ProjectReviewSection";
 import StudentProposalActions from "@/components/student/StudentProposalActions";
 import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
-import ProjectPayment from "@/components/payment/ProjectPayment";
+import {ProjectPayment} from "@/components/payment/ProjectPayment";
 import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users, Clock } from "lucide-react";
 
 /**
@@ -569,7 +569,7 @@ const ProjectDetail = () => {
                 projectId={project.id_project}
                 projectTitle={project.title}
                 amount={project.price}
-                paymentStatus={project.payment_status}
+                paymentStatus={project.payment_status as 'pending' | 'succeeded' | 'processing' | 'failed'}
                 onPaymentSuccess={handlePaymentSuccess}
               />
             </div>
