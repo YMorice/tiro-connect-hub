@@ -35,6 +35,7 @@ import StudentSelectionView from "@/components/student-selection/StudentSelectio
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
 import PaymentStatusMessage from "@/components/PaymentStatusMessage";
 import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users, Clock } from "lucide-react";
+import { format } from "date-fns";
 
 /**
  * Interface for project document data structure
@@ -138,6 +139,16 @@ const ProjectDetail = () => {
       }
     }
   }, [user, id, isValidUUID]);
+
+  // Ajout de logs pour le debug côté étudiant
+  useEffect(() => {
+    console.log("user", user); // Affiche l'utilisateur connecté
+    console.log("user.id", user?.id); // Affiche l'UUID utilisateur
+    console.log("project", project); // Affiche le projet courant
+    console.log("studentId", studentId); // Affiche l'id_student détecté côté front
+    console.log("projectId", project?.id_project); // Affiche l'id du projet courant
+    console.log("proposalStatus", proposalStatus); // Affiche le statut de la proposition
+  }, [user, project, studentId, proposalStatus]);
 
   /**
    * Fetches entrepreneur ID for the current user
@@ -446,12 +457,14 @@ const ProjectDetail = () => {
         setStudentId(studentData.id_student);
         
         // Check proposal status
-        const { data: proposalData } = await supabase
+        const { data: proposalData, error: proposalError } = await supabase
           .from('proposal_to_student')
           .select('accepted')
           .eq('id_project', id)
           .eq('id_student', studentData.id_student)
           .single();
+
+        console.log("Résultat requête proposal_to_student :", { proposalData, proposalError });
 
         if (proposalData) {
           if (proposalData.accepted === null) {
@@ -465,6 +478,47 @@ const ProjectDetail = () => {
       }
     } catch (error) {
       console.error('Error checking proposal status:', error);
+    }
+  };
+
+  const forceUpdateStatusToStep2 = async () => {
+    if ((user as any)?.role !== "admin") {
+      toast.error("Seuls les administrateurs peuvent forcer le passage à l'étape 2.");
+      return;
+    }
+
+    if (!project?.id_project) {
+      toast.error("Projet introuvable.");
+      return;
+    }
+
+    try {
+      console.log("Tentative de passage du projet à STEP2", project.id_project);
+
+      // On tente la mise à jour
+      const { data, error } = await supabase
+        .from('projects')
+        .update({ status: 'STEP2' })
+        .eq('id_project', project.id_project)
+        .select();
+
+      if (error) {
+        console.error("Erreur lors de la mise à jour du statut du projet :", error);
+        toast.error("Erreur lors de la mise à jour : " + (error.message || "inconnue"));
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        toast.error("Aucune ligne modifiée. Vérifiez vos droits ou la politique RLS.");
+        console.warn("Résultat update vide :", data);
+        return;
+      }
+
+      toast.success("Le projet est passé à l'étape 2 (STEP2) !");
+      fetchProject(); // Recharge les données du projet
+    } catch (err) {
+      console.error("Erreur inattendue :", err);
+      toast.error("Erreur inattendue lors du passage à STEP2.");
     }
   };
 
@@ -585,52 +639,33 @@ const ProjectDetail = () => {
           {/* Project Header Card - Contains title, status, price, deadline, and discussion link */}
           <Card className="mb-4 sm:mb-6">
             <CardHeader className="pb-3 sm:pb-4">
-              <div className="flex flex-col gap-4">
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 break-words leading-tight">
-                    {project.title}
-                  </CardTitle>
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
-                      {getStatusDisplay(project.status)}
-                    </Badge>
-                    <div className="flex items-center text-xs sm:text-sm text-gray-500">
-                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                      <span className="hidden sm:inline">Created </span>
-                      {new Date(project.created_at).toLocaleDateString()}
-                    </div>
-                    {/* Deadline Display */}
-                    {project.deadline && (
-                      <div className="flex items-center text-xs sm:text-sm text-gray-500">
-                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        <span className="hidden sm:inline">Due </span>
-                        {new Date(project.deadline).toLocaleDateString()}
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-xl sm:text-2xl font-bold mb-2">{project.title}</CardTitle>
+                  <div className="flex flex-wrap gap-2 items-center text-sm text-muted-foreground">
+                    <Badge variant="outline">{getStatusDisplay(project.status)}</Badge>
+                    {project.price && (
+                      <div className="flex items-center">
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        {project.price}€
                       </div>
                     )}
-                    {/* Discussion Link */}
-                    <Link to="/messages" className="flex items-center">
-                      <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
-                        <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="hidden sm:inline">Discussion</span>
-                        <span className="sm:hidden">Chat</span>
-                        {hasUnreadMessages && (
-                          <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
-                        )}
-                      </Button>
-                    </Link>
+                    {project.deadline && (
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        {format(new Date(project.deadline), 'dd/MM/yyyy')}
+                      </div>
+                    )}
                   </div>
                 </div>
-                {/* Project price display */}
-                {project.price && (
-                  <div className="flex items-center bg-gray-50 px-3 sm:px-4 py-2 sm:py-3 rounded-lg self-start">
-                    <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-tiro-primary mr-2 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs sm:text-sm text-gray-600">Project Value</p>
-                      <p className="text-lg sm:text-xl font-bold text-tiro-primary">
-                        €{project.price.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
+                {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
+                  <Button
+                    onClick={forceUpdateStatusToStep2}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Forcer passage à STEP2
+                  </Button>
                 )}
               </div>
             </CardHeader>

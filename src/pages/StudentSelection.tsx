@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
@@ -128,6 +127,8 @@ const StudentSelection = () => {
         
         console.log('Successfully proposed students and updated project status');
         toast.success(`Successfully proposed ${selectedStudents.length} student${selectedStudents.length > 1 ? 's' : ''} for the project. Project status updated to "Proposals".`);
+        
+        navigate('/admin');
       } else {
         // For proposals mode, insert entries into proposed_student table
         const proposedEntries = selectedStudents.map(student => ({
@@ -171,9 +172,9 @@ const StudentSelection = () => {
         
         console.log('Successfully proposed students to entrepreneur and updated project status');
         toast.success(`Successfully proposed ${selectedStudents.length} student${selectedStudents.length > 1 ? 's' : ''} to the entrepreneur. Project status updated to "Selection".`);
+        
+        navigate('/admin');
       }
-      
-      navigate('/admin');
       
     } catch (error) {
       console.error('Error proposing students:', error);
