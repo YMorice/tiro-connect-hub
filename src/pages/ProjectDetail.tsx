@@ -33,7 +33,7 @@ import ProjectReviewSection from "@/components/reviews/ProjectReviewSection";
 import StudentProposalActions from "@/components/student/StudentProposalActions";
 import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
-import PaymentStatusMessage from "@/components/PaymentStatusMessage";
+import {ProjectPayment} from "@/components/payment/ProjectPayment";
 import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users, Clock } from "lucide-react";
 import { format } from "date-fns";
 
@@ -77,6 +77,12 @@ interface Project {
   id_entrepreneur: string;
   /** ID of the selected student (if any) */
   selected_student?: string;
+  /** Payment status of the project */
+  payment_status?: string;
+  /** Stripe payment intent ID */
+  stripe_payment_intent_id?: string;
+  /** Paid at timestamp */
+  paid_at?: string;
   /** Entrepreneur information with nested user data */
   entrepreneur?: {
     users: {
@@ -381,14 +387,24 @@ const ProjectDetail = () => {
    * @param status - The project status string
    * @returns CSS classes for styling the status badge
    */
+  
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case "completed": return "bg-green-100 text-green-800";
-      case "in_progress": return "bg-blue-100 text-blue-800";
-      case "open": return "bg-yellow-100 text-yellow-800";
-      case "step5": return "bg-green-100 text-green-800";
-      case "step6": return "bg-blue-100 text-blue-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "completed":
+        return "bg-green-100 text-green-700"; // ✅ vert
+      case "step5":
+      case "in progress":
+        return "bg-blue-100 text-blue-700"; // ✅ bleu
+      case "step4":
+        return "bg-red-100 text-red-700"; // ✅ rouge
+      case "step1":
+        return "bg-yellow-100 text-yellow-700"; // ✅ jaune
+      case "step3":
+        return "bg-purple-100 text-purple-700"; // ✅ violet
+      case "step2":
+        return "bg-orange-100 text-orange-700"; // ✅ orange
+      default:
+        return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -408,6 +424,14 @@ const ProjectDetail = () => {
       'STEP6': 'In Progress'
     };
     return statusMap[status] || status?.replace('_', ' ').toUpperCase() || 'Unknown';
+  };
+
+  // Handles successful payment completion
+  // Refreshes the project data to reflect the payment status change
+  const handlePaymentSuccess = () => {
+    // Refresh project data to show updated status
+    fetchProject();
+    toast.success("Payment successful! Your project is now active.");
   };
 
   // Checks if there are unread messages in this project's conversation
@@ -570,21 +594,40 @@ const ProjectDetail = () => {
     project?.status === 'STEP3' && // Selection status
     !project?.selected_student;
 
+  // Show payment section if user is entrepreneur, owns project, and project is in STEP4
+  const showPaymentSection = isEntrepreneur && 
+    entrepreneurId &&
+    project?.id_entrepreneur === entrepreneurId && 
+    project?.status === 'STEP4' &&
+    project?.price > 0;
+
   console.log("Debug info:", {
     isEntrepreneur,
     entrepreneurId,
     projectEntrepreneurId: project?.id_entrepreneur,
     projectStatus: project?.status,
     selectedStudent: project?.selected_student,
-    showProposedStudents
+    showProposedStudents,
+    showPaymentSection,
+    projectPrice: project?.price
   });
 
   return (
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
-          {/* Payment Status Message - Show for Payment status */}
-          <PaymentStatusMessage projectStatus={project.status} />
+          {/* Payment Section - Show for entrepreneurs when project is in STEP4 */}
+          {showPaymentSection && (
+            <div className="mb-4 sm:mb-6">
+              <ProjectPayment
+                projectId={project.id_project}
+                projectTitle={project.title}
+                amount={project.price}
+                paymentStatus={project.payment_status as 'pending' | 'succeeded' | 'processing' | 'failed'}
+                onPaymentSuccess={handlePaymentSuccess}
+              />
+            </div>
+          )}
 
           {/* Student Proposal Actions - Show for students with pending proposals */}
           {isStudent && proposalStatus && studentId && (
@@ -639,6 +682,7 @@ const ProjectDetail = () => {
           {/* Project Header Card - Contains title, status, price, deadline, and discussion link */}
           <Card className="mb-4 sm:mb-6">
             <CardHeader className="pb-3 sm:pb-4">
+<<<<<<< Modification
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="text-xl sm:text-2xl font-bold mb-2">{project.title}</CardTitle>
@@ -656,6 +700,28 @@ const ProjectDetail = () => {
                         {format(new Date(project.deadline), 'dd/MM/yyyy')}
                       </div>
                     )}
+=======
+              <div className="flex flex-col gap-4">
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 break-words leading-tight">
+                    {project.title}
+                  </CardTitle>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
+                      {getStatusDisplay(project.status)}
+                    </Badge>
+                    {/* Discussion Link */}
+                    <Link to="/messages" className="flex items-center">
+                      <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
+                        <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Discussion</span>
+                        <span className="sm:hidden">Chat</span>
+                        {hasUnreadMessages && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
+                        )}
+                      </Button>
+                    </Link>
+>>>>>>> main
                   </div>
                 </div>
                 {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
@@ -680,13 +746,21 @@ const ProjectDetail = () => {
                   Description
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3 sm:space-y-4 text-left">
+                {project.deadline && (
+                  <p className="text-sm sm:text-base text-gray-800">
+                    <Clock className="inline-block h-4 w-4 mr-1 text-gray-500 align-middle" />
+                    <span className="font-semibold">Deadline :</span> {new Date(project.deadline).toLocaleDateString()}
+                  </p>
+                )}
                 <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
                   {project.description}
                 </p>
               </CardContent>
             </Card>
           )}
+
+
 
           {/* People Information Cards - Entrepreneur and Student */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
@@ -714,7 +788,6 @@ const ProjectDetail = () => {
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{project.entrepreneur?.users?.name}</p>
-                    <p className="text-xs sm:text-sm text-gray-500 truncate">{project.entrepreneur?.users?.email}</p>
                   </div>
                 </div>
               </CardContent>
@@ -745,7 +818,6 @@ const ProjectDetail = () => {
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{project.student?.users?.name}</p>
-                      <p className="text-xs sm:text-sm text-gray-500 truncate">{project.student?.users?.email}</p>
                     </div>
                   </div>
                 </CardContent>

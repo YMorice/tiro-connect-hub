@@ -30,6 +30,7 @@ export interface Project {
   price?: number; // Added to track project earnings
   createdAt: Date;
   updatedAt: Date;
+  deadline? :  Date | null;
   proposedStudents?: User[];
 }
 

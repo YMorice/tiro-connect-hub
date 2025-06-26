@@ -79,6 +79,7 @@ const Projects = () => {
               status,
               created_at,
               updated_at,
+              deadline,
               price,
               id_entrepreneur,
               selected_student,
@@ -106,6 +107,9 @@ const Projects = () => {
             documents: [],
             createdAt: new Date(project.created_at),
             updatedAt: new Date(project.updated_at || project.created_at),
+            deadline: project.deadline
+  ? new Date(project.deadline)
+  : null, 
             price: project.price,
             entrepreneur: project.entrepreneurs
           }));
@@ -136,6 +140,9 @@ const Projects = () => {
             documents: [],
             createdAt: new Date(proposal.created_at),
             updatedAt: new Date(proposal.projects.updated_at || proposal.created_at),
+            deadline: proposal.projects.deadline
+  ? new Date(proposal.projects.deadline)
+  : null,
             price: proposal.projects.price,
             proposalStatus: proposal.accepted === null ? 'pending' : (proposal.accepted ? 'accepted' : 'declined'),
             entrepreneur: proposal.projects.entrepreneurs
@@ -151,6 +158,7 @@ const Projects = () => {
               status,
               created_at,
               updated_at,
+              deadline,
               price,
               id_entrepreneur,
               selected_student,
@@ -177,6 +185,9 @@ const Projects = () => {
             documents: [],
             createdAt: new Date(project.created_at),
             updatedAt: new Date(project.updated_at || project.created_at),
+            deadline: project.deadline
+  ? new Date(project.deadline)
+  : null,
             price: project.price,
             proposalStatus: 'assigned' as const,
             entrepreneur: project.entrepreneurs
@@ -203,6 +214,7 @@ const Projects = () => {
             status,
             created_at,
             updated_at,
+            deadline,
             price,
             id_entrepreneur,
             selected_student,
@@ -229,6 +241,7 @@ const Projects = () => {
           documents: [],
           createdAt: new Date(project.created_at),
           updatedAt: new Date(project.updated_at || project.created_at),
+          deadline: project.deadline ? new Date(project.deadline) : null,
           price: project.price,
           entrepreneur: project.entrepreneurs
         }));
@@ -305,26 +318,24 @@ const Projects = () => {
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
+      case "completed":
+        return "bg-green-100 text-green-700"; // ✅ vert
+      case "step5":
+      case "in progress":
+        return "bg-blue-100 text-blue-700"; // ✅ bleu
+      case "step4":
+        return "bg-red-100 text-red-700"; // ✅ rouge
       case "step1":
-      case "open": 
-        return "bg-yellow-100 text-yellow-800";
-      case "step2": 
-        return "bg-blue-100 text-blue-800";
-      case "step3": 
-        return "bg-purple-100 text-purple-800";
-      case "step4": 
-        return "bg-orange-100 text-orange-800";
-      case "step5": 
-        return "bg-green-100 text-green-800";
-      case "step6":
-      case "in_progress": 
-        return "bg-indigo-100 text-indigo-800";
-      case "completed": 
-        return "bg-gray-100 text-gray-800";
-      default: 
-        return "bg-gray-100 text-gray-800";
+        return "bg-yellow-100 text-yellow-700"; // ✅ jaune
+      case "step3":
+        return "bg-purple-100 text-purple-700"; // ✅ violet
+      case "step2":
+        return "bg-orange-100 text-orange-700"; // ✅ orange
+      default:
+        return "bg-gray-100 text-gray-700";
     }
   };
+
 
   const getProposalStatusColor = (proposalStatus: string) => {
     switch (proposalStatus) {
@@ -508,16 +519,17 @@ const Projects = () => {
                         {project.description}
                       </p>
                       <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                        <div className="flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {new Date(project.createdAt).toLocaleDateString('fr-FR')}
+                        <div className="flex items-center text-xs text-gray-500">
+                          {project.deadline && (
+                            <div className="flex items-center text-xs text-gray-500">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              Deadline&nbsp;:
+                              <span className="ml-1 font-medium text-gray-700">
+                                {project.deadline.toLocaleDateString('fr-FR')}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        {project.entrepreneur?.users && (
-                          <div className="flex items-center">
-                            <User className="h-3 w-3 mr-1" />
-                            {project.entrepreneur.users.name} {project.entrepreneur.users.surname}
-                          </div>
-                        )}
                       </div>
                     </CardContent>
                   </Card>

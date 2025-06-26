@@ -125,8 +125,27 @@ const NewProject = () => {
     
     try {
       console.log("Creating project with values:", values);
-      console.log("Entrepreneur ID:", entrepreneurId);
-      console.log("User ID:", user.id);
+
+      // Get the pack details to determine price
+      const { data: packData, error: packError } = await supabase
+        .from('project_packs')
+        .select('price, name')
+        .eq('id_pack', values.packId)
+        .single();
+
+      if (packError) {
+        console.error("Error fetching pack:", packError);
+        throw new Error(`Failed to fetch pack details: ${packError.message}`);
+      }
+
+      // Determine the project price based on pack type
+      let projectPrice = null;
+      if (packData.name !== 'Devis personnalisé') {
+        projectPrice = packData.price;
+        console.log("Setting project price from pack:", projectPrice);
+      } else {
+        console.log("Custom quote project - price will be set by admin later");
+      }
 
       // Create the project with proper error handling
       const { data: projectData, error: projectError } = await supabase
@@ -137,7 +156,8 @@ const NewProject = () => {
           id_entrepreneur: entrepreneurId,
           id_pack: values.packId,
           status: 'STEP1',
-          deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null
+          deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null,
+          price: projectPrice
         })
         .select('id_project')
         .single();
