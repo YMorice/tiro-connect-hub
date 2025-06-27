@@ -283,7 +283,9 @@ const ProjectDetail = () => {
       // Combine all data into final project object
       const formattedProject = {
         ...projectData,
-        entrepreneur: projectData.entrepreneurs,
+        entrepreneur: Array.isArray(projectData.entrepreneurs)
+          ? projectData.entrepreneurs[0]
+          : projectData.entrepreneurs,
         student: studentData,
         documents: documentsData || []
       };
@@ -579,6 +581,14 @@ const ProjectDetail = () => {
     showProposedStudents
   });
 
+  const entrepreneurUser: any = project.entrepreneur?.users || project.entrepreneur || null;
+  const entrepreneurName = entrepreneurUser?.name;
+  const entrepreneurEmail = entrepreneurUser?.email;
+  const entrepreneurPpLink = entrepreneurUser?.pp_link;
+
+  console.log('DEBUG project', project);
+  console.log('DEBUG project.entrepreneur', project.entrepreneur);
+
   return (
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
@@ -699,24 +709,28 @@ const ProjectDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-3 sm:space-x-4">
-                  <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-                    {project.entrepreneur?.users?.pp_link ? (
-                      <AvatarImage 
-                        src={project.entrepreneur.users.pp_link}
-                        alt={project.entrepreneur.users.name}
-                      />
-                    ) : (
-                      <AvatarFallback className="bg-tiro-primary text-white text-sm sm:text-base">
-                        {project.entrepreneur?.users?.name?.charAt(0) || "E"}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{project.entrepreneur?.users?.name}</p>
-                    <p className="text-xs sm:text-sm text-gray-500 truncate">{project.entrepreneur?.users?.email}</p>
+                {entrepreneurUser ? (
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                      {entrepreneurPpLink ? (
+                        <AvatarImage 
+                          src={entrepreneurPpLink}
+                          alt={entrepreneurName}
+                        />
+                      ) : (
+                        <AvatarFallback className="bg-tiro-primary text-white text-sm sm:text-base">
+                          {entrepreneurName?.charAt(0) || "E"}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{entrepreneurName || <span className="italic text-gray-400">Nom non renseigné</span>}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">{entrepreneurEmail || <span className="italic text-gray-400">Email non renseigné</span>}</p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-gray-400 italic">Informations entrepreneur non disponibles</div>
+                )}
               </CardContent>
             </Card>
 
