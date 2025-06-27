@@ -39,6 +39,7 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
 
   useEffect(() => {
     fetchProposedStudents();
+    fetchAcceptedStudents();
   }, [projectId]);
 
   const fetchProposedStudents = async () => {
@@ -69,6 +70,8 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
         `)
         .eq('project_id', projectId);
 
+      console.log('Résultat requête proposed_student :', { data, error });
+
       if (error) {
         console.error('Error fetching proposed students:', error);
         throw error;
@@ -95,6 +98,24 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
     } catch (error) {
       console.error('Error fetching proposed students:', error);
       toast.error('Failed to load proposed students');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAcceptedStudents = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching accepted students for project:', projectId);
+      const { data, error } = await supabase
+        .from('proposal_to_student')
+        .select('id_student')
+        .eq('id_project', projectId)
+        .eq('accepted', true);
+      console.log('Résultat requête étudiants acceptés :', { data, error });
+      // ... (traitement des données si besoin)
+    } catch (error) {
+      console.error('Error fetching accepted students:', error);
     } finally {
       setLoading(false);
     }

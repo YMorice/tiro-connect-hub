@@ -85,31 +85,50 @@ export const useStudentSelection = ({ projectId, mode }: UseStudentSelectionProp
         const { data, error } = await supabase
           .from('proposal_to_student')
           .select(`
-            students!inner (
+            students (
               id_student,
               biography,
               skills,
               specialty,
-              formation,
               available,
-              users!inner (
-                id_users,
+              users (
                 email,
                 name,
-                surname,
-                role
+                surname
               )
             )
           `)
           .eq('id_project', projectId)
           .eq('accepted', true);
-          
+        
+        console.log("Résultat requête étudiants acceptés :", { data, error });
+
         if (error) {
           console.error('Error fetching accepted students:', error);
           throw error;
         }
         
-        studentsData = data?.map(proposal => proposal.students) || [];
+        // Manually map the data to handle potential nulls from RLS issues
+        studentsData = data
+          ?.map(proposal => {
+            if (!proposal.students) {
+              console.warn('Found a proposal but cannot access student data, possibly due to RLS on students table.');
+              return null;
+            }
+            const student = proposal.students;
+            const user = student.users;
+            
+            return {
+              id: student.id_student,
+              email: user?.email || 'N/A',
+              name: user ? `${user.name} ${user.surname}` : `Étudiant ${student.id_student.slice(-4)}`,
+              bio: student.biography || undefined,
+              skills: Array.isArray(student.skills) ? student.skills : [],
+              specialty: student.specialty || undefined,
+              available: student.available,
+            };
+          })
+          .filter(Boolean) as Student[]; // Filter out any nulls
       }
       
       console.log('Formatted students:', studentsData);
