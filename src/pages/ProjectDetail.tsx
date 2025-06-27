@@ -847,6 +847,7 @@ const ProjectDetail = () => {
                             </p>
                           </div>
                         </div>
+                        {/* Téléchargement uniquement sur clic du bouton */}
                         <Button
                           variant="ghost"
                           size="sm"
