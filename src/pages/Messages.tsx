@@ -381,6 +381,14 @@ const Messages = () => {
     }
   }, [selectedConversation, fetchMessages]);
 
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
   const conversationList = useMemo(() => {
     return conversations.map((conversation) => (
       <div
@@ -457,17 +465,17 @@ const Messages = () => {
 
   return (
     <AppLayout>
-      <div className="h-[calc(100vh-4rem)] flex flex-col lg:flex-row overflow-hidden bg-gray-50">
+      <div className="fixed inset-x-0 top-[100px] bottom-0 flex flex-col lg:flex-row bg-gray-50 overflow-hidden">
         {/* Conversations List */}
         <div className={cn(
-          "w-full lg:w-1/3 xl:w-1/4 border-r border-gray-200 flex flex-col bg-white",
+          "w-full lg:w-1/3 xl:w-1/4 border-r border-gray-200 flex flex-col bg-white min-h-0",
           selectedConversation && "hidden lg:flex"
         )}>
           <div className="p-3 lg:p-4 border-b border-gray-200 flex-shrink-0">
             <h2 className="text-lg font-semibold">Messages</h2>
           </div>
           
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto min-h-0">
             {loading ? (
               <div className="flex justify-center items-center h-32">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tiro-primary"></div>
@@ -484,7 +492,7 @@ const Messages = () => {
 
         {/* Chat Area */}
         <div className={cn(
-          "flex-1 flex flex-col bg-white min-w-0",
+          "flex-1 flex flex-col bg-white min-w-0 min-h-0",
           !selectedConversation && "hidden lg:flex"
         )}>
           {selectedConversation ? (

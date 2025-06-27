@@ -23,6 +23,7 @@ import {
 import { toast } from "@/components/ui/sonner";
 import { Users, MessageCircle, Plus, Search, Eye, UserPlus, Filter } from "lucide-react";
 import { StudentAvailabilityService } from "@/services/student-availability-service";
+import PriceUpdateDialog from "@/components/admin/PriceUpdateDialog";
 
 interface Project {
   id: string;
@@ -30,6 +31,8 @@ interface Project {
   description?: string;
   status: string;
   created_at: string;
+  price: number | null;
+  packName: string;
   entrepreneur: {
     name: string;
     companyName?: string;
@@ -105,6 +108,10 @@ const Admin = () => {
             description,
             status,
             created_at,
+            price,
+            project_packs (
+              name
+            ),
             entrepreneurs (
               id_entrepreneur,
               company_name,
@@ -126,6 +133,8 @@ const Admin = () => {
           description: project.description || undefined,
           status: convertDbStatusToDisplay(project.status || 'STEP1'),
           created_at: project.created_at,
+          price: project.price,
+          packName: project.project_packs?.name || 'N/A',
           entrepreneur: {
             name: `${project.entrepreneurs?.users?.name || ""} ${project.entrepreneurs?.users?.surname || ""}`.trim() || "Nom inconnu",
             companyName: project.entrepreneurs?.company_name || undefined,
@@ -178,6 +187,10 @@ const Admin = () => {
           description,
           status,
           created_at,
+          price,
+          project_packs (
+            name
+          ),
           entrepreneurs (
             id_entrepreneur,
             company_name,
@@ -196,6 +209,8 @@ const Admin = () => {
           description: project.description || undefined,
           status: convertDbStatusToDisplay(project.status || 'STEP1'),
           created_at: project.created_at,
+          price: project.price,
+          packName: project.project_packs?.name || 'N/A',
           entrepreneur: {
             name: `${project.entrepreneurs?.users?.name || ""} ${project.entrepreneurs?.users?.surname || ""}`.trim() || "Nom inconnu",
             companyName: project.entrepreneurs?.company_name || undefined,
@@ -360,8 +375,9 @@ const Admin = () => {
                         <TableHead className="text-sm min-w-[200px]">Titre du Projet</TableHead>
                         <TableHead className="hidden md:table-cell text-sm min-w-[150px]">Entrepreneur</TableHead>
                         <TableHead className="hidden sm:table-cell text-sm min-w-[100px]">Statut</TableHead>
+                        <TableHead className="hidden sm:table-cell text-sm min-w-[100px]">Prix</TableHead>
                         <TableHead className="hidden lg:table-cell text-sm min-w-[100px]">Créé</TableHead>
-                        <TableHead className="text-sm min-w-[250px]">Actions</TableHead>
+                        <TableHead className="text-sm min-w-[300px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -371,6 +387,7 @@ const Admin = () => {
                             <TableCell className="font-medium">
                               <div>
                                 <div className="font-semibold text-sm">{project.title}</div>
+                                <div className="text-xs text-muted-foreground">{project.packName}</div>
                                 {project.description && (
                                   <div className="text-xs text-muted-foreground truncate max-w-[200px]">
                                     {project.description}
@@ -392,6 +409,13 @@ const Admin = () => {
                               <Badge className={`${getStatusColor(project.status)} text-xs`}>
                                 {project.status}
                               </Badge>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell text-xs">
+                              {project.price ? (
+                                <span className="font-medium">{project.price.toLocaleString('fr-FR')} €</span>
+                              ) : (
+                                <span className="text-muted-foreground">Non défini</span>
+                              )}
                             </TableCell>
                             <TableCell className="hidden lg:table-cell text-xs">
                               {new Date(project.created_at).toLocaleDateString('fr-FR')}
@@ -489,13 +513,23 @@ const Admin = () => {
                                     </AlertDialogContent>
                                   </AlertDialog>
                                 )}
+                                
+                                {/* Price update button for custom quotes */}
+                                {project.packName === 'Devis personnalisé' && (
+                                  <PriceUpdateDialog
+                                    projectId={project.id}
+                                    projectTitle={project.title}
+                                    currentPrice={project.price}
+                                    onPriceUpdated={refreshProjects}
+                                  />
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-4 text-sm">
+                          <TableCell colSpan={6} className="text-center py-4 text-sm">
                             {projects.length > 0 
                               ? "Aucun projet ne correspond aux critères de recherche" 
                               : "Aucun projet trouvé"}

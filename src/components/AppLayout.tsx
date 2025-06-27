@@ -102,15 +102,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen w-full bg-background">
       {/* Glass Morphism Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/80 backdrop-blur-md border-b border-white/20 shadow-lg">
-        <div className="flex items-center justify-between h-full px-4 lg:px-6">
+      <header className="fixed top-4 inset-x-4 z-50">
+        <div className="w-full h-16 rounded-2xl bg-white/70 backdrop-blur-md border border-white/80 shadow-md flex items-center justify-between px-4 lg:px-6">
+
           {/* Logo */}
           <div className="flex items-center">
             <Link to="https://tiro.agency">
               <img 
                 src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
                 alt="Tiro Logo" 
-                className="h-8" 
+                className="h-12" 
               />
             </Link>
           </div>
@@ -125,7 +126,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   className={cn(
                     "flex items-center px-3 py-2 rounded-lg transition-all text-sm font-medium",
                     isActive(item.href)
-                      ? "bg-tiro-primary/20 text-tiro-primary backdrop-blur-sm"
+                      ? "bg-tiro-primary text-white font-semibold"
                       : "hover:bg-white/10 text-foreground"
                   )}
                 >

@@ -16,6 +16,22 @@
     <meta name="twitter:site" content="@tiro_agency" />
     <meta name="twitter:image" content="/tiro-logo.webp" />
 
+    <meta http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://connect-js.stripe.com https://cdn.jsdelivr.net https://cdn.gpteng.co;
+        style-src  'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src   'self' https://fonts.gstatic.com;
+        img-src    'self' data: https: https://*.stripe.com;
+        connect-src 'self' https://js.stripe.com https://api.stripe.com https://zkypxeoihxjrmbwqkeyd.supabase.co;
+        frame-src  'self' https://js.stripe.com https://connect-js.stripe.com https://hooks.stripe.com https://*.stripe.com;
+        child-src  'self' https://*.stripe.com;
+        object-src 'none';
+        base-uri   'self';
+        frame-ancestors 'self';
+      ">
+
+
     <link id="favicon" rel="icon" type="image/png" href="/ColorDefault.webp" />
     
     <script>
