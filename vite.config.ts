@@ -7,7 +7,8 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
+    compress : false,
+    host: true,
     port: 8080,
     headers: {
       // Protection contre le clickjacking
@@ -17,41 +18,7 @@ export default defineConfig(({ mode }) => ({
       'X-XSS-Protection': '1; mode=block',
 
       // Protection contre le MIME-type sniffing
-      'Content-Security-Policy': [
-        // base
-        "default-src 'self'",
-        "base-uri  'self'",
-        "object-src 'none'",
-
-        // JS externes (Stripe, GPT Eng, jsDelivr)
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' " +
-          "https://js.stripe.com https://connect-js.stripe.com " +
-          "https://cdn.jsdelivr.net https://cdn.gpteng.co",
-
-        // CSS externes (Google Fonts)
-        "style-src  'self' 'unsafe-inline' https://fonts.googleapis.com",
-
-        // Polices Google
-        "font-src   'self' https://fonts.gstatic.com",
-
-        // images (logos Stripe)
-        "img-src    'self' data: https: https://*.stripe.com",
-
-        // XHR / fetch / websockets
-        "connect-src 'self' " +
-          "https://api.stripe.com https://js.stripe.com https://connect-js.stripe.com " +
-          "https://zkypxeoihxjrmbwqkeyd.supabase.co",
-
-        // iframes Stripe (Elements, 3-D Secure, hCaptcha, etc.)
-        "frame-src  'self' https://js.stripe.com https://connect-js.stripe.com https://hooks.stripe.com https://*.stripe.com",
-
-        // certains navigateurs exigent encore child-src
-        "child-src  'self' https://*.stripe.com",
-
-        // protection anti-clickjacking
-        "frame-ancestors 'self'"
-      ].join('; '),
-
+      'Content-Security-Policy': "default-src 'self' blob: data: https: https://js.stripe.com https://m.stripe.com https://m.stripe.network https://connect-js.stripe.com https://hooks.stripe.com https://*.stripe.com; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://connect-js.stripe.com https://cdn.jsdelivr.net https://cdn.gpteng.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: https://*.stripe.com; connect-src 'self' ws: wss: https://api.stripe.com https://js.stripe.com https://connect-js.stripe.com https://m.stripe.com https://m.stripe.network https://hooks.stripe.com https://zkypxeoihxjrmbwqkeyd.supabase.co; frame-src 'self' data: https://js.stripe.com https://connect-js.stripe.com https://hooks.stripe.com https://m.stripe.com https://m.stripe.network https://*.stripe.com; child-src 'self' https://*.stripe.com; frame-ancestors 'self'",
 
       // Protection contre le HSTS
       'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',

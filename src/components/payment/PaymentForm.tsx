@@ -68,6 +68,16 @@ export const PaymentForm = ({ amount, clientSecret, onPaymentSuccess }: Props) =
             },
           }}
         />
+        <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+          <span className="flex items-center">
+            Paiement sécurisé par Stripe
+          </span>
+          <img
+            src="/stripe-logo.png"
+            alt="Paiement sécurisé – Powered by Stripe"
+            className="h-[18px] w-auto"
+          />
+        </div>
       </div>
 
       {error && (
