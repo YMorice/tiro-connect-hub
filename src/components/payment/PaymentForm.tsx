@@ -1,3 +1,4 @@
+
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -39,18 +40,34 @@ export const PaymentForm = ({ amount, clientSecret, onPaymentSuccess }: Props) =
       return;
     }
 
-    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: { card },
-    });
-
-    if (error) {
-      setErr(error.message ?? 'Paiement refusé');
-    } else if (paymentIntent?.status === 'succeeded') {
-      await supabase.functions.invoke('confirm-payment', {
-        body: { paymentIntentId: paymentIntent.id },
+    try {
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card },
       });
-      onPaymentSuccess?.();
+
+      if (error) {
+        setErr(error.message ?? 'Paiement refusé');
+      } else if (paymentIntent?.status === 'succeeded') {
+        console.log('Payment succeeded, confirming with backend...');
+        
+        // Call the confirm-payment function to update project status
+        const { data: confirmData, error: confirmError } = await supabase.functions.invoke('confirm-payment', {
+          body: { paymentIntentId: paymentIntent.id },
+        });
+
+        if (confirmError) {
+          console.error('Error confirming payment:', confirmError);
+          setErr('Paiement réussi mais erreur de confirmation. Veuillez actualiser la page.');
+        } else {
+          console.log('Payment confirmed successfully:', confirmData);
+          onPaymentSuccess?.();
+        }
+      }
+    } catch (err) {
+      console.error('Payment error:', err);
+      setErr('Erreur lors du paiement. Veuillez réessayer.');
     }
+    
     setProc(false);
   };
 
