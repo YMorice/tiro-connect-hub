@@ -682,57 +682,51 @@ const ProjectDetail = () => {
           {/* Project Header Card - Contains title, status, price, deadline, and discussion link */}
           <Card className="mb-4 sm:mb-6">
             <CardHeader className="pb-3 sm:pb-4">
-<<<<<<< Modification
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-xl sm:text-2xl font-bold mb-2">{project.title}</CardTitle>
-                  <div className="flex flex-wrap gap-2 items-center text-sm text-muted-foreground">
-                    <Badge variant="outline">{getStatusDisplay(project.status)}</Badge>
-                    {project.price && (
-                      <div className="flex items-center">
-                        <DollarSign className="h-4 w-4 mr-1" />
-                        {project.price}€
-                      </div>
-                    )}
-                    {project.deadline && (
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {format(new Date(project.deadline), 'dd/MM/yyyy')}
-                      </div>
-                    )}
-=======
               <div className="flex flex-col gap-4">
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 break-words leading-tight">
-                    {project.title}
-                  </CardTitle>
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
-                      {getStatusDisplay(project.status)}
-                    </Badge>
-                    {/* Discussion Link */}
-                    <Link to="/messages" className="flex items-center">
-                      <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
-                        <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="hidden sm:inline">Discussion</span>
-                        <span className="sm:hidden">Chat</span>
-                        {hasUnreadMessages && (
-                          <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
-                        )}
-                      </Button>
-                    </Link>
->>>>>>> main
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 break-words leading-tight">
+                      {project.title}
+                    </CardTitle>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                      <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
+                        {getStatusDisplay(project.status)}
+                      </Badge>
+                      {project.price && (
+                        <div className="flex items-center text-sm sm:text-base text-gray-600">
+                          <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          {project.price}€
+                        </div>
+                      )}
+                      {project.deadline && (
+                        <div className="flex items-center text-sm sm:text-base text-gray-600">
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          {format(new Date(project.deadline), 'dd/MM/yyyy')}
+                        </div>
+                      )}
+                      {/* Discussion Link */}
+                      <Link to="/messages" className="flex items-center">
+                        <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
+                          <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Discussion</span>
+                          <span className="sm:hidden">Chat</span>
+                          {hasUnreadMessages && (
+                            <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
+                          )}
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
+                  {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
+                    <Button
+                      onClick={forceUpdateStatusToStep2}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Forcer passage à STEP2
+                    </Button>
+                  )}
                 </div>
-                {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
-                  <Button
-                    onClick={forceUpdateStatusToStep2}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Forcer passage à STEP2
-                  </Button>
-                )}
               </div>
             </CardHeader>
           </Card>
@@ -759,8 +753,6 @@ const ProjectDetail = () => {
               </CardContent>
             </Card>
           )}
-
-
 
           {/* People Information Cards - Entrepreneur and Student */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
