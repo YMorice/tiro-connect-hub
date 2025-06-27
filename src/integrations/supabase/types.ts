@@ -510,6 +510,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      debug_exists: {
+        Args: { id_student: string; uid: string }
+        Returns: boolean
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean

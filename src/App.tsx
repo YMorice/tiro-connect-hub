@@ -1,3 +1,4 @@
+
 /**
  * App Component - Main Application Entry Point
  * 
@@ -11,7 +12,6 @@
  * - Comprehensive routing with protected routes
  * - Global toast notifications
  * - Authentication flow management
- * - Security headers and CSRF protection
  * 
  * Context Providers:
  * - QueryClientProvider: Manages server state and caching
@@ -23,13 +23,6 @@
  * - Public routes: /, /login, /register, /reset-password, /update-password, /create-admin
  * - Protected routes: All other routes require authentication
  * - 404 handling: Redirects to NotFound component for unknown routes
- * 
- * Security Features:
- * - CSRF token management
- * - Security headers
- * - Input validation
- * - Rate limiting
- * - XSS protection
  */
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -39,8 +32,6 @@ import { AuthProvider } from "@/context/auth-context";
 import { ProjectProvider } from "@/context/project-context";
 import { MessageProvider } from "@/context/message-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 // Import all page components
 import Index from "@/pages/Index";
@@ -105,38 +96,6 @@ const queryClient = new QueryClient({
  * - Fallback route: 404 handling for unknown paths
  */
 function App() {
-  // Gestion des en-têtes de sécurité
-  useEffect(() => {
-    // Ajouter les en-têtes de sécurité
-    const meta = document.createElement('meta');
-    meta.httpEquiv = 'Content-Security-Policy';
-    meta.content = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://zkypxeoihxjrmbwqkeyd.supabase.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://zkypxeoihxjrmbwqkeyd.supabase.co; frame-ancestors 'none';";
-    document.head.appendChild(meta);
-
-    // Ajouter d'autres en-têtes de sécurité
-    const securityHeaders = {
-      'X-Frame-Options': 'DENY',
-      'X-Content-Type-Options': 'nosniff',
-      'Referrer-Policy': 'strict-origin-when-cross-origin',
-      'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
-    };
-
-    // Configurer les intercepteurs Axios pour ajouter les en-têtes de sécurité
-    const setupSecurityHeaders = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Ajouter le token CSRF aux requêtes
-        const csrfToken = session.access_token;
-        // Configurer les en-têtes pour toutes les requêtes
-        Object.entries(securityHeaders).forEach(([key, value]) => {
-          document.cookie = `${key}=${value}; path=/; secure; samesite=strict`;
-        });
-      }
-    };
-
-    setupSecurityHeaders();
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
