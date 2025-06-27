@@ -22,65 +22,44 @@ serve(async (req) => {
 
     console.log("Creating payment intent for project:", projectId);
 
-    // Initialize Supabase client with service role for secure operations
+    // Get user from request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("User not authenticated");
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
 
-    // Get user from auth header
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header");
-    }
-
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData } = await supabaseAdmin.auth.getUser(token);
-    const user = userData.user;
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
     
-    if (!user) {
+    if (userError || !userData.user) {
       throw new Error("User not authenticated");
     }
 
-    console.log("User authenticated:", user.id);
+    console.log("User authenticated:", userData.user.id);
 
-    // Get project details and verify ownership
+    // Get project details
     const { data: project, error: projectError } = await supabaseAdmin
       .from("projects")
-      .select(`
-        id_project,
-        title,
-        price,
-        status,
-        id_entrepreneur,
-        entrepreneurs (
-          id_user
-        )
-      `)
+      .select("*")
       .eq("id_project", projectId)
       .single();
 
-    if (projectError) {
-      console.error("Project fetch error:", projectError);
-      throw new Error(`Project fetch error: ${projectError.message}`);
-    }
-
-    if (!project) {
-      console.error("Project not found for ID:", projectId);
+    if (projectError || !project) {
+      console.error("Project not found:", projectError);
       throw new Error("Project not found");
     }
 
     console.log("Project found:", project.title);
 
-    // Verify user is the project owner
-    if (project.entrepreneurs?.id_user !== user.id) {
-      throw new Error("Unauthorized: You can only pay for your own projects");
-    }
-
-    // Verify project is in payment status
+    // Validate project status and ownership
     if (project.status !== "STEP4") {
-      throw new Error(`Project is not in payment phase. Current status: ${project.status}`);
+      throw new Error("Project is not in payment phase");
     }
 
     if (!project.price || project.price <= 0) {
@@ -94,24 +73,67 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: project.price * 100, // Convert to cents
-      currency: "eur",
-      metadata: {
-        project_id: project.id_project,
-        project_title: project.title,
-        user_id: user.id,
-      },
-    });
+    // Check if we already have a payment intent for this project
+    const { data: existingPayment } = await supabaseAdmin
+      .from("projects")
+      .select("stripe_payment_intent_id")
+      .eq("id_project", projectId)
+      .single();
 
-    console.log("Payment intent created:", paymentIntent.id);
+    let paymentIntent;
+
+    // If we have an existing payment intent, try to retrieve it
+    if (existingPayment?.stripe_payment_intent_id) {
+      try {
+        paymentIntent = await stripe.paymentIntents.retrieve(existingPayment.stripe_payment_intent_id);
+        
+        // If it's already succeeded, don't create a new one
+        if (paymentIntent.status === "succeeded") {
+          throw new Error("Payment already completed");
+        }
+        
+        // If it's canceled or failed, create a new one
+        if (paymentIntent.status === "canceled" || paymentIntent.status === "payment_failed") {
+          paymentIntent = null;
+        }
+      } catch (error) {
+        console.log("Existing payment intent not found or invalid, creating new one");
+        paymentIntent = null;
+      }
+    }
+
+    // Create new payment intent if needed
+    if (!paymentIntent) {
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(project.price * 100), // Convert to cents
+        currency: "eur",
+        metadata: {
+          project_id: projectId,
+          project_title: project.title,
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      // Store the payment intent ID in the project
+      await supabaseAdmin
+        .from("projects")
+        .update({
+          stripe_payment_intent_id: paymentIntent.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id_project", projectId);
+
+      console.log("Payment intent created:", paymentIntent.id);
+    } else {
+      console.log("Using existing payment intent:", paymentIntent.id);
+    }
 
     return new Response(
       JSON.stringify({
         client_secret: paymentIntent.client_secret,
         payment_intent_id: paymentIntent.id,
-        amount: project.price,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

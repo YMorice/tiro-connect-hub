@@ -8,10 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 interface Props {
   amount: number;
   clientSecret: string;
+  paymentIntentId?: string;
   onPaymentSuccess?: () => void;
 }
 
-export const PaymentForm = ({ amount, clientSecret, onPaymentSuccess }: Props) => {
+export const PaymentForm = ({ amount, clientSecret, paymentIntentId, onPaymentSuccess }: Props) => {
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProc] = useState(false);
@@ -23,8 +24,9 @@ export const PaymentForm = ({ amount, clientSecret, onPaymentSuccess }: Props) =
       console.log('Stripe loaded:', !!stripe);
       console.log('Elements loaded:', !!elements);
       console.log('CardElement exists:', !!cardElement);
+      console.log('Payment Intent ID:', paymentIntentId);
     }
-  }, [elements, stripe]);
+  }, [elements, stripe, paymentIntentId]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,16 +43,20 @@ export const PaymentForm = ({ amount, clientSecret, onPaymentSuccess }: Props) =
     }
 
     try {
+      console.log('Confirming payment with client secret:', clientSecret);
+      
       const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: { card },
       });
 
       if (error) {
+        console.error('Stripe payment error:', error);
         setErr(error.message ?? 'Paiement refusé');
       } else if (paymentIntent?.status === 'succeeded') {
-        console.log('Payment succeeded, confirming with backend...');
+        console.log('Payment succeeded! PaymentIntent ID:', paymentIntent.id);
         
         // Call the confirm-payment function to update project status
+        console.log('Calling confirm-payment function...');
         const { data: confirmData, error: confirmError } = await supabase.functions.invoke('confirm-payment', {
           body: { paymentIntentId: paymentIntent.id },
         });
@@ -62,6 +68,9 @@ export const PaymentForm = ({ amount, clientSecret, onPaymentSuccess }: Props) =
           console.log('Payment confirmed successfully:', confirmData);
           onPaymentSuccess?.();
         }
+      } else {
+        console.log('Payment status:', paymentIntent?.status);
+        setErr('Statut de paiement inattendu: ' + paymentIntent?.status);
       }
     } catch (err) {
       console.error('Payment error:', err);
