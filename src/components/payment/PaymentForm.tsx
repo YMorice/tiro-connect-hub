@@ -1,3 +1,4 @@
+
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -7,10 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 interface Props {
   amount: number;
   clientSecret: string;
+  paymentIntentId?: string;
   onPaymentSuccess?: () => void;
 }
 
-export const PaymentForm = ({ amount, clientSecret, onPaymentSuccess }: Props) => {
+export const PaymentForm = ({ amount, clientSecret, paymentIntentId, onPaymentSuccess }: Props) => {
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProc] = useState(false);
@@ -22,8 +24,9 @@ export const PaymentForm = ({ amount, clientSecret, onPaymentSuccess }: Props) =
       console.log('Stripe loaded:', !!stripe);
       console.log('Elements loaded:', !!elements);
       console.log('CardElement exists:', !!cardElement);
+      console.log('Payment Intent ID:', paymentIntentId);
     }
-  }, [elements, stripe]);
+  }, [elements, stripe, paymentIntentId]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,18 +42,41 @@ export const PaymentForm = ({ amount, clientSecret, onPaymentSuccess }: Props) =
       return;
     }
 
-    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: { card },
-    });
-
-    if (error) {
-      setErr(error.message ?? 'Paiement refusé');
-    } else if (paymentIntent?.status === 'succeeded') {
-      await supabase.functions.invoke('confirm-payment', {
-        body: { paymentIntentId: paymentIntent.id },
+    try {
+      console.log('Confirming payment with client secret:', clientSecret);
+      
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card },
       });
-      onPaymentSuccess?.();
+
+      if (error) {
+        console.error('Stripe payment error:', error);
+        setErr(error.message ?? 'Paiement refusé');
+      } else if (paymentIntent?.status === 'succeeded') {
+        console.log('Payment succeeded! PaymentIntent ID:', paymentIntent.id);
+        
+        // Call the confirm-payment function to update project status
+        console.log('Calling confirm-payment function...');
+        const { data: confirmData, error: confirmError } = await supabase.functions.invoke('confirm-payment', {
+          body: { paymentIntentId: paymentIntent.id },
+        });
+
+        if (confirmError) {
+          console.error('Error confirming payment:', confirmError);
+          setErr('Paiement réussi mais erreur de confirmation. Veuillez actualiser la page.');
+        } else {
+          console.log('Payment confirmed successfully:', confirmData);
+          onPaymentSuccess?.();
+        }
+      } else {
+        console.log('Payment status:', paymentIntent?.status);
+        setErr('Statut de paiement inattendu: ' + paymentIntent?.status);
+      }
+    } catch (err) {
+      console.error('Payment error:', err);
+      setErr('Erreur lors du paiement. Veuillez réessayer.');
     }
+    
     setProc(false);
   };
 
@@ -68,6 +94,16 @@ export const PaymentForm = ({ amount, clientSecret, onPaymentSuccess }: Props) =
             },
           }}
         />
+        <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+          <span className="flex items-center">
+            Paiement sécurisé par Stripe
+          </span>
+          <img
+            src="/stripe-logo.png"
+            alt="Paiement sécurisé – Powered by Stripe"
+            className="h-[18px] w-auto"
+          />
+        </div>
       </div>
 
       {error && (

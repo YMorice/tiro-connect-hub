@@ -705,16 +705,16 @@ const ProjectDetail = () => {
                       </Button>
                     </Link>
                   </div>
+                  {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
+                    <Button
+                      onClick={forceUpdateStatusToStep2}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Forcer passage à STEP2
+                    </Button>
+                  )}
                 </div>
-                {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
-                  <Button
-                    onClick={forceUpdateStatusToStep2}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Forcer passage à STEP2
-                  </Button>
-                )}
               </div>
             </CardHeader>
           </Card>

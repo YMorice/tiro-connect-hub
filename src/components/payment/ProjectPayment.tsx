@@ -1,13 +1,14 @@
+
 import { useEffect, useState } from 'react';
-import { Elements }           from '@stripe/react-stripe-js';
-import { loadStripe }         from '@stripe/stripe-js';
-import { supabase }           from '@/integrations/supabase/client';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
-import { Button }             from '@/components/ui/button';
-import { Badge }              from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { CreditCard, CheckCircle, AlertCircle, Clock } from 'lucide-react';
-import { toast }              from '@/components/ui/sonner';
-import { PaymentForm }        from '@/components/payment/PaymentForm';
+import { toast } from '@/components/ui/sonner';
+import { PaymentForm } from '@/components/payment/PaymentForm';
 
 const stripePromise = loadStripe(import.meta.env.VITE_PUBLIC_STRIPE_PK_TEST!);
 
@@ -27,18 +28,31 @@ export const ProjectPayment = ({
   onPaymentSuccess,
 }: Props) => {
   const [clientSecret, setSecret] = useState<string>();
-  const [loading, setLoad]        = useState(true);
-  const [error,   setError]       = useState<string>();
+  const [paymentIntentId, setPaymentIntentId] = useState<string>();
+  const [loading, setLoad] = useState(true);
+  const [error, setError] = useState<string>();
 
-  /* 1) Récupérer le client_secret à l’ouverture */
+  /* 1) Récupérer le client_secret à l'ouverture */
   useEffect(() => {
     (async () => {
       setLoad(true);
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: { projectId },
-      });
-      if (error) setError(error.message);
-      else setSecret(data.client_secret);
+      try {
+        console.log('Creating payment intent for project:', projectId);
+        const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+          body: { projectId },
+        });
+        if (error) {
+          console.error('Error creating payment intent:', error);
+          setError(error.message);
+        } else {
+          console.log('Payment intent response:', data);
+          setSecret(data.client_secret);
+          setPaymentIntentId(data.payment_intent_id);
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        setError('Erreur inattendue lors de la création du paiement');
+      }
       setLoad(false);
     })();
   }, [projectId]);
@@ -66,7 +80,8 @@ export const ProjectPayment = ({
     );
   }
 
-console.log('Client Secret:', clientSecret);
+  console.log('Client Secret:', clientSecret);
+  console.log('Payment Intent ID:', paymentIntentId);
 
   /* 3) Carte principale — paiement requis */
   return (
@@ -108,13 +123,14 @@ console.log('Client Secret:', clientSecret);
           </div>
         )}
 
-        {clientSecret && (
+        {clientSecret && paymentIntentId && (
           <Elements stripe={stripePromise} options={{ clientSecret }}>
             <PaymentForm
               amount={amount}
               clientSecret={clientSecret}
+              paymentIntentId={paymentIntentId}
               onPaymentSuccess={() => {
-                toast.success('Paiement effectué avec succès !');
+                toast.success('Paiement effectué avec succès ! Le projet est maintenant actif.');
                 onPaymentSuccess?.();
               }}
             />
