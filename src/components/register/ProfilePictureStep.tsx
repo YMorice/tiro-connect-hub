@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { RegistrationFormValues } from "@/types";
@@ -37,6 +36,7 @@ const ProfilePictureStep: React.FC<ProfilePictureStepProps> = ({
         .upload(filePath, file, {
           contentType: file.type,
           upsert: true,
+          cacheControl: '31536000', // 1 an de cache navigateur
         });
         
       if (uploadError) throw uploadError;
