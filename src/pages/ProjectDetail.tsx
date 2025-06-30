@@ -743,7 +743,7 @@ const ProjectDetail = () => {
           )}
 
           {/* People Information Cards - Entrepreneur and Student */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6r">
             {/* Entrepreneur Information Card */}
             <Card>
               <CardHeader className="pb-3 sm:pb-4">
@@ -768,7 +768,7 @@ const ProjectDetail = () => {
                       )}
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{project.entrepreneur.users.name}</p>
+                      <p className="font-medium text-gray-900 text-sm sm:text-base text-left truncate">{project.entrepreneur.users.name}</p>
                     </div>
                   </div>
                 ) : (
@@ -801,7 +801,7 @@ const ProjectDetail = () => {
                       )}
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{project.student?.users?.name}</p>
+                      <p className="font-medium text-gray-900 text-sm sm:text-base text-left truncate">{project.student?.users?.name}</p>
                     </div>
                   </div>
                 </CardContent>
