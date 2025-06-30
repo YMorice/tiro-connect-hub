@@ -36,6 +36,7 @@ import { ProposedStudentsDisplay } from "@/components/student-selection/Proposed
 import {ProjectPayment} from "@/components/payment/ProjectPayment";
 import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users, Clock } from "lucide-react";
 import { format } from "date-fns";
+import PaymentStatusMessage from "@/components/PaymentStatusMessage";
 
 /**
  * Interface for project document data structure
@@ -628,6 +629,16 @@ const ProjectDetail = () => {
                 paymentStatus={project.payment_status as 'pending' | 'succeeded' | 'processing' | 'failed'}
                 onPaymentSuccess={handlePaymentSuccess}
               />
+            </div>
+          )}
+
+          {/* Payment Status Message - Show for students when their assigned project is in STEP4 */}
+          {isStudent && 
+           project?.selected_student && 
+           studentId === project.selected_student && 
+           project.status === 'STEP4' && (
+            <div className="mb-4 sm:mb-6">
+              <PaymentStatusMessage projectStatus={project.status} />
             </div>
           )}
 
