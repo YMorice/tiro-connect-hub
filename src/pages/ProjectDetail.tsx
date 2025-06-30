@@ -34,7 +34,7 @@ import StudentProposalActions from "@/components/student/StudentProposalActions"
 import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
 import {ProjectPayment} from "@/components/payment/ProjectPayment";
-import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users, Clock } from "lucide-react";
+import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users, Clock, CheckCircle, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import PaymentStatusMessage from "@/components/PaymentStatusMessage";
 
@@ -132,6 +132,7 @@ const ProjectDetail = () => {
   const [proposalStatus, setProposalStatus] = useState<'pending' | 'accepted' | 'declined' | null>(null);
   const [studentId, setStudentId] = useState<string | null>(null);
   const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
+  const [isSelectedForProject, setIsSelectedForProject] = useState(false);
 
   // Fetch project data when component mounts or dependencies change
   useEffect(() => {
@@ -140,6 +141,7 @@ const ProjectDetail = () => {
       checkUnreadMessages();
       if ((user as any)?.role === 'student') {
         checkProposalStatus();
+        checkIfSelectedForProject();
       }
       if ((user as any)?.role === 'entrepreneur') {
         fetchEntrepreneurId();
@@ -155,7 +157,8 @@ const ProjectDetail = () => {
     console.log("studentId", studentId); // Affiche l'id_student détecté côté front
     console.log("projectId", project?.id_project); // Affiche l'id du projet courant
     console.log("proposalStatus", proposalStatus); // Affiche le statut de la proposition
-  }, [user, project, studentId, proposalStatus]);
+    console.log("isSelectedForProject", isSelectedForProject);
+  }, [user, project, studentId, proposalStatus, isSelectedForProject]);
 
   /**
    * Fetches entrepreneur ID for the current user
@@ -175,6 +178,34 @@ const ProjectDetail = () => {
       }
     } catch (error) {
       console.error('Error fetching entrepreneur ID:', error);
+    }
+  };
+
+  /**
+   * Checks if the current user is selected for this project
+   */
+  const checkIfSelectedForProject = async () => {
+    if (!user?.id || !id) return;
+
+    try {
+      const { data: studentData } = await supabase
+        .from('students')
+        .select('id_student')
+        .eq('id_user', user.id)
+        .single();
+
+      if (studentData) {
+        const { data: projectData } = await supabase
+          .from('projects')
+          .select('selected_student')
+          .eq('id_project', id)
+          .eq('selected_student', studentData.id_student)
+          .single();
+
+        setIsSelectedForProject(!!projectData);
+      }
+    } catch (error) {
+      console.error('Error checking if selected for project:', error);
     }
   };
 
@@ -619,6 +650,33 @@ const ProjectDetail = () => {
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
+          {/* Notification pour étudiant sélectionné */}
+          {isStudent && isSelectedForProject && (
+            <div className="mb-4 sm:mb-6">
+              <Card className="border-l-4 border-l-green-500 bg-green-50">
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-green-800">
+                    <UserCheck className="h-5 w-5 text-green-600" />
+                    Félicitations ! Vous avez été sélectionné pour ce projet
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-green-800 font-medium">
+                        L'entrepreneur vous a choisi pour travailler sur ce projet
+                      </p>
+                      <p className="text-xs text-green-700 mt-1">
+                        Vous pouvez maintenant collaborer directement avec l'entrepreneur et accéder à tous les documents du projet.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Payment Section - Show for entrepreneurs when project is in STEP4 */}
           {showPaymentSection && (
             <div className="mb-4 sm:mb-6">

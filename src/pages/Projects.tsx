@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import AppLayout from "@/components/AppLayout";
@@ -35,12 +34,10 @@ const Projects = () => {
     { value: "completed", label: "Terminé" }
   ];
 
-  // Ajouter les options de filtre de statut de proposition pour les étudiants
   const studentStatusOptions = [
     { value: "all", label: "Tous" },
     { value: "pending", label: "Réponse en Attente" },
     { value: "accepted", label: "Intéressé" },
-    { value: "declined", label: "Refusé" },
     { value: "assigned", label: "Assigné" }
   ];
 
@@ -107,9 +104,7 @@ const Projects = () => {
             documents: [],
             createdAt: new Date(project.created_at),
             updatedAt: new Date(project.updated_at || project.created_at),
-            deadline: project.deadline
-  ? new Date(project.deadline)
-  : null, 
+            deadline: project.deadline ? new Date(project.deadline) : null, 
             price: project.price,
             entrepreneur: project.entrepreneurs
           }));
@@ -117,7 +112,7 @@ const Projects = () => {
           setProjects(sortedProjects);
         }
       } else if (userRole === "student") {
-        // Les étudiants voient à la fois les projets assignés et les propositions
+        // Les étudiants voient seulement les projets où ils sont assignés ou les propositions en cours
         const { data: studentData } = await supabase
           .from("students")
           .select("id_student")
@@ -125,11 +120,28 @@ const Projects = () => {
           .single();
           
         if (studentData) {
-          // Obtenir toutes les propositions pour cet étudiant
+          // Obtenir les propositions en cours (non rejetées et où l'étudiant n'a pas été écarté)
           const proposals = await getStudentProposals(studentData.id_student);
           
-          // Transformer les propositions en format de projet
-          const projectsFromProposals: StudentProject[] = proposals.map(proposal => ({
+          // Filtrer les propositions pour exclure les projets où un autre étudiant a été sélectionné
+          const validProposals = [];
+          for (const proposal of proposals) {
+            const { data: projectData } = await supabase
+              .from("projects")
+              .select("selected_student")
+              .eq("id_project", proposal.projects.id_project)
+              .single();
+              
+            // Inclure seulement si :
+            // - Aucun étudiant n'est sélectionné (selected_student = null)
+            // - OU l'étudiant actuel est celui qui est sélectionné
+            if (!projectData?.selected_student || projectData.selected_student === studentData.id_student) {
+              validProposals.push(proposal);
+            }
+          }
+          
+          // Transformer les propositions valides en format de projet
+          const projectsFromProposals: StudentProject[] = validProposals.map(proposal => ({
             id: proposal.projects.id_project,
             title: proposal.projects.title,
             description: proposal.projects.description || '',
@@ -140,9 +152,7 @@ const Projects = () => {
             documents: [],
             createdAt: new Date(proposal.created_at),
             updatedAt: new Date(proposal.projects.updated_at || proposal.created_at),
-            deadline: proposal.projects.deadline
-  ? new Date(proposal.projects.deadline)
-  : null,
+            deadline: proposal.projects.deadline ? new Date(proposal.projects.deadline) : null,
             price: proposal.projects.price,
             proposalStatus: proposal.accepted === null ? 'pending' : (proposal.accepted ? 'accepted' : 'declined'),
             entrepreneur: proposal.projects.entrepreneurs
@@ -185,9 +195,7 @@ const Projects = () => {
             documents: [],
             createdAt: new Date(project.created_at),
             updatedAt: new Date(project.updated_at || project.created_at),
-            deadline: project.deadline
-  ? new Date(project.deadline)
-  : null,
+            deadline: project.deadline ? new Date(project.deadline) : null,
             price: project.price,
             proposalStatus: 'assigned' as const,
             entrepreneur: project.entrepreneurs
@@ -259,19 +267,18 @@ const Projects = () => {
 
   const sortProjectsByStatus = (projectsList: StudentProject[]) => {
     const statusPriority: { [key: string]: number } = {
-      'STEP1': 1,  // Nouveau
-      'STEP2': 2,  // Propositions
-      'STEP3': 3,  // Sélection
-      'STEP4': 4,  // Paiement
-      'STEP5': 5,  // Actif
-      'STEP6': 6,  // En Cours
+      'STEP1': 1,
+      'STEP2': 2,
+      'STEP3': 3,
+      'STEP4': 4,
+      'STEP5': 5,
+      'STEP6': 6,
       'completed': 7,
-      'open': 1,   // Fallback pour statut legacy
-      'in_progress': 6,  // Fallback pour statut legacy
+      'open': 1,
+      'in_progress': 6,
     };
 
     return [...projectsList].sort((a, b) => {
-      // Pour les étudiants, prioriser d'abord les propositions en attente
       if (userRole === 'student') {
         if (a.proposalStatus === 'pending' && b.proposalStatus !== 'pending') return -1;
         if (b.proposalStatus === 'pending' && a.proposalStatus !== 'pending') return 1;
@@ -280,12 +287,10 @@ const Projects = () => {
       const aPriority = statusPriority[a.status] || 999;
       const bPriority = statusPriority[b.status] || 999;
       
-      // Trier d'abord par priorité de statut
       if (aPriority !== bPriority) {
         return aPriority - bPriority;
       }
       
-      // Puis trier par date de création (plus récent en premier) dans le même statut
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   };
@@ -293,7 +298,6 @@ const Projects = () => {
   const applyFilters = () => {
     let filtered = projects;
 
-    // Appliquer le filtre de recherche
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(project =>
@@ -302,13 +306,10 @@ const Projects = () => {
       );
     }
 
-    // Appliquer le filtre de statut
     if (statusFilter !== "all") {
       if (userRole === 'student') {
-        // Pour les étudiants, filtrer par statut de proposition
         filtered = filtered.filter(project => project.proposalStatus === statusFilter);
       } else {
-        // Pour les entrepreneurs et admins, filtrer par statut de projet
         filtered = filtered.filter(project => project.status === statusFilter);
       }
     }
@@ -319,23 +320,22 @@ const Projects = () => {
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "completed":
-        return "bg-green-100 text-green-700"; // ✅ vert
+        return "bg-green-100 text-green-700";
       case "step5":
       case "in progress":
-        return "bg-blue-100 text-blue-700"; // ✅ bleu
+        return "bg-blue-100 text-blue-700";
       case "step4":
-        return "bg-red-100 text-red-700"; // ✅ rouge
+        return "bg-red-100 text-red-700";
       case "step1":
-        return "bg-yellow-100 text-yellow-700"; // ✅ jaune
+        return "bg-yellow-100 text-yellow-700";
       case "step3":
-        return "bg-purple-100 text-purple-700"; // ✅ violet
+        return "bg-purple-100 text-purple-700";
       case "step2":
-        return "bg-orange-100 text-orange-700"; // ✅ orange
+        return "bg-orange-100 text-orange-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
   };
-
 
   const getProposalStatusColor = (proposalStatus: string) => {
     switch (proposalStatus) {
@@ -402,7 +402,6 @@ const Projects = () => {
     <AppLayout>
       <div className="min-h-screen bg-gray-50 py-6">
         <div className="container mx-auto px-4 max-w-7xl">
-          {/* En-tête de Page avec Titre et Bouton Créer */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
               <h1 className="text-left text-2xl sm:text-3xl font-bold text-gray-900">Projets</h1>
@@ -422,10 +421,8 @@ const Projects = () => {
             )}
           </div>
 
-          {/* Contrôles de Recherche et Filtre */}
           <div className="mb-6 space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
-              {/* Input de Recherche */}
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -437,7 +434,6 @@ const Projects = () => {
                 />
               </div>
               
-              {/* Menu Déroulant de Filtre de Statut */}
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -452,14 +448,11 @@ const Projects = () => {
             </div>
           </div>
 
-          {/* Grille de Projets */}
           {loading ? (
-            /* État de Chargement */
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tiro-primary"></div>
             </div>
           ) : filteredProjects.length === 0 ? (
-            /* État Vide */
             <div className="text-center py-12">
               <div className="text-gray-500 text-lg mb-2">
                 {searchTerm || statusFilter !== "all" 
@@ -479,7 +472,6 @@ const Projects = () => {
               )}
             </div>
           ) : (
-            /* Grille de Projets */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProjects.map((project) => (
                 <Link

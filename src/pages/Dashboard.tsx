@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useProjects } from "@/context/project-context";
@@ -6,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Calendar, FolderPlus, MessageCircle, TrendingUp, CheckCircle, Clock, AlertCircle, HelpCircle, LifeBuoy } from "lucide-react";
+import { Calendar, FolderPlus, MessageCircle, TrendingUp, CheckCircle, Clock, AlertCircle, HelpCircle, LifeBuoy, UserCheck, UserX } from "lucide-react";
 import { getStudentProposals } from "@/services/proposal-service";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
@@ -16,13 +17,15 @@ const Dashboard = () => {
   const { projects, loading } = useProjects();
   const [studentProposals, setStudentProposals] = useState<any[]>([]);
   const [proposalsLoading, setProposalsLoading] = useState(false);
+  const [rejectedProposals, setRejectedProposals] = useState<any[]>([]);
+  const [selectedNotifications, setSelectedNotifications] = useState<any[]>([]);
   const { theme } = useTheme();
 
   const userRole = (user as any)?.role;
 
   // Récupérer les propositions d'étudiants si l'utilisateur est un étudiant
   useEffect(() => {
-    const fetchStudentProposals = async () => {
+    const fetchStudentData = async () => {
       if (userRole === 'student' && user?.id) {
         setProposalsLoading(true);
         try {
@@ -34,18 +37,62 @@ const Dashboard = () => {
             .single();
 
           if (studentData) {
+            // Obtenir les propositions en attente
             const proposals = await getStudentProposals(studentData.id_student);
             setStudentProposals(proposals);
+
+            // Obtenir les propositions rejetées (projets où l'étudiant n'a pas été sélectionné mais le projet a un selected_student)
+            const { data: rejectedData, error: rejectedError } = await supabase
+              .from('proposal_to_student')
+              .select(`
+                id_proposal,
+                created_at,
+                projects!inner (
+                  id_project,
+                  title,
+                  selected_student,
+                  status,
+                  entrepreneurs (
+                    users (name, surname)
+                  )
+                )
+              `)
+              .eq('id_student', studentData.id_student)
+              .neq('projects.selected_student', null)
+              .neq('projects.selected_student', studentData.id_student);
+
+            if (!rejectedError && rejectedData) {
+              setRejectedProposals(rejectedData);
+            }
+
+            // Obtenir les notifications de sélection (projets où l'étudiant a été sélectionné)
+            const { data: selectedData, error: selectedError } = await supabase
+              .from('projects')
+              .select(`
+                id_project,
+                title,
+                status,
+                updated_at,
+                entrepreneurs (
+                  users (name, surname)
+                )
+              `)
+              .eq('selected_student', studentData.id_student)
+              .in('status', ['STEP4', 'STEP5', 'STEP6']);
+
+            if (!selectedError && selectedData) {
+              setSelectedNotifications(selectedData);
+            }
           }
         } catch (error) {
-          console.error('Erreur lors de la récupération des propositions d\'étudiant:', error);
+          console.error('Erreur lors de la récupération des données d\'étudiant:', error);
         } finally {
           setProposalsLoading(false);
         }
       }
     };
 
-    fetchStudentProposals();
+    fetchStudentData();
   }, [user, userRole]);
 
   // Calculer les métriques du tableau de bord - using English status values for comparison
@@ -54,36 +101,32 @@ const Dashboard = () => {
   const completedProjects = projects.filter(p => p.status === "completed").length;
   const pendingProjects = projects.filter(p => p.status === "New" || p.status === "Proposals").length;
 
-  // Obtenir les projets récents (5 derniers)
   const recentProjects = projects.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 5);
   
-  // DEBUG : Afficher les projets reçus et les projets récents
   console.log("Projets reçus dans Dashboard:", projects);
   console.log("Projets récents:", recentProjects);
   
-  // Obtenir les propositions en attente pour les étudiants
   const pendingProposals = studentProposals.filter(p => p.accepted === null);
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "completed":
-        return "bg-green-100 text-green-700"; // ✅ vert
+        return "bg-green-100 text-green-700";
       case "active":
       case "in progress":
-        return "bg-blue-100 text-blue-700"; // ✅ bleu
+        return "bg-blue-100 text-blue-700";
       case "payment":
-        return "bg-red-100 text-red-700"; // ✅ rouge
+        return "bg-red-100 text-red-700";
       case "new":
-        return "bg-yellow-100 text-yellow-700"; // ✅ jaune
+        return "bg-yellow-100 text-yellow-700";
       case "selection":
-        return "bg-purple-100 text-purple-700"; // ✅ violet
+        return "bg-purple-100 text-purple-700";
       case "proposals":
-        return "bg-orange-100 text-orange-700"; // ✅ orange
+        return "bg-orange-100 text-orange-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
   };
-
 
   const getStatusLabel = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -129,6 +172,95 @@ const Dashboard = () => {
               Voici un aperçu de vos projets et de votre activité récente.
             </p>
           </div>
+
+          {/* Notifications pour les étudiants sélectionnés */}
+          {userRole === 'student' && selectedNotifications.length > 0 && (
+            <div className="mb-8">
+              <Card className="border-l-4 border-l-green-500">
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <UserCheck className="h-5 w-5 text-green-500" />
+                    Félicitations ! Vous avez été sélectionné
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">{selectedNotifications.length}</Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    Vous avez été choisi pour travailler sur {selectedNotifications.length > 1 ? 'ces projets' : 'ce projet'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {selectedNotifications.slice(0, 3).map((project) => (
+                    <div key={project.id_project} className="flex items-center justify-between p-4 border rounded-lg bg-green-50 hover:bg-green-100 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <Link 
+                          to={`/projects/${project.id_project}`} 
+                          className="font-medium text-gray-900 hover:text-tiro-primary transition-colors truncate block"
+                        >
+                          {project.title}
+                        </Link>
+                        <div className="flex items-center mt-1 space-x-2">
+                          <Badge className={`${getStatusColor(project.status)} text-xs`}>
+                            {getStatusLabel(project.status)}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            Par : {project.entrepreneurs?.users?.name} {project.entrepreneurs?.users?.surname}
+                          </span>
+                        </div>
+                      </div>
+                      <Link to={`/projects/${project.id_project}`}>
+                        <Button variant="outline" size="sm" className="bg-green-600 text-white hover:bg-green-700">
+                          Voir le Projet
+                        </Button>
+                      </Link>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Notifications pour les étudiants non sélectionnés */}
+          {userRole === 'student' && rejectedProposals.length > 0 && (
+            <div className="mb-8">
+              <Card className="border-l-4 border-l-red-500">
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <UserX className="h-5 w-5 text-red-500" />
+                    Projets non retenus
+                    <Badge variant="secondary" className="bg-red-100 text-red-800">{rejectedProposals.length}</Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    L'entrepreneur a choisi un autre étudiant pour {rejectedProposals.length > 1 ? 'ces projets' : 'ce projet'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {rejectedProposals.slice(0, 3).map((proposal) => (
+                    <div key={proposal.id_proposal} className="flex items-center justify-between p-4 border rounded-lg bg-red-50">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 truncate">
+                          {proposal.projects.title}
+                        </div>
+                        <div className="flex items-center mt-1 space-x-2">
+                          <span className="text-xs text-gray-500">
+                            Par : {proposal.projects.entrepreneurs?.users?.name} {proposal.projects.entrepreneurs?.users?.surname}
+                          </span>
+                          <span className="text-xs text-red-600">
+                            • Un autre étudiant a été sélectionné
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {rejectedProposals.length > 3 && (
+                    <div className="text-center pt-4">
+                      <p className="text-sm text-gray-500">
+                        Et {rejectedProposals.length - 3} autres projets...
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Section Propositions d'Étudiants */}
           {userRole === 'student' && pendingProposals.length > 0 && (
@@ -267,9 +399,7 @@ const Dashboard = () => {
             )}
           </div>
 
-          {/* Grille de Contenu Principal */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Projets Récents */}
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
@@ -331,7 +461,6 @@ const Dashboard = () => {
               </Card>
             </div>
 
-            {/* Actions Rapides */}
             <div className="space-y-6">
               <Card>
                 <CardHeader>
@@ -374,7 +503,6 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              {/* Carte Conseils */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Conseils et Insights</CardTitle>
