@@ -29,6 +29,8 @@ interface Message {
   sender_id: string;
   content: string;
   created_at: string;
+  sender_avatar?: string;
+  sender_name?: string;
 }
 
 const Messages = () => {
@@ -315,7 +317,7 @@ const Messages = () => {
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('*, users:sender_id (pp_link, name, surname)')
         .eq('group_id', groupId)
         .order('created_at', { ascending: true });
 
@@ -328,7 +330,14 @@ const Messages = () => {
         .eq('group_id', groupId)
         .neq('sender_id', userInfo.id);
 
-      setMessages(data || []);
+      // Adapter messages for including avatar and name
+      const messagesWithAvatar = (data || []).map((msg: any) => ({
+        ...msg,
+        sender_avatar: msg.users?.pp_link || undefined,
+        sender_name: msg.users?.name && msg.users?.surname ? `${msg.users.name} ${msg.users.surname}` : undefined,
+      }));
+
+      setMessages(messagesWithAvatar);
     } catch (error: any) {
       console.error("Error fetching messages:", error);
       toast.error("Failed to load messages");
@@ -430,6 +439,30 @@ const Messages = () => {
     ));
   }, [conversations, selectedConversation]);
 
+  // 1. Ajouter une fonction utilitaire pour extraire les participants du projet
+  function getProjectParticipants(conversation) {
+    const participants = [];
+    // Entrepreneur
+    if (conversation?.projects?.entrepreneurs?.users) {
+      participants.push({
+        name: conversation.projects.entrepreneurs.users.name,
+        avatar: conversation.projects.entrepreneurs.users.pp_link,
+        role: 'Entrepreneur',
+      });
+    }
+    // Étudiant sélectionné
+    if (conversation?.projects?.students?.users) {
+      participants.push({
+        name: conversation.projects.students.users.name,
+        avatar: conversation.projects.students.users.pp_link,
+        role: 'Étudiant',
+      });
+    }
+    // Admin (optionnel, si tu veux l'ajouter manuellement)
+    // participants.push({ name: 'Admin', avatar: null, role: 'Admin' });
+    return participants;
+  }
+
   return (
     <AppLayout>
       <div className="fixed inset-x-0 top-[100px] bottom-0 flex flex-col lg:flex-row bg-gray-50 overflow-hidden">
@@ -465,7 +498,7 @@ const Messages = () => {
           {selectedConversation ? (
             <>
               {/* Chat Header */}
-              <div className="p-3 lg:p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+              <div className="p-3 lg:p-4 border-b border-gray-200 flex flex-col flex-shrink-0">
                 <div className="flex items-center space-x-3 min-w-0">
                   <Button
                     variant="ghost"
@@ -492,6 +525,23 @@ const Messages = () => {
                     <p className="text-xs text-gray-500 truncate">Project: {selectedConversation.projectTitle}</p>
                   </div>
                 </div>
+                {/* Affichage des avatars de tous les participants */}
+                <div className="flex items-center space-x-2 mt-2">
+                  {getProjectParticipants(selectedConversation).map((p, idx) => (
+                    <div key={idx} className="flex flex-col items-center">
+                      <Avatar className="w-8 h-8">
+                        {p.avatar ? (
+                          <AvatarImage src={p.avatar} alt={p.name} />
+                        ) : (
+                          <AvatarFallback className="bg-tiro-primary text-white text-xs">
+                            {p.name?.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <span className="text-[10px] text-gray-500 mt-1 max-w-[60px] truncate text-center">{p.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Messages Display Area */}
@@ -507,12 +557,8 @@ const Messages = () => {
                 ) : (
                   messages.map((message) => {
                     const isOwnMessage = message.sender_id === userInfo.id;
-                    const senderName = isOwnMessage 
-                      ? 'You' 
-                      : selectedConversation.otherParticipant;
-                    const senderAvatar = isOwnMessage
-                      ? userInfo.avatar
-                      : selectedConversation.otherParticipantAvatar;
+                    const senderAvatar = isOwnMessage ? userInfo.avatar : message.sender_avatar;
+                    const senderName = isOwnMessage ? 'Vous' : (message.sender_name || selectedConversation.otherParticipant);
 
                     return (
                       <div
@@ -523,18 +569,21 @@ const Messages = () => {
                         )}
                       >
                         {!isOwnMessage && (
-                          <Avatar className="w-6 h-6 lg:w-8 lg:h-8 flex-shrink-0">
-                            {senderAvatar ? (
-                              <AvatarImage 
-                                src={senderAvatar}
-                                alt={senderName}
-                              />
-                            ) : (
-                              <AvatarFallback className="bg-tiro-primary text-white text-xs">
-                                {senderName.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
+                          <div className="flex flex-col items-center">
+                            <Avatar className="w-6 h-6 lg:w-8 lg:h-8 flex-shrink-0">
+                              {senderAvatar ? (
+                                <AvatarImage 
+                                  src={senderAvatar}
+                                  alt={senderName}
+                                />
+                              ) : (
+                                <AvatarFallback className="bg-tiro-primary text-white text-xs">
+                                  {senderName.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              )}
+                            </Avatar>
+                            <span className="text-xs text-gray-500 mt-1 max-w-[70px] truncate text-center">{senderName}</span>
+                          </div>
                         )}
                         <div className={cn(
                           "max-w-xs lg:max-w-md xl:max-w-lg",
@@ -556,18 +605,21 @@ const Messages = () => {
                           </p>
                         </div>
                         {isOwnMessage && (
-                          <Avatar className="w-6 h-6 lg:w-8 lg:h-8 flex-shrink-0">
-                            {senderAvatar ? (
-                              <AvatarImage 
-                                src={senderAvatar}
-                                alt={senderName}
-                              />
-                            ) : (
-                              <AvatarFallback className="bg-tiro-primary text-white text-xs">
-                                {senderName.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
+                          <div className="flex flex-col items-center">
+                            <Avatar className="w-6 h-6 lg:w-8 lg:h-8 flex-shrink-0">
+                              {senderAvatar ? (
+                                <AvatarImage 
+                                  src={senderAvatar}
+                                  alt={senderName}
+                                />
+                              ) : (
+                                <AvatarFallback className="bg-tiro-primary text-white text-xs">
+                                  {senderName.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              )}
+                            </Avatar>
+                            <span className="text-xs text-gray-500 mt-1 max-w-[70px] truncate text-center">{senderName}</span>
+                          </div>
                         )}
                       </div>
                     );

@@ -258,6 +258,7 @@ const Register = () => {
         .upload(filePath, file, {
           contentType: file.type,
           upsert: true,
+          cacheControl: '31536000', // 1 an de cache navigateur
         });
         
       if (uploadError) throw uploadError;

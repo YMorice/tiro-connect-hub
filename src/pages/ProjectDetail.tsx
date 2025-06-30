@@ -289,7 +289,9 @@ const ProjectDetail = () => {
       // Combine all data into final project object
       const formattedProject = {
         ...projectData,
-        entrepreneur: projectData.entrepreneurs,
+        entrepreneur: Array.isArray(projectData.entrepreneurs)
+          ? projectData.entrepreneurs[0]
+          : projectData.entrepreneurs,
         student: studentData,
         documents: documentsData || []
       };
@@ -683,39 +685,25 @@ const ProjectDetail = () => {
           <Card className="mb-4 sm:mb-6">
             <CardHeader className="pb-3 sm:pb-4">
               <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 break-words leading-tight">
-                      {project.title}
-                    </CardTitle>
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
-                        {getStatusDisplay(project.status)}
-                      </Badge>
-                      {project.price && (
-                        <div className="flex items-center text-sm sm:text-base text-gray-600">
-                          <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          {project.price}€
-                        </div>
-                      )}
-                      {project.deadline && (
-                        <div className="flex items-center text-sm sm:text-base text-gray-600">
-                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          {format(new Date(project.deadline), 'dd/MM/yyyy')}
-                        </div>
-                      )}
-                      {/* Discussion Link */}
-                      <Link to="/messages" className="flex items-center">
-                        <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
-                          <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                          <span className="hidden sm:inline">Discussion</span>
-                          <span className="sm:hidden">Chat</span>
-                          {hasUnreadMessages && (
-                            <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
-                          )}
-                        </Button>
-                      </Link>
-                    </div>
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 break-words leading-tight">
+                    {project.title}
+                  </CardTitle>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
+                      {getStatusDisplay(project.status)}
+                    </Badge>
+                    {/* Discussion Link */}
+                    <Link to="/messages" className="flex items-center">
+                      <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
+                        <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Discussion</span>
+                        <span className="sm:hidden">Chat</span>
+                        {hasUnreadMessages && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
+                        )}
+                      </Button>
+                    </Link>
                   </div>
                   {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
                     <Button
@@ -765,23 +753,27 @@ const ProjectDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-3 sm:space-x-4">
-                  <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-                    {project.entrepreneur?.users?.pp_link ? (
-                      <AvatarImage 
-                        src={project.entrepreneur.users.pp_link}
-                        alt={project.entrepreneur.users.name}
-                      />
-                    ) : (
-                      <AvatarFallback className="bg-tiro-primary text-white text-sm sm:text-base">
-                        {project.entrepreneur?.users?.name?.charAt(0) || "E"}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{project.entrepreneur?.users?.name}</p>
+                {project.entrepreneur?.users ? (
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                      {project.entrepreneur.users.pp_link ? (
+                        <AvatarImage 
+                          src={project.entrepreneur.users.pp_link}
+                          alt={project.entrepreneur.users.name}
+                        />
+                      ) : (
+                        <AvatarFallback className="bg-tiro-primary text-white text-sm sm:text-base">
+                          {project.entrepreneur.users.name?.charAt(0) || "E"}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{project.entrepreneur.users.name}</p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-gray-400 italic">Informations entrepreneur non disponibles</div>
+                )}
               </CardContent>
             </Card>
 
@@ -855,6 +847,7 @@ const ProjectDetail = () => {
                             </p>
                           </div>
                         </div>
+                        {/* Téléchargement uniquement sur clic du bouton */}
                         <Button
                           variant="ghost"
                           size="sm"
