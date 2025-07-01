@@ -330,6 +330,9 @@ const Messages = () => {
         .eq('group_id', groupId)
         .neq('sender_id', userInfo.id);
 
+      // Rafraîchir la liste des conversations pour mettre à jour le statut "non lu"
+      fetchConversations();
+
       // Adapter messages for including avatar and name
       const messagesWithAvatar = (data || []).map((msg: any) => ({
         ...msg,
@@ -344,7 +347,7 @@ const Messages = () => {
     } finally {
       setLoadingMessages(false);
     }
-  }, [userInfo.id]);
+  }, [userInfo.id, fetchConversations]);
 
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || !selectedConversation || !userInfo.id) return;
