@@ -514,15 +514,13 @@ const Admin = () => {
                                   </AlertDialog>
                                 )}
                                 
-                                {/* Price update button for custom quotes */}
-                                {project.packName === 'Devis personnalisé' && (
-                                  <PriceUpdateDialog
-                                    projectId={project.id}
-                                    projectTitle={project.title}
-                                    currentPrice={project.price}
-                                    onPriceUpdated={refreshProjects}
-                                  />
-                                )}
+                                {/* Price update button for ALL projects */}
+                                <PriceUpdateDialog
+                                  projectId={project.id}
+                                  projectTitle={project.title}
+                                  currentPrice={project.price}
+                                  onPriceUpdated={refreshProjects}
+                                />
                               </div>
                             </TableCell>
                           </TableRow>
