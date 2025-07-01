@@ -38,8 +38,15 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Get payment intent from Stripe
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    // Get payment intent from Stripe with error handling
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      console.log("Payment intent retrieved successfully:", paymentIntent.status);
+    } catch (stripeError) {
+      console.error("Error retrieving payment intent from Stripe:", stripeError);
+      throw new Error(`Payment intent not found: ${paymentIntentId}`);
+    }
     
     if (!paymentIntent.metadata.project_id) {
       throw new Error("Invalid payment intent: no project ID");
@@ -242,7 +249,7 @@ serve(async (req) => {
       JSON.stringify({ error: errorMessage }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400,
+        status: 400,
       }
     );
   }
