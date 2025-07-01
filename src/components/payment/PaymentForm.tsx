@@ -44,6 +44,8 @@ export const PaymentForm = ({ amount, clientSecret, paymentIntentId, onPaymentSu
 
     try {
       console.log('Confirming payment with client secret:', clientSecret);
+      console.log('clientSecret starts with:', clientSecret?.slice(0, 10));
+
       
       const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: { card },
