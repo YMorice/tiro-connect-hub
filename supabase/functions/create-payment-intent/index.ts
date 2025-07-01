@@ -73,37 +73,39 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Check if we already have a payment intent for this project
-    const { data: existingPayment } = await supabaseAdmin
-      .from("projects")
-      .select("stripe_payment_intent_id")
-      .eq("id_project", projectId)
-      .single();
-
     let paymentIntent;
 
-    // If we have an existing payment intent, try to retrieve it
-    if (existingPayment?.stripe_payment_intent_id) {
+    // Check if we already have a payment intent for this project
+    if (project.stripe_payment_intent_id) {
       try {
-        paymentIntent = await stripe.paymentIntents.retrieve(existingPayment.stripe_payment_intent_id);
+        console.log("Checking existing payment intent:", project.stripe_payment_intent_id);
+        const existingPaymentIntent = await stripe.paymentIntents.retrieve(project.stripe_payment_intent_id);
         
-        // If it's already succeeded, don't create a new one
-        if (paymentIntent.status === "succeeded") {
+        // If it's already succeeded, throw error
+        if (existingPaymentIntent.status === "succeeded") {
           throw new Error("Payment already completed");
         }
         
-        // If it's canceled or failed, create a new one
-        if (paymentIntent.status === "canceled" || paymentIntent.status === "payment_failed") {
+        // If it's in a valid state to be used, return it
+        if (existingPaymentIntent.status === "requires_payment_method" || 
+            existingPaymentIntent.status === "requires_confirmation" ||
+            existingPaymentIntent.status === "requires_action") {
+          console.log("Using existing valid payment intent:", existingPaymentIntent.id);
+          paymentIntent = existingPaymentIntent;
+        } else {
+          // If it's in an invalid state, we'll create a new one
+          console.log("Existing payment intent in invalid state:", existingPaymentIntent.status);
           paymentIntent = null;
         }
       } catch (error) {
-        console.log("Existing payment intent not found or invalid, creating new one");
+        console.log("Error retrieving existing payment intent, creating new one:", error);
         paymentIntent = null;
       }
     }
 
     // Create new payment intent if needed
     if (!paymentIntent) {
+      console.log("Creating new payment intent");
       paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(project.price * 100), // Convert to cents
         currency: "eur",
@@ -116,8 +118,8 @@ serve(async (req) => {
         },
       });
 
-      // Store the payment intent ID in the project
-      await supabaseAdmin
+      // Store the new payment intent ID in the project
+      const { error: updateError } = await supabaseAdmin
         .from("projects")
         .update({
           stripe_payment_intent_id: paymentIntent.id,
@@ -125,9 +127,11 @@ serve(async (req) => {
         })
         .eq("id_project", projectId);
 
-      console.log("Payment intent created:", paymentIntent.id);
-    } else {
-      console.log("Using existing payment intent:", paymentIntent.id);
+      if (updateError) {
+        console.error("Error updating project with payment intent ID:", updateError);
+      }
+
+      console.log("New payment intent created:", paymentIntent.id);
     }
 
     return new Response(

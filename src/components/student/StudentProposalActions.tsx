@@ -87,11 +87,11 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-          <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+        <div className="w-full flex justify-center items-start gap-3 p-3 bg-blue-50 rounded-lg">
+          <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
           <div className="text-sm text-blue-700">
-            <p className="font-medium mb-1">Comment ça fonctionne :</p>
-            <ul className="list-disc list-inside space-y-1 text-xs">
+            <p className="font-medium mb-1 text-center">Comment ça fonctionne :</p>
+            <ul className="list-disc list-inside space-y-1 text-xs text-center">
               <li>Exprimer votre intérêt indique que vous êtes disponible pour ce projet</li>
               <li>L'entrepreneur examinera les étudiants intéressés</li>
               <li>Si sélectionné, vous serez assigné et ajouté à la conversation du projet</li>

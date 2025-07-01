@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,6 +28,9 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
+    // Initialize Resend for email sending
+    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
     // Initialize Supabase client with service role
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -34,8 +38,15 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Get payment intent from Stripe
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    // Get payment intent from Stripe with error handling
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      console.log("Payment intent retrieved successfully:", paymentIntent.status);
+    } catch (stripeError) {
+      console.error("Error retrieving payment intent from Stripe:", stripeError);
+      throw new Error(`Payment intent not found: ${paymentIntentId}`);
+    }
     
     if (!paymentIntent.metadata.project_id) {
       throw new Error("Invalid payment intent: no project ID");
@@ -44,10 +55,23 @@ serve(async (req) => {
     const projectId = paymentIntent.metadata.project_id;
     console.log("Processing payment for project:", projectId);
 
-    // Get project details
+    // Get project details with entrepreneur info
     const { data: project, error: projectError } = await supabaseAdmin
       .from("projects")
-      .select("*")
+      .select(`
+        *,
+        entrepreneurs (
+          id_entrepreneur,
+          company_name,
+          company_address,
+          company_siret,
+          users (
+            email,
+            first_name,
+            last_name
+          )
+        )
+      `)
       .eq("id_project", projectId)
       .single();
 
@@ -56,7 +80,7 @@ serve(async (req) => {
       throw new Error("Project not found");
     }
 
-    // If payment succeeded, update project status to active
+    // If payment succeeded, update project status and create invoice
     if (paymentIntent.status === "succeeded") {
       const { error: updateError } = await supabaseAdmin
         .from("projects")
@@ -72,6 +96,99 @@ serve(async (req) => {
       }
 
       console.log(`Payment succeeded for project ${projectId}, moved to STEP5`);
+
+      // Create Stripe customer if doesn't exist
+      let customerId = paymentIntent.customer as string;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: project.entrepreneurs.users.email,
+          name: `${project.entrepreneurs.users.first_name} ${project.entrepreneurs.users.last_name}`,
+          metadata: {
+            entrepreneur_id: project.entrepreneurs.id_entrepreneur,
+            company_name: project.entrepreneurs.company_name || "",
+          },
+        });
+        customerId = customer.id;
+      }
+
+      // Create invoice after successful payment
+      try {
+        console.log("Creating Stripe invoice for successful payment");
+
+        // Create invoice item
+        const invoiceItem = await stripe.invoiceItems.create({
+          customer: customerId,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+          description: `Paiement pour le projet: ${project.title}`,
+          metadata: {
+            project_id: projectId,
+            payment_intent_id: paymentIntentId,
+          },
+        });
+
+        // Create and finalize invoice
+        const invoice = await stripe.invoices.create({
+          customer: customerId,
+          collection_method: "send_invoice",
+          days_until_due: 30,
+          metadata: {
+            project_id: projectId,
+            payment_intent_id: paymentIntentId,
+          },
+          footer: "Facture générée automatiquement après paiement réussi.",
+        });
+
+        // Mark invoice as paid since payment was already processed
+        await stripe.invoices.pay(invoice.id, {
+          paid_out_of_band: true,
+        });
+
+        console.log("Invoice created and marked as paid:", invoice.id);
+
+        // Send invoice by email
+        if (resend && project.entrepreneurs.users.email) {
+          try {
+            // Get invoice PDF
+            const invoicePdf = await stripe.invoices.retrievePdf(invoice.id);
+            
+            await resend.emails.send({
+              from: "Tiro Connect <noreply@tiro-connect.com>",
+              to: [project.entrepreneurs.users.email],
+              subject: `Facture pour votre projet: ${project.title}`,
+              html: `
+                <h2>Facture pour votre projet</h2>
+                <p>Bonjour ${project.entrepreneurs.users.first_name},</p>
+                <p>Votre paiement pour le projet "<strong>${project.title}</strong>" a été traité avec succès.</p>
+                <p>Vous trouverez en pièce jointe la facture correspondante.</p>
+                <p><strong>Détails de la transaction :</strong></p>
+                <ul>
+                  <li>Montant : ${(paymentIntent.amount / 100).toFixed(2)} €</li>
+                  <li>Numéro de facture : ${invoice.number}</li>
+                  <li>Date : ${new Date().toLocaleDateString('fr-FR')}</li>
+                </ul>
+                <p>Cordialement,<br>L'équipe Tiro Connect</p>
+              `,
+              attachments: [
+                {
+                  filename: `facture-${invoice.number}.pdf`,
+                  content: invoicePdf,
+                  type: 'application/pdf',
+                }
+              ],
+            });
+
+            console.log("Invoice email sent successfully");
+          } catch (emailError) {
+            console.error("Error sending invoice email:", emailError);
+            // Don't fail the whole operation if email fails
+          }
+        }
+
+      } catch (invoiceError) {
+        console.error("Error creating invoice:", invoiceError);
+        // Don't fail the payment confirmation if invoice creation fails
+      }
 
       // If project has selected student, add student to message group
       if (project.selected_student) {
