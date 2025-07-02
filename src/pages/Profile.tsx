@@ -153,6 +153,26 @@ const Profile = () => {
           }
         }
 
+        // Si l'utilisateur est un entrepreneur, récupérer les données supplémentaires
+        if (userData.role === 'entrepreneur') {
+          const { data: entrepreneurData, error: entrepreneurError } = await supabase
+            .from('entrepreneurs')
+            .select('company_name, company_role, address')
+            .eq('id_user', user.id)
+            .single();
+
+          if (entrepreneurError) {
+            console.error('Error fetching entrepreneur data:', entrepreneurError);
+          } else if (entrepreneurData) {
+            setProfile(prev => ({
+              ...prev,
+              companyName: entrepreneurData.company_name || '',
+              companyRole: entrepreneurData.company_role || '',
+              companyAddress: entrepreneurData.address || ''
+            }));
+          }
+        }
+
         // Définir l'URL de l'avatar
         if (userData.pp_link) {
           setAvatarUrl(userData.pp_link);
