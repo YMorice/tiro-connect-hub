@@ -27,7 +27,7 @@ const Profile = () => {
   const [newSkill, setNewSkill] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const avatarUrl = user?.user_metadata?.avatar || "";
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Options de spécialité correspondant à l'inscription
@@ -224,7 +224,6 @@ const Profile = () => {
       if (updateError) throw updateError;
 
       // Mettre à jour l'état local immédiatement
-      setAvatarUrl(publicUrl);
       toast.success('Photo de profil mise à jour avec succès');
     } catch (error) {
       console.error('Erreur lors de la mise à jour de la photo de profil:', error);
@@ -387,19 +386,13 @@ const Profile = () => {
                       <Avatar className="w-32 h-32">
                         {avatarUrl ? (
                           <AvatarImage 
-                            src={avatarUrl} 
-                            alt={`${profile.name} ${profile.surname}`}
+                            src={avatarUrl}
+                            alt={user?.user_metadata?.name || "Photo de profil"}
                             className="object-cover"
-                            onError={(e) => {
-                              console.error('Error loading avatar:', e);
-                              console.log('Failed URL:', avatarUrl); // Debug log
-                              setAvatarUrl('');
-                            }}
                           />
                         ) : (
                           <AvatarFallback className="text-2xl bg-primary text-white">
-                            {profile.name?.charAt(0)}
-                            {profile.surname?.charAt(0)}
+                            {user?.user_metadata?.name?.charAt(0) || "?"}
                           </AvatarFallback>
                         )}
                       </Avatar>

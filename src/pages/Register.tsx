@@ -254,21 +254,25 @@ const Register = () => {
       
       const { error: uploadError } = await supabase
         .storage
-        .from('pp')
+        .from('avatars')
         .upload(filePath, file, {
           contentType: file.type,
           upsert: true,
           cacheControl: '31536000', // 1 an de cache navigateur
         });
         
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Erreur upload Supabase:', uploadError);
+        throw uploadError;
+      }
       
       const { data: urlData } = supabase
         .storage
-        .from('pp')
+        .from('avatars')
         .getPublicUrl(filePath);
         
       const profilePictureUrl = urlData.publicUrl;
+      console.log('URL publique générée:', profilePictureUrl);
       setAvatarUrl(profilePictureUrl);
     } catch (error: any) {
       console.error("Erreur du téléchargement de la photo de profil:", error);
@@ -425,8 +429,9 @@ const Register = () => {
     try {
       setIsSubmitting(true);
       
+      // Synchroniser l'avatar avec la dernière valeur uploadée
+      values.avatar = avatarUrl;
       const name = values.firstName?.trim() || "Nouvel utilisateur";
-      
       const surname = values.lastName?.trim() || "Nouvel utilisateur";
         
       console.log("Soumission des données d'inscription:", {
@@ -452,7 +457,7 @@ const Register = () => {
         companyRole: values.companyRole || null,
         siret: values.siret || null,
         skills: selectedSkills.length > 0 ? selectedSkills : [],
-        avatar: avatarUrl || null,
+        avatar: values.avatar || null,
       };
       
       console.log("Metadata utilisateur pour l'inscription:", userData);
