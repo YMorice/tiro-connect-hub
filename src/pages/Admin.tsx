@@ -224,22 +224,6 @@ const Admin = () => {
     }
   };
 
-  const handleConfirmPayment = async (projectId: string) => {
-    try {
-      const { error } = await supabase
-        .from('projects')
-        .update({ status: convertDisplayStatusToDb('Actif') })
-        .eq('id_project', projectId);
-        
-      if (error) throw error;
-      
-      toast.success("Paiement confirmé. Le projet est maintenant actif.");
-      await refreshProjects();
-    } catch (error) {
-      console.error('Erreur lors de la confirmation du paiement:', error);
-      toast.error("Échec de la confirmation du paiement");
-    }
-  };
 
   const handleCompleteProject = async (projectId: string) => {
     try {
@@ -446,39 +430,6 @@ const Admin = () => {
                                     </span>
                                     <span className="sm:hidden">Sélectionner</span>
                                   </Button>
-                                )}
-                                
-                                {project.status === 'Paiement' && (
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button 
-                                        variant="default" 
-                                        size="sm"
-                                        className="flex items-center bg-green-600 hover:bg-green-700 text-xs h-8"
-                                      >
-                                        <Eye className="h-3 w-3 mr-1" />
-                                        <span className="hidden sm:inline">Confirmer Paiement</span>
-                                        <span className="sm:hidden">Confirmer</span>
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Confirmer le Paiement</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Êtes-vous sûr de vouloir confirmer le paiement pour "{project.title}" ? Cela activera le projet et notifiera toutes les parties.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                        <AlertDialogAction 
-                                          onClick={() => handleConfirmPayment(project.id)}
-                                          className="bg-green-600 hover:bg-green-700"
-                                        >
-                                          Confirmer le Paiement
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
                                 )}
                                 
                                 {(project.status === 'Actif' || project.status === 'En cours') && (
