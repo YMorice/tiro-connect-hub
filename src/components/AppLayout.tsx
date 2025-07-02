@@ -85,8 +85,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   // Get avatar URL with cache busting
   const getAvatarUrl = () => {
-    if (user?.user_metadata?.avatar) {
-      return `${user.user_metadata.avatar}?t=${Date.now()}`;
+    if (user?.pp_link) {
+      return `${user.pp_link}?t=${Date.now()}`;
     }
     return undefined;
   };

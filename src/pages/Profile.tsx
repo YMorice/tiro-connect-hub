@@ -27,7 +27,7 @@ const Profile = () => {
   const [newSkill, setNewSkill] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const avatarUrl = user?.user_metadata?.avatar || "";
+  const avatarUrl = user?.pp_link || "";
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Options de spécialité correspondant à l'inscription
@@ -171,11 +171,6 @@ const Profile = () => {
               companyAddress: entrepreneurData.address || ''
             }));
           }
-        }
-
-        // Définir l'URL de l'avatar
-        if (userData.pp_link) {
-          setAvatarUrl(userData.pp_link);
         }
       }
     } catch (error) {
@@ -444,7 +439,7 @@ const Profile = () => {
                       <Label htmlFor="name">Prénom</Label>
                       <Input
                         id="name"
-                        value={profile.name}
+                        value={profile.name || user?.user_metadata?.name}
                         onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                       />
                     </div>
@@ -452,7 +447,7 @@ const Profile = () => {
                       <Label htmlFor="surname">Nom</Label>
                       <Input
                         id="surname"
-                        value={profile.surname}
+                        value={profile.surname || user?.user_metadata?.surname}
                         onChange={(e) => setProfile({ ...profile, surname: e.target.value })}
                       />
                     </div>
@@ -462,7 +457,7 @@ const Profile = () => {
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
-                      value={profile.email}
+                      value={profile.email || user?.email}
                       disabled
                     />
                   </div>
@@ -474,7 +469,7 @@ const Profile = () => {
                         <Label htmlFor="bio">Bio</Label>
                         <Textarea
                           id="bio"
-                          value={profile.bio}
+                          value={profile.bio || ""}
                           onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                           className="min-h-[100px]"
                         />
@@ -513,7 +508,7 @@ const Profile = () => {
                         <Label htmlFor="formation">Formation</Label>
                         <Input
                           id="formation"
-                          value={profile.formation}
+                          value={profile.formation || ""}
                           onChange={(e) => setProfile({ ...profile, formation: e.target.value })}
                         />
                       </div>
@@ -580,7 +575,7 @@ const Profile = () => {
                         <Label htmlFor="companyName">Nom de l'entreprise</Label>
                         <Input
                           id="companyName"
-                          value={profile.companyName}
+                          value={profile.companyName || ""}
                           onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
                         />
                       </div>
@@ -589,7 +584,7 @@ const Profile = () => {
                         <Label htmlFor="companyRole">Votre rôle dans l'entreprise</Label>
                         <Input
                           id="companyRole"
-                          value={profile.companyRole}
+                          value={profile.companyRole || ""}
                           onChange={(e) => setProfile({ ...profile, companyRole: e.target.value })}
                         />
                       </div>
@@ -598,7 +593,7 @@ const Profile = () => {
                         <Label htmlFor="companyAddress">Adresse de l'entreprise</Label>
                         <Textarea
                           id="companyAddress"
-                          value={profile.companyAddress}
+                          value={profile.companyAddress || ""}
                           onChange={(e) => setProfile({ ...profile, companyAddress: e.target.value })}
                           className="min-h-[100px]"
                         />
