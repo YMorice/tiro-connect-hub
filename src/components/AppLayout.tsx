@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -86,8 +85,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   // Get avatar URL with cache busting
   const getAvatarUrl = () => {
-    if (user?.avatar) {
-      return `${user.avatar}?t=${Date.now()}`;
+    if (user?.user_metadata?.avatar) {
+      return `${user.user_metadata.avatar}?t=${Date.now()}`;
     }
     return undefined;
   };
