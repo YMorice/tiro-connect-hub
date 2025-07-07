@@ -103,7 +103,7 @@ export const uploadFile = async (file: File, projectId: string): Promise<string 
 
     // Upload file to 'documents' bucket
     const { data, error } = await supabase.storage
-      .from('Documents')
+      .from('documents')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false
