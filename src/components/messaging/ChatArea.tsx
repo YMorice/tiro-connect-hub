@@ -43,9 +43,9 @@ const MessageItem = memo(({
     )}
     {!showAvatar && !isOwn && <div className="w-8" />}
     
-    <div className={cn("max-w-[70%]", isOwn && "items-end")}>
+    <div className={cn("max-w-[70%] flex flex-col", isOwn && "items-end")}>
       {showAvatar && !isOwn && (
-        <div className="text-xs text-muted-foreground mb-1">
+        <div className={cn("text-xs text-muted-foreground mb-1", isOwn ? "text-right" : "text-left")}>
           {message.sender_name}
         </div>
       )}
@@ -53,15 +53,15 @@ const MessageItem = memo(({
         className={cn(
           "rounded-lg px-3 py-2 text-sm",
           isOwn 
-            ? "bg-primary text-primary-foreground" 
-            : "bg-muted text-foreground"
+            ? "bg-primary text-primary-foreground text-right" 
+            : "bg-muted text-foreground text-left"
         )}
       >
         {message.content}
       </div>
       <div className={cn(
         "text-xs text-muted-foreground mt-1",
-        isOwn && "text-right"
+        isOwn ? "text-right" : "text-left"
       )}>
         {new Date(message.created_at).toLocaleTimeString('fr-FR', {
           hour: '2-digit',

@@ -49,14 +49,18 @@ export const useConversationMessages = (conversationId: string | null) => {
       setHasMore(data?.length === MESSAGES_PER_PAGE);
       setPage(pageNum);
 
-      // Mark messages as read - optimized batch update
+      // Mark messages as read only for unread messages from others
       if (messagesWithDetails.length > 0) {
-        await supabase
-          .from('messages')
-          .update({ read: true })
-          .eq('group_id', conversationId)
-          .eq('read', false)
-          .neq('sender_id', userInfo.id);
+        const unreadMessageIds = messagesWithDetails
+          .filter(msg => !msg.read && msg.sender_id !== userInfo.id)
+          .map(msg => msg.id_message);
+        
+        if (unreadMessageIds.length > 0) {
+          await supabase
+            .from('messages')
+            .update({ read: true })
+            .in('id_message', unreadMessageIds);
+        }
       }
     } catch (error: any) {
       console.error('Error fetching messages:', error);
@@ -151,6 +155,12 @@ export const useConversationMessages = (conversationId: string | null) => {
                 sender_name: data.users ? `${data.users.name} ${data.users.surname}` : '',
               };
               setMessages(prev => [...prev, messageWithDetails]);
+              
+              // Mark as read immediately since user is viewing the conversation
+              await supabase
+                .from('messages')
+                .update({ read: true })
+                .eq('id_message', data.id_message);
             }
           }
         }
