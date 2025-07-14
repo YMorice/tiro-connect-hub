@@ -7,13 +7,13 @@
 
 @layer base {
   :root {
-    --background: 195 11% 98%; /* #F7FAFB - white */
+    --background: 195 11% 98%; /* #F7FAFB - fond de la plateforme */
     --foreground: 210 28% 10%; /* #121A21 - black */
 
-    --card: 195 11% 98%; /* #F7FAFB - white */
+    --card: 192 10% 93%; /* #ECF0F1 - éléments qui sortent du fond */
     --card-foreground: 210 28% 10%; /* #121A21 - black */
 
-    --popover: 195 11% 98%; /* #F7FAFB - white */
+    --popover: 192 10% 93%; /* #ECF0F1 - éléments qui sortent du fond */
     --popover-foreground: 210 28% 10%; /* #121A21 - black */
 
     --primary: 6 78% 57%; /* #E74C3C - primary */
