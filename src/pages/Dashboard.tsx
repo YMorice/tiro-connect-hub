@@ -109,44 +109,41 @@ const Dashboard = () => {
   const pendingProposals = studentProposals.filter(p => p.accepted === null);
 
   const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "completed":
-        return "bg-green-100 text-green-700";
-      case "active":
-      case "in progress":
-        return "bg-blue-100 text-blue-700";
-      case "payment":
-        return "bg-red-100 text-red-700";
-      case "new":
-        return "bg-yellow-100 text-yellow-700";
-      case "selection":
-        return "bg-purple-100 text-purple-700";
-      case "proposals":
-        return "bg-orange-100 text-orange-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
+    const statusColorMap: { [key: string]: string } = {
+      'STEP1': 'bg-blue-100 text-blue-700',
+      'STEP2': 'bg-yellow-100 text-yellow-700',
+      'STEP3': 'bg-purple-100 text-purple-700', 
+      'STEP4': 'bg-orange-100 text-orange-700',
+      'STEP5': 'bg-indigo-100 text-indigo-700',
+      'STEP6': 'bg-cyan-100 text-cyan-700',
+      'completed': 'bg-green-100 text-green-700',
+      'new': 'bg-blue-100 text-blue-700',
+      'proposals': 'bg-yellow-100 text-yellow-700',
+      'selection': 'bg-purple-100 text-purple-700',
+      'payment': 'bg-orange-100 text-orange-700', 
+      'active': 'bg-indigo-100 text-indigo-700',
+      'in progress': 'bg-cyan-100 text-cyan-700'
+    };
+    return statusColorMap[status?.toLowerCase()] || 'bg-gray-100 text-gray-700';
   };
 
   const getStatusLabel = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "completed":
-        return "Terminé";
-      case "active":
-        return "Actif";
-      case "in progress":
-        return "En cours";
-      case "new":
-        return "Nouveau";
-      case "proposals":
-        return "Propositions";
-      case "selection":
-        return "Sélection";
-      case "payment":
-        return "Paiement";
-      default:
-        return status;
-    }
+    const statusMap: { [key: string]: string } = {
+      'STEP1': 'Nouveau',
+      'STEP2': 'Propositions', 
+      'STEP3': 'Sélection',
+      'STEP4': 'Paiement',
+      'STEP5': 'Actif',
+      'STEP6': 'En cours',
+      'completed': 'Terminé',
+      'new': 'Nouveau',
+      'proposals': 'Propositions',
+      'selection': 'Sélection', 
+      'payment': 'Paiement',
+      'active': 'Actif',
+      'in progress': 'En cours'
+    };
+    return statusMap[status?.toLowerCase()] || status;
   };
 
   if (loading || proposalsLoading) {
