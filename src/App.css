@@ -1,3 +1,13 @@
+/* Fond général de toutes les pages */
+body {
+  background-color: #F7FAFB;
+}
+
+/* Utilitaire pour les blocs/boutons principaux */
+.bg-block {
+  background-color: #ECF0F1;
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;

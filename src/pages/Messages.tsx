@@ -292,10 +292,8 @@ const Messages = () => {
         }
       }
 
-      // Sort conversations: unread first, then by most recent message
+      // Sort conversations: toujours par date du dernier message (plus récent en haut)
       const sortedConversations = conversationsArray.sort((a, b) => {
-        if (a.hasUnreadMessages && !b.hasUnreadMessages) return -1;
-        if (!a.hasUnreadMessages && b.hasUnreadMessages) return 1;
         return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
       });
       
@@ -323,15 +321,22 @@ const Messages = () => {
 
       if (error) throw error;
 
-      // Mark messages as read
-      await supabase
-        .from('messages')
-        .update({ read: true })
-        .eq('group_id', groupId)
-        .neq('sender_id', userInfo.id);
+      // Marquer les messages comme lus
+      if (userInfo.role === 'admin') {
+        await supabase
+          .from('messages')
+          .update({ read: true })
+          .eq('group_id', groupId)
+          .eq('read', false);
+      } else {
+        await supabase
+          .from('messages')
+          .update({ read: true })
+          .eq('group_id', groupId)
+          .neq('sender_id', userInfo.id);
+      }
 
-      // Rafraîchir la liste des conversations pour mettre à jour le statut "non lu"
-      fetchConversations();
+      // Ne pas rafraîchir la liste des conversations ici
 
       // Adapter messages for including avatar and name
       const messagesWithAvatar = (data || []).map((msg: any) => ({
@@ -347,7 +352,7 @@ const Messages = () => {
     } finally {
       setLoadingMessages(false);
     }
-  }, [userInfo.id, fetchConversations]);
+  }, [userInfo.id, userInfo.role]);
 
   const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || !selectedConversation || !userInfo.id) return;
@@ -373,6 +378,29 @@ const Messages = () => {
     }
   }, [newMessage, selectedConversation, userInfo.id, fetchMessages, fetchConversations]);
 
+  const handleSelectConversation = async (conversation: Conversation) => {
+    // Optimisme UI : on retire la pastille immédiatement
+    setConversations(prev => prev.map(c =>
+      c.id === conversation.id ? { ...c, hasUnreadMessages: false } : c
+    ));
+    setSelectedConversation(conversation);
+    // Marquer les messages comme lus en base
+    if (userInfo.role === 'admin') {
+      await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('group_id', conversation.id)
+        .eq('read', false);
+    } else {
+      await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('group_id', conversation.id)
+        .neq('sender_id', userInfo.id);
+    }
+    // Ne pas rafraîchir la liste des conversations ici
+  };
+
   // Effect to fetch conversations when component mounts or user changes
   useEffect(() => {
     fetchConversations();
@@ -396,7 +424,7 @@ const Messages = () => {
     return conversations.map((conversation) => (
       <div
         key={conversation.id}
-        onClick={() => setSelectedConversation(conversation)}
+        onClick={() => handleSelectConversation(conversation)}
         className={cn(
           "p-3 lg:p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors relative",
           selectedConversation?.id === conversation.id && "bg-blue-50 border-l-4 border-l-tiro-primary",
@@ -440,7 +468,7 @@ const Messages = () => {
         </div>
       </div>
     ));
-  }, [conversations, selectedConversation]);
+  }, [conversations, selectedConversation, handleSelectConversation]);
 
   // 1. Ajouter une fonction utilitaire pour extraire les participants du projet
   function getProjectParticipants(conversation) {
@@ -468,12 +496,11 @@ const Messages = () => {
 
   return (
     <AppLayout>
-      <div className="fixed inset-x-0 top-[100px] bottom-0 flex flex-col lg:flex-row bg-gray-50 overflow-hidden">
+      <div className="fixed inset-x-0 top-[100px] bottom-0 flex flex-col lg:flex-row overflow-hidden" style={{ backgroundColor: '#F7FAFB' }}>
         {/* Conversations List */}
         <div className={cn(
-          "w-full lg:w-1/3 xl:w-1/4 border-r border-gray-200 flex flex-col bg-white min-h-0",
-          selectedConversation && "hidden lg:flex"
-        )}>
+          "w-full lg:w-1/3 xl:w-1/4 border-r border-gray-200 flex flex-col min-h-0",
+        )} style={{ backgroundColor: '#ECF0F1' }}>
           <div className="p-3 lg:p-4 border-b border-gray-200 flex-shrink-0">
             <h2 className="text-lg font-semibold">Messages</h2>
           </div>
@@ -495,9 +522,9 @@ const Messages = () => {
 
         {/* Chat Area */}
         <div className={cn(
-          "flex-1 flex flex-col bg-white min-w-0 min-h-0",
+          "flex-1 flex flex-col min-w-0 min-h-0",
           !selectedConversation && "hidden lg:flex"
-        )}>
+        )} style={{ backgroundColor: '#F7FAFB' }}>
           {selectedConversation ? (
             <>
               {/* Chat Header */}
@@ -508,6 +535,7 @@ const Messages = () => {
                     size="sm"
                     onClick={() => setSelectedConversation(null)}
                     className="lg:hidden flex-shrink-0"
+                    style={{ backgroundColor: '#ECF0F1' }}
                   >
                     <ArrowLeft className="w-4 h-4" />
                   </Button>
@@ -589,18 +617,18 @@ const Messages = () => {
                           </div>
                         )}
                         <div className={cn(
-                          "max-w-xs lg:max-w-md xl:max-w-lg",
+                          "max-w-xs lg:max-w-md xl:max-w-lg text-left",
                           isOwnMessage && "order-first"
                         )}>
                           <div className={cn(
-                            "px-3 py-2 rounded-lg break-words",
+                            "px-3 py-2 rounded-lg break-words text-left",
                             isOwnMessage 
                               ? "bg-tiro-primary text-white" 
                               : "bg-gray-100 text-gray-900"
                           )}>
-                            <p className="text-sm">{message.content}</p>
+                            <p className="text-sm text-left">{message.content}</p>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-gray-500 mt-1 text-left">
                             {new Date(message.created_at).toLocaleTimeString([], {
                               hour: '2-digit',
                               minute: '2-digit'
@@ -631,7 +659,7 @@ const Messages = () => {
               </div>
 
               {/* Message Input Area */}
-              <div className="p-3 lg:p-4 border-t border-gray-200 flex-shrink-0">
+              <div className="p-3 lg:p-4 border-t border-gray-200 flex-shrink-0" style={{ backgroundColor: '#ECF0F1' }}>
                 <div className="flex space-x-2">
                   <input
                     type="text"
