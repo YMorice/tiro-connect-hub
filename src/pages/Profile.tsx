@@ -379,12 +379,12 @@ const Profile = () => {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Tabs defaultValue="profile" className="w-full space-y-6">
-            <TabsList className={`grid w-full ${(user as any).role === 'student' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              <TabsTrigger value="profile">Profil</TabsTrigger>
-              {(user as any).role === 'student' && (
+            {(user as any).role === 'student' && (
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="profile">Profil</TabsTrigger>
                 <TabsTrigger value="reviews">Avis</TabsTrigger>
-              )}
-            </TabsList>
+              </TabsList>
+            )}
             
             <TabsContent value="profile" className="space-y-6">
               <Card className="shadow-sm">

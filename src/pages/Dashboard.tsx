@@ -109,44 +109,41 @@ const Dashboard = () => {
   const pendingProposals = studentProposals.filter(p => p.accepted === null);
 
   const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "completed":
-        return "bg-green-100 text-green-700";
-      case "active":
-      case "in progress":
-        return "bg-blue-100 text-blue-700";
-      case "payment":
-        return "bg-red-100 text-red-700";
-      case "new":
-        return "bg-yellow-100 text-yellow-700";
-      case "selection":
-        return "bg-purple-100 text-purple-700";
-      case "proposals":
-        return "bg-orange-100 text-orange-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
+    const statusColorMap: { [key: string]: string } = {
+      'STEP1': 'bg-blue-100 text-blue-700',
+      'STEP2': 'bg-yellow-100 text-yellow-700',
+      'STEP3': 'bg-purple-100 text-purple-700', 
+      'STEP4': 'bg-orange-100 text-orange-700',
+      'STEP5': 'bg-indigo-100 text-indigo-700',
+      'STEP6': 'bg-cyan-100 text-cyan-700',
+      'completed': 'bg-green-100 text-green-700',
+      'new': 'bg-blue-100 text-blue-700',
+      'proposals': 'bg-yellow-100 text-yellow-700',
+      'selection': 'bg-purple-100 text-purple-700',
+      'payment': 'bg-orange-100 text-orange-700', 
+      'active': 'bg-indigo-100 text-indigo-700',
+      'in progress': 'bg-cyan-100 text-cyan-700'
+    };
+    return statusColorMap[status?.toLowerCase()] || 'bg-gray-100 text-gray-700';
   };
 
   const getStatusLabel = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "completed":
-        return "Terminé";
-      case "active":
-        return "Actif";
-      case "in progress":
-        return "En cours";
-      case "new":
-        return "Nouveau";
-      case "proposals":
-        return "Propositions";
-      case "selection":
-        return "Sélection";
-      case "payment":
-        return "Paiement";
-      default:
-        return status;
-    }
+    const statusMap: { [key: string]: string } = {
+      'STEP1': 'Nouveau',
+      'STEP2': 'Propositions', 
+      'STEP3': 'Sélection',
+      'STEP4': 'Paiement',
+      'STEP5': 'Actif',
+      'STEP6': 'En cours',
+      'completed': 'Terminé',
+      'new': 'Nouveau',
+      'proposals': 'Propositions',
+      'selection': 'Sélection', 
+      'payment': 'Paiement',
+      'active': 'Actif',
+      'in progress': 'En cours'
+    };
+    return statusMap[status?.toLowerCase()] || status;
   };
 
   if (loading || proposalsLoading) {
@@ -317,87 +314,6 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Cartes de Métriques */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  {userRole === 'student' ? 'Projets Disponibles' : 'Total des Projets'}
-                </CardTitle>
-                <FolderPlus className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{totalProjects}</div>
-                <p className="text-xs text-muted-foreground">
-                  {userRole === 'student' ? 'Projets sur lesquels vous pouvez travailler' : 'Tous vos projets'}
-                </p>
-              </CardContent>
-            </Card>
-
-            {userRole === 'student' && (
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    Propositions en Attente
-                  </CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-orange-600">{pendingProposals.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    En attente de votre réponse
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Projets Actifs
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{activeProjects}</div>
-                <p className="text-xs text-muted-foreground">
-                  Actuellement en cours
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Terminés
-                </CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{completedProjects}</div>
-                <p className="text-xs text-muted-foreground">
-                  Terminés avec succès
-                </p>
-              </CardContent>
-            </Card>
-
-            {userRole !== 'student' && (
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    En Attente
-                  </CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-yellow-600">{pendingProjects}</div>
-                  <p className="text-xs text-muted-foreground">
-                    En attente d'action
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">

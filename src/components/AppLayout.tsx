@@ -162,7 +162,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     {user?.name || "User"}
                   </p>
                   <p className="text-xs text-muted-foreground capitalize">
-                    {user?.role || "user"}
+                    {user?.role === 'student' ? 'Étudiant' : user?.role === 'entrepreneur' ? 'Entrepreneur' : user?.role || "user"}
                   </p>
                 </div>
               )}
