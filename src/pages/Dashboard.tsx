@@ -336,9 +336,9 @@ const Dashboard = () => {
                 <CardContent className="space-y-4">
                   {recentProjects.length > 0 ? (
                     recentProjects.map(project => (
-                      <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                      <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted transition-colors">
                         <div className="flex-1 min-w-0">
-                          <Link to={`/projects/${project.id}`} className="font-medium text-gray-900 hover:text-tiro-primary transition-colors truncate block">
+                          <Link to={`/projects/${project.id}`} className="font-medium text-foreground hover:text-muted-foreground transition-colors truncate block">
                             {project.title}
                           </Link>
                           <div className="flex items-center mt-1 space-x-2">
