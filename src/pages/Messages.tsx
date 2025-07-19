@@ -36,7 +36,7 @@ const Messages = () => {
   return (
     <AppLayout>
       <div className="fixed inset-x-0 top-[100px] bottom-0 flex flex-col lg:flex-row bg-background overflow-hidden">
-        {/* Conversations List */}
+        {/* Liste des conversations */}
         <div className={cn(
           "w-full lg:w-1/3 xl:w-1/4 border-r border-border flex flex-col bg-background min-h-0",
           selectedConversation && "hidden lg:flex"
@@ -47,7 +47,6 @@ const Messages = () => {
               <p className="text-sm text-muted-foreground">Chargement...</p>
             )}
           </div>
-          
           <div className="flex-1 overflow-y-auto min-h-0">
             <ConversationList
               conversations={conversations}
@@ -57,8 +56,7 @@ const Messages = () => {
             />
           </div>
         </div>
-
-        {/* Chat Area */}
+        {/* Zone de chat */}
         <div className={cn(
           "flex-1 flex flex-col min-h-0",
           !selectedConversation && "hidden lg:flex"
