@@ -9,6 +9,13 @@ import AppLayout from "@/components/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
 
+// Declare global function
+declare global {
+  interface Window {
+    updatePageTitle?: (pageName: string) => void;
+  }
+}
+
 const PackSelection = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -16,6 +23,17 @@ const PackSelection = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Update page title
+    if (window.updatePageTitle) {
+      window.updatePageTitle('Sélection de pack');
+    }
+
+    // Load Calendly script
+    const script = document.createElement('script');
+    script.src = 'https://assets.calendly.com/assets/external/widget.js';
+    script.async = true;
+    document.body.appendChild(script);
+
     const fetchPacks = async () => {
       try {
         const { data, error } = await supabase
@@ -38,6 +56,14 @@ const PackSelection = () => {
     };
 
     fetchPacks();
+
+    return () => {
+      // Cleanup script on unmount
+      const existingScript = document.querySelector('script[src="https://assets.calendly.com/assets/external/widget.js"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
   }, []);
 
   const handleSelectPack = (packId: string) => {
@@ -124,6 +150,21 @@ const PackSelection = () => {
               </CardFooter>
             </Card>
           ))}
+        </div>
+
+        {/* Calendly Section */}
+        <div className="mt-12 pt-8 border-t">
+          <div className="mb-6 text-center">
+            <h2 className="text-xl sm:text-2xl font-bold mb-2">Besoin d'aide pour choisir ?</h2>
+            <p className="text-muted-foreground">
+              Réservez un appel gratuit avec notre équipe pour discuter de votre projet
+            </p>
+          </div>
+          
+          <div className="calendly-inline-widget" 
+               data-url="https://calendly.com/contact-tiro/30min?hide_gdpr_banner=1" 
+               style={{minWidth:'320px', height:'700px'}}>
+          </div>
         </div>
       </div>
     </AppLayout>
