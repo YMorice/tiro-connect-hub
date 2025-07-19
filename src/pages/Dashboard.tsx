@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useProjects } from "@/context/project-context";
@@ -336,11 +335,15 @@ const Dashboard = () => {
                 <CardContent className="space-y-4">
                   {recentProjects.length > 0 ? (
                     recentProjects.map(project => (
-                      <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted transition-colors">
+                      <Link 
+                        key={project.id} 
+                        to={`/projects/${project.id}`}
+                        className="block p-4 border rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                      >
                         <div className="flex-1 min-w-0">
-                          <Link to={`/projects/${project.id}`} className="font-medium text-foreground hover:text-muted-foreground transition-colors truncate block">
+                          <div className="font-medium text-foreground hover:text-muted-foreground transition-colors truncate">
                             {project.title}
-                          </Link>
+                          </div>
                           <div className="flex items-center mt-1 space-x-2">
                             <Badge className={`${getStatusColor(project.status)} text-xs`}>
                               {getStatusLabel(project.status)}
@@ -351,12 +354,7 @@ const Dashboard = () => {
                             </span>
                           </div>
                         </div>
-                        <Link to={`/projects/${project.id}`}>
-                          <Button variant="ghost" size="sm">
-                            Voir
-                          </Button>
-                        </Link>
-                      </div>
+                      </Link>
                     ))
                   ) : (
                     <div className="text-center py-8">
