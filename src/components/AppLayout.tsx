@@ -123,14 +123,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   key={item.href}
                   to={item.href}
                   className={cn(
-                    "flex items-center px-3 py-2 rounded-lg transition-all text-sm font-medium",
+                    "flex items-center px-3 py-2 rounded-lg transition-all text-sm font-medium group",
                     isActive(item.href)
                       ? "bg-tiro-primary text-white font-semibold"
                       : "hover:bg-white/10 text-foreground"
                   )}
                 >
-                  <item.icon size={18} className="mr-2" />
-                  <span>{item.label}</span>
+                  <item.icon size={18} className="mr-2 group-hover:scale-110 transition-transform duration-200" />
+                  <span className="group-hover:scale-105 transition-transform duration-200">{item.label}</span>
                 </Link>
               ))}
             </nav>
@@ -173,9 +173,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               size="icon"
               onClick={handleLogout}
               title="Logout"
-              className="h-8 w-8 hover:bg-white/10"
+              className="h-8 w-8 hover:bg-white/10 group"
             >
-              <LogOut size={16} />
+              <LogOut size={16} className="group-hover:scale-110 transition-transform duration-200" />
             </Button>
           </div>
         </div>
@@ -200,14 +200,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1",
+                  "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1 group",
                   isActive(item.href)
                     ? "bg-tiro-primary/20 text-tiro-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-white/10"
                 )}
               >
-                <item.icon size={20} className="mb-1" />
-                <span className="text-xs font-medium truncate">{item.label}</span>
+                <item.icon size={20} className="mb-1 group-hover:scale-110 transition-transform duration-200" />
+                <span className="text-xs font-medium truncate group-hover:scale-105 transition-transform duration-200">{item.label}</span>
               </Link>
             ))}
             
@@ -216,14 +216,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <Link
                 to="/admin"
                 className={cn(
-                  "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1",
+                  "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1 group",
                   isActive("/admin")
                     ? "bg-tiro-primary/20 text-tiro-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-white/10"
                 )}
               >
-                <Shield size={20} className="mb-1" />
-                <span className="text-xs font-medium truncate">Admin</span>
+                <Shield size={20} className="mb-1 group-hover:scale-110 transition-transform duration-200" />
+                <span className="text-xs font-medium truncate group-hover:scale-105 transition-transform duration-200">Admin</span>
               </Link>
             )}
           </div>
