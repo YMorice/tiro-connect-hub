@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Camera, Loader2 } from "lucide-react";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { studentId } = useParams();
   const [profile, setProfile] = useState<any>(null);
   const [skills, setSkills] = useState<string[]>([]);
@@ -237,6 +237,9 @@ const Profile = () => {
         .eq('id_users', user.id);
 
       if (updateError) throw updateError;
+
+      // Mettre à jour l'utilisateur dans le contexte d'authentification
+      await updateProfile({ pp_link: publicUrl });
 
       // Mettre à jour l'état local immédiatement
       toast.success('Photo de profil mise à jour avec succès');
