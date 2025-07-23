@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -126,7 +127,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     "flex items-center px-3 py-2 rounded-lg transition-all text-sm font-medium",
                     isActive(item.href)
                       ? "bg-tiro-primary text-white font-semibold"
-                      : "hover:bg-white/10 text-foreground"
+                      : "text-foreground hover:text-muted-foreground"
                   )}
                 >
                   <item.icon size={18} className="mr-2" />
@@ -173,7 +174,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               size="icon"
               onClick={handleLogout}
               title="Logout"
-              className="h-8 w-8 hover:bg-white/10"
+              className="h-8 w-8 text-foreground hover:text-muted-foreground"
             >
               <LogOut size={16} />
             </Button>
