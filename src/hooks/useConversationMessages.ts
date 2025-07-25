@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
-import { Message } from './useMessaging';
+import { Message, useMessaging } from './useMessaging';
 
 const MESSAGES_PER_PAGE = 50;
 
 export const useConversationMessages = (conversationId: string | null) => {
   const { user } = useAuth();
+  const { refreshConversations } = useMessaging();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -60,6 +61,9 @@ export const useConversationMessages = (conversationId: string | null) => {
             .from('messages')
             .update({ read: true })
             .in('id_message', unreadMessageIds);
+          
+          // Rafraîchir la liste des conversations pour mettre à jour les pastilles
+          refreshConversations();
         }
       }
     } catch (error: any) {
@@ -68,7 +72,7 @@ export const useConversationMessages = (conversationId: string | null) => {
     } finally {
       setLoading(false);
     }
-  }, [conversationId, userInfo.id]);
+  }, [conversationId, userInfo.id, refreshConversations]);
 
   const loadMoreMessages = useCallback(() => {
     if (!loading && hasMore) {
@@ -161,6 +165,9 @@ export const useConversationMessages = (conversationId: string | null) => {
                 .from('messages')
                 .update({ read: true })
                 .eq('id_message', data.id_message);
+              
+              // Rafraîchir la liste des conversations pour mettre à jour les pastilles
+              refreshConversations();
             }
           }
         }
@@ -170,7 +177,7 @@ export const useConversationMessages = (conversationId: string | null) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, userInfo.id]);
+  }, [conversationId, userInfo.id, refreshConversations]);
 
   return {
     messages,
