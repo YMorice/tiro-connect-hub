@@ -1,28 +1,20 @@
-
-import { useLocation, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useLocation } from "react-router-dom"
+import { useEffect } from "react"
 
 const NotFound = () => {
-  const location = useLocation();
+  const location = useLocation()
 
   useEffect(() => {
     console.error(
-      "Erreur 404 : L'utilisateur a tenté d'accéder à une route inexistante :",
+      "Erreur 404 : Redirection externe vers la landing page. Route non trouvée :",
       location.pathname
-    );
-  }, [location.pathname]);
+    )
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops ! Page non trouvée</p>
-        <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
-          Retour à l'accueil
-        </Link>
-      </div>
-    </div>
-  );
-};
+    // Redirection immédiate vers la 404 de la landing
+    window.location.href = "https://tiro.agency/404"
+  }, [location.pathname])
 
-export default NotFound;
+  return null // on ne rend rien
+}
+
+export default NotFound
