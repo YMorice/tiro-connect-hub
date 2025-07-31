@@ -81,18 +81,15 @@ const Login = () => {
       <div className="w-full max-w-sm">
         <Card className="shadow-lg">
           <CardHeader className="space-y-2 text-center pb-4">
-            <div className="flex justify-center mb-3">
+            <div className="flex justify-center mb-1">
               <img 
                 src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
                 alt="Logo Tiro" 
-                className="h-8" 
+                className="h-14" 
               />
             </div>
-            <CardDescription className="text-sm">
-              Connectez-vous à votre compte
-            </CardDescription>
           </CardHeader>
-          <CardContent className="p-4">
+          <CardContent className="p-4 pt-1">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField 
