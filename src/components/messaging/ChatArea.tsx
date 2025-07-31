@@ -145,31 +145,11 @@ export const ChatArea = memo(({
           <ArrowLeft className="h-4 w-4" />
         </Button>
         
-        <Avatar className="w-8 h-8">
-          {conversation.otherParticipantAvatar ? (
-            <AvatarImage 
-              src={conversation.otherParticipantAvatar}
-              alt={conversation.otherParticipant}
-            />
-          ) : (
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-              {conversation.otherParticipant.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          )}
-        </Avatar>
-        
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-foreground truncate">
             {conversation.otherParticipant}
           </h3>
-          <p className="text-xs text-muted-foreground truncate">
-            Projet: {conversation.projectTitle}
-          </p>
         </div>
-        
-        <Button variant="ghost" size="icon">
-          <MoreVertical className="h-4 w-4" />
-        </Button>
       </div>
 
       {/* Messages */}

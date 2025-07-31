@@ -525,9 +525,6 @@ const Profile = () => {
                           placeholder="votre-portfolio.com"
                           className="w-full"
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Entrez l'URL avec ou sans http:// ou https://
-                        </p>
                       </div>
 
                       {/* Section Compétences */}
