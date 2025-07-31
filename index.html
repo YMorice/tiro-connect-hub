@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tiro</title>
+    <script>
+      // Function to update page title
+      function updatePageTitle(pageName) {
+        document.title = pageName ? `Tiro - ${pageName}` : 'Tiro';
+      }
+      
+      // Make function globally available
+      window.updatePageTitle = updatePageTitle;
+    </script>
     <meta name="description" content="Plateforme de connexion entre entrepreneurs et étudiants en web design" />
     <meta name="author" content="Tiro" />
 
