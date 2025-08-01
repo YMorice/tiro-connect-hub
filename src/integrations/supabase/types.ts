@@ -416,6 +416,7 @@ export type Database = {
           iban: string | null
           id_student: string
           id_user: string
+          is_premium: boolean | null
           portfolio_grade: number | null
           portfolio_link: string | null
           siret: string | null
@@ -430,6 +431,7 @@ export type Database = {
           iban?: string | null
           id_student?: string
           id_user: string
+          is_premium?: boolean | null
           portfolio_grade?: number | null
           portfolio_link?: string | null
           siret?: string | null
@@ -444,6 +446,7 @@ export type Database = {
           iban?: string | null
           id_student?: string
           id_user?: string
+          is_premium?: boolean | null
           portfolio_grade?: number | null
           portfolio_link?: string | null
           siret?: string | null

@@ -44,6 +44,7 @@ import ProjectDetail from "@/pages/ProjectDetail";
 import Profile from "@/pages/Profile";
 import Messages from "@/pages/Messages";
 import Admin from "@/pages/Admin";
+import AdminStudents from "@/pages/AdminStudents";
 import StudentSelection from "@/pages/StudentSelection";
 import NewProject from "@/pages/NewProject";
 import PackSelection from "@/pages/PackSelection";
@@ -173,6 +174,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Admin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/students"
+                  element={
+                    <ProtectedRoute>
+                      <AdminStudents />
                     </ProtectedRoute>
                   }
                 />

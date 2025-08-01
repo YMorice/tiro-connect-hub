@@ -21,7 +21,7 @@ import {
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/sonner";
-import { Users, MessageCircle, Plus, Search, Eye, UserPlus, Filter } from "lucide-react";
+import { Users, MessageCircle, Plus, Search, Eye, UserPlus, Filter, GraduationCap } from "lucide-react";
 import { StudentAvailabilityService } from "@/services/student-availability-service";
 import PriceUpdateDialog from "@/components/admin/PriceUpdateDialog";
 
@@ -266,10 +266,16 @@ const Admin = () => {
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Tableau de Bord Admin</h1>
               <p className="text-muted-foreground text-sm">Gérer les projets et les affectations d'étudiants</p>
             </div>
-            <Button onClick={() => navigate('/new-project')} className="flex items-center w-fit text-sm h-9" size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              Créer un Nouveau Projet
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate('/new-project')} className="flex items-center text-sm h-9" size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                Créer un Nouveau Projet
+              </Button>
+              <Button onClick={() => navigate('/admin/students')} className="flex items-center text-sm h-9" size="sm" variant="outline">
+                <GraduationCap className="h-4 w-4 mr-1" />
+                Gérer les Étudiants
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
