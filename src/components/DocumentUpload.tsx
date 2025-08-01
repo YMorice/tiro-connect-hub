@@ -137,21 +137,21 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
           }}
         >
           <File className="h-4 w-4" />
-          Share Document
+          Partager un document
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Share Document</DialogTitle>
+          <DialogTitle>Partager un document</DialogTitle>
           <DialogDescription>
-            Upload a document to share in this conversation
+            Téléverser un document pour ce projet
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="file" className="text-sm font-medium">
-              Select File
+              Importer le document
             </Label>
             <div className="flex items-center gap-2">
               <Button
@@ -162,7 +162,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
                 disabled={isUploading}
               >
                 <Upload className="mr-2 h-4 w-4" />
-                {selectedFile ? "Change File" : "Select File"}
+                {selectedFile ? "Change File" : "Importer un fichier"}
               </Button>
               <input
                 id="file"
@@ -183,19 +183,19 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
 
           <div className="space-y-2">
             <Label htmlFor="documentName" className="text-sm font-medium">
-              Document Name
+              Nom du document
             </Label>
             <Input
               id="documentName"
               value={documentName}
               onChange={(e) => setDocumentName(e.target.value)}
-              placeholder="Enter document name"
+              placeholder="Entrer le nom du document"
               disabled={isUploading}
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Document Type</Label>
+            <Label className="text-sm font-medium">Type de document</Label>
             <RadioGroup 
               value={documentType} 
               onValueChange={(value) => setDocumentType(value as "proposal" | "final" | "regular")}
@@ -204,15 +204,15 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="regular" id="regular" />
-                <Label htmlFor="regular">Regular Document</Label>
+                <Label htmlFor="regular">Document Classique</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="proposal" id="proposal" />
-                <Label htmlFor="proposal">Project Proposal</Label>
+                <Label htmlFor="proposal">Proposition de Rendu</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="final" id="final" />
-                <Label htmlFor="final">Final Deliverable</Label>
+                <Label htmlFor="final">Rendu Final</Label>
               </div>
             </RadioGroup>
           </div>
@@ -220,14 +220,14 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
         
         <DialogFooter className="flex justify-between sm:justify-between">
           <DialogClose asChild>
-            <Button variant="outline" disabled={isUploading}>Cancel</Button>
+            <Button variant="outline" disabled={isUploading}>Annuler</Button>
           </DialogClose>
           <Button 
             onClick={handleSubmit} 
             type="button"
             disabled={isUploading || !selectedFile}
           >
-            {isUploading ? "Uploading..." : "Share Document"}
+            {isUploading ? "Uploading..." : "Partager"}
           </Button>
         </DialogFooter>
       </DialogContent>
