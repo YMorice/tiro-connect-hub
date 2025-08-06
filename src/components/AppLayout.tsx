@@ -11,13 +11,22 @@ import {
   X,
   Shield,
   LogOut,
-  Home
+  Home,
+  Settings,
+  ChevronDown,
+  HeadphonesIcon
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -31,6 +40,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("Error logging out. Please try again.");
+    }
+  };
 
   const navItems = [
     {
@@ -47,31 +66,29 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       label: "Messages",
       icon: MessageCircle,
       href: "/messages",
-    },
+    }
+  ];
+
+  const settingsItems = [
     {
       label: "Profil",
       icon: UserRound,
       href: "/profile",
     },
-    // Show admin link only for admin users
-    ...(user?.role === "admin" ? [
-      {
-        label: "Admin",
-        icon: Shield,
-        href: "/admin",
+    {
+      label: "Contacter le support",
+      icon: HeadphonesIcon,
+      action: () => {
+        // TODO: Add support contact functionality
+        toast.info("Fonctionnalité bientôt disponible");
       }
-    ] : [])
-  ];
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error("Error logging out:", error);
-      toast.error("Error logging out. Please try again.");
+    },
+    {
+      label: "Déconnexion",
+      icon: LogOut,
+      action: handleLogout
     }
-  };
+  ];
 
   // Safely get user initials
   const getUserInitials = () => {
@@ -99,57 +116,26 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     }
   }, [location.pathname, isMobile]);
 
-  return (
-    <div className="min-h-screen w-full bg-background">
-      {/* Glass Morphism Header */}
-      <header className="fixed top-4 inset-x-4 z-50">
-        <div className="w-full h-16 rounded-2xl bg-white/70 backdrop-blur-md border border-white/80 shadow-md flex items-center justify-between px-4 lg:px-6">
-
-          {/* Logo */}
-          <div className="flex items-center">
+  if (isMobile) {
+    return (
+      <div className="min-h-screen w-full bg-background">
+        {/* Mobile Header */}
+        <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-md border-b border-border">
+          <div className="flex items-center justify-between h-full px-4">
             <Link to="https://tiro.agency">
               <img 
                 src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
                 alt="Tiro Logo" 
-                className="h-12" 
+                className="h-10" 
               />
             </Link>
-          </div>
-
-          {/* Desktop Navigation */}
-          {!isMobile && (
-            <nav className="hidden md:flex items-center space-x-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center px-3 py-2 rounded-lg transition-all text-sm font-medium",
-                    isActive(item.href)
-                      ? "bg-tiro-primary text-white font-semibold"
-                      : "text-foreground hover:text-muted-foreground"
-                  )}
-                >
-                  <item.icon size={18} className="mr-2" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </nav>
-          )}
-
-          {/* User Section */}
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center">
+            <div className="flex items-center space-x-2">
               <Avatar className="w-8 h-8">
                 {getAvatarUrl() ? (
                   <AvatarImage 
                     src={getAvatarUrl()} 
                     alt={user?.name || "User"}
                     className="object-cover"
-                    onError={(e) => {
-                      console.error("Failed to load avatar image in header:", getAvatarUrl());
-                      e.currentTarget.style.display = 'none';
-                    }}
                   />
                 ) : (
                   <AvatarFallback className="bg-tiro-primary text-white text-sm">
@@ -157,46 +143,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   </AvatarFallback>
                 )}
               </Avatar>
-              {!isMobile && (
-                <div className="ml-3">
-                  <p className="font-medium text-foreground text-sm">
-                    {user?.name || "User"}
-                  </p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {user?.role === 'student' ? 'Étudiant' : user?.role === 'entrepreneur' ? 'Entrepreneur' : user?.role || "user"}
-                  </p>
-                </div>
-              )}
             </div>
-
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={handleLogout}
-              title="Logout"
-              className="h-8 w-8 text-foreground hover:text-muted-foreground"
-            >
-              <LogOut size={16} />
-            </Button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content with top padding for fixed header */}
-      <main className={cn(
-        "w-full",
-        isMobile ? "pt-16 pb-20" : "pt-16" // Extra bottom padding on mobile for bottom nav
-      )}>
-        <div className="w-full min-h-[calc(100vh-4rem)] overflow-auto">
+        {/* Mobile Main Content */}
+        <main className="pt-16 pb-20">
           {children}
-        </div>
-      </main>
+        </main>
 
-      {/* Mobile Bottom Navigation */}
-      {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-t border-white/20 shadow-lg">
+        {/* Mobile Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border">
           <div className="flex items-center justify-around h-16 px-2">
-            {navItems.slice(0, 4).map((item) => ( // Show only first 4 items to prevent overflow
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
@@ -204,32 +163,161 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1",
                   isActive(item.href)
                     ? "bg-tiro-primary/20 text-tiro-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/10"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <item.icon size={20} className="mb-1" />
+                <item.icon size={18} className="mb-1" />
                 <span className="text-xs font-medium truncate">{item.label}</span>
               </Link>
             ))}
-            
-            {/* Show admin button if user is admin and we have space */}
-            {user?.role === "admin" && (
-              <Link
-                to="/admin"
-                className={cn(
-                  "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1",
-                  isActive("/admin")
-                    ? "bg-tiro-primary/20 text-tiro-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/10"
-                )}
-              >
-                <Shield size={20} className="mb-1" />
-                <span className="text-xs font-medium truncate">Admin</span>
-              </Link>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "flex flex-col items-center justify-center p-2 h-auto min-w-0 flex-1",
+                    "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Settings size={18} className="mb-1" />
+                  <span className="text-xs font-medium truncate">Réglages</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {settingsItems.map((item) => (
+                  <DropdownMenuItem
+                    key={item.label}
+                    onClick={item.action}
+                    asChild={!!item.href}
+                  >
+                    {item.href ? (
+                      <Link to={item.href} className="flex items-center">
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center cursor-pointer">
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span>{item.label}</span>
+                      </div>
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </nav>
-      )}
+      </div>
+    );
+  }
+
+  // Desktop Layout with Left Sidebar
+  return (
+    <div className="min-h-screen w-full bg-background flex">
+      {/* Left Sidebar */}
+      <aside className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-border flex flex-col z-40">
+        {/* Logo Section */}
+        <div className="p-6 border-b border-border">
+          <Link to="https://tiro.agency" className="block">
+            <img 
+              src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
+              alt="Tiro Logo" 
+              className="h-12" 
+            />
+          </Link>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-2">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={cn(
+                "flex items-center px-4 py-3 rounded-lg transition-all text-sm font-medium group",
+                isActive(item.href)
+                  ? "bg-tiro-primary text-white"
+                  : "text-foreground hover:bg-muted"
+              )}
+            >
+              <item.icon size={20} className="mr-3" />
+              <span>{item.label}</span>
+            </Link>
+          ))}
+          
+          {/* Settings Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start px-4 py-3 h-auto text-sm font-medium",
+                  "text-foreground hover:bg-muted"
+                )}
+              >
+                <Settings size={20} className="mr-3" />
+                <span>Réglages</span>
+                <ChevronDown size={16} className="ml-auto" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" align="start" className="w-56">
+              {settingsItems.map((item) => (
+                <DropdownMenuItem
+                  key={item.label}
+                  onClick={item.action}
+                  asChild={!!item.href}
+                >
+                  {item.href ? (
+                    <Link to={item.href} className="flex items-center">
+                      <item.icon className="mr-2 h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center cursor-pointer">
+                      <item.icon className="mr-2 h-4 w-4" />
+                      <span>{item.label}</span>
+                    </div>
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </nav>
+
+        {/* User Section */}
+        <div className="p-4 border-t border-border">
+          <div className="flex items-center space-x-3">
+            <Avatar className="w-10 h-10">
+              {getAvatarUrl() ? (
+                <AvatarImage 
+                  src={getAvatarUrl()} 
+                  alt={user?.name || "User"}
+                  className="object-cover"
+                />
+              ) : (
+                <AvatarFallback className="bg-tiro-primary text-white">
+                  {getUserInitials()}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-foreground text-sm truncate">
+                {user?.name || "User"}
+              </p>
+              <p className="text-xs text-muted-foreground capitalize truncate">
+                {user?.role === 'student' ? 'Étudiant' : user?.role === 'entrepreneur' ? 'Entrepreneur' : user?.role || "user"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 ml-64">
+        <div className="min-h-screen">
+          {children}
+        </div>
+      </main>
     </div>
   );
 };
