@@ -38,6 +38,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -217,7 +218,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Left Sidebar */}
       <aside className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-border flex flex-col z-40">
         {/* Logo Section */}
-        <div className="p-6 border-b border-border">
+        <div className="p-6 border-b border-border flex justify-center">
           <Link to="https://tiro.agency" className="block">
             <img 
               src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
@@ -245,43 +246,52 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </Link>
           ))}
           
-          {/* Settings Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
+          {/* Settings Expandable Section */}
+          <div className="space-y-1">
+            <Button
+              variant="ghost"
+              onClick={() => setSettingsOpen(!settingsOpen)}
+              className={cn(
+                "w-full justify-start px-4 py-3 h-auto text-sm font-medium",
+                "text-foreground hover:bg-muted"
+              )}
+            >
+              <Settings size={20} className="mr-3" />
+              <span>Réglages</span>
+              <ChevronDown 
+                size={16} 
                 className={cn(
-                  "w-full justify-start px-4 py-3 h-auto text-sm font-medium",
-                  "text-foreground hover:bg-muted"
-                )}
-              >
-                <Settings size={20} className="mr-3" />
-                <span>Réglages</span>
-                <ChevronDown size={16} className="ml-auto" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="start" className="w-56">
-              {settingsItems.map((item) => (
-                <DropdownMenuItem
-                  key={item.label}
-                  onClick={item.action}
-                  asChild={!!item.href}
-                >
-                  {item.href ? (
-                    <Link to={item.href} className="flex items-center">
-                      <item.icon className="mr-2 h-4 w-4" />
+                  "ml-auto transition-transform duration-200",
+                  settingsOpen && "rotate-180"
+                )} 
+              />
+            </Button>
+            {settingsOpen && (
+              <div className="pl-4 space-y-1">
+                {settingsItems.map((item) => (
+                  item.href ? (
+                    <Link
+                      key={item.label}
+                      to={item.href}
+                      className="flex items-center px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                    >
+                      <item.icon className="mr-3 h-4 w-4" />
                       <span>{item.label}</span>
                     </Link>
                   ) : (
-                    <div className="flex items-center cursor-pointer">
-                      <item.icon className="mr-2 h-4 w-4" />
+                    <button
+                      key={item.label}
+                      onClick={item.action}
+                      className="w-full flex items-center px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                    >
+                      <item.icon className="mr-3 h-4 w-4" />
                       <span>{item.label}</span>
-                    </div>
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                    </button>
+                  )
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* User Section */}
