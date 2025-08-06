@@ -333,9 +333,6 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between">
                     <div className="text-left">
                       <CardTitle className="text-xl">Projets Récents</CardTitle>
-                      <CardDescription>
-                        Votre dernière activité de projet
-                      </CardDescription>
                     </div>
                     <Link to="/projects">
                       <Button variant="outline" size="sm">
@@ -388,47 +385,6 @@ const Dashboard = () => {
             </div>
 
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-xl">Actions Rapides</CardTitle>
-                  <CardDescription>
-                    Tâches courantes et raccourcis
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {userRole === 'entrepreneur' && (
-                    <Link to="/pack-selection" className="block">
-                      <Button className="w-full justify-start">
-                        <FolderPlus className="mr-2 h-4 w-4" />
-                        Nouveau Projet
-                      </Button>
-                    </Link>
-                  )}
-                  <Link to="/projects" className="block">
-                    <Button variant="outline" className="w-full justify-start">
-                      <Calendar className="mr-2 h-4 w-4" />
-                      Voir Tous les Projets
-                    </Button>
-                  </Link>
-                  <Link to="/messages" className="block">
-                    <Button variant="outline" className="w-full justify-start">
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                      Messages
-                    </Button>
-                  </Link>
-                  <a href="https://tiro.agency/support/" target="_blank" rel="noopener noreferrer" className="block">
-                    <Button variant="outline" className="w-full justify-start">
-                      {theme === 'dark' ? (
-                        <LifeBuoy className="mr-2 h-4 w-4" />
-                      ) : (
-                        <HelpCircle className="mr-2 h-4 w-4" />
-                      )}
-                      Contacter le Support
-                    </Button>
-                  </a>
-                </CardContent>
-              </Card>
-
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Conseils et Insights</CardTitle>
