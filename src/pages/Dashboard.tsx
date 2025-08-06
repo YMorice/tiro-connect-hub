@@ -161,12 +161,24 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-6 max-w-7xl">
           {/* En-tête */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 text-left">
-              Bon retour, {user?.user_metadata?.name || "Utilisateur"} !
-            </h1>
-            <p className="text-gray-600 text-left">
-              Voici un aperçu de vos projets et de votre activité récente.
-            </p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2 text-left">
+                  Bon retour, {user?.user_metadata?.name || "Utilisateur"} !
+                </h1>
+                <p className="text-gray-600 text-left">
+                  Voici un aperçu de vos projets et de votre activité récente.
+                </p>
+              </div>
+              {userRole === 'entrepreneur' && (
+                <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/90">
+                  <Link to="/pack-selection">
+                    <FolderPlus className="h-4 w-4 mr-2" />
+                    Nouveau Projet
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Notifications pour les étudiants sélectionnés */}

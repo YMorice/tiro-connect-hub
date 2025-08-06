@@ -35,44 +35,48 @@ const Messages = () => {
 
   return (
     <AppLayout>
-      <div className="fixed inset-x-0 top-[100px] bottom-0 flex flex-col lg:flex-row bg-background overflow-hidden">
-        {/* Liste des conversations */}
-        <div className={cn(
-          "w-full lg:w-1/3 xl:w-1/4 border-r border-border flex flex-col bg-background min-h-0",
-          selectedConversation && "hidden lg:flex"
-        )}>
-          <div className="p-3 lg:p-4 border-b border-border flex-shrink-0">
-            <h2 className="text-lg font-semibold text-foreground">Messages</h2>
-            {conversationsLoading && (
-              <p className="text-sm text-muted-foreground">Chargement...</p>
-            )}
+      <div className="min-h-screen bg-gray-50 py-6">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="flex flex-col lg:flex-row bg-background rounded-lg shadow-sm overflow-hidden min-h-[calc(100vh-8rem)]">
+            {/* Liste des conversations */}
+            <div className={cn(
+              "w-full lg:w-1/3 xl:w-1/4 border-r border-border flex flex-col bg-background min-h-0",
+              selectedConversation && "hidden lg:flex"
+            )}>
+              <div className="p-3 lg:p-4 border-b border-border flex-shrink-0">
+                <h2 className="text-lg font-semibold text-foreground">Messages</h2>
+                {conversationsLoading && (
+                  <p className="text-sm text-muted-foreground">Chargement...</p>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto min-h-0">
+                <ConversationList
+                  conversations={conversations}
+                  selectedConversation={selectedConversation}
+                  onSelectConversation={handleSelectConversation}
+                  loading={conversationsLoading}
+                />
+              </div>
+            </div>
+            {/* Zone de chat */}
+            <div className={cn(
+              "flex-1 flex flex-col min-h-0",
+              !selectedConversation && "hidden lg:flex"
+            )}>
+              <ChatArea
+                conversation={selectedConversation}
+                messages={messages}
+                loading={messagesLoading}
+                sending={sending}
+                hasMore={hasMore}
+                onSendMessage={handleSendMessage}
+                onLoadMore={loadMoreMessages}
+                onBack={handleBack}
+                newMessage={newMessage}
+                onNewMessageChange={setNewMessage}
+              />
+            </div>
           </div>
-          <div className="flex-1 overflow-y-auto min-h-0">
-            <ConversationList
-              conversations={conversations}
-              selectedConversation={selectedConversation}
-              onSelectConversation={handleSelectConversation}
-              loading={conversationsLoading}
-            />
-          </div>
-        </div>
-        {/* Zone de chat */}
-        <div className={cn(
-          "flex-1 flex flex-col min-h-0",
-          !selectedConversation && "hidden lg:flex"
-        )}>
-          <ChatArea
-            conversation={selectedConversation}
-            messages={messages}
-            loading={messagesLoading}
-            sending={sending}
-            hasMore={hasMore}
-            onSendMessage={handleSendMessage}
-            onLoadMore={loadMoreMessages}
-            onBack={handleBack}
-            newMessage={newMessage}
-            onNewMessageChange={setNewMessage}
-          />
         </div>
       </div>
     </AppLayout>
