@@ -240,7 +240,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               className={cn(
                 "flex items-center px-4 py-3 rounded-lg transition-all text-sm font-medium group",
                 isActive(item.href)
-                  ? "bg-tiro-primary text-white"
+                  ? "bg-tiro-gray2 text-tiro-black"
                   : "text-foreground hover:bg-muted"
               )}
             >

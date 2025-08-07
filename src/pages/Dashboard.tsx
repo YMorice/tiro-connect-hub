@@ -157,7 +157,7 @@ const Dashboard = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-tiro-gray1">
         <div className="container mx-auto px-4 py-6 max-w-7xl">
           {/* En-tête */}
           <div className="mb-8">
