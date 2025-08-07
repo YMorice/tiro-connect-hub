@@ -132,11 +132,9 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
   return (
     <div className="space-y-4 p-4 border rounded-lg bg-white">
-      <h3 className="font-semibold">Rate this student</h3>
-      
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <Label>Rating</Label>
+          <Label>Votre note</Label>
           <div className="flex space-x-1 mt-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
@@ -153,12 +151,12 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             ))}
           </div>
           {rating === 0 && (
-            <p className="text-sm text-red-500 mt-1">Please select a rating</p>
+            <p className="text-sm text-red-500 mt-1">Veuillez sélectionner une note</p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="comment">Comment</Label>
+          <Label htmlFor="comment">Votre commentaire</Label>
           <Textarea
             id="comment"
             placeholder="Partagez votre expérience avec cet étudiant..."
@@ -179,10 +177,10 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             disabled={isSubmitting || rating === 0 || hasExistingReview}
             className="bg-tiro-primary hover:bg-tiro-primary/90"
           >
-            {isSubmitting ? "Submitting..." : "Submit Review"}
+            {isSubmitting ? "Submitting..." : "Soumettre l'avis"}
           </Button>
           <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+            Annuler
           </Button>
         </div>
       </form>

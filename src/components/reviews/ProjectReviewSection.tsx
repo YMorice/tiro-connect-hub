@@ -83,7 +83,7 @@ const ProjectReviewSection: React.FC<ProjectReviewSectionProps> = ({
 
   return (
     <div className="mt-6 p-4 border rounded-lg bg-gray-50">
-      <h3 className="font-semibold mb-4">Student Review</h3>
+      <h3 className="font-semibold mb-4">Laisser un avis</h3>
       
       {existingReview ? (
         <div className="space-y-2">
