@@ -177,7 +177,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             disabled={isSubmitting || rating === 0 || hasExistingReview}
             className="bg-tiro-primary hover:bg-tiro-primary/90"
           >
-            {isSubmitting ? "Submitting..." : "Soumettre l'avis"}
+            {isSubmitting ? "En cours..." : "Soumettre l'avis"}
           </Button>
           <Button type="button" variant="outline" onClick={onCancel}>
             Annuler
