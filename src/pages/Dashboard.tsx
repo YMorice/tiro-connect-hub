@@ -385,11 +385,11 @@ const Dashboard = () => {
             </div>
 
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
+              <Card className="text-left">
+                <CardHeader className="text-left">
                   <CardTitle className="text-lg">Conseils et Insights</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 text-left">
                   <div className="flex items-start space-x-3">
                     <AlertCircle className="h-5 w-5 text-tiro-primary mt-0.5" />
                     <div>

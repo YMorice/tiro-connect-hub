@@ -79,10 +79,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     {
       label: "Contacter le support",
       icon: HeadphonesIcon,
-      action: () => {
-        // TODO: Add support contact functionality
-        toast.info("Fonctionnalité bientôt disponible");
-      }
+      href: "https://tiro.agency/support",
     },
     {
       label: "Déconnexion",

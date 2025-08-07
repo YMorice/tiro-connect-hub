@@ -49,7 +49,6 @@ import StudentSelection from "@/pages/StudentSelection";
 import NewProject from "@/pages/NewProject";
 import PackSelection from "@/pages/PackSelection";
 import AcceptedStudents from "@/pages/AcceptedStudents";
-import CreateAdminAccount from "@/pages/CreateAdminAccount";
 import NotFound from "@/pages/NotFound";
 import UpdatePassword from "@/pages/UpdatePassword";
 
@@ -110,7 +109,6 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
-                <Route path="/create-admin" element={<CreateAdminAccount />} />
                 
                 {/* Protected Routes - Require authentication */}
                 <Route

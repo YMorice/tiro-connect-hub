@@ -60,7 +60,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
         return {
           icon: CheckCircle,
           color: 'bg-green-100 text-green-800',
-          message: 'Vous avez exprimé votre intérêt pour ce projet. L\'entrepreneur examinera et pourra vous sélectionner.'
+          message: 'Vous avez exprimé votre intérêt pour ce projet. L\'entrepreneur examinera les différents profils et pourra vous sélectionner.'
         };
       case 'declined':
         return {
@@ -75,9 +75,9 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
   const StatusIcon = statusInfo.icon;
 
   return (
-    <Card className="border-l-4 border-l-tiro-primary">
+    <Card className="border-l-4 border-l-tiro-primary items-left">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
+        <CardTitle className="text-lg flex items-left gap-2">
           <StatusIcon className="h-5 w-5" />
           Proposition de projet
           <Badge className={statusInfo.color}>
@@ -87,15 +87,14 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="w-full flex justify-center items-start gap-3 p-3 bg-blue-50 rounded-lg">
+        <div className="w-fit flex justify-start items-left gap-3 p-3 pr-10 bg-blue-50 rounded-lg">
           <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
           <div className="text-sm text-blue-700">
-            <p className="font-medium mb-1 text-center">Comment ça fonctionne :</p>
-            <ul className="list-disc list-inside space-y-1 text-xs text-center">
+            <p className="font-medium mb-1 text-left">Comment ça fonctionne :</p>
+            <ul className="list-disc list-inside space-y-1 text-xs text-left">
               <li>Exprimer votre intérêt indique que vous êtes disponible pour ce projet</li>
-              <li>L'entrepreneur examinera les étudiants intéressés</li>
-              <li>Si sélectionné, vous serez assigné et ajouté à la conversation du projet</li>
-              <li>Un seul étudiant sera sélectionné par projet</li>
+              <li>L'entrepreneur recevra une sélection de 3 profils intéressés par son besoin</li>
+              <li>Si vous êtes sélectionné, vous serez assigné et ajouté à la conversation du projet</li>
             </ul>
           </div>
         </div>
@@ -103,11 +102,11 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
         <p className="text-gray-700">{statusInfo.message}</p>
 
         {proposalStatus === 'pending' && (
-          <div className="flex gap-3">
+          <div className="flex justify-center gap-3">
             <Button
               onClick={() => handleProposalResponse(true)}
               disabled={loading}
-              className="flex-1 bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 w-60"
             >
               {loading ? (
                 <>
@@ -125,7 +124,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
               onClick={() => handleProposalResponse(false)}
               disabled={loading}
               variant="outline"
-              className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+              className="border-red-200 text-red-600 hover:bg-red-50 w-60"
             >
               {loading ? (
                 <>
@@ -139,14 +138,6 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
                 </>
               )}
             </Button>
-          </div>
-        )}
-
-        {proposalStatus === 'accepted' && (
-          <div className="p-3 bg-green-50 rounded-lg">
-            <p className="text-sm text-green-700">
-              <strong>Prochaines étapes :</strong> Attendez que l'entrepreneur examine tous les étudiants intéressés et fasse sa sélection. Vous serez notifié si vous êtes choisi pour le projet.
-            </p>
           </div>
         )}
       </CardContent>
