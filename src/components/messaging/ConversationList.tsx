@@ -30,16 +30,19 @@ const ConversationItem = memo(({
     <div className="flex items-center space-x-3">
       <div className="relative">
         <Avatar className="w-8 h-8 lg:w-10 lg:h-10 flex-shrink-0">
-          {conversation.otherParticipantAvatar ? (
+          {conversation.otherParticipantAvatar && conversation.otherParticipantAvatar.trim() !== '' ? (
             <AvatarImage 
               src={conversation.otherParticipantAvatar}
               alt={conversation.otherParticipant}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
             />
-          ) : (
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs lg:text-sm">
-              {conversation.otherParticipant.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          )}
+          ) : null}
+          <AvatarFallback className="bg-primary text-primary-foreground text-xs lg:text-sm">
+            {conversation.otherParticipant.charAt(0).toUpperCase()}
+          </AvatarFallback>
         </Avatar>
         {conversation.hasUnreadMessages && (
           <div className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full border-2 border-background flex items-center justify-center">

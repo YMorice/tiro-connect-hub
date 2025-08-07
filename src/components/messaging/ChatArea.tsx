@@ -2,6 +2,7 @@ import React, { memo, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, ArrowLeft, MoreVertical } from 'lucide-react';
 import { Message, Conversation } from '@/hooks/useMessaging';
 import { useAuth } from '@/context/auth-context';
@@ -153,35 +154,37 @@ export const ChatArea = memo(({
       </div>
 
       {/* Messages */}
-      <div 
-        ref={messagesContainerRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-2"
-      >
-        {loading && hasMore && (
-          <div className="flex justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-          </div>
-        )}
-        
-        {messages.map((message, index) => {
-          const isOwn = message.sender_id === user?.id;
-          const prevMessage = messages[index - 1];
-          const showAvatar = !prevMessage || 
-            prevMessage.sender_id !== message.sender_id ||
-            new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime() > 300000; // 5 minutes
+      <ScrollArea className="flex-1">
+        <div 
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
+          className="p-4 space-y-2 min-h-full"
+        >
+          {loading && hasMore && (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          )}
+          
+          {messages.map((message, index) => {
+            const isOwn = message.sender_id === user?.id;
+            const prevMessage = messages[index - 1];
+            const showAvatar = !prevMessage || 
+              prevMessage.sender_id !== message.sender_id ||
+              new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime() > 300000; // 5 minutes
 
-          return (
-            <MessageItem
-              key={message.id_message}
-              message={message}
-              isOwn={isOwn}
-              showAvatar={showAvatar}
-            />
-          );
-        })}
-        <div ref={messagesEndRef} />
-      </div>
+            return (
+              <MessageItem
+                key={message.id_message}
+                message={message}
+                isOwn={isOwn}
+                showAvatar={showAvatar}
+              />
+            );
+          })}
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
 
       {/* Message Input */}
       <div className="p-4 border-t border-border bg-background flex-shrink-0">
