@@ -14,7 +14,8 @@ import {
   Home,
   Settings,
   ChevronDown,
-  HeadphonesIcon
+  HeadphonesIcon,
+  FileText
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
@@ -75,6 +76,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       label: "Profil",
       icon: UserRound,
       href: "/profile",
+    },
+    {
+      label: "Mes Documents",
+      icon: FileText,
+      href: "/documents",
     },
     {
       label: "Contacter le support",
@@ -177,8 +183,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Settings size={18} className="mb-1" />
-                  <span className="text-xs font-medium truncate">Réglages</span>
+                  <Home size={24} className="mb-1" />
+                  <span className="text-xs font-medium truncate">Mon espace</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -253,8 +259,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 "text-foreground hover:bg-muted"
               )}
             >
-              <Settings size={20} className="mr-3" />
-              <span>Réglages</span>
+              <Home size={24} className="mr-3" />
+              <span>Mon espace</span>
               <ChevronDown 
                 size={16} 
                 className={cn(

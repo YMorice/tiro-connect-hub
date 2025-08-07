@@ -48,6 +48,7 @@ import AdminStudents from "@/pages/AdminStudents";
 import StudentSelection from "@/pages/StudentSelection";
 import NewProject from "@/pages/NewProject";
 import PackSelection from "@/pages/PackSelection";
+import PersonalDocuments from "@/pages/PersonalDocuments";
 import AcceptedStudents from "@/pages/AcceptedStudents";
 import NotFound from "@/pages/NotFound";
 import UpdatePassword from "@/pages/UpdatePassword";
@@ -204,6 +205,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <AcceptedStudents />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/documents"
+                  element={
+                    <ProtectedRoute>
+                      <PersonalDocuments />
                     </ProtectedRoute>
                   }
                 />
