@@ -157,21 +157,21 @@ const Dashboard = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-tiro-gray1">
+      <div className="min-h-screen bg-tiro-test">
         <div className="container mx-auto px-4 py-6 max-w-7xl">
           {/* En-tête */}
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2 text-left">
+                <h1 className="text-3xl font-bold text-tiro-black mb-2 text-left">
                   Bon retour, {user?.user_metadata?.name || "Utilisateur"} !
                 </h1>
-                <p className="text-gray-600 text-left">
+                <p className="text-tiro-black text-left">
                   Voici un aperçu de vos projets et de votre activité récente.
                 </p>
               </div>
               {userRole === 'entrepreneur' && (
-                <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/90">
+                <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/70">
                   <Link to="/pack-selection">
                     <FolderPlus className="h-4 w-4 mr-2" />
                     Nouveau Projet
@@ -328,7 +328,7 @@ const Dashboard = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <Card>
+              <Card className="bg-tiro-white">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="text-left">
@@ -385,7 +385,7 @@ const Dashboard = () => {
             </div>
 
             <div className="space-y-6">
-              <Card className="text-left">
+              <Card className="text-left bg-tiro-white">
                 <CardHeader className="text-left">
                   <CardTitle className="text-lg">Conseils et Insights</CardTitle>
                 </CardHeader>

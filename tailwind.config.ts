@@ -67,6 +67,7 @@ export default {
 					gray1: '#ECF0F1',
 					gray2: '#CACECF',
 					black: '#121A21',
+					test: 'hsla(200, 23%, 95%, 0.75)'
 				}
 			},
 			borderRadius: {
