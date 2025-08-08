@@ -479,7 +479,7 @@ const Projects = () => {
                   to={`/projects/${project.id}`}
                   className="block"
                 >
-                  <Card className="h-full hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer">
+                  <Card className="h-full shadow-none transition-colors duration-200 hover:bg-muted cursor-pointer">
                     <CardHeader className="pb-3">
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex flex-wrap gap-2">
