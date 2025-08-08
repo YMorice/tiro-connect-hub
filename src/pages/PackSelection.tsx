@@ -100,11 +100,11 @@ const PackSelection = () => {
 
   return (
     <AppLayout>
-      <div className="container max-w-6xl py-4 px-4">
+      <div className="container max-w-6xl py-4 px-4 bg-tiro-white">
         <div className="mb-6">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">Choisissez un pack de projet</h1>
           <p className="text-muted-foreground text-sm">
-            Sélectionnez le package qui convient le mieux aux besoins de votre projet.
+            Sélectionnez le Pack qui convient le mieux aux besoins de votre projet.
           </p>
         </div>
 

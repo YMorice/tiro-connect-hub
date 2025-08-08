@@ -400,7 +400,7 @@ const Projects = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-gray-50 py-6">
+      <div className="min-h-screen bg-tiro-test py-6">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
@@ -412,7 +412,7 @@ const Projects = () => {
               </p>
             </div>
             {canCreateProject() && (
-              <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/90">
+              <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/70 rounded-[5px]">
                 <Link to="/pack-selection">
                   <Plus className="h-4 w-4 mr-2" />
                   Nouveau Projet
@@ -424,20 +424,20 @@ const Projects = () => {
           <div className="mb-6 space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-tiro-gray2 h-4 w-4" />
                 <Input
                   type="text"
                   placeholder="Rechercher des projets..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-tiro-white"
                 />
               </div>
               
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tiro-primary focus:border-transparent bg-white min-w-[160px]"
+                className="px-3 py-2 border border-gray-300 rounded-[5px] focus:outline-none focus:ring-2 focus:ring-tiro-primary focus:border-transparent bg-tiro-white min-w-[160px]"
               >
                 {currentStatusOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -479,7 +479,7 @@ const Projects = () => {
                   to={`/projects/${project.id}`}
                   className="block"
                 >
-                  <Card className="h-full shadow-none transition-colors duration-200 hover:bg-muted cursor-pointer">
+                  <Card className="h-full shadow-none transition-colors duration-200 rounded-[5px] bg-tiro-white hover:bg-muted cursor-pointer">
                     <CardHeader className="pb-3">
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex flex-wrap gap-2">

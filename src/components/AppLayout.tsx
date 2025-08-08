@@ -241,7 +241,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               key={item.href}
               to={item.href}
               className={cn(
-                "flex items-center px-4 py-3 rounded-lg transition-all text-sm font-medium group",
+                "flex items-center px-4 py-3 rounded-[5px] transition-all text-sm font-medium group",
                 isActive(item.href)
                   ? "bg-tiro-gray2 text-tiro-black"
                   : "text-foreground hover:bg-muted"
@@ -279,7 +279,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     <Link
                       key={item.label}
                       to={item.href}
-                      className="flex items-center px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                      className="flex items-center px-4 py-2 rounded-[5px] text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
                     >
                       <item.icon className="mr-3 h-4 w-4" />
                       <span>{item.label}</span>
@@ -301,7 +301,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </nav>
 
         {/* User Section */}
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-border w-fit mx-auto">
           <div className="flex items-center space-x-3">
             <Avatar className="w-10 h-10">
               {getAvatarUrl() ? (
