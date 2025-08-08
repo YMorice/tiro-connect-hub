@@ -167,7 +167,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 className={cn(
                   "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1",
                   isActive(item.href)
-                    ? "bg-tiro-primary/20 text-tiro-primary"
+                    ? "bg-tiro-gray2 text-tiro-black"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -222,7 +222,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Left Sidebar */}
       <aside className="fixed left-4 top-4 h-[calc(100vh-2rem)] w-56 bg-tiro-white backdrop-blur-md border border-border rounded-[25px] shadow-lg flex flex-col z-40 overflow-hidden">
         {/* Logo Section */}
-        <div className="p-6 border-b border-border flex justify-center">
+        <div className="p-6 flex justify-center">
           <Link to="https://tiro.agency" className="block">
             <img 
               src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
@@ -247,7 +247,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   : "text-foreground hover:bg-muted"
               )}
             >
-              <item.icon size={20} className="mr-3" />
+              <item.icon size={16} className="mr-3" />
               <span>{item.label}</span>
             </Link>
           ))}
@@ -262,7 +262,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 "text-foreground hover:bg-muted"
               )}
             >
-              <Home size={24} className="mr-3" />
+              <Home size={20} className="mr-3" />
               <span>Mon espace</span>
               <ChevronDown 
                 size={16} 
@@ -301,7 +301,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </nav>
 
         {/* User Section */}
-        <div className="p-4 border-t border-border w-fit mx-auto">
+        <div className="p-4 w-fit mx-auto">
           <div className="flex items-center space-x-3">
             <Avatar className="w-10 h-10">
               {getAvatarUrl() ? (

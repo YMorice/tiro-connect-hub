@@ -648,7 +648,7 @@ const ProjectDetail = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-tiro-test">
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
           {/* Notification pour étudiant sélectionné */}
           {isStudent && isSelectedForProject && (

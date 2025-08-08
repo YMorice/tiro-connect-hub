@@ -365,7 +365,7 @@ const Profile = () => {
   if (studentId && profile) {
     return (
       <AppLayout>
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-tiro-test-50 py-8">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <StudentProfileView 
               studentId={studentId}
@@ -379,18 +379,29 @@ const Profile = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-tiro-test -50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Tabs defaultValue="profile" className="w-full space-y-6">
             {(user as any).role === 'student' && (
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="profile">Profil</TabsTrigger>
-                <TabsTrigger value="reviews">Avis</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-tiro-gray1">
+                <TabsTrigger
+                  value="profile"
+                  className="bg-tiro-gray1 text-gray-700 data-[state=active]:bg-tiro-white data-[state=active]:text-black transition-colors"
+                >
+                  Profil
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="reviews"
+                  className="bg-tiro-gray1 text-gray-700 data-[state=active]:bg-tiro-white data-[state=active]:text-black transition-colors"
+                >
+                  Avis
+                </TabsTrigger>
               </TabsList>
             )}
             
             <TabsContent value="profile" className="space-y-6">
-              <Card className="shadow-sm">
+              <Card className="shadow-sm bg-tiro-white">
                 <CardHeader className="text-center">
                   <CardTitle className="text-2xl">Informations du Profil</CardTitle>
                   <CardDescription>
@@ -444,6 +455,7 @@ const Profile = () => {
                         id="name"
                         value={profile.name || user?.user_metadata?.name}
                         onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                        className="bg-tiro-white"
                       />
                     </div>
                     <div className="space-y-2 text-left">
@@ -452,6 +464,7 @@ const Profile = () => {
                         id="surname"
                         value={profile.surname || user?.user_metadata?.surname}
                         onChange={(e) => setProfile({ ...profile, surname: e.target.value })}
+                        className="bg-tiro-white"
                       />
                     </div>
                   </div>
@@ -462,6 +475,7 @@ const Profile = () => {
                       id="email"
                       value={profile.email || user?.email}
                       disabled
+                      className="bg-tiro-white"
                     />
                   </div>
 
@@ -474,7 +488,7 @@ const Profile = () => {
                           id="bio"
                           value={profile.bio || ""}
                           onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                          className="min-h-[100px]"
+                          className="min-h-[100px] bg-tiro-white"
                         />
                       </div>
 
@@ -513,6 +527,7 @@ const Profile = () => {
                           id="formation"
                           value={profile.formation || ""}
                           onChange={(e) => setProfile({ ...profile, formation: e.target.value })}
+                          className="bg-tiro-white"
                         />
                       </div>
 
@@ -523,7 +538,7 @@ const Profile = () => {
                           value={profile.portfolioLink || ""}
                           onChange={(e) => setProfile({ ...profile, portfolioLink: e.target.value })}
                           placeholder="votre-portfolio.com"
-                          className="w-full"
+                          className="w-full bg-tiro-white"
                         />
                       </div>
 
@@ -547,7 +562,7 @@ const Profile = () => {
                           </div>
                           <div className="flex flex-col sm:flex-row gap-3">
                             <Select value={newSkill} onValueChange={setNewSkill}>
-                              <SelectTrigger className="flex-1">
+                              <SelectTrigger className="flex-1 bg-tiro-white">
                                 <SelectValue placeholder="Sélectionner une compétence à ajouter" />
                               </SelectTrigger>
                               <SelectContent>
@@ -577,6 +592,7 @@ const Profile = () => {
                           id="companyName"
                           value={profile.companyName || ""}
                           onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
+                          className="bg-tiro-white"
                         />
                       </div>
 
@@ -586,6 +602,7 @@ const Profile = () => {
                           id="companyRole"
                           value={profile.companyRole || ""}
                           onChange={(e) => setProfile({ ...profile, companyRole: e.target.value })}
+                          className="bg-tiro-white"
                         />
                       </div>
 
@@ -595,15 +612,15 @@ const Profile = () => {
                           id="companyAddress"
                           value={profile.companyAddress || ""}
                           onChange={(e) => setProfile({ ...profile, companyAddress: e.target.value })}
-                          className="min-h-[100px]"
+                          className="min-h-[100px] bg-tiro-white"
                         />
                       </div>
                     </>
                   )}
 
                   <div className="flex justify-center pt-6">
-                    <Button 
-                      onClick={handleSaveProfile} 
+                    <Button
+                      onClick={handleSaveProfile}
                       disabled={saving}
                       className="w-full sm:w-auto px-8 py-3"
                     >

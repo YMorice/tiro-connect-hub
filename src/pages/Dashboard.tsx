@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Calendar, FolderPlus, MessageCircle, TrendingUp, CheckCircle, Clock, AlertCircle, HelpCircle, LifeBuoy, UserCheck, UserX } from "lucide-react";
+import { Calendar, FolderPlus, MessageCircle, TrendingUp, FilePlus, CheckCircle, Clock, AlertCircle, HelpCircle, LifeBuoy, UserCheck, UserX } from "lucide-react";
 import { getStudentProposals } from "@/services/proposal-service";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
@@ -184,12 +184,12 @@ const Dashboard = () => {
           {/* Notifications pour les étudiants sélectionnés */}
           {userRole === 'student' && selectedNotifications.length > 0 && (
             <div className="mb-8">
-              <Card className="border-l-4 border-l-green-500">
+              <Card className="border-l-4 border-l-tiro-secondary">
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center gap-2">
-                    <UserCheck className="h-5 w-5 text-green-500" />
+                    <UserCheck className="h-5 w-5 text-tiro-secondary" />
                     Félicitations ! Vous avez été sélectionné
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">{selectedNotifications.length}</Badge>
+                    <Badge variant="secondary" className="bg-tiro-secondary/10 text-tiro-secondary">{selectedNotifications.length}</Badge>
                   </CardTitle>
                   <CardDescription>
                     Vous avez été choisi pour travailler sur {selectedNotifications.length > 1 ? 'ces projets' : 'ce projet'}
@@ -197,11 +197,11 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {selectedNotifications.slice(0, 3).map((project) => (
-                    <div key={project.id_project} className="flex items-center justify-between p-4 border rounded-lg bg-green-50 hover:bg-green-100 transition-colors">
+                    <div key={project.id_project} className="flex items-center justify-between p-4 border rounded-lg bg-tiro-secondary/10">
                       <div className="flex-1 min-w-0">
                         <Link 
                           to={`/projects/${project.id_project}`} 
-                          className="font-medium text-gray-900 hover:text-tiro-primary transition-colors truncate block"
+                          className="font-medium text-gray-900 transition-colors truncate block"
                         >
                           {project.title}
                         </Link>
@@ -209,13 +209,10 @@ const Dashboard = () => {
                           <Badge className={`${getStatusColor(project.status)} text-xs`}>
                             {getStatusLabel(project.status)}
                           </Badge>
-                          <span className="text-xs text-gray-500">
-                            Par : {project.entrepreneurs?.users?.name} {project.entrepreneurs?.users?.surname}
-                          </span>
                         </div>
                       </div>
                       <Link to={`/projects/${project.id_project}`}>
-                        <Button variant="outline" size="sm" className="bg-green-600 text-white hover:bg-green-700">
+                        <Button size="sm" className="bg-tiro-secondary text-white hover:bg-tiro-secondary/70 text-white">
                           Voir le Projet
                         </Button>
                       </Link>
@@ -273,10 +270,10 @@ const Dashboard = () => {
           {/* Section Propositions d'Étudiants */}
           {userRole === 'student' && pendingProposals.length > 0 && (
             <div className="mb-8">
-              <Card className="border-l-4 border-l-orange-500">
+              <Card className="border-l-4 border-l-blue-500 bg-tiro-white">
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-orange-500" />
+                    <FilePlus className="h-5 w-5 text-blue-500" />
                     Nouvelles Propositions de Projets
                     <Badge variant="secondary">{pendingProposals.length}</Badge>
                   </CardTitle>

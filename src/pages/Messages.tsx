@@ -35,12 +35,12 @@ const Messages = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-gray-50 py-6">
+      <div className="min-h-screen bg-tiro-test py-6">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex flex-col lg:flex-row bg-background rounded-lg shadow-sm overflow-hidden h-[calc(100vh-8rem)]">
+          <div className="flex flex-col lg:flex-row bg-background rounded-[5px] shadow-sm overflow-hidden h-[calc(100vh-8rem)]">
             {/* Liste des conversations */}
             <div className={cn(
-              "w-full lg:w-1/3 xl:w-1/4 border-r border-border flex flex-col bg-background min-h-0",
+              "w-full lg:w-1/3 xl:w-1/4 border-r border-border flex flex-col bg-tiro-white min-h-0",
               selectedConversation && "hidden lg:flex"
             )}>
               <div className="p-3 lg:p-4 border-b border-border flex-shrink-0">
@@ -60,7 +60,7 @@ const Messages = () => {
             </div>
             {/* Zone de chat */}
             <div className={cn(
-              "flex-1 flex flex-col min-h-0",
+              "flex-1 flex flex-col min-h-0 bg-tiro-white",
               !selectedConversation && "hidden lg:flex"
             )}>
               <ChatArea
