@@ -122,7 +122,7 @@ useEffect(() => {
 
   return (
     <AppLayout>
-      <div className="container max-w-6xl mx-auto py-4 px-4 bg-tiro-white">
+      <div className="container max-w-7xl mx-auto py-4 px-4 bg-tiro-test">
         <div className="mb-6">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 text-center">Choisissez un pack de projet</h1>
           <p className="text-muted-foreground text-sm text-center">
@@ -132,14 +132,14 @@ useEffect(() => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {packs.map((pack) => (
-            <Card key={pack.id_pack} className="flex flex-col h-full">
+            <Card key={pack.id_pack} className="flex flex-col h-full bg-tiro-white">
               <CardHeader className="flex-shrink-0 p-4">
                 <CardTitle className="text-lg">{pack.name}</CardTitle>
                 <CardDescription className="text-sm">{pack.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow p-4 pt-0">
                 {pack.price !== null && pack.price !== undefined ? (
-                  <p className="text-xl sm:text-2xl font-bold mb-3">
+                  <p className="text-l sm:text-2xl font-bold mb-3">
                     {pack.price === 0 ? (
                       ""
                     ) : (

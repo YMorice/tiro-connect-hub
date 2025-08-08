@@ -292,7 +292,7 @@ const NewProject = () => {
           <CardHeader>
             <CardTitle className="text-2xl">Créer nouveau projet</CardTitle>
             <CardDescription>
-              Détails pour votre nouveau projet
+              Les détails pour votre nouveau projet
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -313,7 +313,7 @@ const NewProject = () => {
                     <FormItem>
                       <FormLabel>Pack de projet</FormLabel>
                       <Select defaultValue={field.value} onValueChange={field.onChange} disabled>
-                        <FormControl>
+                        <FormControl className="bg-tiro-white">
                           <SelectTrigger>
                             <SelectValue placeholder="Sélectionnez un pack" />
                           </SelectTrigger>
@@ -335,7 +335,7 @@ const NewProject = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Titre du projet</FormLabel>
-                      <FormControl>
+                      <FormControl className="bg-tiro-white">
                         <Input placeholder="Entrez le titre de votre projet" {...field} />
                       </FormControl>
                       <FormMessage />
@@ -349,7 +349,7 @@ const NewProject = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Description du projet</FormLabel>
-                      <FormControl>
+                      <FormControl className="bg-tiro-white">
                         <Textarea 
                           placeholder="Décrivez votre projet en détail et vos besoins spécifiques pour ce pack" 
                           className="min-h-[200px]" 

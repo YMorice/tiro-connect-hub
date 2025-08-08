@@ -570,7 +570,7 @@ const Register = () => {
       case 1:
         return (
           <Form {...step1Form}>
-            <form onSubmit={step1Form.handleSubmit(onSubmitStep1)} className="space-y-4">
+            <form onSubmit={step1Form.handleSubmit(onSubmitStep1)} className="space-y-4 bg-tiro-white">
               <FormField
                 control={step1Form.control}
                 name="role"
@@ -595,7 +595,7 @@ const Register = () => {
                             <RadioGroupItem value="entrepreneur" />
                           </FormControl>
                           <FormLabel className="font-normal">
-                            Entrepreneur - J'ai besoin de services de web design
+                            Entrepreneur - J'ai besoin de services design
                           </FormLabel>
                         </FormItem>
                       </RadioGroup>
@@ -611,7 +611,7 @@ const Register = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-left">Email</FormLabel>
-                    <FormControl>
+                    <FormControl className="bg-tiro-white">
                       <Input 
                         placeholder="exemple@email.com" 
                         {...field} 
@@ -629,7 +629,7 @@ const Register = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Mot de passe</FormLabel>
-                    <FormControl>
+                    <FormControl className="bg-tiro-white">
                       <Input 
                         type="password" 
                         placeholder="******" 
@@ -647,7 +647,7 @@ const Register = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Confirmer mot de passe</FormLabel>
-                    <FormControl>
+                    <FormControl className="bg-tiro-white">
                       <Input 
                         type="password" 
                         placeholder="******" 
@@ -1310,16 +1310,13 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-10">
+    <div className="min-h-screen flex items-center justify-center bg-tiro-test py-10">
       <div className="w-full max-w-md">
         <Card className="shadow-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
-              <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-10" />
+              <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-14" />
             </div>
-            <CardDescription>
-              {step === 5 ? "Inscription terminée" : "Créer votre compte"}
-            </CardDescription>
           </CardHeader>
           
           <CardContent key={step}>
