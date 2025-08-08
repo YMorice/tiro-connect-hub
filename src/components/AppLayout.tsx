@@ -43,7 +43,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   
   const isActive = (path: string) => location.pathname === path;
 
-  const handleLogout = async () => {
+  const handleLogout = React.useCallback(async () => {
     try {
       await logout();
       navigate('/login');
@@ -51,9 +51,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       console.error("Error logging out:", error);
       toast.error("Error logging out. Please try again.");
     }
-  };
+  }, [logout, navigate]);
 
-  const navItems = [
+  const navItems = React.useMemo(() => ([
     {
       label: "Tableau de bord",
       icon: LayoutDashboard,
@@ -69,9 +69,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: MessageCircle,
       href: "/messages",
     }
-  ];
+  ]), []);
 
-  const settingsItems = [
+  const settingsItems = React.useMemo(() => ([
     {
       label: "Profil",
       icon: UserRound,
@@ -92,7 +92,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: LogOut,
       action: handleLogout
     }
-  ];
+  ]), [handleLogout]);
 
   // Safely get user initials
   const getUserInitials = () => {
@@ -105,13 +105,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return "U";
   };
 
-  // Get avatar URL with cache busting
-  const getAvatarUrl = () => {
-    if (user?.pp_link) {
-      return `${user.pp_link}?t=${Date.now()}`;
-    }
-    return undefined;
-  };
+  // Get avatar URL (no cache-busting to avoid reload on each render)
+  const getAvatarUrl = React.useCallback(() => {
+    return user?.pp_link || undefined;
+  }, [user?.pp_link]);
 
   // Close sidebar when route changes on mobile
   React.useEffect(() => {
@@ -131,6 +128,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
                 alt="Tiro Logo" 
                 className="h-10" 
+                decoding="async"
+                draggable="false"
               />
             </Link>
             <div className="flex items-center space-x-2">
@@ -140,6 +139,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     src={getAvatarUrl()} 
                     alt={user?.name || "User"}
                     className="object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                 ) : (
                   <AvatarFallback className="bg-tiro-primary text-white text-sm">
@@ -227,6 +228,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" 
               alt="Tiro Logo" 
               className="h-12" 
+              decoding="async"
+              draggable="false"
             />
           </Link>
         </div>
@@ -306,6 +309,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   src={getAvatarUrl()} 
                   alt={user?.name || "User"}
                   className="object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
               ) : (
                 <AvatarFallback className="bg-tiro-primary text-white">
