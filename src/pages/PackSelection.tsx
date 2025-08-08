@@ -9,10 +9,13 @@ import AppLayout from "@/components/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/sonner";
 
-// Declare global function
+// Declare global types
 declare global {
   interface Window {
     updatePageTitle?: (pageName: string) => void;
+    Calendly?: {
+      initInlineWidget: (config: any) => void;
+    };
   }
 }
 
@@ -22,16 +25,34 @@ const PackSelection = () => {
   const [packs, setPacks] = useState<ProjectPack[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+useEffect(() => {
     // Update page title
     if (window.updatePageTitle) {
       window.updatePageTitle('Sélection de pack');
     }
 
+    // Load Calendly stylesheet
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://assets.calendly.com/assets/external/widget.css';
+    document.head.appendChild(link);
+
     // Load Calendly script
     const script = document.createElement('script');
     script.src = 'https://assets.calendly.com/assets/external/widget.js';
     script.async = true;
+    script.onload = () => {
+      try {
+        window.Calendly?.initInlineWidget({
+          url: 'https://calendly.com/contact-tiro/30min?hide_gdpr_banner=1',
+          parentElement: document.querySelector('.calendly-inline-widget') as HTMLElement,
+          prefill: {},
+          utm: {},
+        });
+      } catch (e) {
+        console.warn('Calendly init failed', e);
+      }
+    };
     document.body.appendChild(script);
 
     const fetchPacks = async () => {
@@ -58,11 +79,12 @@ const PackSelection = () => {
     fetchPacks();
 
     return () => {
-      // Cleanup script on unmount
+      // Cleanup Calendly assets on unmount
       const existingScript = document.querySelector('script[src="https://assets.calendly.com/assets/external/widget.js"]');
-      if (existingScript) {
-        existingScript.remove();
-      }
+      if (existingScript) existingScript.remove();
+
+      const existingLink = document.querySelector('link[href="https://assets.calendly.com/assets/external/widget.css"]');
+      if (existingLink) existingLink.remove();
     };
   }, []);
 
@@ -100,10 +122,10 @@ const PackSelection = () => {
 
   return (
     <AppLayout>
-      <div className="container max-w-6xl py-4 px-4 bg-tiro-white">
+      <div className="container max-w-6xl mx-auto py-4 px-4 bg-tiro-white">
         <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">Choisissez un pack de projet</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 text-center">Choisissez un pack de projet</h1>
+          <p className="text-muted-foreground text-sm text-center">
             Sélectionnez le Pack qui convient le mieux aux besoins de votre projet.
           </p>
         </div>
@@ -163,7 +185,7 @@ const PackSelection = () => {
           
           <div className="calendly-inline-widget" 
                data-url="https://calendly.com/contact-tiro/30min?hide_gdpr_banner=1" 
-               style={{minWidth:'320px', height:'700px'}}>
+               style={{minWidth:'320px', height:'700px', width:'100%'}}>
           </div>
         </div>
       </div>
