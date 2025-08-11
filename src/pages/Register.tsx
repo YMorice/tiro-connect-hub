@@ -581,7 +581,7 @@ const Register = () => {
                       <div
                         role="radiogroup"
                         aria-label="Choisir votre rôle"
-                        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-6"
+                        className="grid grid-cols-1 gap-4"
                       >
                         {[
                           {
@@ -615,20 +615,20 @@ const Register = () => {
                                 "transition-all duration-200",
                                 "hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                 selected ? "border-primary shadow-sm ring-1 ring-primary" : "border-border",
-                                "p-4 sm:p-6 lg:p-8 text-left min-h-[120px] sm:min-h-[140px] lg:min-h-[180px]",
+                                "p-4 sm:p-6 text-left min-h-[120px] sm:min-h-[140px]",
                               ].join(" ")}
                             >
-                              <div className="flex items-center gap-4 md:gap-6 lg:gap-8">
+                              <div className="flex items-center gap-4 md:gap-6">
                                 <img
                                   src={opt.img}
                                   alt={opt.alt}
                                   loading="lazy"
                                   decoding="async"
-                                  className="h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-36 lg:w-36 object-contain"
+                                  className="h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 object-contain"
                                 />
                                 <div className="space-y-1 flex-1">
-                                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold">{opt.title}</h3>
-                                  <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">{opt.description}</p>
+                                  <h3 className="text-base sm:text-lg font-semibold">{opt.title}</h3>
+                                  <p className="text-xs sm:text-sm text-muted-foreground">{opt.description}</p>
                                 </div>
                               </div>
                               {selected && (
