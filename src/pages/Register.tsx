@@ -615,7 +615,7 @@ const Register = () => {
                                 "transition-all duration-200",
                                 "hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                 selected ? "border-primary shadow-sm ring-1 ring-primary" : "border-border",
-                                "p-4 md:p-6 text-left",
+                                "p-4 sm:p-6 lg:p-8 text-left min-h-[120px] sm:min-h-[140px] lg:min-h-[180px]",
                               ].join(" ")}
                             >
                               <div className="flex items-center gap-4 md:gap-6 lg:gap-8">
@@ -626,9 +626,9 @@ const Register = () => {
                                   decoding="async"
                                   className="h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-36 lg:w-36 object-contain"
                                 />
-                                <div className="space-y-1">
-                                  <h3 className="text-lg font-semibold">{opt.title}</h3>
-                                  <p className="text-sm text-muted-foreground">{opt.description}</p>
+                                <div className="space-y-1 flex-1">
+                                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold">{opt.title}</h3>
+                                  <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">{opt.description}</p>
                                 </div>
                               </div>
                               {selected && (
@@ -710,7 +710,7 @@ const Register = () => {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         id="terms"
-                        className="h-4 w-4 shrink-0"
+                        className="h-4 w-4 shrink-0 min-w-[1rem] min-h-[1rem] max-w-[1rem] max-h-[1rem]"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
