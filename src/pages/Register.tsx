@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -576,29 +576,70 @@ const Register = () => {
                 name="role"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>Je suis un:</FormLabel>
+                    <FormLabel>Je suis...</FormLabel>
                     <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        className="flex flex-col space-y-1"
+                      <div
+                        role="radiogroup"
+                        aria-label="Choisir votre rôle"
+                        className="grid grid-cols-1 gap-4 md:grid-cols-2"
                       >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="student" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Etudiant - Je veux travailler sur des projets web
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="entrepreneur" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Entrepreneur - J'ai besoin de services design
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
+                        {[
+                          {
+                            value: "entrepreneur" as const,
+                            title: "Entreprise",
+                            description:
+                              "Je cherche des juniors motivés pour travailler avec nous.",
+                            img: "/placeholder.svg",
+                            alt: "Illustration entreprise",
+                          },
+                          {
+                            value: "student" as const,
+                            title: "Freelance Junior",
+                            description:
+                              "Je crée mon profil pour intégrer la communauté et accéder aux missions.",
+                            img: "/placeholder.svg",
+                            alt: "Illustration freelance junior",
+                          },
+                        ].map((opt) => {
+                          const selected = field.value === opt.value;
+                          return (
+                            <button
+                              type="button"
+                              key={opt.value}
+                              role="radio"
+                              aria-checked={selected}
+                              onClick={() => field.onChange(opt.value)}
+                              className={[
+                                "relative w-full rounded-xl border",
+                                "bg-card text-card-foreground",
+                                "transition-all duration-200",
+                                "hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                selected ? "border-primary shadow-sm ring-1 ring-primary" : "border-border",
+                                "p-4 md:p-6 text-left",
+                              ].join(" ")}
+                            >
+                              <div className="flex items-center gap-4">
+                                <img
+                                  src={opt.img}
+                                  alt={opt.alt}
+                                  loading="lazy"
+                                  decoding="async"
+                                  className="h-24 w-24 md:h-28 md:w-28 object-contain"
+                                />
+                                <div className="space-y-1">
+                                  <h3 className="text-lg font-semibold">{opt.title}</h3>
+                                  <p className="text-sm text-muted-foreground">{opt.description}</p>
+                                </div>
+                              </div>
+                              {selected && (
+                                <div className="pointer-events-none absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                                  <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
