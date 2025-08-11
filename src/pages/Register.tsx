@@ -515,19 +515,39 @@ const Register = () => {
                         {[
                           {
                             value: "entrepreneur" as const,
-                            title: "Entreprise",
+                            title: "Une entreprise",
                             description:
                               "Je cherche des juniors motivés pour travailler avec nous.",
-                            img: "/placeholder.svg",
+                            img: "https://app.tiro.agency/entrepreneur.png",
                             alt: "Illustration entreprise",
+                            credit: (
+                              <a
+                                href="https://storyset.com/business"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-gray-500 hover:underline"
+                              >
+                                Business illustrations by Storyset
+                              </a>
+                            ),
                           },
                           {
                             value: "student" as const,
-                            title: "Freelance Junior",
+                            title: "Un.e étudiant.e",
                             description:
                               "Je crée mon profil pour intégrer la communauté et accéder aux missions.",
-                            img: "/placeholder.svg",
+                            img: "https://app.tiro.agency/freelance.png",
                             alt: "Illustration freelance junior",
+                            credit: (
+                              <a
+                                href="https://storyset.com/business"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-gray-500 hover:underline"
+                              >
+                                Business illustrations by Storyset
+                              </a>
+                            ),
                           },
                         ].map((opt) => {
                           const selected = field.value === opt.value;
@@ -542,7 +562,7 @@ const Register = () => {
                                 "relative w-full rounded-xl border",
                                 "bg-card text-card-foreground",
                                 "transition-all duration-200",
-                                "hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                "hover:bg-tiro-test focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                 selected ? "border-primary shadow-sm ring-1 ring-primary" : "border-border",
                                 "p-4 sm:p-6 text-left min-h-[120px] sm:min-h-[140px]",
                               ].join(" ")}
@@ -1298,7 +1318,7 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-tiro-test py-10">
       <div className="w-full max-w-md">
-        <Card className="shadow-lg">
+        <Card>
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
               <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Tiro Logo" className="h-14" />
