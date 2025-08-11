@@ -9,15 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/context/auth-context";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/sonner";
-
-// Declare global grecaptcha
-declare global {
-  interface Window {
-    grecaptcha: any;
-  }
-}
 
 const formSchema = z.object({
   email: z.string().email("Adresse email invalide"),
@@ -30,7 +21,6 @@ const Login = () => {
   const { login, user, session, loading } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -40,33 +30,6 @@ const Login = () => {
     }
   });
 
-  // Load reCaptcha script
-  useEffect(() => {
-    const loadRecaptcha = () => {
-      if (window.grecaptcha) {
-        setRecaptchaLoaded(true);
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://www.google.com/recaptcha/api.js?render=6LfgWJUrAAAAAL7BccALaFZ8r9eSnQGGYrN3DaPq';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        setRecaptchaLoaded(true);
-      };
-      document.head.appendChild(script);
-
-      return () => {
-        if (document.head.contains(script)) {
-          document.head.removeChild(script);
-        }
-      };
-    };
-
-    loadRecaptcha();
-  }, []);
-
   // Redirect authenticated users to dashboard
   useEffect(() => {
     if (user && session && !loading) {
@@ -75,52 +38,12 @@ const Login = () => {
     }
   }, [user, session, loading, navigate]);
 
-  // Verify reCaptcha
-  const verifyRecaptcha = async (): Promise<boolean> => {
-    if (!recaptchaLoaded || !window.grecaptcha) {
-      toast.error("reCaptcha non chargé");
-      return false;
-    }
-
-    try {
-      const token = await window.grecaptcha.execute('6LfgWJUrAAAAAL7BccALaFZ8r9eSnQGGYrN3DaPq', { action: 'login' });
-      
-      const response = await supabase.functions.invoke('verify-recaptcha', {
-        body: { token }
-      });
-
-      if (response.error) {
-        console.error('Erreur vérification reCaptcha:', response.error);
-        toast.error("Erreur lors de la vérification de sécurité");
-        return false;
-      }
-
-      if (!response.data?.success) {
-        console.error('reCaptcha échoué:', response.data);
-        toast.error("Vérification de sécurité échouée");
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Erreur reCaptcha:', error);
-      toast.error("Erreur lors de la vérification de sécurité");
-      return false;
-    }
-  };
-
   const onSubmit = async (values: FormValues) => {
     if (isSubmitting) return;
     
     try {
       setIsSubmitting(true);
       console.log("Starting login for:", values.email);
-      
-      // Verify reCaptcha before proceeding
-      const isRecaptchaValid = await verifyRecaptcha();
-      if (!isRecaptchaValid) {
-        return;
-      }
       
       const result = await login(values.email, values.password);
       

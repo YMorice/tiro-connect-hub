@@ -18,12 +18,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload from "@/components/FileUpload";
 import { supabase } from "@/integrations/supabase/client";
 
-// Declare global grecaptcha
-declare global {
-  interface Window {
-    grecaptcha: any;
-  }
-}
 
 // List of available skills for checkboxes
 const AVAILABLE_SKILLS = [
@@ -161,7 +155,7 @@ const Register = () => {
   const [registrationCompleted, setRegistrationCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
+  
   
   const [formValues, setFormValues] = useState<FormValues>({
     email: "",
@@ -171,32 +165,6 @@ const Register = () => {
     acceptTerms: false,
   });
 
-  // Load reCaptcha script
-  useEffect(() => {
-    const loadRecaptcha = () => {
-      if (window.grecaptcha) {
-        setRecaptchaLoaded(true);
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://www.google.com/recaptcha/api.js?render=6LfgWJUrAAAAAL7BccALaFZ8r9eSnQGGYrN3DaPq';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        setRecaptchaLoaded(true);
-      };
-      document.head.appendChild(script);
-
-      return () => {
-        if (document.head.contains(script)) {
-          document.head.removeChild(script);
-        }
-      };
-    };
-
-    loadRecaptcha();
-  }, []);
 
   // Redirect if user is already logged in
   useEffect(() => {
@@ -457,52 +425,13 @@ const Register = () => {
     });
   };
 
-  // Verify reCaptcha
-  const verifyRecaptcha = async (): Promise<boolean> => {
-    if (!recaptchaLoaded || !window.grecaptcha) {
-      toast.error("reCaptcha non chargé");
-      return false;
-    }
 
-    try {
-      const token = await window.grecaptcha.execute('6LfgWJUrAAAAAL7BccALaFZ8r9eSnQGGYrN3DaPq', { action: 'register' });
-      
-      const response = await supabase.functions.invoke('verify-recaptcha', {
-        body: { token }
-      });
-
-      if (response.error) {
-        console.error('Erreur vérification reCaptcha:', response.error);
-        toast.error("Erreur lors de la vérification de sécurité");
-        return false;
-      }
-
-      if (!response.data?.success) {
-        console.error('reCaptcha échoué:', response.data);
-        toast.error("Vérification de sécurité échouée");
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Erreur reCaptcha:', error);
-      toast.error("Erreur lors de la vérification de sécurité");
-      return false;
-    }
-  };
-
-  // Final submit function - with reCaptcha verification
+  // Final submit function
   const finalSubmit = async (values: FormValues) => {
     if (isSubmitting) return;
     
     try {
       setIsSubmitting(true);
-      
-      // Verify reCaptcha before proceeding
-      const isRecaptchaValid = await verifyRecaptcha();
-      if (!isRecaptchaValid) {
-        return;
-      }
       
       // Synchroniser l'avatar avec la dernière valeur uploadée
       values.avatar = avatarUrl;
