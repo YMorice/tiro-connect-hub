@@ -930,6 +930,7 @@ const Register = () => {
                       <Input 
                         placeholder="John" 
                         {...field} 
+                        className="bg-tiro-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -946,7 +947,8 @@ const Register = () => {
                     <FormControl>
                       <Input 
                         placeholder="Doe" 
-                        {...field} 
+                        {...field}
+                        className="bg-tiro-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -962,8 +964,9 @@ const Register = () => {
                     <FormLabel className="text-left">Numéro de téléphone</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="+33612345678" 
-                        {...field} 
+                        placeholder="0612345678" 
+                        {...field}
+                        className="bg-tiro-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -998,7 +1001,7 @@ const Register = () => {
               {/* Profile Picture Upload */}
               <div className="flex flex-col gap-4 items-center mb-4">
                 <Label className="self-start">Photo de profil</Label>
-                <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start">
+                <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-center">
                   <Avatar className="w-24 h-24">
                     {avatarUrl ? (
                       <AvatarImage src={avatarUrl} alt="Profile" />
@@ -1011,7 +1014,7 @@ const Register = () => {
                   <FileUpload 
                     onFileSelect={handleFileSelect} 
                     accept="image/*"
-                    buttonText="Télécharger une photo de profil"
+                    buttonText="Télécharger votre photo de profil"
                   />
                 </div>
               </div>
@@ -1025,7 +1028,8 @@ const Register = () => {
                     <FormControl>
                       <Input 
                         placeholder="John" 
-                        {...field} 
+                        {...field}
+                        className="bg-tiro-white" 
                       />
                     </FormControl>
                     <FormMessage />
@@ -1042,7 +1046,8 @@ const Register = () => {
                     <FormControl>
                       <Input 
                         placeholder="Doe" 
-                        {...field} 
+                        {...field}
+                        className="bg-tiro-white" 
                       />
                     </FormControl>
                     <FormMessage />
@@ -1058,8 +1063,9 @@ const Register = () => {
                     <FormLabel>Numéro de téléphone</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="+33612345678" 
-                        {...field} 
+                        placeholder="0612345678" 
+                        {...field}
+                        className="bg-tiro-white" 
                       />
                     </FormControl>
                     <FormMessage />
@@ -1091,7 +1097,7 @@ const Register = () => {
               {/* Profile Picture Upload */}
               <div className="flex flex-col gap-4 items-center mb-4">
                 <Label className="self-start">Photo de profil</Label>
-                <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start">
+                <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-center">
                   <Avatar className="w-24 h-24">
                     {avatarUrl ? (
                       <AvatarImage src={avatarUrl} alt="Profile" />
@@ -1104,7 +1110,7 @@ const Register = () => {
                   <FileUpload 
                     onFileSelect={handleFileSelect} 
                     accept="image/*"
-                    buttonText="Téléchager photo de profil"
+                    buttonText="Télécharger votre photo de profil"
                   />
                 </div>
               </div>
@@ -1117,8 +1123,9 @@ const Register = () => {
                     <FormLabel>Nom de l'entreprise</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="ACME Inc." 
-                        {...field} 
+                        placeholder="Tiro Inc." 
+                        {...field}
+                        className="bg-tiro-white" 
                       />
                     </FormControl>
                     <FormMessage />
@@ -1134,8 +1141,9 @@ const Register = () => {
                     <FormLabel>Votre rôle dans l'entreprise</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="CEO, CTO, Project Manager, etc." 
-                        {...field} 
+                        placeholder="CEO, CTO, Fondateur..." 
+                        {...field}
+                        className="bg-tiro-white" 
                       />
                     </FormControl>
                     <FormMessage />
@@ -1152,7 +1160,8 @@ const Register = () => {
                     <FormControl>
                       <Input 
                         placeholder="12345678901234" 
-                        {...field} 
+                        {...field}
+                        className="bg-tiro-white" 
                       />
                     </FormControl>
                     <FormMessage />
@@ -1169,7 +1178,8 @@ const Register = () => {
                     <FormControl>
                       <Textarea 
                         placeholder="Adresse complète de l'entreprise" 
-                        {...field} 
+                        {...field}
+                        className="bg-tiro-white" 
                       />
                     </FormControl>
                     <FormMessage />
@@ -1210,7 +1220,8 @@ const Register = () => {
                     <FormControl>
                       <Input 
                         placeholder="12345678901234" 
-                        {...field} 
+                        {...field}
+                        className="bg-tiro-white" 
                       />
                     </FormControl>
                     <FormMessage />
@@ -1244,7 +1255,8 @@ const Register = () => {
                     <FormControl>
                       <Input 
                         placeholder="FR76 1234 5678 9012 3456 7890 123" 
-                        {...field} 
+                        {...field}
+                        className="bg-tiro-white" 
                       />
                     </FormControl>
                     <FormMessage />

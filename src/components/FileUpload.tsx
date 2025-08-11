@@ -48,11 +48,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
           <Upload className="h-4 w-4" />
           {buttonText}
         </Button>
-        {fileName && (
-          <span className="text-sm text-muted-foreground">
-            {fileName}
-          </span>
-        )}
       </div>
       <input
         type="file"

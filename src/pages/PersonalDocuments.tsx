@@ -164,16 +164,15 @@ const PersonalDocuments = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-gray-50 py-6">
+      <div className="min-h-screen bg-tiro-test py-6">
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center space-x-2 mb-2">
-              <FileText className="h-8 w-8 text-primary" />
               <h1 className="text-3xl font-bold text-gray-900">Mes Documents</h1>
             </div>
             <p className="text-gray-600">
-              Retrouvez et téléchargez tous vos documents personnels
+              Retrouvez ici vos documents administratifs personnels.
             </p>
           </div>
 
@@ -188,32 +187,9 @@ const PersonalDocuments = () => {
                       placeholder="Rechercher par nom de document ou projet..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 bg-tiro-white"
                     />
                   </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant={filterType === 'all' ? 'default' : 'outline'}
-                    onClick={() => setFilterType('all')}
-                    size="sm"
-                  >
-                    Tous
-                  </Button>
-                  <Button
-                    variant={filterType === 'proposal' ? 'default' : 'outline'}
-                    onClick={() => setFilterType('proposal')}
-                    size="sm"
-                  >
-                    Propositions
-                  </Button>
-                  <Button
-                    variant={filterType === 'final_proposal' ? 'default' : 'outline'}
-                    onClick={() => setFilterType('final_proposal')}
-                    size="sm"
-                  >
-                    Finales
-                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -232,12 +208,6 @@ const PersonalDocuments = () => {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     {searchTerm || filterType !== 'all' ? 'Aucun document trouvé' : 'Aucun document'}
                   </h3>
-                  <p className="text-gray-500">
-                    {searchTerm || filterType !== 'all' 
-                      ? 'Essayez de modifier vos critères de recherche'
-                      : 'Vos documents apparaîtront ici une fois que vous en aurez uploadé'
-                    }
-                  </p>
                 </div>
               </CardContent>
             </Card>

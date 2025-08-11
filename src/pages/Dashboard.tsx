@@ -197,7 +197,7 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {selectedNotifications.slice(0, 3).map((project) => (
-                    <div key={project.id_project} className="flex items-center justify-between p-4 border rounded-lg bg-tiro-secondary/10">
+                    <div key={project.id_project} className="flex items-center justify-between p-4 border rounded-lg bg-tiro-white">
                       <div className="flex-1 min-w-0">
                         <Link 
                           to={`/projects/${project.id_project}`} 
@@ -206,9 +206,13 @@ const Dashboard = () => {
                           {project.title}
                         </Link>
                         <div className="flex items-center mt-1 space-x-2">
-                          <Badge className={`${getStatusColor(project.status)} text-xs`}>
-                            {getStatusLabel(project.status)}
-                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            De : {project.entrepreneurs?.users?.name}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            <Calendar className="h-3 w-3 inline mr-1" />
+                            {new Date(project.created_at).toLocaleDateString('fr-FR')}
+                          </span>
                         </div>
                       </div>
                       <Link to={`/projects/${project.id_project}`}>
@@ -287,13 +291,13 @@ const Dashboard = () => {
                       <div className="flex-1 min-w-0">
                         <Link 
                           to={`/projects/${proposal.projects.id_project}`} 
-                          className="font-medium text-gray-900 hover:text-tiro-primary transition-colors truncate block"
+                          className="font-medium text-gray-900 truncate block"
                         >
                           {proposal.projects.title}
                         </Link>
                         <div className="flex items-center mt-1 space-x-2">
                           <span className="text-xs text-gray-500">
-                            De : {proposal.projects.entrepreneurs?.users?.name} {proposal.projects.entrepreneurs?.users?.surname}
+                            De : {proposal.projects.entrepreneurs?.users?.name}
                           </span>
                           <span className="text-xs text-gray-500">
                             <Calendar className="h-3 w-3 inline mr-1" />
@@ -302,7 +306,7 @@ const Dashboard = () => {
                         </div>
                       </div>
                       <Link to={`/projects/${proposal.projects.id_project}`}>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="bg-blue-500 text-tiro-white hover:bg-blue-500/75 hover:text-tiro-white">
                           Voir et Répondre
                         </Button>
                       </Link>
