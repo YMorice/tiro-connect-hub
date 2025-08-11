@@ -581,7 +581,7 @@ const Register = () => {
                       <div
                         role="radiogroup"
                         aria-label="Choisir votre rôle"
-                        className="grid grid-cols-1 gap-4 md:grid-cols-2"
+                        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-6"
                       >
                         {[
                           {
@@ -618,13 +618,13 @@ const Register = () => {
                                 "p-4 md:p-6 text-left",
                               ].join(" ")}
                             >
-                              <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-4 md:gap-6 lg:gap-8">
                                 <img
                                   src={opt.img}
                                   alt={opt.alt}
                                   loading="lazy"
                                   decoding="async"
-                                  className="h-24 w-24 md:h-28 md:w-28 object-contain"
+                                  className="h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-36 lg:w-36 object-contain"
                                 />
                                 <div className="space-y-1">
                                   <h3 className="text-lg font-semibold">{opt.title}</h3>
@@ -710,6 +710,7 @@ const Register = () => {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         id="terms"
+                        className="h-4 w-4 shrink-0"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
