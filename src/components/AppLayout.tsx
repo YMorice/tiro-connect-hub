@@ -279,7 +279,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     <Link
                       key={item.label}
                       to={item.href}
-                      className="flex items-center px-4 py-2 rounded-[5px] text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                      className="flex items-center px-4 py-2 rounded-[5px] text-sm text-tiro-black/80 hover:bg-muted/50 transition-all"
                     >
                       <item.icon className="mr-3 h-4 w-4" />
                       <span>{item.label}</span>
@@ -288,7 +288,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     <button
                       key={item.label}
                       onClick={item.action}
-                      className="w-full flex items-center px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                      className="w-full flex items-center px-4 py-2 rounded-lg text-sm text-tiro-black/80 hover:bg-muted/50 transition-all"
                     >
                       <item.icon className="mr-3 h-4 w-4" />
                       <span>{item.label}</span>

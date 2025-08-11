@@ -230,10 +230,10 @@ const Dashboard = () => {
           {/* Notifications pour les étudiants non sélectionnés */}
           {userRole === 'student' && rejectedProposals.length > 0 && (
             <div className="mb-8">
-              <Card className="border-l-4 border-l-red-500">
+              <Card className="border-l-4 border-l-tiro-primary">
                 <CardHeader>
                   <CardTitle className="text-xl flex items-center gap-2">
-                    <UserX className="h-5 w-5 text-red-500" />
+                    <UserX className="h-5 w-5 text-yellow-500" />
                     Projets non retenus
                     <Badge variant="secondary" className="bg-red-100 text-red-800">{rejectedProposals.length}</Badge>
                   </CardTitle>

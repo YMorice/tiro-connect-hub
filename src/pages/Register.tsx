@@ -834,8 +834,8 @@ const Register = () => {
                     <FormControl>
                       <Textarea 
                         placeholder="Parlez nous de vos compétences, vos expériences et vos intérêts..." 
-                        className="min-h-[100px]"
-                        {...field} 
+                        className="min-h-[100px] bg-tiro-white"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -852,7 +852,8 @@ const Register = () => {
                     <FormControl>
                       <Input 
                         placeholder="Votre éducation ou formation" 
-                        {...field} 
+                        {...field}
+                        className="bg-tiro-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -870,6 +871,7 @@ const Register = () => {
                       <Input 
                         placeholder="votreportfolio.com" 
                         {...field}
+                        className="bg-tiro-white"
                       />
                     </FormControl>
                     <FormMessage />
@@ -1238,7 +1240,8 @@ const Register = () => {
                     <FormControl>
                       <Textarea 
                         placeholder="Votre adresse complète" 
-                        {...field} 
+                        {...field}
+                        className="bg-tiro-white"
                       />
                     </FormControl>
                     <FormMessage />
