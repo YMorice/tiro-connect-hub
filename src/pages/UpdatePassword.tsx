@@ -41,7 +41,12 @@ const UpdatePassword = () => {
     const init = async () => {
       try {
         // 1) PKCE flow: ?code=...
-        const code = searchParams.get("code");
+        // 1) PKCE flow: ?code=... (also support code in URL hash)
+        let code = searchParams.get("code");
+        if (!code && window.location.hash) {
+          const hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
+          code = hashParams.get("code") || code;
+        }
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
