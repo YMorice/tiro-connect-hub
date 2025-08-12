@@ -258,7 +258,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <span>{item.label}</span>
             </Link>
           ))}
-          
+
           {/* Settings Expandable Section */}
           <div className="space-y-1">
             <Button
@@ -305,6 +305,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </div>
             )}
           </div>
+          {/* Lien Admin */}
+          {user?.role?.toLowerCase() === "admin" && (
+            <Link to="/admin" aria-label="Page Admin" className="ml-2">
+              <Button className="w-full justify-center">
+                <Shield className="h-5 w-5 mr-2" />
+                Page Admin
+              </Button>
+            </Link>
+          )}
         </nav>
 
         {/* User Section */}

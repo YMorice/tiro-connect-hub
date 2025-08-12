@@ -215,3 +215,8 @@
     font-size: clamp(1.25rem, 4vw, 2rem);
   }
 }
+
+/* Désactive toutes les ombres dans l'app */
+* {
+  box-shadow: none !important;
+}
