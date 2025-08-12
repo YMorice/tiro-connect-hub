@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload from "@/components/FileUpload";
 import { supabase } from "@/integrations/supabase/client";
-import { Palette, Clapperboard, BadgeCheck, PenTool } from "lucide-react";
+import { Palette, Clapperboard, LayoutDashboard, PenTool } from "lucide-react";
 
 // List of available skills for checkboxes
 const AVAILABLE_SKILLS = [
@@ -705,13 +705,13 @@ const Register = () => {
                 name="specialty"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quelles sont vos spécialités ?</FormLabel>
+                    <FormLabel>Quelles sont votre/vos spécialité.s ?</FormLabel>
                     <FormControl>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {[
-                          { value: "ui_ux", label: "UI/UX", Icon: Palette },
+                          { value: "ui_ux", label: "UI/UX", Icon: LayoutDashboard },
                           { value: "motion_design", label: "Motion Design", Icon: Clapperboard },
-                          { value: "identite_visuelle", label: "Identité Visuelle", Icon: BadgeCheck },
+                          { value: "identite_visuelle", label: "Identité Visuelle", Icon: Palette },
                           { value: "creation_contenu", label: "Création de contenu", Icon: PenTool },
                         ].map((opt) => {
                           const selected = (field.value || []).includes(opt.value);
@@ -742,7 +742,6 @@ const Register = () => {
                                 <opt.Icon className="h-6 w-6 text-primary" aria-hidden="true" />
                                 <div className="space-y-1">
                                   <h3 className="text-base font-semibold">{opt.label}</h3>
-                                  <p className="text-xs text-muted-foreground">Cliquez pour sélectionner</p>
                                 </div>
                               </div>
                               {selected && (
@@ -768,7 +767,7 @@ const Register = () => {
                     <FormLabel>A propos de vous</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Parlez nous de vos compétences, vos expériences et vos intérêts..." 
+                        placeholder="Cette description sera utilisée pour présenter votre profil à nos clients." 
                         className="min-h-[100px] bg-tiro-white"
                         {...field}
                       />
@@ -816,7 +815,7 @@ const Register = () => {
               
               {/* Skills selection with checkboxes */}
               <div className="space-y-2">
-                <Label>Compétences (Sélectionnez ce qui vous correspond)</Label>
+                <Label>Compétences</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">
                   {AVAILABLE_SKILLS.map((skill) => (
                     <div key={skill} className="flex items-center space-x-2">
