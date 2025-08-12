@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           id_document: string
           id_project: string
+          id_user: string | null
           link: string
           name: string
           type: string
@@ -28,6 +29,7 @@ export type Database = {
           created_at?: string
           id_document?: string
           id_project: string
+          id_user?: string | null
           link: string
           name: string
           type: string
@@ -37,6 +39,7 @@ export type Database = {
           created_at?: string
           id_document?: string
           id_project?: string
+          id_user?: string | null
           link?: string
           name?: string
           type?: string
@@ -49,6 +52,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id_project"]
+          },
+          {
+            foreignKeyName: "documents_id_user_fkey"
+            columns: ["id_user"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id_users"]
           },
         ]
       }
@@ -86,6 +96,36 @@ export type Database = {
             referencedColumns: ["id_users"]
           },
         ]
+      }
+      gg_analytics: {
+        Row: {
+          avg_session_duration: number | null
+          created_at: string
+          engagement_rate: number | null
+          id: number
+          nb_new_users: number | null
+          nb_session: number | null
+          nb_users: number | null
+        }
+        Insert: {
+          avg_session_duration?: number | null
+          created_at?: string
+          engagement_rate?: number | null
+          id?: number
+          nb_new_users?: number | null
+          nb_session?: number | null
+          nb_users?: number | null
+        }
+        Update: {
+          avg_session_duration?: number | null
+          created_at?: string
+          engagement_rate?: number | null
+          id?: number
+          nb_new_users?: number | null
+          nb_session?: number | null
+          nb_users?: number | null
+        }
+        Relationships: []
       }
       message_groups: {
         Row: {
@@ -357,31 +397,31 @@ export type Database = {
       }
       reviews: {
         Row: {
-          comment: string
-          created_at: string
-          entrepreneur_id: string
+          comment: string | null
+          created_at: string | null
+          entrepreneur_id: string | null
           id: string
-          project_id: string
-          rating: number
-          student_id: string
+          project_id: string | null
+          rating: number | null
+          student_id: string | null
         }
         Insert: {
-          comment: string
-          created_at?: string
-          entrepreneur_id: string
+          comment?: string | null
+          created_at?: string | null
+          entrepreneur_id?: string | null
           id?: string
-          project_id: string
-          rating: number
-          student_id: string
+          project_id?: string | null
+          rating?: number | null
+          student_id?: string | null
         }
         Update: {
-          comment?: string
-          created_at?: string
-          entrepreneur_id?: string
+          comment?: string | null
+          created_at?: string | null
+          entrepreneur_id?: string | null
           id?: string
-          project_id?: string
-          rating?: number
-          student_id?: string
+          project_id?: string | null
+          rating?: number | null
+          student_id?: string | null
         }
         Relationships: [
           {
@@ -394,7 +434,7 @@ export type Database = {
           {
             foreignKeyName: "reviews_project_id_fkey"
             columns: ["project_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "projects"
             referencedColumns: ["id_project"]
           },
@@ -406,6 +446,39 @@ export type Database = {
             referencedColumns: ["id_student"]
           },
         ]
+      }
+      social_account: {
+        Row: {
+          created_at: string
+          engagement_rate: number | null
+          followers_count: number | null
+          id: number
+          likes_count: number | null
+          platform: string | null
+          videos_count: number | null
+          views_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          engagement_rate?: number | null
+          followers_count?: number | null
+          id?: number
+          likes_count?: number | null
+          platform?: string | null
+          videos_count?: number | null
+          views_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          engagement_rate?: number | null
+          followers_count?: number | null
+          id?: number
+          likes_count?: number | null
+          platform?: string | null
+          videos_count?: number | null
+          views_count?: number | null
+        }
+        Relationships: []
       }
       students: {
         Row: {
