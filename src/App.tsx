@@ -1,4 +1,3 @@
-
 /**
  * App Component - Main Application Entry Point
  * 
@@ -32,6 +31,7 @@ import { AuthProvider } from "@/context/auth-context";
 import { ProjectProvider } from "@/context/project-context";
 import { MessageProvider } from "@/context/message-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AppLayout from "@/components/AppLayout";
 
 // Import all page components
 import Index from "@/pages/Index";
@@ -110,113 +110,30 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
-                
-                {/* Protected Routes - Require authentication */}
+
+                {/* Protected Routes with AppLayout - Require authentication */}
                 <Route
-                  path="/dashboard"
                   element={
                     <ProtectedRoute>
-                      <Dashboard />
+                      <AppLayout />
                     </ProtectedRoute>
                   }
-                />
-                <Route
-                  path="/projects"
-                  element={
-                    <ProtectedRoute>
-                      <Projects />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/projects/:id"
-                  element={
-                    <ProtectedRoute>
-                      <ProjectDetail />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/projects/new"
-                  element={
-                    <ProtectedRoute>
-                      <NewProject />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/pack-selection"
-                  element={
-                    <ProtectedRoute>
-                      <PackSelection />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/messages"
-                  element={
-                    <ProtectedRoute>
-                      <Messages />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <Admin />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/students"
-                  element={
-                    <ProtectedRoute>
-                      <AdminStudents />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/student-selection"
-                  element={
-                    <ProtectedRoute>
-                      <StudentSelection />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/new-project"
-                  element={
-                    <ProtectedRoute>
-                      <NewProject />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/accepted-students"
-                  element={
-                    <ProtectedRoute>
-                      <AcceptedStudents />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/documents"
-                  element={
-                    <ProtectedRoute>
-                      <PersonalDocuments />
-                    </ProtectedRoute>
-                  }
-                />
-                
+                >
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/projects" element={<Projects />} />
+                  <Route path="/projects/:id" element={<ProjectDetail />} />
+                  <Route path="/projects/new" element={<NewProject />} />
+                  <Route path="/pack-selection" element={<PackSelection />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/admin/students" element={<AdminStudents />} />
+                  <Route path="/student-selection" element={<StudentSelection />} />
+                  <Route path="/new-project" element={<NewProject />} />
+                  <Route path="/accepted-students" element={<AcceptedStudents />} />
+                  <Route path="/documents" element={<PersonalDocuments />} />
+                </Route>
+
                 {/* Fallback Route - 404 handling */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

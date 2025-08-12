@@ -210,81 +210,79 @@ const StudentSelection = () => {
     : (students.length > 0 ? "No students match the current filters" : "No students have accepted the proposal yet");
 
   return (
-    <AppLayout>
-      <div className="h-screen flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 space-y-4 p-4">
-          <div className="flex flex-col gap-3">
-            <div>
-              <button 
-                onClick={() => navigate('/admin')}
-                className="flex items-center text-muted-foreground hover:text-foreground mb-2 text-sm"
-              >
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                Back to Admin
-              </button>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{pageTitle}</h1>
-              <p className="text-muted-foreground text-sm">
-                {projectTitle ? `For project: ${projectTitle}` : pageDescription}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Mode: {mode} | Project ID: {projectId}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                onClick={proposeStudents}
-                disabled={selectedStudents.length === 0 || proposing}
-                className="flex items-center text-sm h-9"
-                size="sm"
-              >
-                <Check className="h-4 w-4 mr-1" />
-                {proposing ? 'Proposing...' : buttonText}
-              </Button>
-            </div>
+    <div className="h-screen flex flex-col overflow-hidden">
+      <div className="flex-shrink-0 space-y-4 p-4">
+        <div className="flex flex-col gap-3">
+          <div>
+            <button 
+              onClick={() => navigate('/admin')}
+              className="flex items-center text-muted-foreground hover:text-foreground mb-2 text-sm"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Admin
+            </button>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{pageTitle}</h1>
+            <p className="text-muted-foreground text-sm">
+              {projectTitle ? `For project: ${projectTitle}` : pageDescription}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Mode: {mode} | Project ID: {projectId}
+            </p>
           </div>
-
-          {selectedStudents.length === 0 && (
-            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <p className="text-orange-800 font-medium text-sm">⚠️ Please select at least one student before proposing</p>
-              <p className="text-orange-600 text-xs mt-1">{warningText}</p>
-            </div>
-          )}
-
-          <StudentSelectionFilters
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            skillFilter={skillFilter}
-            setSkillFilter={setSkillFilter}
-            specialtyFilter={specialtyFilter}
-            setSpecialtyFilter={setSpecialtyFilter}
-            specialties={specialties}
-            onClearFilters={clearFilters}
-          />
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={proposeStudents}
+              disabled={selectedStudents.length === 0 || proposing}
+              className="flex items-center text-sm h-9"
+              size="sm"
+            >
+              <Check className="h-4 w-4 mr-1" />
+              {proposing ? 'Proposing...' : buttonText}
+            </Button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-hidden px-4 pb-4">
-          <Card className="h-full flex flex-col">
-            <CardHeader className="flex-shrink-0 p-4">
-              <CardTitle className="text-lg">
-                {mode === 'new' ? `Students (${filteredStudents.length})` : `Students Who Accepted (${filteredStudents.length})`}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-4 pt-0">
-              <div className="h-full">
-                <StudentTable
-                  students={filteredStudents}
-                  selectedStudents={selectedStudents}
-                  onToggleSelection={toggleStudentSelection}
-                  isStudentSelected={isStudentSelected}
-                  loading={loading}
-                  emptyMessage={emptyMessage}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {selectedStudents.length === 0 && (
+          <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-orange-800 font-medium text-sm">⚠️ Please select at least one student before proposing</p>
+            <p className="text-orange-600 text-xs mt-1">{warningText}</p>
+          </div>
+        )}
+
+        <StudentSelectionFilters
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          skillFilter={skillFilter}
+          setSkillFilter={setSkillFilter}
+          specialtyFilter={specialtyFilter}
+          setSpecialtyFilter={setSpecialtyFilter}
+          specialties={specialties}
+          onClearFilters={clearFilters}
+        />
       </div>
-    </AppLayout>
+
+      <div className="flex-1 overflow-hidden px-4 pb-4">
+        <Card className="h-full flex flex-col">
+          <CardHeader className="flex-shrink-0 p-4">
+            <CardTitle className="text-lg">
+              {mode === 'new' ? `Students (${filteredStudents.length})` : `Students Who Accepted (${filteredStudents.length})`}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden p-4 pt-0">
+            <div className="h-full">
+              <StudentTable
+                students={filteredStudents}
+                selectedStudents={selectedStudents}
+                onToggleSelection={toggleStudentSelection}
+                isStudentSelected={isStudentSelected}
+                loading={loading}
+                emptyMessage={emptyMessage}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 

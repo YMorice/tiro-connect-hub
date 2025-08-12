@@ -258,250 +258,248 @@ const Admin = () => {
   }
 
   return (
-    <AppLayout>
-      <div className="h-full overflow-auto">
-        <div className="max-w-full p-4 space-y-4">
-          <div className="flex flex-col gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Tableau de Bord Admin</h1>
-              <p className="text-muted-foreground text-sm">Gérer les projets et les affectations d'étudiants</p>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate('/new-project')} className="flex items-center text-sm h-9" size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Créer un Nouveau Projet
-              </Button>
-              <Button onClick={() => navigate('/admin/students')} className="flex items-center text-sm h-9" size="sm" variant="outline">
-                <GraduationCap className="h-4 w-4 mr-1" />
-                Gérer les Étudiants
-              </Button>
-            </div>
+    <div className="h-full overflow-auto">
+      <div className="max-w-full p-4 space-y-4">
+        <div className="flex flex-col gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Tableau de Bord Admin</h1>
+            <p className="text-muted-foreground text-sm">Gérer les projets et les affectations d'étudiants</p>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                <CardTitle className="text-sm font-medium">Total des Projets</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <div className="text-xl font-bold">{projects.length}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                <CardTitle className="text-sm font-medium">Projets Actifs</CardTitle>
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <div className="text-xl font-bold">
-                  {projects.filter(p => p.status === 'Actif' || p.status === 'En cours').length}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
-                <CardTitle className="text-sm font-medium">Projets en Attente</CardTitle>
-                <Eye className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <div className="text-xl font-bold">
-                  {projects.filter(p => p.status === 'Nouveau' || p.status === 'Propositions' || p.status === 'Sélection').length}
-                </div>
-              </CardContent>
-            </Card>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate('/new-project')} className="flex items-center text-sm h-9" size="sm">
+              <Plus className="h-4 w-4 mr-1" />
+              Créer un Nouveau Projet
+            </Button>
+            <Button onClick={() => navigate('/admin/students')} className="flex items-center text-sm h-9" size="sm" variant="outline">
+              <GraduationCap className="h-4 w-4 mr-1" />
+              Gérer les Étudiants
+            </Button>
           </div>
+        </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card>
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">Tous les Projets</CardTitle>
-              <CardDescription className="text-sm">Gérer les statuts des projets et les affectations d'étudiants</CardDescription>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Rechercher des projets..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8 text-sm h-9"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[150px] h-9 text-sm">
-                      <SelectValue placeholder="Filtrer par statut" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Tous les statuts</SelectItem>
-                      {statusOptions.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {(searchQuery || statusFilter) && (
-                    <Button variant="outline" size="sm" onClick={clearFilters} className="h-9 text-sm">
-                      <Filter className="h-4 w-4 mr-1" />
-                      Effacer
-                    </Button>
-                  )}
-                </div>
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <CardTitle className="text-sm font-medium">Total des Projets</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              {loading ? (
-                <div className="flex justify-center py-6">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                </div>
-              ) : (
-                <div className="border rounded-md overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-sm min-w-[200px]">Titre du Projet</TableHead>
-                        <TableHead className="hidden md:table-cell text-sm min-w-[150px]">Entrepreneur</TableHead>
-                        <TableHead className="hidden sm:table-cell text-sm min-w-[100px]">Statut</TableHead>
-                        <TableHead className="hidden sm:table-cell text-sm min-w-[100px]">Prix</TableHead>
-                        <TableHead className="hidden lg:table-cell text-sm min-w-[100px]">Créé</TableHead>
-                        <TableHead className="text-sm min-w-[300px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredProjects.length > 0 ? (
-                        filteredProjects.map(project => (
-                          <TableRow key={project.id}>
-                            <TableCell className="font-medium">
-                              <div>
-                                <div className="font-semibold text-sm">{project.title}</div>
-                                <div className="text-xs text-muted-foreground">{project.packName}</div>
-                                {project.description && (
-                                  <div className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                    {project.description}
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <div>
-                                <div className="font-medium text-sm">{project.entrepreneur.name}</div>
-                                {project.entrepreneur.companyName && (
-                                  <div className="text-xs text-muted-foreground">
-                                    {project.entrepreneur.companyName}
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden sm:table-cell">
-                              <Badge className={`${getStatusColor(project.status)} text-xs`}>
-                                {project.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="hidden sm:table-cell text-xs">
-                              {project.price ? (
-                                <span className="font-medium">{project.price.toLocaleString('fr-FR')} €</span>
-                              ) : (
-                                <span className="text-muted-foreground">Non défini</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell text-xs">
-                              {new Date(project.created_at).toLocaleDateString('fr-FR')}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1 flex-wrap">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleViewConversation(project.id, project.title)}
-                                  className="flex items-center text-xs h-8"
-                                >
-                                  <MessageCircle className="h-3 w-3 mr-1" />
-                                  <span className="hidden sm:inline">Voir Conversation</span>
-                                  <span className="sm:hidden">Chat</span>
-                                </Button>
-                                
-                                {(project.status === 'Nouveau' || project.status === 'Propositions') && (
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => handleSelectStudents(project.id, project.title, project.status)}
-                                    className="flex items-center text-xs h-8"
-                                  >
-                                    <UserPlus className="h-3 w-3 mr-1" />
-                                    <span className="hidden sm:inline">
-                                      {project.status === 'Nouveau' ? 'Sélectionner Étudiants' : 'Sélectionner Acceptés'}
-                                    </span>
-                                    <span className="sm:hidden">Sélectionner</span>
-                                  </Button>
-                                )}
-                                
-                                {(project.status === 'Actif' || project.status === 'En cours') && (
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button 
-                                        variant="default" 
-                                        size="sm"
-                                        className="flex items-center bg-purple-600 hover:bg-purple-700 text-xs h-8"
-                                      >
-                                        <Eye className="h-3 w-3 mr-1" />
-                                        <span className="hidden sm:inline">Terminer Projet</span>
-                                        <span className="sm:hidden">Terminer</span>
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Terminer le Projet</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Êtes-vous sûr de vouloir marquer "{project.title}" comme terminé ? Cela rendra l'étudiant assigné disponible pour de nouveaux projets et ne peut pas être annulé.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                        <AlertDialogAction 
-                                          onClick={() => handleCompleteProject(project.id)}
-                                          className="bg-purple-600 hover:bg-purple-700"
-                                        >
-                                          Terminer le Projet
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                )}
-                                
-                                {/* Price update button for custom quotes */}
-                                {project.packName === 'Devis personnalisé' && (
-                                  <PriceUpdateDialog
-                                    projectId={project.id}
-                                    projectTitle={project.title}
-                                    currentPrice={project.price}
-                                    onPriceUpdated={refreshProjects}
-                                  />
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-4 text-sm">
-                            {projects.length > 0 
-                              ? "Aucun projet ne correspond aux critères de recherche" 
-                              : "Aucun projet trouvé"}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
+              <div className="text-xl font-bold">{projects.length}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <CardTitle className="text-sm font-medium">Projets Actifs</CardTitle>
+              <MessageCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl font-bold">
+                {projects.filter(p => p.status === 'Actif' || p.status === 'En cours').length}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
+              <CardTitle className="text-sm font-medium">Projets en Attente</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="text-xl font-bold">
+                {projects.filter(p => p.status === 'Nouveau' || p.status === 'Propositions' || p.status === 'Sélection').length}
+              </div>
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader className="p-4">
+            <CardTitle className="text-lg">Tous les Projets</CardTitle>
+            <CardDescription className="text-sm">Gérer les statuts des projets et les affectations d'étudiants</CardDescription>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Rechercher des projets..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 text-sm h-9"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[150px] h-9 text-sm">
+                    <SelectValue placeholder="Filtrer par statut" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Tous les statuts</SelectItem>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(searchQuery || statusFilter) && (
+                  <Button variant="outline" size="sm" onClick={clearFilters} className="h-9 text-sm">
+                    <Filter className="h-4 w-4 mr-1" />
+                    Effacer
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            {loading ? (
+              <div className="flex justify-center py-6">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              </div>
+            ) : (
+              <div className="border rounded-md overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-sm min-w-[200px]">Titre du Projet</TableHead>
+                      <TableHead className="hidden md:table-cell text-sm min-w-[150px]">Entrepreneur</TableHead>
+                      <TableHead className="hidden sm:table-cell text-sm min-w-[100px]">Statut</TableHead>
+                      <TableHead className="hidden sm:table-cell text-sm min-w-[100px]">Prix</TableHead>
+                      <TableHead className="hidden lg:table-cell text-sm min-w-[100px]">Créé</TableHead>
+                      <TableHead className="text-sm min-w-[300px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProjects.length > 0 ? (
+                      filteredProjects.map(project => (
+                        <TableRow key={project.id}>
+                          <TableCell className="font-medium">
+                            <div>
+                              <div className="font-semibold text-sm">{project.title}</div>
+                              <div className="text-xs text-muted-foreground">{project.packName}</div>
+                              {project.description && (
+                                <div className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                  {project.description}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <div>
+                              <div className="font-medium text-sm">{project.entrepreneur.name}</div>
+                              {project.entrepreneur.companyName && (
+                                <div className="text-xs text-muted-foreground">
+                                  {project.entrepreneur.companyName}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge className={`${getStatusColor(project.status)} text-xs`}>
+                              {project.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell text-xs">
+                            {project.price ? (
+                              <span className="font-medium">{project.price.toLocaleString('fr-FR')} €</span>
+                            ) : (
+                              <span className="text-muted-foreground">Non défini</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell text-xs">
+                            {new Date(project.created_at).toLocaleDateString('fr-FR')}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 flex-wrap">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleViewConversation(project.id, project.title)}
+                                className="flex items-center text-xs h-8"
+                              >
+                                <MessageCircle className="h-3 w-3 mr-1" />
+                                <span className="hidden sm:inline">Voir Conversation</span>
+                                <span className="sm:hidden">Chat</span>
+                              </Button>
+                              
+                              {(project.status === 'Nouveau' || project.status === 'Propositions') && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleSelectStudents(project.id, project.title, project.status)}
+                                  className="flex items-center text-xs h-8"
+                                >
+                                  <UserPlus className="h-3 w-3 mr-1" />
+                                  <span className="hidden sm:inline">
+                                    {project.status === 'Nouveau' ? 'Sélectionner Étudiants' : 'Sélectionner Acceptés'}
+                                  </span>
+                                  <span className="sm:hidden">Sélectionner</span>
+                                </Button>
+                              )}
+                              
+                              {(project.status === 'Actif' || project.status === 'En cours') && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button 
+                                      variant="default" 
+                                      size="sm"
+                                      className="flex items-center bg-purple-600 hover:bg-purple-700 text-xs h-8"
+                                    >
+                                      <Eye className="h-3 w-3 mr-1" />
+                                      <span className="hidden sm:inline">Terminer Projet</span>
+                                      <span className="sm:hidden">Terminer</span>
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Terminer le Projet</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Êtes-vous sûr de vouloir marquer "{project.title}" comme terminé ? Cela rendra l'étudiant assigné disponible pour de nouveaux projets et ne peut pas être annulé.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                        onClick={() => handleCompleteProject(project.id)}
+                                        className="bg-purple-600 hover:bg-purple-700"
+                                      >
+                                        Terminer le Projet
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                              
+                              {/* Price update button for custom quotes */}
+                              {project.packName === 'Devis personnalisé' && (
+                                <PriceUpdateDialog
+                                  projectId={project.id}
+                                  projectTitle={project.title}
+                                  currentPrice={project.price}
+                                  onPriceUpdated={refreshProjects}
+                                />
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-4 text-sm">
+                          {projects.length > 0 
+                            ? "Aucun projet ne correspond aux critères de recherche" 
+                            : "Aucun projet trouvé"}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
-    </AppLayout>
+    </div>
   );
 };
 

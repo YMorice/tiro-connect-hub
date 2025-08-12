@@ -156,287 +156,285 @@ const Dashboard = () => {
   }
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-tiro-test">
-        <div className="container mx-auto px-4 py-6 max-w-7xl">
-          {/* En-tête */}
-          <div className="mb-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-tiro-black mb-2 text-left">
-                  Bon retour, {user?.user_metadata?.name || "Utilisateur"} !
-                </h1>
-                <p className="text-tiro-black text-left">
-                  Voici un aperçu de vos projets et de votre activité récente.
-                </p>
-              </div>
-              {userRole === 'entrepreneur' && (
-                <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/70">
-                  <Link to="/pack-selection">
-                    <FolderPlus className="h-4 w-4 mr-2" />
-                    Nouveau Projet
-                  </Link>
-                </Button>
-              )}
+    <div className="min-h-screen bg-tiro-test">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* En-tête */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-3xl  sm:text-4xl font-clash text-tiro-black mb-2 text-left">
+                Bon retour, {user?.user_metadata?.name || "Utilisateur"} !
+              </h1>
+              <p className="text-tiro-black text-left">
+                Voici un aperçu de vos projets et de votre activité récente.
+              </p>
             </div>
+            {userRole === 'entrepreneur' && (
+              <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/70">
+                <Link to="/pack-selection">
+                  <FolderPlus className="h-4 w-4 mr-2" />
+                  Nouveau Projet
+                </Link>
+              </Button>
+            )}
           </div>
+        </div>
 
-          {/* Notifications pour les étudiants sélectionnés */}
-          {userRole === 'student' && selectedNotifications.length > 0 && (
-            <div className="mb-8">
-              <Card className="border-l-4 border-l-tiro-secondary">
-                <CardHeader>
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <UserCheck className="h-5 w-5 text-tiro-secondary" />
-                    Félicitations ! Vous avez été sélectionné
-                    <Badge variant="secondary" className="bg-tiro-secondary/10 text-tiro-secondary">{selectedNotifications.length}</Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    Vous avez été choisi pour travailler sur {selectedNotifications.length > 1 ? 'ces projets' : 'ce projet'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {selectedNotifications.slice(0, 3).map((project) => (
-                    <div key={project.id_project} className="flex items-center justify-between p-4 border rounded-lg bg-tiro-white">
-                      <div className="flex-1 min-w-0">
-                        <Link 
-                          to={`/projects/${project.id_project}`} 
-                          className="font-medium text-gray-900 transition-colors truncate block"
-                        >
-                          {project.title}
-                        </Link>
-                        <div className="flex items-center mt-1 space-x-2">
-                          <span className="text-xs text-gray-500">
-                            De : {project.entrepreneurs?.users?.name}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            <Calendar className="h-3 w-3 inline mr-1" />
-                            {new Date(project.created_at).toLocaleDateString('fr-FR')}
-                          </span>
-                        </div>
-                      </div>
-                      <Link to={`/projects/${project.id_project}`}>
-                        <Button size="sm" className="bg-tiro-secondary text-white hover:bg-tiro-secondary/70 text-white">
-                          Voir le Projet
-                        </Button>
+        {/* Notifications pour les étudiants sélectionnés */}
+        {userRole === 'student' && selectedNotifications.length > 0 && (
+          <div className="mb-8">
+            <Card className="border-l-4 border-l-tiro-secondary">
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <UserCheck className="h-5 w-5 text-tiro-secondary" />
+                  Félicitations ! Vous avez été sélectionné
+                  <Badge variant="secondary" className="bg-tiro-secondary/10 text-tiro-secondary">{selectedNotifications.length}</Badge>
+                </CardTitle>
+                <CardDescription>
+                  Vous avez été choisi pour travailler sur {selectedNotifications.length > 1 ? 'ces projets' : 'ce projet'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {selectedNotifications.slice(0, 3).map((project) => (
+                  <div key={project.id_project} className="flex items-center justify-between p-4 border rounded-lg bg-tiro-white">
+                    <div className="flex-1 min-w-0">
+                      <Link 
+                        to={`/projects/${project.id_project}`} 
+                        className="font-medium text-gray-900 transition-colors truncate block"
+                      >
+                        {project.title}
                       </Link>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Notifications pour les étudiants non sélectionnés */}
-          {userRole === 'student' && rejectedProposals.length > 0 && (
-            <div className="mb-8">
-              <Card className="border-l-4 border-l-tiro-primary">
-                <CardHeader>
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <UserX className="h-5 w-5 text-yellow-500" />
-                    Projets non retenus
-                    <Badge variant="secondary" className="bg-red-100 text-red-800">{rejectedProposals.length}</Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    L'entrepreneur a choisi un autre étudiant pour {rejectedProposals.length > 1 ? 'ces projets' : 'ce projet'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {rejectedProposals.slice(0, 3).map((proposal) => (
-                    <div key={proposal.id_proposal} className="flex items-center justify-between p-4 border rounded-lg bg-red-50">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900 truncate">
-                          {proposal.projects.title}
-                        </div>
-                        <div className="flex items-center mt-1 space-x-2">
-                          <span className="text-xs text-gray-500">
-                            Par : {proposal.projects.entrepreneurs?.users?.name} {proposal.projects.entrepreneurs?.users?.surname}
-                          </span>
-                          <span className="text-xs text-red-600">
-                            • Un autre étudiant a été sélectionné
-                          </span>
-                        </div>
+                      <div className="flex items-center mt-1 space-x-2">
+                        <span className="text-xs text-gray-500">
+                          De : {project.entrepreneurs?.users?.name}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          <Calendar className="h-3 w-3 inline mr-1" />
+                          {new Date(project.created_at).toLocaleDateString('fr-FR')}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                  {rejectedProposals.length > 3 && (
-                    <div className="text-center pt-4">
-                      <p className="text-sm text-gray-500">
-                        Et {rejectedProposals.length - 3} autres projets...
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Section Propositions d'Étudiants */}
-          {userRole === 'student' && pendingProposals.length > 0 && (
-            <div className="mb-8">
-              <Card className="border-l-4 border-l-blue-500 bg-tiro-white">
-                <CardHeader>
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <FilePlus className="h-5 w-5 text-blue-500" />
-                    Nouvelles Propositions de Projets
-                    <Badge variant="secondary">{pendingProposals.length}</Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    Vous avez de nouvelles propositions de projets en attente de votre réponse
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {pendingProposals.slice(0, 3).map((proposal) => (
-                    <div key={proposal.id_proposal} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="flex-1 min-w-0">
-                        <Link 
-                          to={`/projects/${proposal.projects.id_project}`} 
-                          className="font-medium text-gray-900 truncate block"
-                        >
-                          {proposal.projects.title}
-                        </Link>
-                        <div className="flex items-center mt-1 space-x-2">
-                          <span className="text-xs text-gray-500">
-                            De : {proposal.projects.entrepreneurs?.users?.name}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            <Calendar className="h-3 w-3 inline mr-1" />
-                            {new Date(proposal.created_at).toLocaleDateString('fr-FR')}
-                          </span>
-                        </div>
-                      </div>
-                      <Link to={`/projects/${proposal.projects.id_project}`}>
-                        <Button variant="outline" size="sm" className="bg-blue-500 text-tiro-white hover:bg-blue-500/75 hover:text-tiro-white">
-                          Voir et Répondre
-                        </Button>
-                      </Link>
-                    </div>
-                  ))}
-                  {pendingProposals.length > 3 && (
-                    <div className="text-center pt-4">
-                      <Link to="/projects">
-                        <Button variant="outline">
-                          Voir Toutes les Propositions ({pendingProposals.length})
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <Card className="bg-tiro-white">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="text-left">
-                      <CardTitle className="text-xl">Projets Récents</CardTitle>
-                    </div>
-                    <Link to="/projects">
-                      <Button variant="outline" size="sm">
-                        Voir Tout
+                    <Link to={`/projects/${project.id_project}`}>
+                      <Button size="sm" className="bg-tiro-secondary text-white hover:bg-tiro-secondary/70 text-white">
+                        Voir le Projet
                       </Button>
                     </Link>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {recentProjects.length > 0 ? (
-                    recentProjects.map(project => (
-                      <Link 
-                        key={project.id} 
-                        to={`/projects/${project.id}`}
-                        className="block p-4 border rounded-[5px] hover:bg-muted transition-colors cursor-pointer"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-foreground hover:text-muted-foreground transition-colors truncate">
-                            {project.title}
-                          </div>
-                          <div className="flex items-center mt-1 space-x-2">
-                            <Badge className={`${getStatusColor(project.status)} text-xs`}>
-                              {getStatusLabel(project.status)}
-                            </Badge>
-                            <span className="text-xs text-gray-500">
-                              <Calendar className="h-3 w-3 inline mr-1" />
-                              {new Date(project.updatedAt).toLocaleDateString('fr-FR')}
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <FolderPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500 mb-4">
-                        {userRole === 'student' ? 'Aucun projet assigné pour le moment' : 'Aucun projet pour le moment'}
-                      </p>
-                      {userRole === 'entrepreneur' && (
-                        <Link to="/pack-selection">
-                          <Button className="bg-tiro-purple hover:bg-tiro-purple/90">
-                            Créer Votre Premier Projet
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-            <div className="space-y-6">
-              <Card className="text-left bg-tiro-white">
-                <CardHeader className="text-left">
-                  <CardTitle className="text-lg">Conseils et Insights</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-left">
-                  <div className="flex items-start space-x-3">
-                    <AlertCircle className="h-5 w-5 text-tiro-primary mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {userRole === 'student' ? 'Répondez Rapidement' : 'Restez Professionnel'}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        {userRole === 'student' 
-                          ? 'Des réponses rapides aux propositions augmentent vos chances d\'être sélectionné.'
-                          : 'Adoptez une attitude et un ton pro, comme dans toute relation client.'
-                        }
-                      </p>
+        {/* Notifications pour les étudiants non sélectionnés */}
+        {userRole === 'student' && rejectedProposals.length > 0 && (
+          <div className="mb-8">
+            <Card className="border-l-4 border-l-tiro-primary">
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <UserX className="h-5 w-5 text-yellow-500" />
+                  Projets non retenus
+                  <Badge variant="secondary" className="bg-red-100 text-red-800">{rejectedProposals.length}</Badge>
+                </CardTitle>
+                <CardDescription>
+                  L'entrepreneur a choisi un autre étudiant pour {rejectedProposals.length > 1 ? 'ces projets' : 'ce projet'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {rejectedProposals.slice(0, 3).map((proposal) => (
+                  <div key={proposal.id_proposal} className="flex items-center justify-between p-4 border rounded-lg bg-red-50">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 truncate">
+                        {proposal.projects.title}
+                      </div>
+                      <div className="flex items-center mt-1 space-x-2">
+                        <span className="text-xs text-gray-500">
+                          Par : {proposal.projects.entrepreneurs?.users?.name} {proposal.projects.entrepreneurs?.users?.surname}
+                        </span>
+                        <span className="text-xs text-red-600">
+                          • Un autre étudiant a été sélectionné
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <MessageCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Restez Connecté
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        Une communication régulière avec votre étudiant mène à de meilleurs résultats de projet.
-                      </p>
-                    </div>
+                ))}
+                {rejectedProposals.length > 3 && (
+                  <div className="text-center pt-4">
+                    <p className="text-sm text-gray-500">
+                      Et {rejectedProposals.length - 3} autres projets...
+                    </p>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {userRole === 'student' ? 'Mettez à Jour Votre Profil' : 'Exigences Claires'}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        {userRole === 'student'
-                          ? 'Gardez vos compétences et portfolio à jour pour attirer plus de propositions de projets.'
-                          : 'Des descriptions de projet détaillées aident les étudiants à livrer exactement ce dont vous avez besoin.'
-                        }
-                      </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Section Propositions d'Étudiants */}
+        {userRole === 'student' && pendingProposals.length > 0 && (
+          <div className="mb-8">
+            <Card className="border-l-4 border-l-blue-500 bg-tiro-white">
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <FilePlus className="h-5 w-5 text-blue-500" />
+                  Nouvelles Propositions de Projets
+                  <Badge variant="secondary">{pendingProposals.length}</Badge>
+                </CardTitle>
+                <CardDescription>
+                  Vous avez de nouvelles propositions de projets en attente de votre réponse
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {pendingProposals.slice(0, 3).map((proposal) => (
+                  <div key={proposal.id_proposal} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <Link 
+                        to={`/projects/${proposal.projects.id_project}`} 
+                        className="font-medium text-gray-900 truncate block"
+                      >
+                        {proposal.projects.title}
+                      </Link>
+                      <div className="flex items-center mt-1 space-x-2">
+                        <span className="text-xs text-gray-500">
+                          De : {proposal.projects.entrepreneurs?.users?.name}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          <Calendar className="h-3 w-3 inline mr-1" />
+                          {new Date(proposal.created_at).toLocaleDateString('fr-FR')}
+                        </span>
+                      </div>
                     </div>
+                    <Link to={`/projects/${proposal.projects.id_project}`}>
+                      <Button variant="outline" size="sm" className="bg-blue-500 text-tiro-white hover:bg-blue-500/75 hover:text-tiro-white">
+                        Voir et Répondre
+                      </Button>
+                    </Link>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                ))}
+                {pendingProposals.length > 3 && (
+                  <div className="text-center pt-4">
+                    <Link to="/projects">
+                      <Button variant="outline">
+                        Voir Toutes les Propositions ({pendingProposals.length})
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <Card className="bg-tiro-white">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="text-left">
+                    <CardTitle className="text-xl">Projets Récents</CardTitle>
+                  </div>
+                  <Link to="/projects">
+                    <Button variant="outline" size="sm">
+                      Voir Tout
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {recentProjects.length > 0 ? (
+                  recentProjects.map(project => (
+                    <Link 
+                      key={project.id} 
+                      to={`/projects/${project.id}`}
+                      className="block p-4 border rounded-[5px] hover:bg-muted transition-colors cursor-pointer"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-foreground hover:text-muted-foreground transition-colors truncate">
+                          {project.title}
+                        </div>
+                        <div className="flex items-center mt-1 space-x-2">
+                          <Badge className={`${getStatusColor(project.status)} text-xs`}>
+                            {getStatusLabel(project.status)}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            <Calendar className="h-3 w-3 inline mr-1" />
+                            {new Date(project.updatedAt).toLocaleDateString('fr-FR')}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <FolderPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 mb-4">
+                      {userRole === 'student' ? 'Aucun projet assigné pour le moment' : 'Aucun projet pour le moment'}
+                    </p>
+                    {userRole === 'entrepreneur' && (
+                      <Link to="/pack-selection">
+                        <Button className="bg-tiro-purple hover:bg-tiro-purple/90">
+                          Créer Votre Premier Projet
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="text-left bg-tiro-white">
+              <CardHeader className="text-left">
+                <CardTitle className="text-lg">Conseils et Insights</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-left">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-tiro-primary mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {userRole === 'student' ? 'Répondez Rapidement' : 'Restez Professionnel'}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {userRole === 'student' 
+                        ? 'Des réponses rapides aux propositions augmentent vos chances d\'être sélectionné.'
+                        : 'Adoptez une attitude et un ton pro, comme dans toute relation client.'
+                      }
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <MessageCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      Restez Connecté
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      Une communication régulière avec votre étudiant mène à de meilleurs résultats de projet.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {userRole === 'student' ? 'Mettez à Jour Votre Profil' : 'Exigences Claires'}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {userRole === 'student'
+                        ? 'Gardez vos compétences et portfolio à jour pour attirer plus de propositions de projets.'
+                        : 'Des descriptions de projet détaillées aident les étudiants à livrer exactement ce dont vous avez besoin.'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
-    </AppLayout>
+    </div>
   );
 };
 

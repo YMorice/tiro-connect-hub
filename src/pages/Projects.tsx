@@ -399,139 +399,137 @@ const Projects = () => {
   const currentStatusOptions = userRole === 'student' ? studentStatusOptions : statusOptions;
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-tiro-test py-6">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <div>
-              <h1 className="text-left text-2xl sm:text-3xl font-bold text-gray-900">Projets</h1>
-              <p className="text-gray-600 mt-1 text-left">
-                {userRole === "student" && "Propositions de projets et assignations"}
-                {userRole === "entrepreneur" && "Vos projets"}
-                {userRole === "admin" && "Tous les projets du système"}
-              </p>
+    <div className="min-h-screen bg-tiro-test py-6">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <div>
+            <h1 className="text-left text-3xl sm:text-4xl font-clash text-gray-900">Projets</h1>
+            <p className="text-gray-600 mt-1 text-left">
+              {userRole === "student" && "Propositions de projets et assignations"}
+              {userRole === "entrepreneur" && "Vos projets"}
+              {userRole === "admin" && "Tous les projets du système"}
+            </p>
+          </div>
+          {canCreateProject() && (
+            <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/70 rounded-[5px]">
+              <Link to="/pack-selection">
+                <Plus className="h-4 w-4 mr-2" />
+                Nouveau Projet
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-tiro-gray2 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Rechercher des projets..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-tiro-white"
+              />
             </div>
-            {canCreateProject() && (
-              <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/70 rounded-[5px]">
+            
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-[5px] focus:outline-none focus:ring-2 focus:ring-tiro-primary focus:border-transparent bg-tiro-white min-w-[160px]"
+            >
+              {currentStatusOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tiro-primary"></div>
+          </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg mb-2">
+              {searchTerm || statusFilter !== "all" 
+                ? "Aucun projet ne correspond à vos filtres" 
+                : userRole === "student"
+                ? "Aucun projet ou proposition pour le moment"
+                : "Aucun projet trouvé"
+              }
+            </div>
+            {canCreateProject() && !searchTerm && statusFilter === "all" && (
+              <Button asChild className="mt-4 bg-tiro-primary hover:bg-tiro-primary/90">
                 <Link to="/pack-selection">
                   <Plus className="h-4 w-4 mr-2" />
-                  Nouveau Projet
+                  Créer Votre Premier Projet
                 </Link>
               </Button>
             )}
           </div>
-
-          <div className="mb-6 space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-tiro-gray2 h-4 w-4" />
-                <Input
-                  type="text"
-                  placeholder="Rechercher des projets..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-tiro-white"
-                />
-              </div>
-              
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-[5px] focus:outline-none focus:ring-2 focus:ring-tiro-primary focus:border-transparent bg-tiro-white min-w-[160px]"
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProjects.map((project) => (
+              <Link
+                key={project.id}
+                to={`/projects/${project.id}`}
+                className="block"
               >
-                {currentStatusOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tiro-primary"></div>
-            </div>
-          ) : filteredProjects.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-500 text-lg mb-2">
-                {searchTerm || statusFilter !== "all" 
-                  ? "Aucun projet ne correspond à vos filtres" 
-                  : userRole === "student"
-                  ? "Aucun projet ou proposition pour le moment"
-                  : "Aucun projet trouvé"
-                }
-              </div>
-              {canCreateProject() && !searchTerm && statusFilter === "all" && (
-                <Button asChild className="mt-4 bg-tiro-primary hover:bg-tiro-primary/90">
-                  <Link to="/pack-selection">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Créer Votre Premier Projet
-                  </Link>
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProjects.map((project) => (
-                <Link
-                  key={project.id}
-                  to={`/projects/${project.id}`}
-                  className="block"
-                >
-                  <Card className="h-full shadow-none transition-colors duration-200 rounded-[5px] bg-tiro-white hover:bg-muted cursor-pointer">
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex flex-wrap gap-2">
-                          <Badge className={`${getStatusColor(project.status)} text-xs`}>
-                            {getStatusDisplay(project.status)}
+                <Card className="h-full shadow-none transition-colors duration-200 rounded-[5px] bg-tiro-white hover:bg-muted cursor-pointer">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className={`${getStatusColor(project.status)} text-xs`}>
+                          {getStatusDisplay(project.status)}
+                        </Badge>
+                        {project.proposalStatus && (
+                          <Badge 
+                            className={`${getProposalStatusColor(project.proposalStatus)} text-xs flex items-center gap-1`}
+                          >
+                            {getProposalStatusIcon(project.proposalStatus)}
+                            {getProposalStatusDisplay(project.proposalStatus)}
                           </Badge>
-                          {project.proposalStatus && (
-                            <Badge 
-                              className={`${getProposalStatusColor(project.proposalStatus)} text-xs flex items-center gap-1`}
-                            >
-                              {getProposalStatusIcon(project.proposalStatus)}
-                              {getProposalStatusDisplay(project.proposalStatus)}
-                            </Badge>
-                          )}
+                        )}
+                      </div>
+                      {project.price && (
+                        <div className="flex items-center text-sm text-tiro-primary font-semibold">
+                          <DollarSign className="h-4 w-4 mr-1" />
+                          €{project.price.toLocaleString()}
                         </div>
-                        {project.price && (
-                          <div className="flex items-center text-sm text-tiro-primary font-semibold">
-                            <DollarSign className="h-4 w-4 mr-1" />
-                            €{project.price.toLocaleString()}
+                      )}
+                    </div>
+                    <CardTitle className="text-lg font-semibold line-clamp-2 min-h-[3.5rem]">
+                      {project.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-gray-600 text-sm line-clamp-3 mb-4 min-h-[4.5rem]">
+                      {project.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                      <div className="flex items-center text-xs text-gray-500">
+                        {project.deadline && (
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            Deadline&nbsp;:
+                            <span className="ml-1 font-medium text-gray-700">
+                              {project.deadline.toLocaleDateString('fr-FR')}
+                            </span>
                           </div>
                         )}
                       </div>
-                      <CardTitle className="text-lg font-semibold line-clamp-2 min-h-[3.5rem]">
-                        {project.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-gray-600 text-sm line-clamp-3 mb-4 min-h-[4.5rem]">
-                        {project.description}
-                      </p>
-                      <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                        <div className="flex items-center text-xs text-gray-500">
-                          {project.deadline && (
-                            <div className="flex items-center text-xs text-gray-500">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              Deadline&nbsp;:
-                              <span className="ml-1 font-medium text-gray-700">
-                                {project.deadline.toLocaleDateString('fr-FR')}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
-    </AppLayout>
+    </div>
   );
 };
 

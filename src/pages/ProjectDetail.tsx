@@ -647,309 +647,307 @@ const ProjectDetail = () => {
   });
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-tiro-test">
-        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
-          {/* Notification pour étudiant sélectionné */}
-          {isStudent && isSelectedForProject && (
-            <div className="mb-4 sm:mb-6">
-              <Card className="border-l-4 border-l-green-500 bg-green-50">
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-green-800">
-                    <UserCheck className="h-5 w-5 text-green-600" />
-                    Félicitations ! Vous avez été sélectionné pour ce projet
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-start space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-green-800 font-medium">
-                        L'entrepreneur vous a choisi pour travailler sur ce projet
-                      </p>
-                      <p className="text-xs text-green-700 mt-1">
-                        Vous pouvez maintenant collaborer directement avec l'entrepreneur et accéder à tous les documents du projet.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Payment Section - Show for entrepreneurs when project is in STEP4 */}
-          {showPaymentSection && (
-            <div className="mb-4 sm:mb-6">
-              <ProjectPayment
-                projectId={project.id_project}
-                projectTitle={project.title}
-                amount={project.price}
-                paymentStatus={project.payment_status as 'pending' | 'succeeded' | 'processing' | 'failed'}
-                onPaymentSuccess={handlePaymentSuccess}
-              />
-            </div>
-          )}
-
-          {/* Payment Status Message - Show for students when their assigned project is in STEP4 */}
-          {isStudent && 
-           project?.selected_student && 
-           studentId === project.selected_student && 
-           project.status === 'STEP4' && (
-            <div className="mb-4 sm:mb-6">
-              <PaymentStatusMessage projectStatus={project.status} />
-            </div>
-          )}
-
-          {/* Student Proposal Actions - Show for students with pending proposals */}
-          {isStudent && proposalStatus && studentId && (
-            <div className="mb-4 sm:mb-6">
-              <StudentProposalActions
-                projectId={project.id_project}
-                studentId={studentId}
-                proposalStatus={proposalStatus}
-                onStatusChange={handleProposalStatusChange}
-              />
-            </div>
-          )}
-
-          {/* Proposed Students Section - Show for entrepreneurs when project is in Selection */}
-          {showProposedStudents && (
-            <div className="mb-4 sm:mb-6">
-              <Card>
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="text-base sm:text-lg flex items-center">
-                    <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Proposed Students - Make Your Selection
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <StudentSelectionView
-                    projectId={project.id_project}
-                    onStudentSelected={handleStudentSelected}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Student Selection Section - Show for entrepreneurs */}
-          {showStudentSelection && !showProposedStudents && (
-            <Card className="mb-4 sm:mb-6">
+    <div className="min-h-screen bg-tiro-test">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
+        {/* Notification pour étudiant sélectionné */}
+        {isStudent && isSelectedForProject && (
+          <div className="mb-4 sm:mb-6">
+            <Card className="border-l-4 border-l-green-500 bg-green-50">
               <CardHeader className="pb-3 sm:pb-4">
-                <CardTitle className="text-base sm:text-lg flex items-center">
-                  <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Student Selection
+                <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-green-800">
+                  <UserCheck className="h-5 w-5 text-green-600" />
+                  Félicitations ! Vous avez été sélectionné pour ce projet
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-6 sm:py-8">
-                  <p className="text-gray-500 text-sm sm:text-base">Waiting for admin to propose students for your project.</p>
-                  <p className="text-xs sm:text-sm text-gray-400 mt-2">You will be able to select from proposed students once they are available.</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Project Header Card - Contains title, status, price, deadline, and discussion link */}
-          <Card className="mb-4 sm:mb-6">
-            <CardHeader className="pb-3 sm:pb-4">
-              <div className="flex flex-col gap-4">
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 break-words leading-tight">
-                    {project.title}
-                  </CardTitle>
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
-                      {getStatusDisplay(project.status)}
-                    </Badge>
-                    {/* Discussion Link */}
-                    <Link to="/messages" className="flex items-center">
-                      <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
-                        <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="hidden sm:inline">Discussion</span>
-                        <span className="sm:hidden">Chat</span>
-                        {hasUnreadMessages && (
-                          <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
-                        )}
-                      </Button>
-                    </Link>
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-green-800 font-medium">
+                      L'entrepreneur vous a choisi pour travailler sur ce projet
+                    </p>
+                    <p className="text-xs text-green-700 mt-1">
+                      Vous pouvez maintenant collaborer directement avec l'entrepreneur et accéder à tous les documents du projet.
+                    </p>
                   </div>
-                  {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
-                    <Button
-                      onClick={forceUpdateStatusToStep2}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Forcer passage à STEP2
-                    </Button>
-                  )}
                 </div>
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* Project Description Card */}
-          {project.description && (
-            <Card className="mb-4 sm:mb-6">
-              <CardHeader className="pb-3 sm:pb-4">
-                <CardTitle className="text-base sm:text-lg flex items-center">
-                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Description
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 sm:space-y-4 text-left">
-                {project.deadline && (
-                  <p className="text-sm sm:text-base text-gray-800">
-                    <Clock className="inline-block h-4 w-4 mr-1 text-gray-500 align-middle" />
-                    <span className="font-semibold">Deadline :</span> {new Date(project.deadline).toLocaleDateString()}
-                  </p>
-                )}
-                <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {project.description}
-                </p>
               </CardContent>
             </Card>
-          )}
+          </div>
+        )}
 
-          {/* People Information Cards - Entrepreneur and Student */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6r">
-            {/* Entrepreneur Information Card */}
+        {/* Payment Section - Show for entrepreneurs when project is in STEP4 */}
+        {showPaymentSection && (
+          <div className="mb-4 sm:mb-6">
+            <ProjectPayment
+              projectId={project.id_project}
+              projectTitle={project.title}
+              amount={project.price}
+              paymentStatus={project.payment_status as 'pending' | 'succeeded' | 'processing' | 'failed'}
+              onPaymentSuccess={handlePaymentSuccess}
+            />
+          </div>
+        )}
+
+        {/* Payment Status Message - Show for students when their assigned project is in STEP4 */}
+        {isStudent && 
+          project?.selected_student && 
+          studentId === project.selected_student && 
+          project.status === 'STEP4' && (
+          <div className="mb-4 sm:mb-6">
+            <PaymentStatusMessage projectStatus={project.status} />
+          </div>
+        )}
+
+        {/* Student Proposal Actions - Show for students with pending proposals */}
+        {isStudent && proposalStatus && studentId && (
+          <div className="mb-4 sm:mb-6">
+            <StudentProposalActions
+              projectId={project.id_project}
+              studentId={studentId}
+              proposalStatus={proposalStatus}
+              onStatusChange={handleProposalStatusChange}
+            />
+          </div>
+        )}
+
+        {/* Proposed Students Section - Show for entrepreneurs when project is in Selection */}
+        {showProposedStudents && (
+          <div className="mb-4 sm:mb-6">
             <Card>
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="text-base sm:text-lg flex items-center">
-                  <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Entrepreneur
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  Proposed Students - Make Your Selection
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {project.entrepreneur?.users ? (
-                  <div className="flex items-center space-x-3 sm:space-x-4">
-                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-                      {project.entrepreneur.users.pp_link ? (
-                        <AvatarImage 
-                          src={project.entrepreneur.users.pp_link}
-                          alt={project.entrepreneur.users.name}
-                        />
-                      ) : (
-                        <AvatarFallback className="bg-tiro-primary text-white text-sm sm:text-base">
-                          {project.entrepreneur.users.name?.charAt(0) || "E"}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 text-sm sm:text-base text-left truncate">{project.entrepreneur.users.name}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-gray-400 italic">Informations entrepreneur non disponibles</div>
-                )}
+                <StudentSelectionView
+                  projectId={project.id_project}
+                  onStudentSelected={handleStudentSelected}
+                />
               </CardContent>
             </Card>
-
-            {/* Student Information Card - Only shown if a student is assigned */}
-            {project.student && (
-              <Card>
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="text-base sm:text-lg flex items-center">
-                    <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Assigned Student
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center space-x-3 sm:space-x-4">
-                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-                      {project.student?.users?.pp_link ? (
-                        <AvatarImage 
-                          src={project.student.users.pp_link}
-                          alt={project.student.users.name}
-                        />
-                      ) : (
-                        <AvatarFallback className="bg-tiro-primary text-white text-sm sm:text-base">
-                          {project.student?.users?.name?.charAt(0) || "S"}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 text-sm sm:text-base text-left truncate">{project.student?.users?.name}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
+        )}
 
-          {/* Documents Management Section */}
+        {/* Student Selection Section - Show for entrepreneurs */}
+        {showStudentSelection && !showProposedStudents && (
+          <Card className="mb-4 sm:mb-6">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg flex items-center">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                Student Selection
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-6 sm:py-8">
+                <p className="text-gray-500 text-sm sm:text-base">Waiting for admin to propose students for your project.</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-2">You will be able to select from proposed students once they are available.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Project Header Card - Contains title, status, price, deadline, and discussion link */}
+        <Card className="mb-4 sm:mb-6">
+          <CardHeader className="pb-3 sm:pb-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 break-words leading-tight">
+                  {project.title}
+                </CardTitle>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
+                    {getStatusDisplay(project.status)}
+                  </Badge>
+                  {/* Discussion Link */}
+                  <Link to="/messages" className="flex items-center">
+                    <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
+                      <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Discussion</span>
+                      <span className="sm:hidden">Chat</span>
+                      {hasUnreadMessages && (
+                        <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
+                      )}
+                    </Button>
+                  </Link>
+                </div>
+                {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
+                  <Button
+                    onClick={forceUpdateStatusToStep2}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Forcer passage à STEP2
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Project Description Card */}
+        {project.description && (
           <Card className="mb-4 sm:mb-6">
             <CardHeader className="pb-3 sm:pb-4">
               <CardTitle className="text-base sm:text-lg flex items-center">
                 <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                Project Documents
+                Description
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Document Upload Component */}
-              <DocumentUpload 
-                projectId={project.id_project} 
-                onDocumentSubmit={handleDocumentSubmit}
-              />
+            <CardContent className="space-y-3 sm:space-y-4 text-left">
+              {project.deadline && (
+                <p className="text-sm sm:text-base text-gray-800">
+                  <Clock className="inline-block h-4 w-4 mr-1 text-gray-500 align-middle" />
+                  <span className="font-semibold">Deadline :</span> {new Date(project.deadline).toLocaleDateString()}
+                </p>
+              )}
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {project.description}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-              {/* Documents List Display */}
-              {documentsLoading ? (
-                <div className="flex justify-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-tiro-primary"></div>
-                </div>
-              ) : project.documents && project.documents.length > 0 ? (
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900 text-sm sm:text-base">Uploaded Documents</h4>
-                  <div className="grid gap-2 sm:gap-3">
-                    {project.documents.map((doc) => (
-                      <div 
-                        key={doc.id_document}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="flex items-center space-x-3 min-w-0 flex-1">
-                          <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-gray-900 truncate text-sm sm:text-base">{doc.name}</p>
-                            <p className="text-xs sm:text-sm text-gray-500">
-                              {doc.type} • {new Date(doc.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        {/* Téléchargement uniquement sur clic du bouton */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => downloadDocument(doc)}
-                          className="flex-shrink-0 p-2"
-                        >
-                          <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-                        </Button>
-                      </div>
-                    ))}
+        {/* People Information Cards - Entrepreneur and Student */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6r">
+          {/* Entrepreneur Information Card */}
+          <Card>
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg flex items-center">
+                <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                Entrepreneur
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {project.entrepreneur?.users ? (
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                    {project.entrepreneur.users.pp_link ? (
+                      <AvatarImage 
+                        src={project.entrepreneur.users.pp_link}
+                        alt={project.entrepreneur.users.name}
+                      />
+                    ) : (
+                      <AvatarFallback className="bg-tiro-primary text-white text-sm sm:text-base">
+                        {project.entrepreneur.users.name?.charAt(0) || "E"}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 text-sm sm:text-base text-left truncate">{project.entrepreneur.users.name}</p>
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4 text-sm sm:text-base">No documents uploaded yet.</p>
+                <div className="text-gray-400 italic">Informations entrepreneur non disponibles</div>
               )}
             </CardContent>
           </Card>
 
-          {/* Review Section - Only shown for completed projects with assigned students */}
-          {project.student && project.selected_student && (
+          {/* Student Information Card - Only shown if a student is assigned */}
+          {project.student && (
             <Card>
-              <CardContent className="p-0">
-                <ProjectReviewSection
-                  projectId={project.id_project}
-                  studentId={project.selected_student}
-                  projectStatus={project.status}
-                />
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-base sm:text-lg flex items-center">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  Assigned Student
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                    {project.student?.users?.pp_link ? (
+                      <AvatarImage 
+                        src={project.student.users.pp_link}
+                        alt={project.student.users.name}
+                      />
+                    ) : (
+                      <AvatarFallback className="bg-tiro-primary text-white text-sm sm:text-base">
+                        {project.student?.users?.name?.charAt(0) || "S"}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 text-sm sm:text-base text-left truncate">{project.student?.users?.name}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}
         </div>
+
+        {/* Documents Management Section */}
+        <Card className="mb-4 sm:mb-6">
+          <CardHeader className="pb-3 sm:pb-4">
+            <CardTitle className="text-base sm:text-lg flex items-center">
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+              Project Documents
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Document Upload Component */}
+            <DocumentUpload 
+              projectId={project.id_project} 
+              onDocumentSubmit={handleDocumentSubmit}
+            />
+
+            {/* Documents List Display */}
+            {documentsLoading ? (
+              <div className="flex justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-tiro-primary"></div>
+              </div>
+            ) : project.documents && project.documents.length > 0 ? (
+              <div className="space-y-3">
+                <h4 className="font-medium text-gray-900 text-sm sm:text-base">Uploaded Documents</h4>
+                <div className="grid gap-2 sm:gap-3">
+                  {project.documents.map((doc) => (
+                    <div 
+                      key={doc.id_document}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center space-x-3 min-w-0 flex-1">
+                        <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-gray-900 truncate text-sm sm:text-base">{doc.name}</p>
+                          <p className="text-xs sm:text-sm text-gray-500">
+                            {doc.type} • {new Date(doc.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      {/* Téléchargement uniquement sur clic du bouton */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => downloadDocument(doc)}
+                        className="flex-shrink-0 p-2"
+                      >
+                        <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4 text-sm sm:text-base">No documents uploaded yet.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Review Section - Only shown for completed projects with assigned students */}
+        {project.student && project.selected_student && (
+          <Card>
+            <CardContent className="p-0">
+              <ProjectReviewSection
+                projectId={project.id_project}
+                studentId={project.selected_student}
+                projectStatus={project.status}
+              />
+            </CardContent>
+          </Card>
+        )}
       </div>
-    </AppLayout>
+    </div>
   );
 };
 

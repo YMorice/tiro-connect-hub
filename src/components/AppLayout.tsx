@@ -1,6 +1,5 @@
-
 import React, { useState } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link, useLocation, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   LayoutDashboard, 
@@ -117,6 +116,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     }
   }, [location.pathname, isMobile]);
 
+  // Mobile
   if (isMobile) {
     return (
       <div className="min-h-screen w-full bg-background">
@@ -154,11 +154,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
         {/* Mobile Main Content */}
         <main className="pt-16 pb-20">
-          {children}
+          <Outlet />
         </main>
 
         {/* Mobile Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-tiro-white border-t border-border">
           <div className="flex items-center justify-around h-16 px-2">
             {navItems.map((item) => (
               <Link
@@ -333,7 +333,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Main Content */}
       <main className="flex-1 ml-[15rem]">
         <div className="min-h-screen">
-          {children}
+          <Outlet />
         </div>
       </main>
     </div>

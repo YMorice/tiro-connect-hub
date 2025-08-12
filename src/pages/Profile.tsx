@@ -378,283 +378,281 @@ const Profile = () => {
   }
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-tiro-test -50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Tabs defaultValue="profile" className="w-full space-y-6">
-            {(user as any).role === 'student' && (
-              <TabsList className="grid w-full grid-cols-2 bg-tiro-gray1">
-                <TabsTrigger
-                  value="profile"
-                  className="bg-tiro-gray1 text-gray-700 data-[state=active]:bg-tiro-white data-[state=active]:text-black transition-colors"
-                >
-                  Profil
-                </TabsTrigger>
+    <div className="min-h-screen bg-tiro-test -50 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Tabs defaultValue="profile" className="w-full space-y-6">
+          {(user as any).role === 'student' && (
+            <TabsList className="grid w-full grid-cols-2 bg-tiro-gray1">
+              <TabsTrigger
+                value="profile"
+                className="bg-tiro-gray1 text-gray-700 data-[state=active]:bg-tiro-white data-[state=active]:text-black transition-colors"
+              >
+                Profil
+              </TabsTrigger>
 
-                <TabsTrigger
-                  value="reviews"
-                  className="bg-tiro-gray1 text-gray-700 data-[state=active]:bg-tiro-white data-[state=active]:text-black transition-colors"
-                >
-                  Avis
-                </TabsTrigger>
-              </TabsList>
-            )}
-            
-            <TabsContent value="profile" className="space-y-6">
-              <Card className="shadow-sm bg-tiro-white">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl">Informations du Profil</CardTitle>
-                  <CardDescription>
-                    Mettez à jour vos informations de profil
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-8">
-                  {/* Section Photo de Profil */}
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="relative group">
-                      <Avatar className="w-32 h-32">
-                        {avatarUrl ? (
-                          <AvatarImage 
-                            src={avatarUrl}
-                            alt={user?.user_metadata?.name || "Photo de profil"}
-                            className="object-cover"
-                          />
-                        ) : (
-                          <AvatarFallback className="text-2xl bg-primary text-white">
-                            {user?.user_metadata?.name?.charAt(0) || "?"}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <label
-                        htmlFor="avatar-upload"
-                        className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
-                      >
-                        <Camera className="w-8 h-8 text-white" />
-                      </label>
-                      <input
-                        id="avatar-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleAvatarUpload}
-                        disabled={loading}
-                      />
-                    </div>
-                    {loading && (
-                      <div className="mt-2">
-                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                      </div>
-                    )}
+              <TabsTrigger
+                value="reviews"
+                className="bg-tiro-gray1 text-gray-700 data-[state=active]:bg-tiro-white data-[state=active]:text-black transition-colors"
+              >
+                Avis
+              </TabsTrigger>
+            </TabsList>
+          )}
+          
+          <TabsContent value="profile" className="space-y-6">
+            <Card className="shadow-sm bg-tiro-white">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl">Informations du Profil</CardTitle>
+                <CardDescription>
+                  Mettez à jour vos informations de profil
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Section Photo de Profil */}
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="relative group">
+                    <Avatar className="w-32 h-32">
+                      {avatarUrl ? (
+                        <AvatarImage 
+                          src={avatarUrl}
+                          alt={user?.user_metadata?.name || "Photo de profil"}
+                          className="object-cover"
+                        />
+                      ) : (
+                        <AvatarFallback className="text-2xl bg-primary text-white">
+                          {user?.user_metadata?.name?.charAt(0) || "?"}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <label
+                      htmlFor="avatar-upload"
+                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                    >
+                      <Camera className="w-8 h-8 text-white" />
+                    </label>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarUpload}
+                      disabled={loading}
+                    />
                   </div>
-
-                  {/* Informations de Base */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-2 text-left">
-                      <Label htmlFor="name">Prénom</Label>
-                      <Input
-                        id="name"
-                        value={profile.name || user?.user_metadata?.name}
-                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                        className="bg-tiro-white"
-                      />
+                  {loading && (
+                    <div className="mt-2">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
                     </div>
-                    <div className="space-y-2 text-left">
-                      <Label htmlFor="surname">Nom</Label>
-                      <Input
-                        id="surname"
-                        value={profile.surname || user?.user_metadata?.surname}
-                        onChange={(e) => setProfile({ ...profile, surname: e.target.value })}
-                        className="bg-tiro-white"
-                      />
-                    </div>
-                  </div>
+                  )}
+                </div>
 
+                {/* Informations de Base */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-2 text-left">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="name">Prénom</Label>
                     <Input
-                      id="email"
-                      value={profile.email || user?.email}
-                      disabled
+                      id="name"
+                      value={profile.name || user?.user_metadata?.name}
+                      onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                       className="bg-tiro-white"
                     />
                   </div>
+                  <div className="space-y-2 text-left">
+                    <Label htmlFor="surname">Nom</Label>
+                    <Input
+                      id="surname"
+                      value={profile.surname || user?.user_metadata?.surname}
+                      onChange={(e) => setProfile({ ...profile, surname: e.target.value })}
+                      className="bg-tiro-white"
+                    />
+                  </div>
+                </div>
 
-                  {/* Champs spécifiques au rôle */}
-                  {(user as any).role === 'student' && (
-                    <>
-                      <div className="space-y-2 text-left">
-                        <Label htmlFor="bio">Bio</Label>
-                        <Textarea
-                          id="bio"
-                          value={profile.bio || ""}
-                          onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                          className="min-h-[100px] bg-tiro-white"
-                        />
+                <div className="space-y-2 text-left">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    value={profile.email || user?.email}
+                    disabled
+                    className="bg-tiro-white"
+                  />
+                </div>
+
+                {/* Champs spécifiques au rôle */}
+                {(user as any).role === 'student' && (
+                  <>
+                    <div className="space-y-2 text-left">
+                      <Label htmlFor="bio">Bio</Label>
+                      <Textarea
+                        id="bio"
+                        value={profile.bio || ""}
+                        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                        className="min-h-[100px] bg-tiro-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2 text-left">
+                      <Label>Spécialités</Label>
+                      <div className="flex flex-col space-y-2">
+                        {specialtyOptions.map((specialty) => (
+                          <div key={specialty} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`specialty-${specialty}`}
+                              checked={profile.specialty?.includes(specialty)}
+                              onCheckedChange={(checked) => {
+                                const currentSpecialties = profile.specialty || [];
+                                setProfile({
+                                  ...profile,
+                                  specialty: checked
+                                    ? [...currentSpecialties, specialty]
+                                    : currentSpecialties.filter(s => s !== specialty)
+                                });
+                              }}
+                            />
+                            <Label
+                              htmlFor={`specialty-${specialty}`}
+                              className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {specialty}
+                            </Label>
+                          </div>
+                        ))}
                       </div>
+                    </div>
 
-                      <div className="space-y-2 text-left">
-                        <Label>Spécialités</Label>
-                        <div className="flex flex-col space-y-2">
-                          {specialtyOptions.map((specialty) => (
-                            <div key={specialty} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`specialty-${specialty}`}
-                                checked={profile.specialty?.includes(specialty)}
-                                onCheckedChange={(checked) => {
-                                  const currentSpecialties = profile.specialty || [];
-                                  setProfile({
-                                    ...profile,
-                                    specialty: checked
-                                      ? [...currentSpecialties, specialty]
-                                      : currentSpecialties.filter(s => s !== specialty)
-                                  });
-                                }}
-                              />
-                              <Label
-                                htmlFor={`specialty-${specialty}`}
-                                className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    <div className="space-y-2 text-left">
+                      <Label htmlFor="formation">Formation</Label>
+                      <Input
+                        id="formation"
+                        value={profile.formation || ""}
+                        onChange={(e) => setProfile({ ...profile, formation: e.target.value })}
+                        className="bg-tiro-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="portfolioLink">Lien Portfolio</Label>
+                      <Input
+                        id="portfolioLink"
+                        value={profile.portfolioLink || ""}
+                        onChange={(e) => setProfile({ ...profile, portfolioLink: e.target.value })}
+                        placeholder="votre-portfolio.com"
+                        className="w-full bg-tiro-white"
+                      />
+                    </div>
+
+                    {/* Section Compétences */}
+                    <div className="space-y-4">
+                      <Label>Compétences</Label>
+                      <div className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                          {skills.map((skill) => (
+                            <Badge key={skill} variant="secondary" className="text-sm flex items-center gap-2">
+                              {skill}
+                              <button
+                                type="button"
+                                onClick={() => removeSkill(skill)}
+                                className="ml-1 hover:text-red-500 text-lg"
                               >
-                                {specialty}
-                              </Label>
-                            </div>
+                                ×
+                              </button>
+                            </Badge>
                           ))}
                         </div>
-                      </div>
-
-                      <div className="space-y-2 text-left">
-                        <Label htmlFor="formation">Formation</Label>
-                        <Input
-                          id="formation"
-                          value={profile.formation || ""}
-                          onChange={(e) => setProfile({ ...profile, formation: e.target.value })}
-                          className="bg-tiro-white"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="portfolioLink">Lien Portfolio</Label>
-                        <Input
-                          id="portfolioLink"
-                          value={profile.portfolioLink || ""}
-                          onChange={(e) => setProfile({ ...profile, portfolioLink: e.target.value })}
-                          placeholder="votre-portfolio.com"
-                          className="w-full bg-tiro-white"
-                        />
-                      </div>
-
-                      {/* Section Compétences */}
-                      <div className="space-y-4">
-                        <Label>Compétences</Label>
-                        <div className="space-y-4">
-                          <div className="flex flex-wrap gap-2">
-                            {skills.map((skill) => (
-                              <Badge key={skill} variant="secondary" className="text-sm flex items-center gap-2">
-                                {skill}
-                                <button
-                                  type="button"
-                                  onClick={() => removeSkill(skill)}
-                                  className="ml-1 hover:text-red-500 text-lg"
-                                >
-                                  ×
-                                </button>
-                              </Badge>
-                            ))}
-                          </div>
-                          <div className="flex flex-col sm:flex-row gap-3">
-                            <Select value={newSkill} onValueChange={setNewSkill}>
-                              <SelectTrigger className="flex-1 bg-tiro-white">
-                                <SelectValue placeholder="Sélectionner une compétence à ajouter" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {skillOptions
-                                  .filter(skill => !skills.includes(skill))
-                                  .map((skill) => (
-                                    <SelectItem key={skill} value={skill}>
-                                      {skill}
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                            <Button type="button" onClick={addSkill} disabled={!newSkill} className="sm:w-auto w-full">
-                              Ajouter Compétence
-                            </Button>
-                          </div>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <Select value={newSkill} onValueChange={setNewSkill}>
+                            <SelectTrigger className="flex-1 bg-tiro-white">
+                              <SelectValue placeholder="Sélectionner une compétence à ajouter" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {skillOptions
+                                .filter(skill => !skills.includes(skill))
+                                .map((skill) => (
+                                  <SelectItem key={skill} value={skill}>
+                                    {skill}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          <Button type="button" onClick={addSkill} disabled={!newSkill} className="sm:w-auto w-full">
+                            Ajouter Compétence
+                          </Button>
                         </div>
                       </div>
-                    </>
-                  )}
+                    </div>
+                  </>
+                )}
 
-                  {(user as any).role === 'entrepreneur' && (
-                    <>
-                      <div className="space-y-2 text-left">
-                        <Label htmlFor="companyName">Nom de l'entreprise</Label>
-                        <Input
-                          id="companyName"
-                          value={profile.companyName || ""}
-                          onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
-                          className="bg-tiro-white"
-                        />
+                {(user as any).role === 'entrepreneur' && (
+                  <>
+                    <div className="space-y-2 text-left">
+                      <Label htmlFor="companyName">Nom de l'entreprise</Label>
+                      <Input
+                        id="companyName"
+                        value={profile.companyName || ""}
+                        onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
+                        className="bg-tiro-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2 text-left">
+                      <Label htmlFor="companyRole">Votre rôle dans l'entreprise</Label>
+                      <Input
+                        id="companyRole"
+                        value={profile.companyRole || ""}
+                        onChange={(e) => setProfile({ ...profile, companyRole: e.target.value })}
+                        className="bg-tiro-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2 text-left">
+                      <Label htmlFor="companyAddress">Adresse de l'entreprise</Label>
+                      <Textarea
+                        id="companyAddress"
+                        value={profile.companyAddress || ""}
+                        onChange={(e) => setProfile({ ...profile, companyAddress: e.target.value })}
+                        className="min-h-[100px] bg-tiro-white"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="flex justify-center pt-6">
+                  <Button
+                    onClick={handleSaveProfile}
+                    disabled={saving}
+                    className="w-full sm:w-auto px-8 py-3"
+                  >
+                    {saving ? (
+                      <div className="flex items-center">
+                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
+                        Sauvegarde...
                       </div>
+                    ) : "Sauvegarder le Profil"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                      <div className="space-y-2 text-left">
-                        <Label htmlFor="companyRole">Votre rôle dans l'entreprise</Label>
-                        <Input
-                          id="companyRole"
-                          value={profile.companyRole || ""}
-                          onChange={(e) => setProfile({ ...profile, companyRole: e.target.value })}
-                          className="bg-tiro-white"
-                        />
-                      </div>
-
-                      <div className="space-y-2 text-left">
-                        <Label htmlFor="companyAddress">Adresse de l'entreprise</Label>
-                        <Textarea
-                          id="companyAddress"
-                          value={profile.companyAddress || ""}
-                          onChange={(e) => setProfile({ ...profile, companyAddress: e.target.value })}
-                          className="min-h-[100px] bg-tiro-white"
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  <div className="flex justify-center pt-6">
-                    <Button
-                      onClick={handleSaveProfile}
-                      disabled={saving}
-                      className="w-full sm:w-auto px-8 py-3"
-                    >
-                      {saving ? (
-                        <div className="flex items-center">
-                          <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
-                          Sauvegarde...
-                        </div>
-                      ) : "Sauvegarder le Profil"}
-                    </Button>
-                  </div>
+          {(user as any).role === 'student' && (
+            <TabsContent value="reviews">
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle>Vos Avis</CardTitle>
+                  <CardDescription>
+                    Ici vous pouvez voir tous les avis que vous avez reçus.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <StudentReviewsTable />
                 </CardContent>
               </Card>
             </TabsContent>
-
-            {(user as any).role === 'student' && (
-              <TabsContent value="reviews">
-                <Card className="shadow-sm">
-                  <CardHeader>
-                    <CardTitle>Vos Avis</CardTitle>
-                    <CardDescription>
-                      Ici vous pouvez voir tous les avis que vous avez reçus.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <StudentReviewsTable />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            )}
-          </Tabs>
-        </div>
+          )}
+        </Tabs>
       </div>
-    </AppLayout>
+    </div>
   );
 };
 

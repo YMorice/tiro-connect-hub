@@ -276,191 +276,189 @@ const NewProject = () => {
   }
 
   return (
-    <AppLayout>
-      <div className="w-full max-w-3xl mx-auto pb-8 px-4 sm:px-6">
-        <div className="mb-8">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate("/pack-selection")} 
-            className="flex items-center text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la sélection de pack
-          </Button>
-        </div>
-
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle className="text-2xl">Créer nouveau projet</CardTitle>
-            <CardDescription>
-              Les détails pour votre nouveau projet
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!entrepreneurId && (
-              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                <p className="text-yellow-800">
-                  Chargement de votre profil d'entrepreneur
-                </p>
-              </div>
-            )}
-            
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="packId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pack de projet</FormLabel>
-                      <Select defaultValue={field.value} onValueChange={field.onChange} disabled>
-                        <FormControl className="bg-tiro-white">
-                          <SelectTrigger>
-                            <SelectValue placeholder="Sélectionnez un pack" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={selectedPack.id}>
-                            {selectedPack.name}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Titre du projet</FormLabel>
-                      <FormControl className="bg-tiro-white">
-                        <Input placeholder="Entrez le titre de votre projet" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description du projet</FormLabel>
-                      <FormControl className="bg-tiro-white">
-                        <Textarea 
-                          placeholder="Décrivez votre projet en détail et vos besoins spécifiques pour ce pack" 
-                          className="min-h-[200px]" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="deadline"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Date limite du projet (optionnel)</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={`w-full justify-start text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                            >
-                              <Calendar className="mr-2 h-4 w-4" />
-                              {field.value ? format(field.value, "PPP") : "Select a deadline"}
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <CalendarComponent
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date < new Date()}
-                            initialFocus
-                            className="p-3 pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="space-y-4 border p-4 rounded-md bg-gray-50">
-                  <h3 className="font-medium">Documents initiaux (Optionnel)</h3>
-                  <p className="text-sm text-muted-foreground">
-                  Vous pouvez ajouter à ce projet des documents qui aideront l'étudiant à comprendre vos exigences.
-                  </p>
-                  
-                  <div className="space-y-2">
-                    <FileUpload 
-                      onFileSelect={(file) => {
-                        setSelectedFiles(prev => [...prev, file]);
-                      }} 
-                      buttonText="Ajouter un document" 
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip" 
-                      maxSize={20} 
-                    />
-                    
-                    {selectedFiles.length > 0 && (
-                      <div className="mt-2 space-y-2">
-                        <Label>Fichiers sélectionnés:</Label>
-                        <div className="space-y-1">
-                          {selectedFiles.map((file, index) => (
-                            <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
-                              <span className="text-sm truncate max-w-[70%]">{file.name}</span>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== index))}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end space-x-4 pt-6 border-t">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => navigate("/projects")} 
-                    disabled={isSubmitting}
-                  >
-                    Annuler
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting || !entrepreneurId} 
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    {isSubmitting ? (
-                      <div className="flex items-center">
-                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
-                        Création...
-                      </div>
-                    ) : "Création du projet"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+    <div className="w-full max-w-3xl mx-auto pb-8 px-4 sm:px-6">
+      <div className="mb-8">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate("/pack-selection")} 
+          className="flex items-center text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la sélection de pack
+        </Button>
       </div>
-    </AppLayout>
+
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-2xl">Créer nouveau projet</CardTitle>
+          <CardDescription>
+            Les détails pour votre nouveau projet
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!entrepreneurId && (
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-yellow-800">
+                Chargement de votre profil d'entrepreneur
+              </p>
+            </div>
+          )}
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="packId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pack de projet</FormLabel>
+                    <Select defaultValue={field.value} onValueChange={field.onChange} disabled>
+                      <FormControl className="bg-tiro-white">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionnez un pack" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={selectedPack.id}>
+                          {selectedPack.name}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Titre du projet</FormLabel>
+                    <FormControl className="bg-tiro-white">
+                      <Input placeholder="Entrez le titre de votre projet" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description du projet</FormLabel>
+                    <FormControl className="bg-tiro-white">
+                      <Textarea 
+                        placeholder="Décrivez votre projet en détail et vos besoins spécifiques pour ce pack" 
+                        className="min-h-[200px]" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="deadline"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date limite du projet (optionnel)</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={`w-full justify-start text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                          >
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {field.value ? format(field.value, "PPP") : "Select a deadline"}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-4 border p-4 rounded-md bg-gray-50">
+                <h3 className="font-medium">Documents initiaux (Optionnel)</h3>
+                <p className="text-sm text-muted-foreground">
+                Vous pouvez ajouter à ce projet des documents qui aideront l'étudiant à comprendre vos exigences.
+                </p>
+                
+                <div className="space-y-2">
+                  <FileUpload 
+                    onFileSelect={(file) => {
+                      setSelectedFiles(prev => [...prev, file]);
+                    }} 
+                    buttonText="Ajouter un document" 
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip" 
+                    maxSize={20} 
+                  />
+                  
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      <Label>Fichiers sélectionnés:</Label>
+                      <div className="space-y-1">
+                        {selectedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                            <span className="text-sm truncate max-w-[70%]">{file.name}</span>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== index))}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end space-x-4 pt-6 border-t">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => navigate("/projects")} 
+                  disabled={isSubmitting}
+                >
+                  Annuler
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting || !entrepreneurId} 
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center">
+                      <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
+                      Création...
+                    </div>
+                  ) : "Création du projet"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
