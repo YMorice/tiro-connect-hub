@@ -1272,7 +1272,7 @@ const Register = () => {
             
             <div className="space-y-3 text-muted-foreground">
               <p>
-                On vous a envoyés un mail au <strong className="text-foreground">{formValues.email}</strong>
+                On vous a envoyés un mail à <strong className="text-foreground">{formValues.email}</strong>
               </p>
               <p>
               Veuillez cliquer sur le lien dans le mail de confirmation pour activer votre compte.
@@ -1290,7 +1290,7 @@ const Register = () => {
               className="mt-4 bg-tiro-primary hover:bg-tiro-primary/90 text-white w-full"
               disabled={isSubmitting}
             >
-              Go to Login
+              Se connecter
             </Button>
           </div>
         );
