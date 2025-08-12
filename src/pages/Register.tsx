@@ -102,20 +102,25 @@ const step3SchemaStudent = z.object({
 const step3SchemaEntrepreneur = z.object({
   companyName: z.string().min(2, "Le nom de votre entreprise doit contenir au moins 2 caractères"),
   companyRole: z.string().min(2, "Votre role doit contenir au moins 2 caractères"),
-  siret: z.string()
-    .min(14, "Votre numéro de SIRET doit contenir 14 chiffres")
-    .max(14, "Votre numéro de SIRET doit contenir 14 chiffres")
-    .regex(/^[0-9]+$/, "Le numéro SIRET ne doit contenir que des chiffres"),
+  siret: z
+    .string()
+    .trim()
+    .optional()
+    .refine((val) => !val || /^[0-9]{14}$/.test(val), {
+      message: "Le numéro de SIRET doit contenir 14 chiffres",
+    }),
   companyAddress: z.string().min(5, "Veuillez entrer une adresse valide"),
 });
 
 // Step 4 schema - Additional information
 const step4SchemaStudent = z.object({
-  siret: z.string()
-    .min(14, "Votre numéro de SIRET doit contenir 14 chiffres")
-    .max(14, "Votre numéro de SIRET doit contenir 14 chiffres")
-    .regex(/^[0-9]+$/, "Le numéro SIRET ne doit contenir que des chiffres")
-    .optional(),
+  siret: z
+    .string()
+    .trim()
+    .optional()
+    .refine((val) => !val || /^[0-9]{14}$/.test(val), {
+      message: "Le numéro de SIRET doit contenir 14 chiffres",
+    }),
   address: z.string().min(5, "Veuillez entrer une adresse valide"),
   iban: z.string().min(15, "Veuillez entrer un IBAN valide"),
 });
@@ -1088,7 +1093,7 @@ const Register = () => {
                 name="siret"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Numéro SIRET</FormLabel>
+                    <FormLabel>Numéro SIRET (optionnel)</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="12345678901234" 
@@ -1148,7 +1153,7 @@ const Register = () => {
                 name="siret"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Numéro SIRET (optionel)</FormLabel>
+                    <FormLabel>Numéro SIRET (optionnel)</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="12345678901234" 
