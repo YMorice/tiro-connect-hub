@@ -402,7 +402,7 @@ const Profile = () => {
           <TabsContent value="profile" className="space-y-6">
             <Card className="shadow-sm bg-tiro-white">
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Informations du Profil</CardTitle>
+                <CardTitle className="text-2xl sm:text-3xl font-clash tracking-wide">Informations du Profil</CardTitle>
                 <CardDescription>
                   Mettez à jour vos informations de profil
                 </CardDescription>

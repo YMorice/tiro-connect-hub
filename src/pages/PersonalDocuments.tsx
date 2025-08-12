@@ -168,7 +168,7 @@ const PersonalDocuments = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-2 mb-2">
-            <h1 className="text-3xl font-bold text-gray-900">Mes Documents</h1>
+            <h1 className="text-3xl sm:text-4xl font-clash text-tiro-black tracking-wide">Mes Documents</h1>
           </div>
           <p className="text-gray-600">
             Retrouvez ici vos documents administratifs personnels.

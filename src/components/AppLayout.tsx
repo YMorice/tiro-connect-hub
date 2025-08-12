@@ -121,7 +121,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return (
       <div className="min-h-screen w-full bg-background">
         {/* Mobile Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-md border-b border-border">
+        <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/35 backdrop-blur-md border-b border-border">
           <div className="flex items-center justify-between h-full px-4">
             <Link to="https://tiro.agency">
               <img 

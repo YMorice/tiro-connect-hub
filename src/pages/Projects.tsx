@@ -403,7 +403,7 @@ const Projects = () => {
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-left text-3xl sm:text-4xl font-clash text-gray-900">Projets</h1>
+            <h1 className="text-left text-3xl sm:text-4xl font-clash text-gray-900 tracking-wide">Projets</h1>
             <p className="text-gray-600 mt-1 text-left">
               {userRole === "student" && "Propositions de projets et assignations"}
               {userRole === "entrepreneur" && "Vos projets"}

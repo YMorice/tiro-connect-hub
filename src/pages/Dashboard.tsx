@@ -147,11 +147,9 @@ const Dashboard = () => {
 
   if (loading || proposalsLoading) {
     return (
-      <AppLayout>
-        <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tiro-primary"></div>
-        </div>
-      </AppLayout>
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tiro-primary"></div>
+      </div>
     );
   }
 
@@ -162,7 +160,7 @@ const Dashboard = () => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl  sm:text-4xl font-clash text-tiro-black mb-2 text-left">
+              <h1 className="text-3xl  sm:text-4xl font-clash text-tiro-black mb-2 text-left tracking-wide">
                 Bon retour, {user?.user_metadata?.name || "Utilisateur"} !
               </h1>
               <p className="text-tiro-black text-left">
