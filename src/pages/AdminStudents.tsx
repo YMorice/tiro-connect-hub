@@ -20,8 +20,9 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
-import { Users, Search, Filter, Star, Crown, Eye, UserCheck, UserX } from "lucide-react";
+import { Users, Search, Filter, Star, Crown, Eye, UserCheck, UserX, Pencil } from "lucide-react";
 
 interface Student {
   id: string;
@@ -48,6 +49,11 @@ const AdminStudents = () => {
   const [specialtyFilter, setSpecialtyFilter] = useState("");
   const [premiumFilter, setPremiumFilter] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("");
+
+  // Edition de la note de portfolio
+  const [gradeDialogOpen, setGradeDialogOpen] = useState(false);
+  const [gradeValue, setGradeValue] = useState<number | "">("");
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   // Redirect if not admin
   useEffect(() => {
@@ -189,13 +195,45 @@ const AdminStudents = () => {
     }
   };
 
+  const openGradeDialog = (student: Student) => {
+    setSelectedStudent(student);
+    setGradeValue(student.portfolio_grade ?? "");
+    setGradeDialogOpen(true);
+  };
+
+  const handleSavePortfolioGrade = async () => {
+    if (!selectedStudent) return;
+    try {
+      const value = gradeValue === "" ? null : Number(gradeValue);
+      if (value !== null && (isNaN(value) || value < 0 || value > 20)) {
+        toast.error("La note doit être un nombre entre 0 et 20");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('students')
+        .update({ portfolio_grade: value })
+        .eq('id_student', selectedStudent.id);
+
+      if (error) throw error;
+
+      setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, portfolio_grade: value } : s));
+      toast.success("Note de portfolio mise à jour");
+      setGradeDialogOpen(false);
+      setSelectedStudent(null);
+      setGradeValue("");
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour de la note de portfolio:', err);
+      toast.error("Échec de la mise à jour de la note");
+    }
+  };
+
   const clearFilters = () => {
     setSearchQuery("");
     setSpecialtyFilter("");
     setPremiumFilter("");
     setAvailabilityFilter("");
   };
-
   const getSpecialtyOptions = () => {
     const specialties = students
       .map(student => student.specialty)
@@ -398,7 +436,7 @@ const AdminStudents = () => {
                           </TableCell>
                           <TableCell className="hidden sm:table-cell">
                             <div className="text-sm">
-                              {student.portfolio_grade ? (
+                              {student.portfolio_grade !== null && student.portfolio_grade !== undefined ? (
                                 <span className="font-medium">{student.portfolio_grade}/20</span>
                               ) : (
                                 <span className="text-muted-foreground">N/A</span>
@@ -455,6 +493,16 @@ const AdminStudents = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex items-center text-xs h-8"
+                                onClick={() => openGradeDialog(student)}
+                              >
+                                <Pencil className="h-3 w-3 mr-1" />
+                                Noter
+                              </Button>
+
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button 
@@ -527,6 +575,36 @@ const AdminStudents = () => {
             )}
           </CardContent>
         </Card>
+
+        <Dialog open={gradeDialogOpen} onOpenChange={setGradeDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Modifier la note du portfolio</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                {selectedStudent ? `${selectedStudent.name} ${selectedStudent.surname}` : ''}
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={0}
+                  max={20}
+                  step={1}
+                  value={gradeValue}
+                  onChange={(e) => setGradeValue(e.target.value === '' ? '' : Number(e.target.value))}
+                  placeholder="0-20"
+                  className="w-24"
+                />
+                <span className="text-sm text-muted-foreground">/20</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setGradeDialogOpen(false)}>Annuler</Button>
+              <Button onClick={handleSavePortfolioGrade}>Enregistrer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
