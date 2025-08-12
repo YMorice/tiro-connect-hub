@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload from "@/components/FileUpload";
 import { supabase } from "@/integrations/supabase/client";
-
+import { Palette, Clapperboard, BadgeCheck, PenTool } from "lucide-react";
 
 // List of available skills for checkboxes
 const AVAILABLE_SKILLS = [
@@ -702,71 +702,52 @@ const Register = () => {
                   <FormItem>
                     <FormLabel>Quelles sont vos spécialités ?</FormLabel>
                     <FormControl>
-                      <div className="flex flex-col space-y-2">
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes("ui_ux")}
-                              onCheckedChange={(checked) => {
-                                const currentValue = field.value || [];
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {[
+                          { value: "ui_ux", label: "UI/UX", Icon: Palette },
+                          { value: "motion_design", label: "Motion Design", Icon: Clapperboard },
+                          { value: "identite_visuelle", label: "Identité Visuelle", Icon: BadgeCheck },
+                          { value: "creation_contenu", label: "Création de contenu", Icon: PenTool },
+                        ].map((opt) => {
+                          const selected = (field.value || []).includes(opt.value);
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              role="checkbox"
+                              aria-checked={selected}
+                              onClick={() => {
+                                const current = field.value || [];
                                 field.onChange(
-                                  checked
-                                    ? [...currentValue, "ui_ux"]
-                                    : currentValue.filter((value) => value !== "ui_ux")
+                                  selected
+                                    ? current.filter((v: string) => v !== opt.value)
+                                    : [...current, opt.value]
                                 );
                               }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">UI/UX</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes("motion_design")}
-                              onCheckedChange={(checked) => {
-                                const currentValue = field.value || [];
-                                field.onChange(
-                                  checked
-                                    ? [...currentValue, "motion_design"]
-                                    : currentValue.filter((value) => value !== "motion_design")
-                                );
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">Motion Design</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes("identite_visuelle")}
-                              onCheckedChange={(checked) => {
-                                const currentValue = field.value || [];
-                                field.onChange(
-                                  checked
-                                    ? [...currentValue, "identite_visuelle"]
-                                    : currentValue.filter((value) => value !== "identite_visuelle")
-                                );
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">Identité Visuelle</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes("creation_contenu")}
-                              onCheckedChange={(checked) => {
-                                const currentValue = field.value || [];
-                                field.onChange(
-                                  checked
-                                    ? [...currentValue, "creation_contenu"]
-                                    : currentValue.filter((value) => value !== "creation_contenu")
-                                );
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">Création de contenu</FormLabel>
-                        </FormItem>
+                              className={[
+                                "relative w-full rounded-xl border",
+                                "bg-card text-card-foreground",
+                                "transition-all duration-200",
+                                "hover:bg-tiro-test focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                selected ? "border-primary shadow-sm ring-1 ring-primary" : "border-border",
+                                "p-4 sm:p-6 text-left min-h-[100px]",
+                              ].join(" ")}
+                            >
+                              <div className="flex items-center gap-4">
+                                <opt.Icon className="h-6 w-6 text-primary" aria-hidden="true" />
+                                <div className="space-y-1">
+                                  <h3 className="text-base font-semibold">{opt.label}</h3>
+                                  <p className="text-xs text-muted-foreground">Cliquez pour sélectionner</p>
+                                </div>
+                              </div>
+                              {selected && (
+                                <div className="pointer-events-none absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                                  <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     </FormControl>
                     <FormMessage />
