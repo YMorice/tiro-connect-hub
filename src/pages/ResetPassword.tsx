@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -39,9 +38,8 @@ const ResetPassword = () => {
       // Use the correct redirect URL for password reset
       const redirectUrl = new URL('/update-password', window.location.origin).toString();
       
-      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: redirectUrl,
-      });
+      const { data, error } = await supabase.auth.resetPasswordForEmail(values.email, { redirectTo: redirectUrl });
+      console.log("resetPasswordForEmail result:", { data, error });
       
       if (error) {
         console.error("Reset password error:", error);
@@ -68,9 +66,6 @@ const ResetPassword = () => {
               <div className="flex justify-center mb-2">
                 <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Logo Tiro" className="h-10" />
               </div>
-              <CardDescription>
-                Vérifiez votre email
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 text-center">
               <div className="mx-auto h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center">
@@ -138,6 +133,7 @@ const ResetPassword = () => {
                           {...field} 
                           autoComplete="email" 
                           disabled={isSubmitting}
+                          className = "bg-tiro-white"
                         />
                       </FormControl>
                       <FormMessage />
