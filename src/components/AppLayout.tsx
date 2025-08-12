@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface AppLayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
@@ -133,6 +133,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               />
             </Link>
             <div className="flex items-center space-x-2">
+              {user?.role === 'admin' && (
+                <Link to="/admin" aria-label="Espace administrateur" className="mr-1">
+                  <Button variant="ghost" size="icon">
+                    <Shield className="h-5 w-5" />
+                  </Button>
+                </Link>
+              )}
               <Avatar className="w-8 h-8">
                 {getAvatarUrl() ? (
                   <AvatarImage 
