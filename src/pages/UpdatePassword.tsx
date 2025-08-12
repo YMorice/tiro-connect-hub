@@ -38,38 +38,57 @@ const UpdatePassword = () => {
   });
 
   useEffect(() => {
-    // Check if we have the necessary tokens for password reset
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    
-    if (!accessToken || !refreshToken) {
-      console.log("Missing tokens, redirecting to login");
-      toast.error("Lien de réinitialisation invalide ou expiré");
-      navigate("/login");
-      return;
-    }
-
-    // Set the session with the tokens from the URL
-    const setSession = async () => {
+    const init = async () => {
       try {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
-        });
-        
-        if (error) {
-          console.error("Error setting session:", error);
-          toast.error("Lien de réinitialisation invalide ou expiré");
-          navigate("/login");
+        // 1) PKCE flow: ?code=...
+        const code = searchParams.get("code");
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          // Nettoie l'URL
+          navigate("/update-password", { replace: true });
+          return;
         }
-      } catch (error) {
-        console.error("Error setting session:", error);
+
+        // 2) Legacy flow: ?access_token=...&refresh_token=...
+        let accessToken = searchParams.get("access_token");
+        let refreshToken = searchParams.get("refresh_token");
+
+        // 2b) Fallback: tokens dans le hash (#access_token=...)
+        if (!accessToken || !refreshToken) {
+          const hash = window.location.hash;
+          if (hash && hash.includes("access_token")) {
+            const hashParams = new URLSearchParams(hash.replace("#", ""));
+            accessToken = hashParams.get("access_token") || accessToken;
+            refreshToken = hashParams.get("refresh_token") || refreshToken;
+          }
+        }
+
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) throw error;
+          // Nettoie l'URL
+          navigate("/update-password", { replace: true });
+          return;
+        }
+
+        // 3) Si l'utilisateur est déjà connecté (via magic link), tout va bien
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) return;
+
+        toast.error("Lien de réinitialisation invalide ou expiré");
+        navigate("/login");
+      } catch (err) {
+        console.error("Error initializing password recovery:", err);
         toast.error("Lien de réinitialisation invalide ou expiré");
         navigate("/login");
       }
     };
 
-    setSession();
+    init();
   }, [searchParams, navigate]);
 
   const onSubmit = async (values: FormValues) => {
