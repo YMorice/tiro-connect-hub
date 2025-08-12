@@ -402,7 +402,6 @@ const NewProject = () => {
                   </p>
                   
                   <div className="space-y-2">
-                    <Label>Documents du projet</Label>
                     <FileUpload 
                       onFileSelect={(file) => {
                         setSelectedFiles(prev => [...prev, file]);
