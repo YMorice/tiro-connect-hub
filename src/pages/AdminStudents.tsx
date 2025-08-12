@@ -31,6 +31,7 @@ interface Student {
   email: string;
   specialty: string | null;
   formation: string | null;
+  portfolio_link: string | null;
   portfolio_grade: number | null;
   average_rating: number | null;
   is_premium: boolean;
@@ -75,6 +76,7 @@ const AdminStudents = () => {
             id_student,
             specialty,
             formation,
+            portfolio_link,
             portfolio_grade,
             is_premium,
             available,
@@ -119,6 +121,7 @@ const AdminStudents = () => {
               email: student.users?.email || "",
               specialty: student.specialty,
               formation: student.formation,
+              portfolio_link: student.portfolio_link,
               portfolio_grade: student.portfolio_grade,
               average_rating: averageRating,
               is_premium: student.is_premium || false,
@@ -493,6 +496,29 @@ const AdminStudents = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
+                              {student.portfolio_link ? (
+                                <Button 
+                                  asChild
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="flex items-center text-xs h-8"
+                                >
+                                  <a href={student.portfolio_link} target="_blank" rel="noopener noreferrer">
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    Portfolio
+                                  </a>
+                                </Button>
+                              ) : (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  disabled
+                                  className="flex items-center text-xs h-8"
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  Portfolio
+                                </Button>
+                              )}
                               <Button 
                                 variant="outline" 
                                 size="sm" 
