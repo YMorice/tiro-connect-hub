@@ -279,6 +279,7 @@ export type Database = {
           price: number | null
           selected_student: string | null
           status: string | null
+          student_notification_read: boolean | null
           title: string
           updated_at: string
         }
@@ -292,6 +293,7 @@ export type Database = {
           price?: number | null
           selected_student?: string | null
           status?: string | null
+          student_notification_read?: boolean | null
           title: string
           updated_at?: string
         }
@@ -305,6 +307,7 @@ export type Database = {
           price?: number | null
           selected_student?: string | null
           status?: string | null
+          student_notification_read?: boolean | null
           title?: string
           updated_at?: string
         }

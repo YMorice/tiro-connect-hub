@@ -72,11 +72,13 @@ const Dashboard = () => {
                 title,
                 status,
                 updated_at,
+                student_notification_read,
                 entrepreneurs (
                   users (name, surname)
                 )
               `)
               .eq('selected_student', studentData.id_student)
+              .eq('student_notification_read', false)
               .in('status', ['STEP4', 'STEP5', 'STEP6']);
 
             if (!selectedError && selectedData) {
@@ -93,6 +95,25 @@ const Dashboard = () => {
 
     fetchStudentData();
   }, [user, userRole]);
+
+  // Fonction pour marquer la notification comme lue
+  const markNotificationAsRead = async (projectId: string) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ student_notification_read: true })
+        .eq('id_project', projectId);
+
+      if (!error) {
+        // Retirer la notification de la liste locale
+        setSelectedNotifications(prev => 
+          prev.filter(notif => notif.id_project !== projectId)
+        );
+      }
+    } catch (error) {
+      console.error('Erreur lors du marquage de la notification comme lue:', error);
+    }
+  };
 
   // Calculer les métriques du tableau de bord - using English status values for comparison
   const totalProjects = projects.length;
@@ -212,11 +233,24 @@ const Dashboard = () => {
                         </span>
                       </div>
                     </div>
-                    <Link to={`/projects/${project.id_project}`}>
-                      <Button size="sm" className="bg-tiro-secondary text-white hover:bg-tiro-secondary/70 text-white">
-                        Voir le Projet
+                    <div className="flex gap-2">
+                      <Link to={`/projects/${project.id_project}`}>
+                        <Button 
+                          size="sm" 
+                          className="bg-tiro-secondary text-white hover:bg-tiro-secondary/70"
+                          onClick={() => markNotificationAsRead(project.id_project)}
+                        >
+                          Voir le Projet
+                        </Button>
+                      </Link>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => markNotificationAsRead(project.id_project)}
+                      >
+                        Marquer comme lu
                       </Button>
-                    </Link>
+                    </div>
                   </div>
                 ))}
               </CardContent>
