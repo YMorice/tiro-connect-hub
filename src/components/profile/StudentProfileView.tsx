@@ -74,9 +74,9 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                 </div>
               )}
               
-              {skills && skills.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold mb-1">Compétences</h3>
+              <div>
+                <h3 className="text-sm font-semibold mb-1">Compétences</h3>
+                {skills && skills.length > 0 ? (
                   <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                     {skills.map((skill, index) => (
                       <Badge key={index} variant="secondary" className="text-xs">
@@ -84,8 +84,10 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                       </Badge>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className="text-sm text-muted-foreground">Aucune compétence renseignée</p>
+                )}
+              </div>
               
               {portfolioLink && (
                 <div>

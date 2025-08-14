@@ -133,9 +133,9 @@ const Profile = () => {
 
         // Si l'utilisateur est un étudiant, récupérer les données supplémentaires
         if (userData.role === 'student') {
-          const { data: studentData, error: studentError } = await supabase
+        const { data: studentData, error: studentError } = await supabase
             .from('students')
-            .select('biography, specialty, skills, formation, portfolio_link')
+            .select('biography, specialty, skills, formation, portfolio_link, siret, iban')
             .eq('id_user', user.id)
             .single();
 
@@ -148,8 +148,12 @@ const Profile = () => {
               specialty: studentData.specialty || '',
               skills: studentData.skills || [],
               formation: studentData.formation || '',
-              portfolioLink: studentData.portfolio_link || ''
+              portfolioLink: studentData.portfolio_link || '',
+              siret: studentData.siret || '',
+              iban: studentData.iban || ''
             }));
+            // Charger les skills dans l'état local
+            setSkills(studentData.skills || []);
           }
         }
 
@@ -283,7 +287,9 @@ const Profile = () => {
           specialty: profile.specialty,
           skills: skills,
           formation: profile.formation,
-          portfolio_link: formatPortfolioUrl(profile.portfolioLink)
+          portfolio_link: formatPortfolioUrl(profile.portfolioLink),
+          siret: profile.siret,
+          iban: profile.iban
         };
 
         if (existingStudent) {
@@ -538,6 +544,28 @@ const Profile = () => {
                         onChange={(e) => setProfile({ ...profile, portfolioLink: e.target.value })}
                         placeholder="votre-portfolio.com"
                         className="w-full bg-tiro-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2 text-left">
+                      <Label htmlFor="siret">Numéro SIRET</Label>
+                      <Input
+                        id="siret"
+                        value={profile.siret || ""}
+                        onChange={(e) => setProfile({ ...profile, siret: e.target.value })}
+                        placeholder="Votre numéro SIRET"
+                        className="bg-tiro-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2 text-left">
+                      <Label htmlFor="iban">IBAN</Label>
+                      <Input
+                        id="iban"
+                        value={profile.iban || ""}
+                        onChange={(e) => setProfile({ ...profile, iban: e.target.value })}
+                        placeholder="Votre IBAN"
+                        className="bg-tiro-white"
                       />
                     </div>
 
