@@ -128,7 +128,12 @@ const Profile = () => {
           specialty: '',
           skills: [],
           formation: '',
-          portfolioLink: ''
+          portfolioLink: '',
+          siret: '',
+          iban: '',
+          companyName: '',
+          companyRole: '',
+          companyAddress: ''
         });
 
         // Si l'utilisateur est un étudiant, récupérer les données supplémentaires
@@ -137,11 +142,12 @@ const Profile = () => {
             .from('students')
             .select('biography, specialty, skills, formation, portfolio_link, siret, iban')
             .eq('id_user', user.id)
-            .single();
+            .maybeSingle();
 
           if (studentError) {
             console.error('Error fetching student data:', studentError);
           } else if (studentData) {
+            console.log('Student data loaded:', studentData); // Debug log
             setProfile(prev => ({
               ...prev,
               bio: studentData.biography || '',
@@ -154,6 +160,21 @@ const Profile = () => {
             }));
             // Charger les skills dans l'état local
             setSkills(studentData.skills || []);
+            console.log('Skills loaded:', studentData.skills); // Debug log
+          } else {
+            console.log('No student data found, creating empty profile');
+            // Si aucune donnée étudiant n'existe, initialiser avec des valeurs vides
+            setProfile(prev => ({
+              ...prev,
+              bio: '',
+              specialty: '',
+              skills: [],
+              formation: '',
+              portfolioLink: '',
+              siret: '',
+              iban: ''
+            }));
+            setSkills([]);
           }
         }
 
@@ -504,14 +525,11 @@ const Profile = () => {
                           <div key={specialty} className="flex items-center space-x-2">
                             <Checkbox
                               id={`specialty-${specialty}`}
-                              checked={profile.specialty?.includes(specialty)}
+                              checked={profile.specialty === specialty}
                               onCheckedChange={(checked) => {
-                                const currentSpecialties = profile.specialty || [];
                                 setProfile({
                                   ...profile,
-                                  specialty: checked
-                                    ? [...currentSpecialties, specialty]
-                                    : currentSpecialties.filter(s => s !== specialty)
+                                  specialty: checked ? specialty : ''
                                 });
                               }}
                             />
