@@ -147,10 +147,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      toast.success("Welcome back!");
+      toast.success("Inscription réussie");
     } catch (error: any) {
       console.error("Sign in error:", error);
-      toast.error(error.message || "Failed to sign in");
+      toast.error(error.message || "Problème lors de l'inscription");
       throw error;
     }
   }, []);
@@ -159,14 +159,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        toast.error(error.message || "Failed to sign in");
+        toast.error(error.message || "Problème lors de la connexion");
         return { error };
       }
-      toast.success("Welcome back!");
+      toast.success("Connexion réussie");
       return {};
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(error.message || "Failed to sign in");
+      toast.error(error.message || "Problème lors de la connexion");
       return { error };
     }
   }, []);
@@ -181,10 +181,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       if (error) throw error;
-      toast.success("Account created successfully!");
+      toast.success("Compte créé avec succès !");
     } catch (error: any) {
       console.error("Sign up error:", error);
-      toast.error(error.message || "Failed to create account");
+      toast.error(error.message || "Problème lors de la création du compte");
       throw error;
     }
   }, []);
@@ -199,14 +199,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
       if (error) {
-        toast.error(error.message || "Failed to create account");
+        toast.error(error.message || "Problème lors de la création du compte");
         return { error };
       }
-      toast.success("Account created successfully!");
+      toast.success("Compte créé avec succès !");
       return {};
     } catch (error: any) {
       console.error("Register error:", error);
-      toast.error(error.message || "Failed to create account");
+      toast.error(error.message || "Problème lors de la création du compte");
       return { error };
     }
   }, []);
