@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -204,6 +204,36 @@ export type Database = {
             referencedColumns: ["id_users"]
           },
         ]
+      }
+      personal_documents: {
+        Row: {
+          created_at: string
+          document_name: string
+          document_type: string
+          id_document: string
+          id_user: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_name: string
+          document_type: string
+          id_document?: string
+          id_user: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          id_document?: string
+          id_user?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       project_packs: {
         Row: {
@@ -679,9 +709,9 @@ export type Database = {
       match_documents: {
         Args: { filter: Json; match_count: number; query_embedding: string }
         Returns: {
-          id: string
           content: string
           embedding: string
+          id: string
           similarity: number
         }[]
       }
