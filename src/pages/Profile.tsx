@@ -148,6 +148,9 @@ const Profile = () => {
             console.error('Error fetching student data:', studentError);
           } else if (studentData) {
             console.log('Student data loaded:', studentData); // Debug log
+            console.log('Skills from DB:', studentData.skills); // Debug log
+            console.log('Specialty from DB:', studentData.specialty); // Debug log
+            
             setProfile(prev => ({
               ...prev,
               bio: studentData.biography || '',
@@ -158,9 +161,11 @@ const Profile = () => {
               siret: studentData.siret || '',
               iban: studentData.iban || ''
             }));
-            // Charger les skills dans l'état local
-            setSkills(studentData.skills || []);
-            console.log('Skills loaded:', studentData.skills); // Debug log
+            
+            // Charger les skills dans l'état local - S'assurer que c'est un tableau
+            const skillsArray = Array.isArray(studentData.skills) ? studentData.skills : [];
+            setSkills(skillsArray);
+            console.log('Skills set in state:', skillsArray); // Debug log
           } else {
             console.log('No student data found, creating empty profile');
             // Si aucune donnée étudiant n'existe, initialiser avec des valeurs vides
