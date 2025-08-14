@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Calendar, FolderPlus, MessageCircle, TrendingUp, FilePlus, CheckCircle, Clock, AlertCircle, HelpCircle, LifeBuoy, UserCheck, UserX } from "lucide-react";
+import { Calendar, FolderPlus, MessageCircle, TrendingUp, FilePlus, CheckCircle, Clock, AlertCircle, HelpCircle, LifeBuoy, UserCheck, UserX, CircleCheckBig } from "lucide-react";
 import { getStudentProposals } from "@/services/proposal-service";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
@@ -423,7 +423,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-3 text-left">
                 <div className="flex items-start space-x-3">
-                  <AlertCircle className="h-5 w-5 text-tiro-primary mt-0.5" />
+                  <CircleCheckBig className="h-5 w-5 text-tiro-black mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       {userRole === 'student' ? 'Répondez Rapidement' : 'Restez Professionnel'}
@@ -437,7 +437,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <MessageCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <CircleCheckBig className="h-5 w-5 text-tiro-black mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       Restez Connecté
@@ -448,7 +448,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                  <CircleCheckBig className="h-5 w-5 text-tiro-black mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       {userRole === 'student' ? 'Mettez à Jour Votre Profil' : 'Exigences Claires'}
