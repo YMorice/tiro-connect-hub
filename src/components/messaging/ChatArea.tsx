@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, ArrowLeft, MoreVertical } from 'lucide-react';
+import { Send, ArrowLeft, MoreVertical, FolderOpen, MessageCircle } from 'lucide-react';
 import { Message, Conversation } from '@/hooks/useMessaging';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
@@ -126,7 +126,7 @@ export const ChatArea = memo(({
     return (
       <div className="flex-1 flex items-center justify-center bg-muted/20">
         <div className="text-center text-muted-foreground">
-          <div className="text-4xl mb-4">💬</div>
+            <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p>Sélectionnez une conversation pour commencer</p>
         </div>
       </div>

@@ -140,7 +140,7 @@ const Profile = () => {
         if (userData.role === 'student') {
         const { data: studentData, error: studentError } = await supabase
             .from('students')
-            .select('biography, specialty, skills, formation, portfolio_link, address, siret, iban')
+            .select('biography, specialty, skills, formation, portfolio_link, siret, iban, adress') // <-- Ajoute "adress"
             .eq('id_user', user.id)
             .maybeSingle();
 
@@ -160,7 +160,8 @@ const Profile = () => {
               portfolioLink: studentData.portfolio_link || '',
               address: studentData.address || '',
               siret: studentData.siret || '',
-              iban: studentData.iban || ''
+              iban: studentData.iban || '',
+              adress: studentData.adress || '' // <-- Ajoute cette ligne
             }));
             
             // Charger les skills dans l'état local - S'assurer que c'est un tableau
@@ -188,7 +189,7 @@ const Profile = () => {
         if (userData.role === 'entrepreneur') {
           const { data: entrepreneurData, error: entrepreneurError } = await supabase
             .from('entrepreneurs')
-            .select('company_name, company_role, address')
+            .select('company_name, company_role, address, company_siret')
             .eq('id_user', user.id)
             .single();
 
@@ -199,7 +200,8 @@ const Profile = () => {
               ...prev,
               companyName: entrepreneurData.company_name || '',
               companyRole: entrepreneurData.company_role || '',
-              companyAddress: entrepreneurData.address || ''
+              companyAddress: entrepreneurData.address || '',
+              siret: entrepreneurData.company_siret || ''
             }));
           }
         }
@@ -316,7 +318,8 @@ const Profile = () => {
           formation: profile.formation,
           portfolio_link: formatPortfolioUrl(profile.portfolioLink),
           siret: profile.siret,
-          iban: profile.iban
+          iban: profile.iban,
+          adress: profile.adress || "" // <-- Ajoute cette ligne
         };
 
         if (existingStudent) {
@@ -511,6 +514,16 @@ const Profile = () => {
                   />
                 </div>
 
+                <div className="space-y-2 text-left">
+                  <Label htmlFor="phone">Téléphone</Label>
+                  <Input
+                    id="email"
+                    value={profile.email || user?.email}
+                    disabled
+                    className="bg-tiro-white"
+                  />
+                </div>
+
                 {/* Champs spécifiques au rôle */}
                 {(user as any).role === 'student' && (
                   <>
@@ -593,6 +606,17 @@ const Profile = () => {
                       />
                     </div>
 
+                    {/* Champ Adresse */}
+                    <div className="space-y-2 text-left">
+                      <Label htmlFor="adress">Adresse</Label>
+                      <Textarea
+                        id="adress"
+                        value={profile.adress || ""}
+                        onChange={(e) => setProfile({ ...profile, adress: e.target.value })}
+                        className="min-h-[100px] bg-tiro-white"
+                      />
+                    </div>
+
                     {/* Section Compétences */}
                     <div className="space-y-4">
                       <Label>Compétences</Label>
@@ -653,6 +677,17 @@ const Profile = () => {
                         id="companyRole"
                         value={profile.companyRole || ""}
                         onChange={(e) => setProfile({ ...profile, companyRole: e.target.value })}
+                        className="bg-tiro-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2 text-left">
+                      <Label htmlFor="siret">Numéro SIRET</Label>
+                      <Input
+                        id="siret"
+                        value={profile.siret || ""}
+                        onChange={(e) => setProfile({ ...profile, siret: e.target.value })}
+                        placeholder="Votre numéro SIRET"
                         className="bg-tiro-white"
                       />
                     </div>
