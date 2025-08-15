@@ -155,20 +155,6 @@ useEffect(() => {
               <CardDescription className="text-sm">{pack.description}</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow p-4 pt-0">
-              {pack.price !== null && pack.price !== undefined ? (
-                <p className="text-l sm:text-2xl font-bold mb-3">
-                  {pack.price === 0 ? (
-                    ""
-                  ) : (
-                    <>
-                      {pack.from === true && "à partir de "}
-                      {pack.price.toFixed(2)} €
-                    </>
-                  )}
-                </p>
-              ) : (
-                <p className="text-xl sm:text-2xl font-bold mb-3">Contactez-nous pour le prix</p>
-              )}
               <h3 className="font-semibold mb-2 text-sm">Fonctionnalités :</h3>
               <ul className="space-y-1">
                 {pack.features?.map((feature, index) => (
@@ -184,7 +170,18 @@ useEffect(() => {
                 className="w-full text-sm h-9" 
                 onClick={() => handleSelectPack(pack.id_pack)}
               >
-                Sélectionner ce pack
+                {pack.price !== null && pack.price !== undefined ? (
+                  pack.price === 0 ? (
+                    "Obtenir un devis"
+                  ) : (
+                    <>
+                      {pack.from === true && "À partir de "}
+                      {pack.price.toFixed(2)} € - Sélectionner
+                    </>
+                  )
+                ) : (
+                  "Obtenir un devis"
+                )}
               </Button>
             </CardFooter>
           </Card>
