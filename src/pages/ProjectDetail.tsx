@@ -797,12 +797,20 @@ const ProjectDetail = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4 text-left">
-              {project.deadline && (
-                <p className="text-sm sm:text-base text-gray-800">
-                  <Clock className="inline-block h-4 w-4 mr-1 text-gray-500 align-middle" />
-                  <span className="font-semibold">Deadline :</span> {new Date(project.deadline).toLocaleDateString()}
-                </p>
-              )}
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-6">
+                {project.deadline && (
+                  <p className="text-sm sm:text-base text-gray-800">
+                    <Clock className="inline-block h-4 w-4 mr-1 text-gray-500 align-middle" />
+                    <span className="font-semibold">Deadline :</span> {new Date(project.deadline).toLocaleDateString()}
+                  </p>
+                )}
+                {project.price && (
+                  <p className="text-sm sm:text-base text-tiro-primary font-semibold">
+                    <DollarSign className="inline-block h-4 w-4 mr-1 align-middle" />
+                    <span className="font-semibold">Prix :</span> €{project.price.toLocaleString()}
+                  </p>
+                )}
+              </div>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {project.description}
               </p>

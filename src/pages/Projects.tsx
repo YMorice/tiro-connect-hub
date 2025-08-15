@@ -494,12 +494,6 @@ const Projects = () => {
                           </Badge>
                         )}
                       </div>
-                      {project.price && (
-                        <div className="flex items-center text-sm text-tiro-primary font-semibold">
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          €{project.price.toLocaleString()}
-                        </div>
-                      )}
                     </div>
                     <CardTitle className="text-lg font-semibold line-clamp-2 min-h-[3.5rem]">
                       {project.title}
@@ -509,18 +503,22 @@ const Projects = () => {
                     <p className="text-gray-600 text-sm line-clamp-3 mb-4 min-h-[4.5rem]">
                       {project.description}
                     </p>
-                    <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                      <div className="flex items-center text-xs text-gray-500">
-                        {project.deadline && (
-                          <div className="flex items-center text-xs text-gray-500">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            Deadline&nbsp;:
-                            <span className="ml-1 font-medium text-gray-700">
-                              {project.deadline.toLocaleDateString('fr-FR')}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex justify-between items-center">
+                      {project.deadline && (
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          Deadline&nbsp;:
+                          <span className="ml-1 font-medium text-gray-700">
+                            {project.deadline.toLocaleDateString('fr-FR')}
+                          </span>
+                        </div>
+                      )}
+                      {project.price && (
+                        <div className="flex items-center text-sm text-tiro-primary font-semibold">
+                          <DollarSign className="h-4 w-4 mr-1" />
+                          €{project.price.toLocaleString()}
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
