@@ -367,7 +367,7 @@ const NewProject = () => {
                 name="deadline"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date limite du projet (optionnel)</FormLabel>
+                    <FormLabel>Deadline (optionnel)</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -376,7 +376,7 @@ const NewProject = () => {
                             className={`w-full justify-start text-left font-normal ${!field.value && "text-muted-foreground"}`}
                           >
                             <Calendar className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : "Select a deadline"}
+                            {field.value ? format(field.value, "PPP") : "Sélectionnez une date limite"}
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
@@ -395,9 +395,6 @@ const NewProject = () => {
                   </FormItem>
                 )}
               />
-
-
-
               <div className="flex items-center justify-end space-x-4 pt-6 border-t">
                 <Button 
                   type="button" 

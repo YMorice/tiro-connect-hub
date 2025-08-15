@@ -134,7 +134,7 @@ useEffect(() => {
             </CardContent>
             <CardFooter className="flex-shrink-0 p-4">
               <Button 
-                className="w-full text-sm h-9" 
+                className="w-full text-md h-9 font-clash tracking-wide" 
                 onClick={() => handleSelectPack(pack.id_pack)}
               >
                 {pack.price !== null && pack.price !== undefined ? (
@@ -143,7 +143,7 @@ useEffect(() => {
                   ) : (
                     <>
                       {pack.from === true && "À partir de "}
-                      {pack.price.toFixed(2)} € - Sélectionner
+                      {pack.price.toFixed(2)} €
                     </>
                   )
                 ) : (
