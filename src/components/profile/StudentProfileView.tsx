@@ -18,6 +18,9 @@ interface StudentProfileViewProps {
     skills?: string[];
     formation?: string;
     portfolioLink?: string;
+    siret?: string;
+    iban?: string;
+    address?: string;
   };
 }
 
@@ -26,7 +29,7 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
   studentProfile 
 }) => {
   const { user } = useAuth();
-  const { name, surname, email, avatar, bio, specialty, skills, formation, portfolioLink } = studentProfile;
+  const { name, surname, email, avatar, bio, specialty, skills, formation, portfolioLink, siret, iban, address } = studentProfile;
   
   const getInitials = (name: string, surname: string) => {
     return `${name.charAt(0)}${surname.charAt(0)}`.toUpperCase();
@@ -100,6 +103,27 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                   >
                     Voir le Portfolio
                   </a>
+                </div>
+              )}
+              
+              {address && (
+                <div>
+                  <h3 className="text-sm font-semibold mb-1">Adresse</h3>
+                  <p className="text-sm">{address}</p>
+                </div>
+              )}
+              
+              {siret && (
+                <div>
+                  <h3 className="text-sm font-semibold mb-1">SIRET</h3>
+                  <p className="text-sm">{siret}</p>
+                </div>
+              )}
+              
+              {iban && (
+                <div>
+                  <h3 className="text-sm font-semibold mb-1">IBAN</h3>
+                  <p className="text-sm font-mono">{iban}</p>
                 </div>
               )}
             </div>

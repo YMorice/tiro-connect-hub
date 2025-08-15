@@ -140,7 +140,7 @@ const Profile = () => {
         if (userData.role === 'student') {
         const { data: studentData, error: studentError } = await supabase
             .from('students')
-            .select('biography, specialty, skills, formation, portfolio_link, siret, iban')
+            .select('biography, specialty, skills, formation, portfolio_link, address, siret, iban')
             .eq('id_user', user.id)
             .maybeSingle();
 
@@ -158,6 +158,7 @@ const Profile = () => {
               skills: studentData.skills || [],
               formation: studentData.formation || '',
               portfolioLink: studentData.portfolio_link || '',
+              address: studentData.address || '',
               siret: studentData.siret || '',
               iban: studentData.iban || ''
             }));
