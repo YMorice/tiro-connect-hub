@@ -323,7 +323,7 @@ const Profile = () => {
           portfolio_link: formatPortfolioUrl(profile.portfolioLink),
           siret: profile.siret,
           iban: profile.iban,
-          adress: profile.adress || "" 
+          address: profile.address || "" 
         };
 
         if (existingStudent) {
