@@ -28,7 +28,7 @@ interface StudentProfileViewProps {
     email: string;
     avatar?: string;
     bio?: string;
-    specialty?: string;
+    specialty?: string | string[];
     skills?: string[];
     formation?: string;
     portfolioLink?: string;
@@ -74,32 +74,33 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
               <div>
                 <h2 className="text-xl font-bold">{name} {surname}</h2>
                 <p className="text-muted-foreground">{email}</p>
-                {specialty && (
-                  <div className="mt-1">
-                    <div className="flex flex-wrap gap-1">
-                      {(() => {
-                        let specialties: string[] = [];
-                        
-                        // Parse les spécialités selon leur format
-                        if (Array.isArray(specialty)) {
-                          specialties = specialty;
-                        } else if (typeof specialty === 'string') {
-                          try {
-                            specialties = JSON.parse(specialty);
-                          } catch {
-                            specialties = [specialty];
-                          }
-                        }
-                        
-                        return specialties.map((s, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {specialtyLabels[s] || s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                <div>
+                  <h3 className="text-sm font-semibold mb-1">Spécialités</h3>
+                  {(() => {
+                    let specialties: string[] = [];
+                    if (Array.isArray(specialty)) {
+                      specialties = specialty;
+                    } else if (typeof specialty === 'string' && specialty) {
+                      try {
+                        specialties = JSON.parse(specialty);
+                      } catch {
+                        specialties = [specialty];
+                      }
+                    }
+                    
+                    return specialties.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                        {specialties.map((spec: string, index: number) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {specialtyLabels[spec] || spec.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                           </Badge>
-                        ));
-                      })()}
-                    </div>
-                  </div>
-                )}
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Aucune spécialité renseignée</p>
+                    );
+                  })()}
+                </div>
               </div>
               
               {bio && (
