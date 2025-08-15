@@ -84,6 +84,10 @@ interface Project {
   stripe_payment_intent_id?: string;
   /** Paid at timestamp */
   paid_at?: string;
+  /** Project pack information */
+  pack?: {
+    name: string;
+  };
   /** Entrepreneur information with nested user data */
   entrepreneur?: {
     users: {
@@ -245,6 +249,9 @@ const ProjectDetail = () => {
         .from("projects")
         .select(`
           *,
+          project_packs (
+            name
+          ),
           entrepreneurs (
             users (name, email, pp_link)
           )
@@ -321,6 +328,7 @@ const ProjectDetail = () => {
       // Combine all data into final project object
       const formattedProject = {
         ...projectData,
+        pack: projectData.project_packs,
         entrepreneur: Array.isArray(projectData.entrepreneurs)
           ? projectData.entrepreneurs[0]
           : projectData.entrepreneurs,
@@ -334,6 +342,7 @@ const ProjectDetail = () => {
       // Don't show error for documents, just set empty array
       const formattedProject = {
         ...projectData,
+        pack: projectData.project_packs,
         entrepreneur: projectData.entrepreneurs,
         student: studentData,
         documents: []
@@ -750,9 +759,14 @@ const ProjectDetail = () => {
           <CardHeader className="pb-3 sm:pb-4">
             <div className="flex flex-col gap-4">
               <div className="flex-1 min-w-0">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-3 break-words leading-tight">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 break-words leading-tight">
                   {project.title}
                 </CardTitle>
+                {project.pack && (
+                  <p className="text-base sm:text-lg font-medium text-tiro-primary mb-3">
+                    {project.pack.name}
+                  </p>
+                )}
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
                     {getStatusDisplay(project.status)}

@@ -106,6 +106,9 @@ export interface DatabaseProposedStudent {
 // Extended project interface for student view with proposal status
 export interface StudentProject extends Project {
   proposalStatus?: 'pending' | 'accepted' | 'declined' | 'assigned';
+  pack?: {
+    name: string;
+  };
   entrepreneur?: {
     users: {
       name: string;

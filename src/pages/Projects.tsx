@@ -80,6 +80,9 @@ const Projects = () => {
               price,
               id_entrepreneur,
               selected_student,
+              project_packs (
+                name
+              ),
               entrepreneurs (
                 users (name, surname)
               )
@@ -106,6 +109,7 @@ const Projects = () => {
             updatedAt: new Date(project.updated_at || project.created_at),
             deadline: project.deadline ? new Date(project.deadline) : null, 
             price: project.price,
+            pack: project.project_packs,
             entrepreneur: project.entrepreneurs
           }));
           const sortedProjects = sortProjectsByStatus(transformedProjects);
@@ -154,6 +158,7 @@ const Projects = () => {
             updatedAt: new Date(proposal.projects.updated_at || proposal.created_at),
             deadline: proposal.projects.deadline ? new Date(proposal.projects.deadline) : null,
             price: proposal.projects.price,
+            pack: proposal.projects.project_packs,
             proposalStatus: proposal.accepted === null ? 'pending' : (proposal.accepted ? 'accepted' : 'declined'),
             entrepreneur: proposal.projects.entrepreneurs
           }));
@@ -172,6 +177,9 @@ const Projects = () => {
               price,
               id_entrepreneur,
               selected_student,
+              project_packs (
+                name
+              ),
               entrepreneurs (
                 users (name, surname)
               )
@@ -197,6 +205,7 @@ const Projects = () => {
             updatedAt: new Date(project.updated_at || project.created_at),
             deadline: project.deadline ? new Date(project.deadline) : null,
             price: project.price,
+            pack: project.project_packs,
             proposalStatus: 'assigned' as const,
             entrepreneur: project.entrepreneurs
           }));
@@ -226,6 +235,9 @@ const Projects = () => {
             price,
             id_entrepreneur,
             selected_student,
+            project_packs (
+              name
+            ),
             entrepreneurs (
               users (name, surname)
             )
@@ -251,6 +263,7 @@ const Projects = () => {
           updatedAt: new Date(project.updated_at || project.created_at),
           deadline: project.deadline ? new Date(project.deadline) : null,
           price: project.price,
+          pack: project.project_packs,
           entrepreneur: project.entrepreneurs
         }));
         const sortedProjects = sortProjectsByStatus(transformedProjects);
@@ -479,7 +492,7 @@ const Projects = () => {
                 className="block"
               >
                 <Card className="h-full shadow-none transition-colors duration-200 rounded-[5px] bg-tiro-white hover:bg-muted cursor-pointer">
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-2">
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex flex-wrap gap-2">
                         <Badge className={`${getStatusColor(project.status)} text-xs`}>
@@ -495,12 +508,17 @@ const Projects = () => {
                         )}
                       </div>
                     </div>
-                    <CardTitle className="text-lg font-semibold line-clamp-2 min-h-[3.5rem]">
+                    <CardTitle className="text-lg font-semibold line-clamp-2 mb-1">
                       {project.title}
                     </CardTitle>
+                    {project.pack && (
+                      <p className="text-sm font-medium text-tiro-primary mb-2">
+                        {project.pack.name}
+                      </p>
+                    )}
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <p className="text-gray-600 text-sm line-clamp-3 mb-4 min-h-[4.5rem]">
+                    <p className="text-gray-600 text-sm line-clamp-3 mb-3">
                       {project.description}
                     </p>
                     <div className="flex justify-between items-center">
