@@ -35,13 +35,7 @@ const Profile = () => {
     { value: "ui_ux", label: "UI/UX" },
     { value: "motion_design", label: "Motion Design" },
     { value: "identite_visuelle", label: "Identité Visuelle" },
-    { value: "print_design", label: "Print Design" },
-    { value: "illustration", label: "Illustration" },
-    { value: "photographie", label: "Photographie" },
-    { value: "video_editing", label: "Montage Vidéo" },
-    { value: "branding", label: "Branding" },
-    { value: "packaging", label: "Packaging" },
-    { value: "web_design", label: "Web Design" }
+    { value: "content_creation", label: "Création de Contenu" },
   ];
 
   // Options de compétences correspondant à l'inscription
