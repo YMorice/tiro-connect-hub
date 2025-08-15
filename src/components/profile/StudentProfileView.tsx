@@ -6,6 +6,20 @@ import { Badge } from '@/components/ui/badge';
 import StudentReviewsSection from '@/components/reviews/StudentReviewsSection';
 import { useAuth } from '@/context/auth-context';
 
+// Mapping des spécialités techniques vers des labels lisibles
+const specialtyLabels: { [key: string]: string } = {
+  'identite_visuelle': 'Identité Visuelle',
+  'motion_design': 'Motion Design',
+  'web_design': 'Web Design',
+  'ui_ux': 'UI/UX',
+  'print_design': 'Print Design',
+  'illustration': 'Illustration',
+  'photographie': 'Photographie',
+  'video_editing': 'Montage Vidéo',
+  'branding': 'Branding',
+  'packaging': 'Packaging'
+};
+
 interface StudentProfileViewProps {
   studentId: string;
   studentProfile: {
@@ -62,18 +76,28 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                 <p className="text-muted-foreground">{email}</p>
                 {specialty && (
                   <div className="mt-1">
-                    <span className="text-sm font-medium">
-                      {Array.isArray(specialty) 
-                        ? specialty.map(s => 
-                            s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-                          ).join(', ')
-                        : typeof specialty === 'string' && specialty.startsWith('[')
-                        ? JSON.parse(specialty).map((s: string) => 
-                            s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-                          ).join(', ')
-                        : specialty
-                      }
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {(() => {
+                        let specialties: string[] = [];
+                        
+                        // Parse les spécialités selon leur format
+                        if (Array.isArray(specialty)) {
+                          specialties = specialty;
+                        } else if (typeof specialty === 'string') {
+                          try {
+                            specialties = JSON.parse(specialty);
+                          } catch {
+                            specialties = [specialty];
+                          }
+                        }
+                        
+                        return specialties.map((s, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {specialtyLabels[s] || s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </Badge>
+                        ));
+                      })()}
+                    </div>
                   </div>
                 )}
               </div>
