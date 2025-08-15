@@ -32,10 +32,16 @@ const Profile = () => {
 
   // Options de spécialité correspondant à l'inscription
   const specialtyOptions = [
-    "UI/UX",
-    "Motion Design",
-    "Identité Visuelle",
-    "Création de contenu"
+    { value: "ui_ux", label: "UI/UX" },
+    { value: "motion_design", label: "Motion Design" },
+    { value: "identite_visuelle", label: "Identité Visuelle" },
+    { value: "print_design", label: "Print Design" },
+    { value: "illustration", label: "Illustration" },
+    { value: "photographie", label: "Photographie" },
+    { value: "video_editing", label: "Montage Vidéo" },
+    { value: "branding", label: "Branding" },
+    { value: "packaging", label: "Packaging" },
+    { value: "web_design", label: "Web Design" }
   ];
 
   // Options de compétences correspondant à l'inscription
@@ -542,26 +548,46 @@ const Profile = () => {
                     <div className="space-y-2 text-left">
                       <Label>Spécialités</Label>
                       <div className="flex flex-col space-y-2">
-                        {specialtyOptions.map((specialty) => (
-                          <div key={specialty} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`specialty-${specialty}`}
-                              checked={profile.specialty === specialty}
-                              onCheckedChange={(checked) => {
-                                setProfile({
-                                  ...profile,
-                                  specialty: checked ? specialty : ''
-                                });
-                              }}
-                            />
-                            <Label
-                              htmlFor={`specialty-${specialty}`}
-                              className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              {specialty}
-                            </Label>
-                          </div>
-                        ))}
+                        {specialtyOptions.map((specialty) => {
+                          // Parse les spécialités existantes
+                          let currentSpecialties: string[] = [];
+                          if (Array.isArray(profile.specialty)) {
+                            currentSpecialties = profile.specialty;
+                          } else if (typeof profile.specialty === 'string' && profile.specialty) {
+                            try {
+                              currentSpecialties = JSON.parse(profile.specialty);
+                            } catch {
+                              currentSpecialties = [profile.specialty];
+                            }
+                          }
+                          
+                          return (
+                            <div key={specialty.value} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`specialty-${specialty.value}`}
+                                checked={currentSpecialties.includes(specialty.value)}
+                                onCheckedChange={(checked) => {
+                                  let newSpecialties: string[];
+                                  if (checked) {
+                                    newSpecialties = [...currentSpecialties, specialty.value];
+                                  } else {
+                                    newSpecialties = currentSpecialties.filter(s => s !== specialty.value);
+                                  }
+                                  setProfile({
+                                    ...profile,
+                                    specialty: JSON.stringify(newSpecialties)
+                                  });
+                                }}
+                              />
+                              <Label
+                                htmlFor={`specialty-${specialty.value}`}
+                                className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {specialty.label}
+                              </Label>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
