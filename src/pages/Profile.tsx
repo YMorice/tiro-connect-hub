@@ -140,7 +140,7 @@ const Profile = () => {
         if (userData.role === 'student') {
         const { data: studentData, error: studentError } = await supabase
             .from('students')
-            .select('biography, specialty, skills, formation, portfolio_link, siret, iban, adress') // <-- Ajoute "adress"
+            .select('biography, specialty, skills, formation, portfolio_link, address, siret, iban')
             .eq('id_user', user.id)
             .maybeSingle();
 
@@ -160,8 +160,7 @@ const Profile = () => {
               portfolioLink: studentData.portfolio_link || '',
               address: studentData.address || '',
               siret: studentData.siret || '',
-              iban: studentData.iban || '',
-              adress: studentData.adress || '' // <-- Ajoute cette ligne
+              iban: studentData.iban || ''
             }));
             
             // Charger les skills dans l'état local - S'assurer que c'est un tableau
@@ -178,6 +177,7 @@ const Profile = () => {
               skills: [],
               formation: '',
               portfolioLink: '',
+              address: '',
               siret: '',
               iban: ''
             }));
@@ -319,7 +319,7 @@ const Profile = () => {
           portfolio_link: formatPortfolioUrl(profile.portfolioLink),
           siret: profile.siret,
           iban: profile.iban,
-          adress: profile.adress || "" // <-- Ajoute cette ligne
+          address: profile.address
         };
 
         if (existingStudent) {
@@ -608,11 +608,11 @@ const Profile = () => {
 
                     {/* Champ Adresse */}
                     <div className="space-y-2 text-left">
-                      <Label htmlFor="adress">Adresse</Label>
+                      <Label htmlFor="address">Adresse</Label>
                       <Textarea
-                        id="adress"
-                        value={profile.adress || ""}
-                        onChange={(e) => setProfile({ ...profile, adress: e.target.value })}
+                        id="address"
+                        value={profile.address || ""}
+                        onChange={(e) => setProfile({ ...profile, address: e.target.value })}
                         className="min-h-[100px] bg-tiro-white"
                       />
                     </div>
