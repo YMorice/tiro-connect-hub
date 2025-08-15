@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Plus, Calendar, DollarSign, User, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Search, Plus, Calendar, BadgeEuro, User, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getStudentProposals } from "@/services/proposal-service";
 import { StudentProject } from "@/types";
@@ -515,8 +515,8 @@ const Projects = () => {
                       )}
                       {project.price && (
                         <div className="flex items-center text-sm text-tiro-primary font-semibold">
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          €{project.price.toLocaleString()}
+                          <BadgeEuro className="h-4 w-4 mr-1" />
+                          {project.price.toLocaleString()}€
                         </div>
                       )}
                     </div>

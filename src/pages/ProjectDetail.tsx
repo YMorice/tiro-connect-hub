@@ -34,7 +34,7 @@ import StudentProposalActions from "@/components/student/StudentProposalActions"
 import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
 import {ProjectPayment} from "@/components/payment/ProjectPayment";
-import { Download, FileText, Calendar, User, DollarSign, MessageCircle, Users, Clock, CheckCircle, UserCheck } from "lucide-react";
+import { Download, FileText, Calendar, User, BadgeEuro, MessageCircle, Users, Clock, CheckCircle, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import PaymentStatusMessage from "@/components/PaymentStatusMessage";
 
@@ -588,25 +588,21 @@ const ProjectDetail = () => {
   // Show loading spinner while fetching data
   if (loading) {
     return (
-      <AppLayout>
-        <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tiro-primary"></div>
-        </div>
-      </AppLayout>
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tiro-primary"></div>
+      </div>
     );
   }
 
   // Show error state if project not found
   if (!project) {
     return (
-      <AppLayout>
-        <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Project not found</h1>
-            <p className="text-gray-600">The project you're looking for doesn't exist or you don't have access to it.</p>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Project not found</h1>
+          <p className="text-gray-600">The project you're looking for doesn't exist or you don't have access to it.</p>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
@@ -765,7 +761,7 @@ const ProjectDetail = () => {
                   <Link to="/messages" className="flex items-center">
                     <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
                       <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      <span className="hidden sm:inline">Discussion</span>
+                      <span className="hidden sm:inline">Aller à la Discussion</span>
                       <span className="sm:hidden">Chat</span>
                       {hasUnreadMessages && (
                         <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
@@ -806,8 +802,8 @@ const ProjectDetail = () => {
                 )}
                 {project.price && (
                   <p className="text-sm sm:text-base text-tiro-primary font-semibold">
-                    <DollarSign className="inline-block h-4 w-4 mr-1 align-middle" />
-                    <span className="font-semibold">Prix :</span> €{project.price.toLocaleString()}
+                    <BadgeEuro className="inline-block h-4 w-4 mr-1 align-middle" />
+                    <span className="font-semibold">Prix :</span> {project.price.toLocaleString()}€
                   </p>
                 )}
               </div>
@@ -859,7 +855,7 @@ const ProjectDetail = () => {
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="text-base sm:text-lg flex items-center">
                   <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Assigned Student
+                  Étudiant.e Sélectionné.e
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -890,7 +886,7 @@ const ProjectDetail = () => {
           <CardHeader className="pb-3 sm:pb-4">
             <CardTitle className="text-base sm:text-lg flex items-center">
               <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-              Project Documents
+              Documents du Projet
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -937,7 +933,7 @@ const ProjectDetail = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4 text-sm sm:text-base">No documents uploaded yet.</p>
+              <p className="text-gray-500 text-center py-4 text-sm sm:text-base">Aucun document téléversé pour le moment.</p>
             )}
           </CardContent>
         </Card>
