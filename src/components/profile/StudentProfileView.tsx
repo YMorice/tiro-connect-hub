@@ -60,7 +60,22 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
               <div>
                 <h2 className="text-xl font-bold">{name} {surname}</h2>
                 <p className="text-muted-foreground">{email}</p>
-                {specialty && <p className="text-sm font-medium mt-1">{specialty}</p>}
+                {specialty && (
+                  <div className="mt-1">
+                    <span className="text-sm font-medium">
+                      {Array.isArray(specialty) 
+                        ? specialty.map(s => 
+                            s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                          ).join(', ')
+                        : typeof specialty === 'string' && specialty.startsWith('[')
+                        ? JSON.parse(specialty).map((s: string) => 
+                            s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                          ).join(', ')
+                        : specialty
+                      }
+                    </span>
+                  </div>
+                )}
               </div>
               
               {bio && (
