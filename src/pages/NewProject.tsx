@@ -13,12 +13,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Trash2, Calendar } from "lucide-react";
-import FileUpload from "@/components/FileUpload";
+import { ArrowLeft, Calendar } from "lucide-react";
+
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
-import { uploadFile, addDocumentToProject } from "@/services/document-service";
+
 import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -48,7 +48,6 @@ const NewProject = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
   const isMobile = useIsMobile();
@@ -234,38 +233,21 @@ const NewProject = () => {
       } catch (messageError) {
         console.error("Error with message group creation:", messageError);
         // Don't fail the whole project creation for message group issues
-        toast.warning("Project created but there may be an issue with messaging setup");
+        toast.warning("Projet créé mais il peut y avoir un problème avec la configuration de la messagerie");
       }
 
-      // Handle file uploads if any were selected
-      if (selectedFiles.length > 0) {
-        console.log("Uploading files:", selectedFiles.length);
-        for (const file of selectedFiles) {
-          try {
-            // Upload file to storage
-            const fileUrl = await uploadFile(file, projectId);
-            if (fileUrl) {
-              // Add document metadata to database
-              await addDocumentToProject(projectId, file.name, 'proposal', fileUrl);
-              console.log("File uploaded successfully:", file.name);
-            }
-          } catch (error) {
-            console.error(`Error uploading file ${file.name}:`, error);
-            toast.error(`Failed to upload ${file.name}`);
-          }
-        }
-      }
+
 
       // Reload projects to get the latest data
       await loadProjects();
-      toast.success("Project created successfully!");
+      toast.success("Projet créé avec succès!");
 
       // Navigate to the specific project page instead of projects list
       navigate(`/projects/${projectId}`);
     } catch (error) {
       console.error("Error creating project:", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error(`Failed to create project: ${errorMessage}`);
+      toast.error(`Erreur lors de la création du projet: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -394,43 +376,7 @@ const NewProject = () => {
                 )}
               />
 
-              <div className="space-y-4 border p-4 rounded-md bg-gray-50">
-                <h3 className="font-medium">Documents initiaux (Optionnel)</h3>
-                <p className="text-sm text-muted-foreground">
-                Vous pouvez ajouter à ce projet des documents qui aideront l'étudiant à comprendre vos exigences.
-                </p>
-                
-                <div className="space-y-2">
-                  <FileUpload 
-                    onFileSelect={(file) => {
-                      setSelectedFiles(prev => [...prev, file]);
-                    }} 
-                    buttonText="Ajouter un document" 
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip" 
-                    maxSize={20} 
-                  />
-                  
-                  {selectedFiles.length > 0 && (
-                    <div className="mt-2 space-y-2">
-                      <Label>Fichiers sélectionnés:</Label>
-                      <div className="space-y-1">
-                        {selectedFiles.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
-                            <span className="text-sm truncate max-w-[70%]">{file.name}</span>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== index))}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+
 
               <div className="flex items-center justify-end space-x-4 pt-6 border-t">
                 <Button 

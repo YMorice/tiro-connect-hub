@@ -450,12 +450,12 @@ const ProjectDetail = () => {
    */
   const getStatusDisplay = (status: string) => {
     const statusMap: { [key: string]: string } = {
-      'STEP1': 'New',
-      'STEP2': 'Proposals',
-      'STEP3': 'Selection',
-      'STEP4': 'Payment',
-      'STEP5': 'Active',
-      'STEP6': 'In Progress'
+      'STEP1': 'Nouveau',
+      'STEP2': 'Propositions',
+      'STEP3': 'Sélection',
+      'STEP4': 'Paiement',
+      'STEP5': 'Actif',
+      'STEP6': 'Terminé'
     };
     return statusMap[status] || status?.replace('_', ' ').toUpperCase() || 'Unknown';
   };

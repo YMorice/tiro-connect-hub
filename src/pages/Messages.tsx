@@ -43,7 +43,7 @@ const Messages = () => {
             selectedConversation && "hidden lg:flex"
           )}>
             <div className="p-3 lg:p-4 border-b border-border flex-shrink-0">
-              <h2 className="text-lg font-semibold text-foreground">Messages</h2>
+              <h2 className="text-lg font-clash text-foreground tracking-wide">Messages</h2>
               {conversationsLoading && (
                 <p className="text-sm text-muted-foreground">Chargement...</p>
               )}
