@@ -514,9 +514,9 @@ const Projects = () => {
                         </div>
                       )}
                       {project.price && (
-                        <div className="flex items-center text-sm text-tiro-primary font-semibold">
+                        <div className="flex items-center text-sm text-tiro-black font-semibold">
                           <BadgeEuro className="h-4 w-4 mr-1" />
-                          {userRole === "student" ? Math.round(project.price * 0.75).toLocaleString() : project.price.toLocaleString()}€
+                          Prix : {userRole === "student" ? Math.round(project.price * 0.75).toLocaleString() : project.price.toLocaleString()}€
                         </div>
                       )}
                     </div>

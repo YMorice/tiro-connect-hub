@@ -34,7 +34,7 @@ import StudentProposalActions from "@/components/student/StudentProposalActions"
 import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
 import {ProjectPayment} from "@/components/payment/ProjectPayment";
-import { Download, FileText, Calendar, User, BadgeEuro, MessageCircle, Users, Clock, CheckCircle, UserCheck } from "lucide-react";
+import { Download, FileText, Calendar, User, BadgeEuro, MessageCircle, Users, CheckCircle, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import PaymentStatusMessage from "@/components/PaymentStatusMessage";
 
@@ -796,12 +796,12 @@ const ProjectDetail = () => {
               <div className="flex flex-col gap-2 sm:flex-row sm:gap-6">
                 {project.deadline && (
                   <p className="text-sm sm:text-base text-gray-800">
-                    <Clock className="inline-block h-4 w-4 mr-1 text-gray-500 align-middle" />
+                    <Calendar className="inline-block h-4 w-4 mr-1 text-gray-500 align-middle" />
                     <span className="font-semibold">Deadline :</span> {new Date(project.deadline).toLocaleDateString()}
                   </p>
                 )}
                 {project.price && (
-                  <p className="text-sm sm:text-base text-tiro-primary font-semibold">
+                  <p className="text-sm sm:text-base text-tiro-black font-semibold">
                     <BadgeEuro className="inline-block h-4 w-4 mr-1 align-middle" />
                     <span className="font-semibold">Prix :</span> {(user as any)?.role === "student" ? Math.round(project.price * 0.75).toLocaleString() : project.price.toLocaleString()}€
                   </p>

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Calendar, FolderPlus, MessageCircle, TrendingUp, FilePlus, CheckCircle, Clock, AlertCircle, HelpCircle, LifeBuoy, UserCheck, UserX, CircleCheckBig } from "lucide-react";
+import { Calendar, FolderPlus, MessageCircle, TrendingUp, Plus, FilePlus, CheckCircle, Clock, AlertCircle, HelpCircle, LifeBuoy, UserCheck, UserX, CircleCheckBig } from "lucide-react";
 import { getStudentProposals } from "@/services/proposal-service";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
@@ -191,7 +191,7 @@ const Dashboard = () => {
             {userRole === 'entrepreneur' && (
               <Button asChild className="bg-tiro-primary hover:bg-tiro-primary/70">
                 <Link to="/pack-selection">
-                  <FolderPlus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 mr-2" />
                   Nouveau Projet
                 </Link>
               </Button>
