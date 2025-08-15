@@ -14,6 +14,7 @@ export interface Conversation {
   hasUnreadMessages: boolean;
   projectStatus: string;
   unreadCount: number;
+  packName?: string;
 }
 
 export interface Message {
@@ -54,6 +55,9 @@ export const useMessaging = () => {
           status,
           id_entrepreneur,
           selected_student,
+          project_packs (
+            name
+          ),
           entrepreneurs (
             users!entrepreneurs_id_user_fkey (name, surname, pp_link)
           ),
@@ -170,7 +174,8 @@ export const useMessaging = () => {
             lastMessage: latestMessage?.content || 'No messages yet',
             lastMessageTime: latestMessage?.created_at || new Date().toISOString(),
             hasUnreadMessages: unreadCount > 0,
-            unreadCount
+            unreadCount,
+            packName: project.project_packs?.name
           };
         })
         .filter(Boolean) as Conversation[];

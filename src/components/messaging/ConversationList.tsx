@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Conversation } from '@/hooks/useMessaging';
 import { cn } from '@/lib/utils';
+import { ClipboardPen, Clapperboard, Palette, PenTool } from 'lucide-react';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -30,18 +31,10 @@ const ConversationItem = memo(({
     <div className="flex items-center space-x-3">
       <div className="relative">
         <Avatar className="w-8 h-8 lg:w-10 lg:h-10 flex-shrink-0">
-          {conversation.otherParticipantAvatar && conversation.otherParticipantAvatar.trim() !== '' ? (
-            <AvatarImage 
-              src={conversation.otherParticipantAvatar}
-              alt={conversation.otherParticipant}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-              }}
-            />
-          ) : null}
-          <AvatarFallback className="bg-primary text-primary-foreground text-xs lg:text-sm">
-            {conversation.otherParticipant.charAt(0).toUpperCase()}
+          <AvatarFallback className="bg-tiro-black text-tiro-white text-xs lg:text-sm">
+            {React.createElement(getPackIcon(conversation.packName), { 
+              className: "w-4 h-4 lg:w-5 lg:h-5" 
+            })}
           </AvatarFallback>
         </Avatar>
         {conversation.hasUnreadMessages && (
@@ -77,6 +70,23 @@ const ConversationItem = memo(({
     </div>
   </div>
 ));
+
+const getPackIcon = (packName?: string) => {
+  switch (packName?.toLowerCase()) {
+    case 'devis personnalisé':
+      return ClipboardPen;
+    case 'motion design':
+      return Clapperboard;
+    case 'identité visuelle':
+      return Palette;
+    case 'communication':
+      return PenTool;
+    case 'design de site web':
+      return Clapperboard;
+    default:
+      return ClipboardPen;
+  }
+};
 
 ConversationItem.displayName = 'ConversationItem';
 
