@@ -120,6 +120,26 @@ useEffect(() => {
 
   return (
     <div className="container max-w-7xl mx-auto py-4 px-4 bg-tiro-test">
+      <Card className="w-full mb-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-lg mb-2">Besoin d'accompagnement ?</h3>
+              <p className="text-muted-foreground">
+                Si vous avez la moindre question sur votre projet, notre équipe est là pour vous accompagner. 
+                Réservez un appel gratuit pour discuter de vos besoins.
+              </p>
+            </div>
+            <Button 
+              onClick={() => window.open('https://tiro.agency/reserver-meeting', '_blank')}
+              className="ml-4 bg-primary hover:bg-primary/90 whitespace-nowrap"
+            >
+              Réserver un appel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="mb-6">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 text-center">Choisissez un pack de projet</h1>
         <p className="text-muted-foreground text-sm text-center">
