@@ -803,7 +803,7 @@ const ProjectDetail = () => {
                 {project.price && (
                   <p className="text-sm sm:text-base text-tiro-primary font-semibold">
                     <BadgeEuro className="inline-block h-4 w-4 mr-1 align-middle" />
-                    <span className="font-semibold">Prix :</span> {project.price.toLocaleString()}€
+                    <span className="font-semibold">Prix :</span> {(user as any)?.role === "student" ? Math.round(project.price * 0.75).toLocaleString() : project.price.toLocaleString()}€
                   </p>
                 )}
               </div>
