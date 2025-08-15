@@ -95,7 +95,9 @@ const Profile = () => {
         specialty: data.specialty,
         skills: data.skills || [],
         formation: data.formation,
-        portfolioLink: data.portfolio_link
+        portfolioLink: data.portfolio_link,
+        siret: data.siret,
+        iban: data.iban
       });
     } catch (error) {
       console.error("Erreur lors de la récupération du profil d'étudiant:", error);
@@ -410,6 +412,8 @@ const Profile = () => {
       </div>
     );
   }
+
+  console.log('Profile state before render:', profile); // Debug log
 
   return (
     <div className="min-h-screen bg-tiro-test -50 py-8">
