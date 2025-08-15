@@ -465,7 +465,7 @@ const Register = () => {
         companyName: values.companyName || null,
         companyRole: values.companyRole || null,
         siret: values.siret || null,
-        skills: selectedSkills.length > 0 ? selectedSkills : [],
+        skills: selectedSkills.length > 0 ? JSON.stringify(selectedSkills) : JSON.stringify([]),
         avatar: values.avatar || null,
       };
       
