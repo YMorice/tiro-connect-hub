@@ -54,7 +54,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const navItems = React.useMemo(() => ([
     {
-      label: "Tableau de bord",
+      label: "Dashboard",
       icon: LayoutDashboard,
       href: "/dashboard",
     },
@@ -184,18 +184,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             ))}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
+                <div
                   className={cn(
-                    "flex flex-col items-center justify-center p-2 h-auto min-w-0 flex-1",
+                    "flex flex-col items-center justify-center p-2 rounded-lg transition-all min-w-0 flex-1",
                     "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Home size={24} className="mb-1" />
-                  <span className="text-xs font-medium truncate">Mon espace</span>
-                </Button>
+                  <Home size={18} className="mb-1" />
+                  <span className="text-xs font-medium truncate">Menu</span>
+                </div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 mb-3">
                 {settingsItems.map((item) => (
                   <DropdownMenuItem
                     key={item.label}
@@ -270,7 +269,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               )}
             >
               <Home size={20} className="mr-3" />
-              <span>Mon espace</span>
+              <span>Menu</span>
               <ChevronDown 
                 size={16} 
                 className={cn(

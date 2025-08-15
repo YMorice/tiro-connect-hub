@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Calendar, FolderPlus, MessageCircle, TrendingUp, Plus, FilePlus, CheckCircle, Clock, AlertCircle, HelpCircle, LifeBuoy, UserCheck, UserX, CircleCheckBig } from "lucide-react";
+import { Calendar, FolderPlus, MessageCircle, TrendingUp, Plus, FilePlus, CheckCircle, Clock, AlertCircle, HelpCircle, LifeBuoy, UserCheck, UserX, Zap, MessageSquare, UserCog } from "lucide-react";
 import { getStudentProposals } from "@/services/proposal-service";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
@@ -357,7 +357,6 @@ const Dashboard = () => {
           </div>
         )}
 
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <Card className="bg-tiro-white">
@@ -382,7 +381,7 @@ const Dashboard = () => {
                       className="block p-4 border rounded-[5px] hover:bg-muted transition-colors cursor-pointer"
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-foreground hover:text-muted-foreground transition-colors truncate">
+                        <div className="font-medium text-foreground  truncate">
                           {project.title}
                         </div>
                         <div className="flex items-center mt-1 space-x-2">
@@ -421,9 +420,9 @@ const Dashboard = () => {
               <CardHeader className="text-left">
                 <CardTitle className="text-lg">Conseils et Insights</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-left">
+              <CardContent className="space-y-4 text-left">
                 <div className="flex items-start space-x-3">
-                  <CircleCheckBig className="h-5 w-5 text-tiro-black mt-0.5" />
+                  <Zap className="h-4 w-4 text-tiro-primary mt-1 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       {userRole === 'student' ? 'Répondez Rapidement' : 'Restez Professionnel'}
@@ -437,7 +436,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <CircleCheckBig className="h-5 w-5 text-tiro-black mt-0.5" />
+                  <MessageSquare className="h-4 w-4 text-blue-500 mt-1 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       Restez Connecté
@@ -448,7 +447,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <CircleCheckBig className="h-5 w-5 text-tiro-black mt-0.5" />
+                  <UserCog className="h-4 w-4 text-tiro-secondary mt-1 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       {userRole === 'student' ? 'Mettez à Jour Votre Profil' : 'Exigences Claires'}

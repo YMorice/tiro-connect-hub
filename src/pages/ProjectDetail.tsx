@@ -810,7 +810,7 @@ const ProjectDetail = () => {
               <div className="flex flex-col gap-2 sm:flex-row sm:gap-6">
                 {project.deadline && (
                   <p className="text-sm sm:text-base text-gray-800">
-                    <Calendar className="inline-block h-4 w-4 mr-1 text-gray-500 align-middle" />
+                    <Calendar className="inline-block h-4 w-4 mr-1 text-tiro-black align-middle" />
                     <span className="font-semibold">Deadline :</span> {new Date(project.deadline).toLocaleDateString()}
                   </p>
                 )}
