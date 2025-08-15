@@ -689,10 +689,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      is_project_owner: {
-        Args: { project_id: string }
-        Returns: boolean
-      }
       ivfflat_bit_support: {
         Args: { "": unknown }
         Returns: unknown
