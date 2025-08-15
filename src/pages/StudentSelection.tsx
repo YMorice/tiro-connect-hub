@@ -117,7 +117,7 @@ const StudentSelection = () => {
         console.log('Updating project status to STEP2');
         const { error: statusError } = await supabase
           .from('projects')
-          .update({ status: convertDisplayStatusToDb('Proposals') })
+          .update({ status: 'STEP2' })
           .eq('id_project', projectId);
           
         if (statusError) {
