@@ -348,7 +348,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Main Content */}
       <main className="flex-1 ml-[15rem]">
-        <div className="min-h-screen">
+        <div className="min-h-screen pt-4 sm:pt-6 lg:pt-8">
           <Outlet />
         </div>
       </main>

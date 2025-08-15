@@ -508,11 +508,11 @@ const Projects = () => {
                         )}
                       </div>
                     </div>
-                    <CardTitle className="text-lg font-semibold line-clamp-2 mb-1">
+                    <CardTitle className="text-1xl  sm:text-2xl font-clash tracking-wide line-clamp-2 mb-1">
                       {project.title}
                     </CardTitle>
                     {project.pack && (
-                      <p className="text-sm font-medium text-tiro-primary mb-2">
+                      <p className="text-md font-medium text-tiro-black/70 mb-2">
                         {project.pack.name}
                       </p>
                     )}

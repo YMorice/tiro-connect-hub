@@ -653,7 +653,7 @@ const ProjectDetail = () => {
 
   return (
     <div className="min-h-screen bg-tiro-test">
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
         {/* Notification pour étudiant sélectionné */}
         {isStudent && isSelectedForProject && (
           <div className="mb-4 sm:mb-6">
@@ -759,11 +759,11 @@ const ProjectDetail = () => {
           <CardHeader className="pb-3 sm:pb-4">
             <div className="flex flex-col gap-4">
               <div className="flex-1 min-w-0">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 break-words leading-tight">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-clash text-tiro-black tracking-wide mb-1 break-words leading-tight">
                   {project.title}
                 </CardTitle>
                 {project.pack && (
-                  <p className="text-base sm:text-lg font-medium text-tiro-primary mb-3">
+                  <p className="text-base sm:text-lg font-medium text-tiro-black/70 mb-3">
                     {project.pack.name}
                   </p>
                 )}
