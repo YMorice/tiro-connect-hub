@@ -321,7 +321,7 @@ const Profile = () => {
           portfolio_link: formatPortfolioUrl(profile.portfolioLink),
           siret: profile.siret,
           iban: profile.iban,
-          address: profile.address
+          adress: profile.adress || "" 
         };
 
         if (existingStudent) {
@@ -391,27 +391,23 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </AppLayout>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
   // Si on visualise un profil d'étudiant spécifique, utiliser StudentProfileView
   if (studentId && profile) {
     return (
-      <AppLayout>
-        <div className="min-h-screen bg-tiro-test-50 py-8">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <StudentProfileView 
-              studentId={studentId}
-              studentProfile={profile}
-            />
-          </div>
+      <div className="min-h-screen bg-tiro-test-50 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <StudentProfileView 
+            studentId={studentId}
+            studentProfile={profile}
+          />
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
@@ -519,9 +515,9 @@ const Profile = () => {
                 <div className="space-y-2 text-left">
                   <Label htmlFor="phone">Téléphone</Label>
                   <Input
-                    id="email"
-                    value={profile.email || user?.email}
-                    disabled
+                    id="phone"
+                    value={profile.phone || user?.phone}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                     className="bg-tiro-white"
                   />
                 </div>
