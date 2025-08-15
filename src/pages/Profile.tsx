@@ -150,6 +150,8 @@ const Profile = () => {
             console.log('Student data loaded:', studentData); // Debug log
             console.log('Skills from DB:', studentData.skills); // Debug log
             console.log('Specialty from DB:', studentData.specialty); // Debug log
+            console.log('SIRET from DB:', studentData.siret); // Debug log
+            console.log('IBAN from DB:', studentData.iban); // Debug log
             
             setProfile(prev => ({
               ...prev,

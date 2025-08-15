@@ -106,26 +106,20 @@ const StudentProfileView: React.FC<StudentProfileViewProps> = ({
                 </div>
               )}
               
-              {address && (
-                <div>
-                  <h3 className="text-sm font-semibold mb-1">Adresse</h3>
-                  <p className="text-sm">{address}</p>
-                </div>
-              )}
+              <div>
+                <h3 className="text-sm font-semibold mb-1">Adresse</h3>
+                <p className="text-sm">{address || "Non renseignée"}</p>
+              </div>
               
-              {siret && (
-                <div>
-                  <h3 className="text-sm font-semibold mb-1">SIRET</h3>
-                  <p className="text-sm">{siret}</p>
-                </div>
-              )}
+              <div>
+                <h3 className="text-sm font-semibold mb-1">SIRET</h3>
+                <p className="text-sm">{siret || "Non renseigné"}</p>
+              </div>
               
-              {iban && (
-                <div>
-                  <h3 className="text-sm font-semibold mb-1">IBAN</h3>
-                  <p className="text-sm font-mono">{iban}</p>
-                </div>
-              )}
+              <div>
+                <h3 className="text-sm font-semibold mb-1">IBAN</h3>
+                <p className="text-sm font-mono">{iban || "Non renseigné"}</p>
+              </div>
             </div>
           </div>
         </CardContent>
