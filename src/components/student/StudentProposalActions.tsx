@@ -60,7 +60,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
         return {
           icon: CheckCircle,
           color: 'bg-green-100 text-green-800',
-          message: 'Vous avez exprimé votre intérêt pour ce projet. L\'entrepreneur examinera les différents profils et pourra vous sélectionner.'
+          message: 'Vous avez exprimé votre intérêt pour ce projet. Nous reviendrons vers vous pour vous tenir au courant.'
         };
       case 'declined':
         return {
@@ -77,7 +77,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
   return (
     <Card className="border-l-4 border-l-blue-500 items-left bg-tiro-white">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
+        <CardTitle className="text-xl flex items-center gap-2">
           Proposition de projet
           <Badge className={statusInfo.color}>
             {proposalStatus === 'pending' ? 'En attente' : 
@@ -90,7 +90,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
           <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
           <div className="text-sm text-blue-700">
             <p className="font-medium mb-1 text-left">Comment ça fonctionne :</p>
-            <ul className="list-disc list-inside space-y-1 text-xs text-left">
+            <ul className="list-disc list-inside space-y-1 text-s text-left">
               <li>Exprimer votre intérêt indique que vous êtes disponible pour ce projet</li>
               <li>L'entrepreneur recevra une sélection de 3 profils intéressés par son besoin</li>
               <li>Si vous êtes sélectionné, vous serez assigné et ajouté à la conversation du projet</li>
@@ -107,7 +107,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
                 onClick={() => handleProposalResponse(true)}
                 disabled={loading}
                 size="sm"
-                className="bg-tiro-secondary hover:bg-tiro-secondary/70 w-full sm:w-auto"
+                className="bg-tiro-secondary hover:bg-tiro-secondary/70 w-full sm:w-60"
               >
                 {loading ? (
                   <>
@@ -126,7 +126,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
                 disabled={loading}
                 variant="outline"
                 size="sm"
-                className="bg-tiro-primary text-tiro-white hover:bg-tiro-primary/70 hover:text-tiro-white w-full sm:w-auto"
+                className="bg-tiro-primary text-tiro-white hover:bg-tiro-primary/70 hover:text-tiro-white w-full sm:w-60"
               >
                 {loading ? (
                   <>
