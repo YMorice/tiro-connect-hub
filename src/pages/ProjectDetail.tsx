@@ -719,7 +719,7 @@ const ProjectDetail = () => {
         {/* Proposed Students Section - Show for entrepreneurs when project is in Selection */}
         {showProposedStudents && (
           <div className="mb-4 sm:mb-6">
-            <Card>
+            <Card className="bg-tiro-white">
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="text-base sm:text-lg flex items-center">
                   <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
@@ -738,7 +738,7 @@ const ProjectDetail = () => {
 
         {/* Student Selection Section - Show for entrepreneurs */}
         {showStudentSelection && !showProposedStudents && (
-          <Card className="mb-4 sm:mb-6">
+          <Card className="mb-4 sm:mb-6 bg-tiro-white">
             <CardHeader className="pb-3 sm:pb-4">
               <CardTitle className="text-base sm:text-lg flex items-center">
                 <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
@@ -755,7 +755,7 @@ const ProjectDetail = () => {
         )}
 
         {/* Project Header Card - Contains title, status, price, deadline, and discussion link */}
-        <Card className="mb-4 sm:mb-6">
+        <Card className="mb-4 sm:mb-6 bg-tiro-white">
           <CardHeader className="pb-3 sm:pb-4">
             <div className="flex flex-col gap-4">
               <div className="flex-1 min-w-0">
@@ -799,7 +799,7 @@ const ProjectDetail = () => {
 
         {/* Project Description Card */}
         {project.description && (
-          <Card className="mb-4 sm:mb-6">
+          <Card className="mb-4 sm:mb-6 bg-tiro-white">
             <CardHeader className="pb-3 sm:pb-4">
               <CardTitle className="text-base sm:text-lg flex items-center">
                 <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
@@ -831,7 +831,7 @@ const ProjectDetail = () => {
         {/* People Information Cards - Entrepreneur and Student */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6r">
           {/* Entrepreneur Information Card */}
-          <Card>
+          <Card className="bg-tiro-white">
             <CardHeader className="pb-3 sm:pb-4">
               <CardTitle className="text-base sm:text-lg flex items-center">
                 <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
@@ -865,7 +865,7 @@ const ProjectDetail = () => {
 
           {/* Student Information Card - Only shown if a student is assigned */}
           {project.student && (
-            <Card>
+            <Card className="bg-tiro-white">
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="text-base sm:text-lg flex items-center">
                   <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
@@ -896,7 +896,7 @@ const ProjectDetail = () => {
         </div>
 
         {/* Documents Management Section */}
-        <Card className="mb-4 sm:mb-6">
+        <Card className="mb-4 sm:mb-6 bg-tiro-white">
           <CardHeader className="pb-3 sm:pb-4">
             <CardTitle className="text-base sm:text-lg flex items-center">
               <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
