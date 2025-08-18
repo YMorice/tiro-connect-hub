@@ -766,7 +766,7 @@ const ProjectDetail = () => {
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="text-base sm:text-lg flex items-center">
                   <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Proposed Students - Make Your Selection
+                  Faites votre sélection parmi les étudiants proposés.
                 </CardTitle>
               </CardHeader>
               <CardContent>

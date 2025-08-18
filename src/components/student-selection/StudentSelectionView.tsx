@@ -172,11 +172,6 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Select a Student</h3>
-      <p className="text-sm text-gray-600 mb-4">
-        Choose from students proposed by the admin:
-      </p>
-      
       <div className="grid gap-4 grid-cols-1">
         {proposedStudents.map((student) => (
           <Card key={student.id_student} className="hover:shadow-md transition-shadow">
@@ -187,7 +182,7 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                   {student.users.pp_link ? (
                     <AvatarImage 
                       src={student.users.pp_link} 
-                      alt={`${student.users.name} ${student.users.surname}`}
+                      alt={`${student.users.name}`}
                     />
                   ) : (
                     <AvatarFallback className="bg-tiro-primary text-white text-lg">
@@ -204,24 +199,11 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                       <h4 className="text-lg font-semibold text-gray-900">
                         {student.users.name} {student.users.surname}
                       </h4>
-                      <div className="flex items-center justify-center sm:justify-start text-sm text-gray-500 mt-1">
-                        <Mail className="h-4 w-4 mr-1 flex-shrink-0" />
-                        <span className="truncate">{student.users.email}</span>
-                      </div>
                       
                       {/* Add student review badge */}
                       <div className="mt-1 flex justify-center sm:justify-start">
                         <StudentReviewBadge studentId={student.id_student} />
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-center gap-2">
-                      <Badge 
-                        variant={student.available ? "secondary" : "destructive"}
-                        className="text-xs"
-                      >
-                        {student.available ? "Available" : "Busy"}
-                      </Badge>
                     </div>
                   </div>
 
