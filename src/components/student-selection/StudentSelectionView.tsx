@@ -228,20 +228,9 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                   {/* Specialty & Formation */}
                   <div className="flex flex-col sm:flex-row flex-wrap gap-2 mb-3 items-center sm:items-start">
                     {student.specialty && (
-                      <div className="flex flex-wrap gap-2">
-                        {Array.isArray(student.specialty) ? (
-                          student.specialty.map((specialty, index) => (
-                            <div key={index} className="flex items-center text-sm text-gray-600">
-                              <GraduationCap className="h-4 w-4 mr-1 flex-shrink-0" />
-                              <span className="text-center sm:text-left">{specialty}</span>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <GraduationCap className="h-4 w-4 mr-1 flex-shrink-0" />
-                            <span className="text-center sm:text-left">{student.specialty}</span>
-                          </div>
-                        )}
+                      <div className="flex items-center text-sm text-gray-600">
+                        <GraduationCap className="h-4 w-4 mr-1 flex-shrink-0" />
+                        <span className="text-center sm:text-left">{student.specialty}</span>
                       </div>
                     )}
                     {student.formation && (
