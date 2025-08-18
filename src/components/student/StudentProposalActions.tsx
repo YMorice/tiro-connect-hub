@@ -101,11 +101,11 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
         <p className="text-gray-700">{statusInfo.message}</p>
 
         {proposalStatus === 'pending' && (
-          <div className="flex justify-center gap-3">
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
             <Button
               onClick={() => handleProposalResponse(true)}
               disabled={loading}
-              className="bg-tiro-secondary hover:bg-tiro-secondary/70 w-60"
+              className="bg-tiro-secondary hover:bg-tiro-secondary/70 w-full sm:w-60"
             >
               {loading ? (
                 <>
@@ -123,7 +123,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
               onClick={() => handleProposalResponse(false)}
               disabled={loading}
               variant="outline"
-              className="bg-tiro-primary text-tiro-white hover:bg-tiro-primary/70 hover:text-tiro-white w-60"
+              className="bg-tiro-primary text-tiro-white hover:bg-tiro-primary/70 hover:text-tiro-white w-full sm:w-60"
             >
               {loading ? (
                 <>
