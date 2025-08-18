@@ -92,7 +92,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
                 onClick={() => handleProposalResponse(true)}
                 disabled={loading}
                 size="sm"
-                className="bg-tiro-secondary hover:bg-tiro-secondary/70 w-full sm:w-auto"
+                className="bg-tiro-secondary hover:bg-tiro-secondary/70 w-full sm:w-60"
               >
                 {loading ? (
                   <>
@@ -111,7 +111,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
                 disabled={loading}
                 variant="outline"
                 size="sm"
-                className="bg-tiro-primary text-tiro-white hover:bg-tiro-primary/70 hover:text-tiro-white w-full sm:w-auto"
+                className="bg-tiro-primary text-tiro-white hover:bg-tiro-primary/70 hover:text-tiro-white w-full sm:w-60"
               >
                 {loading ? (
                   <>
