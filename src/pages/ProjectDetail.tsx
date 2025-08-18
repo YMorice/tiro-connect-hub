@@ -657,7 +657,7 @@ const ProjectDetail = () => {
         {/* Notification pour étudiant sélectionné */}
         {isStudent && isSelectedForProject && (
           <div className="mb-4 sm:mb-6">
-            <Card className="border-l-4 border-l-green-500 bg-green-50">
+            <Card className="border-l-4 border-l-green-500 bg-green-50 bg-tiro-white">
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-green-800">
                   <UserCheck className="h-5 w-5 text-green-600" />

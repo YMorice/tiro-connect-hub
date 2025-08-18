@@ -75,7 +75,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
   const StatusIcon = statusInfo.icon;
 
   return (
-    <Card className="border-l-4 border-l-blue-500 items-left">
+    <Card className="border-l-4 border-l-blue-500 items-left bg-tiro-white">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-left gap-2">
           Proposition de projet
