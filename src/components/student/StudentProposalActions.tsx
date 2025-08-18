@@ -77,13 +77,57 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
   return (
     <Card className="border-l-4 border-l-blue-500 items-left bg-tiro-white">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-left gap-2">
-          Proposition de projet
-          <Badge className={statusInfo.color}>
-            {proposalStatus === 'pending' ? 'En attente' : 
-             proposalStatus === 'accepted' ? 'Accepté' : 'Refusé'}
-          </Badge>
-        </CardTitle>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            Proposition de projet
+            <Badge className={statusInfo.color}>
+              {proposalStatus === 'pending' ? 'En attente' : 
+               proposalStatus === 'accepted' ? 'Accepté' : 'Refusé'}
+            </Badge>
+          </CardTitle>
+          
+          {proposalStatus === 'pending' && (
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 min-w-0 sm:flex-shrink-0">
+              <Button
+                onClick={() => handleProposalResponse(true)}
+                disabled={loading}
+                size="sm"
+                className="bg-tiro-secondary hover:bg-tiro-secondary/70 w-full sm:w-auto"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Traitement...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Exprimer de l'intérêt
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => handleProposalResponse(false)}
+                disabled={loading}
+                variant="outline"
+                size="sm"
+                className="bg-tiro-primary text-tiro-white hover:bg-tiro-primary/70 hover:text-tiro-white w-full sm:w-auto"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
+                    Traitement...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Refuser
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="w-fit flex justify-start items-left gap-3 p-3 pr-10 bg-blue-50 rounded-lg">
@@ -99,46 +143,6 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
         </div>
 
         <p className="text-gray-700">{statusInfo.message}</p>
-
-        {proposalStatus === 'pending' && (
-          <div className="flex flex-col sm:flex-row justify-center gap-3">
-            <Button
-              onClick={() => handleProposalResponse(true)}
-              disabled={loading}
-              className="bg-tiro-secondary hover:bg-tiro-secondary/70 w-full sm:w-60"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Traitement...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Exprimer de l'intérêt
-                </>
-              )}
-            </Button>
-            <Button
-              onClick={() => handleProposalResponse(false)}
-              disabled={loading}
-              variant="outline"
-              className="bg-tiro-primary text-tiro-white hover:bg-tiro-primary/70 hover:text-tiro-white w-full sm:w-60"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2"></div>
-                  Traitement...
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Refuser
-                </>
-              )}
-            </Button>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
