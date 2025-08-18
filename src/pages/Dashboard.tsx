@@ -321,10 +321,10 @@ const Dashboard = () => {
                   <Link 
                     key={proposal.id_proposal} 
                     to={`/projects/${proposal.projects.id_project}`}
-                    className="block p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 cursor-pointer hover:shadow-md"
+                    className="block p-4 border rounded-lg hover:bg-muted  transition-all cursor-pointer"
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 hover:text-blue-600 transition-colors truncate">
+                      <div className="font-medium text-gray-900 truncate">
                         {proposal.projects.title}
                       </div>
                       <div className="flex items-center mt-1 space-x-2">

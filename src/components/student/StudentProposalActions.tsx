@@ -75,10 +75,9 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
   const StatusIcon = statusInfo.icon;
 
   return (
-    <Card className="border-l-4 border-l-tiro-primary items-left">
+    <Card className="border-l-4 border-l-blue-500 items-left">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-left gap-2">
-          <StatusIcon className="h-5 w-5" />
           Proposition de projet
           <Badge className={statusInfo.color}>
             {proposalStatus === 'pending' ? 'En attente' : 
@@ -106,7 +105,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
             <Button
               onClick={() => handleProposalResponse(true)}
               disabled={loading}
-              className="bg-green-600 hover:bg-green-700 w-60"
+              className="bg-tiro-secondary hover:bg-tiro-secondary/70 w-60"
             >
               {loading ? (
                 <>
@@ -116,7 +115,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Exprimer l'intérêt
+                  Exprimer de l'intérêt
                 </>
               )}
             </Button>
@@ -124,7 +123,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
               onClick={() => handleProposalResponse(false)}
               disabled={loading}
               variant="outline"
-              className="border-red-200 text-red-600 hover:bg-red-50 w-60"
+              className="bg-tiro-primary text-tiro-white hover:bg-tiro-primary/70 hover:text-tiro-white w-60"
             >
               {loading ? (
                 <>
