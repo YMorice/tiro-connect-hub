@@ -77,14 +77,29 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
   return (
     <Card className="border-l-4 border-l-blue-500 items-left bg-tiro-white">
       <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          Proposition de projet
+          <Badge className={statusInfo.color}>
+            {proposalStatus === 'pending' ? 'En attente' : 
+             proposalStatus === 'accepted' ? 'Accepté' : 'Refusé'}
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="w-fit flex justify-start items-left gap-3 p-3 pr-10 bg-blue-50 rounded-lg">
+          <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
+          <div className="text-sm text-blue-700">
+            <p className="font-medium mb-1 text-left">Comment ça fonctionne :</p>
+            <ul className="list-disc list-inside space-y-1 text-xs text-left">
+              <li>Exprimer votre intérêt indique que vous êtes disponible pour ce projet</li>
+              <li>L'entrepreneur recevra une sélection de 3 profils intéressés par son besoin</li>
+              <li>Si vous êtes sélectionné, vous serez assigné et ajouté à la conversation du projet</li>
+            </ul>
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            Proposition de projet
-            <Badge className={statusInfo.color}>
-              {proposalStatus === 'pending' ? 'En attente' : 
-               proposalStatus === 'accepted' ? 'Accepté' : 'Refusé'}
-            </Badge>
-          </CardTitle>
+          <p className="text-gray-700">{statusInfo.message}</p>
           
           {proposalStatus === 'pending' && (
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 min-w-0 sm:flex-shrink-0">
@@ -92,7 +107,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
                 onClick={() => handleProposalResponse(true)}
                 disabled={loading}
                 size="sm"
-                className="bg-tiro-secondary hover:bg-tiro-secondary/70 w-full sm:w-60"
+                className="bg-tiro-secondary hover:bg-tiro-secondary/70 w-full sm:w-auto"
               >
                 {loading ? (
                   <>
@@ -111,7 +126,7 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
                 disabled={loading}
                 variant="outline"
                 size="sm"
-                className="bg-tiro-primary text-tiro-white hover:bg-tiro-primary/70 hover:text-tiro-white w-full sm:w-60"
+                className="bg-tiro-primary text-tiro-white hover:bg-tiro-primary/70 hover:text-tiro-white w-full sm:w-auto"
               >
                 {loading ? (
                   <>
@@ -128,21 +143,6 @@ const StudentProposalActions: React.FC<StudentProposalActionsProps> = ({
             </div>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="w-fit flex justify-start items-left gap-3 p-3 pr-10 bg-blue-50 rounded-lg">
-          <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
-          <div className="text-sm text-blue-700">
-            <p className="font-medium mb-1 text-left">Comment ça fonctionne :</p>
-            <ul className="list-disc list-inside space-y-1 text-xs text-left">
-              <li>Exprimer votre intérêt indique que vous êtes disponible pour ce projet</li>
-              <li>L'entrepreneur recevra une sélection de 3 profils intéressés par son besoin</li>
-              <li>Si vous êtes sélectionné, vous serez assigné et ajouté à la conversation du projet</li>
-            </ul>
-          </div>
-        </div>
-
-        <p className="text-gray-700">{statusInfo.message}</p>
       </CardContent>
     </Card>
   );
