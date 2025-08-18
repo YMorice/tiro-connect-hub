@@ -87,7 +87,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       href: "https://tiro.agency/support",
     },
     {
-      label: "Déconnexion",
+      label: "Se déconnecter",
       icon: LogOut,
       action: handleLogout
     }

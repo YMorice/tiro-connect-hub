@@ -742,13 +742,13 @@ const ProjectDetail = () => {
             <CardHeader className="pb-3 sm:pb-4">
               <CardTitle className="text-base sm:text-lg flex items-center">
                 <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                Student Selection
+                Choix du profil
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-6 sm:py-8">
-                <p className="text-gray-500 text-sm sm:text-base">Waiting for admin to propose students for your project.</p>
-                <p className="text-xs sm:text-sm text-gray-400 mt-2">You will be able to select from proposed students once they are available.</p>
+                <p className="text-gray-500 text-sm sm:text-base">Attendez que notre équipe fasse une sélection adaptée à votre projet.</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-2">Vous pourrez choisir un des étudiants parmi la proposition de notre équipe.</p>
               </div>
             </CardContent>
           </Card>
