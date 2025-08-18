@@ -654,6 +654,49 @@ const ProjectDetail = () => {
   return (
     <div className="min-h-screen bg-tiro-test">
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
+        {/* Project Header Card - Contains title, status, price, deadline, and discussion link */}
+        <Card className="mb-4 sm:mb-6 bg-tiro-white">
+          <CardHeader className="pb-3 sm:pb-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-clash text-tiro-black tracking-wide mb-1 break-words leading-tight">
+                  {project.title}
+                </CardTitle>
+                {project.pack && (
+                  <p className="text-base sm:text-lg font-medium text-tiro-black/70 mb-3">
+                    {project.pack.name}
+                  </p>
+                )}
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
+                    {getStatusDisplay(project.status)}
+                  </Badge>
+                  {/* Discussion Link */}
+                  <Link to="/messages" className="flex items-center">
+                    <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
+                      <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Aller à la Discussion</span>
+                      <span className="sm:hidden">Chat</span>
+                      {hasUnreadMessages && (
+                        <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
+                      )}
+                    </Button>
+                  </Link>
+                </div>
+                {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
+                  <Button
+                    onClick={forceUpdateStatusToStep2}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Forcer passage à STEP2
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
         {/* Notification pour étudiant sélectionné */}
         {isStudent && isSelectedForProject && (
           <div className="mb-4 sm:mb-6">
@@ -754,48 +797,6 @@ const ProjectDetail = () => {
           </Card>
         )}
 
-        {/* Project Header Card - Contains title, status, price, deadline, and discussion link */}
-        <Card className="mb-4 sm:mb-6 bg-tiro-white">
-          <CardHeader className="pb-3 sm:pb-4">
-            <div className="flex flex-col gap-4">
-              <div className="flex-1 min-w-0">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-clash text-tiro-black tracking-wide mb-1 break-words leading-tight">
-                  {project.title}
-                </CardTitle>
-                {project.pack && (
-                  <p className="text-base sm:text-lg font-medium text-tiro-black/70 mb-3">
-                    {project.pack.name}
-                  </p>
-                )}
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
-                    {getStatusDisplay(project.status)}
-                  </Badge>
-                  {/* Discussion Link */}
-                  <Link to="/messages" className="flex items-center">
-                    <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
-                      <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      <span className="hidden sm:inline">Aller à la Discussion</span>
-                      <span className="sm:hidden">Chat</span>
-                      {hasUnreadMessages && (
-                        <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
-                      )}
-                    </Button>
-                  </Link>
-                </div>
-                {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
-                  <Button
-                    onClick={forceUpdateStatusToStep2}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Forcer passage à STEP2
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
 
         {/* Project Description Card */}
         {project.description && (
