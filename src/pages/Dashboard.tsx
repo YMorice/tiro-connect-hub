@@ -318,14 +318,15 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 {pendingProposals.slice(0, 3).map((proposal) => (
-                  <div key={proposal.id_proposal} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <Link 
+                    key={proposal.id_proposal} 
+                    to={`/projects/${proposal.projects.id_project}`}
+                    className="block p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 cursor-pointer hover:shadow-md"
+                  >
                     <div className="flex-1 min-w-0">
-                      <Link 
-                        to={`/projects/${proposal.projects.id_project}`} 
-                        className="font-medium text-gray-900 truncate block"
-                      >
+                      <div className="font-medium text-gray-900 hover:text-blue-600 transition-colors truncate">
                         {proposal.projects.title}
-                      </Link>
+                      </div>
                       <div className="flex items-center mt-1 space-x-2">
                         <span className="text-xs text-gray-500">
                           De : {proposal.projects.entrepreneurs?.users?.name}
@@ -336,12 +337,7 @@ const Dashboard = () => {
                         </span>
                       </div>
                     </div>
-                    <Link to={`/projects/${proposal.projects.id_project}`}>
-                      <Button variant="outline" size="sm" className="bg-blue-500 text-tiro-white hover:bg-blue-500/75 hover:text-tiro-white">
-                        Voir et Répondre
-                      </Button>
-                    </Link>
-                  </div>
+                  </Link>
                 ))}
                 {pendingProposals.length > 3 && (
                   <div className="text-center pt-4">
