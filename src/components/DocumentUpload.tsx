@@ -199,15 +199,15 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="regular" id="regular" />
-                <Label htmlFor="regular">Document Classique</Label>
+                <Label htmlFor="regular">Document classique</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="proposal" id="proposal" />
-                <Label htmlFor="proposal">Proposition de Rendu</Label>
+                <Label htmlFor="proposal">Proposition de rendu</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="final" id="final" />
-                <Label htmlFor="final">Rendu Final</Label>
+                <Label htmlFor="final">Rendu final</Label>
               </div>
             </RadioGroup>
           </div>
