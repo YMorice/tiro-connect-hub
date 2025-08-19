@@ -51,22 +51,22 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
 
   const handleSubmit = async () => {
     if (!session) {
-      toast.error("You must be logged in to upload documents");
+      toast.error("Vous devez être connecté pour téléverser des documents");
       return;
     }
     
     if (!selectedFile) {
-      toast.error("Please select a file to upload");
+      toast.error("Veuillez sélectionner un fichier à téléverser");
       return;
     }
 
     if (!documentName.trim()) {
-      toast.error("Please provide a document name");
+      toast.error("Veuillez fournir un nom de document");
       return;
     }
 
     if (!projectId) {
-      toast.error("No project selected");
+      toast.error("Aucun projet sélectionné");
       return;
     }
 
@@ -108,7 +108,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
         setDocumentType("regular");
         setSelectedFile(null);
         setDialogOpen(false);
-        toast.success("Document uploaded successfully");
+        toast.success("Votre document a été téléversé avec succès");
       } catch (error) {
         // Si l'upload du fichier a réussi mais que l'ajout des métadonnées échoue,
         // on ne montre pas d'erreur car le fichier est déjà dans le bucket
@@ -116,7 +116,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
       }
     } catch (error) {
       console.error("Document upload error:", error);
-      toast.error("An error occurred while uploading the document");
+      toast.error("Une erreur est survenue lors du téléversement du document");
     } finally {
       setIsUploading(false);
     }
@@ -130,7 +130,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
           className="flex items-center gap-2" 
           onClick={() => {
             if (!session) {
-              toast.error("You must be logged in to upload documents");
+              toast.error("Vous devez être connecté pour téléverser des documents");
               return false;
             }
             return true;
@@ -174,11 +174,6 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
                 disabled={isUploading}
               />
             </div>
-            {selectedFile && (
-              <p className="text-sm text-muted-foreground mt-1">
-                Selected: {selectedFile.name}
-              </p>
-            )}
           </div>
 
           <div className="space-y-2">
@@ -227,7 +222,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
             type="button"
             disabled={isUploading || !selectedFile}
           >
-            {isUploading ? "Uploading..." : "Partager"}
+            {isUploading ? "En cours..." : "Partager"}
           </Button>
         </DialogFooter>
       </DialogContent>
