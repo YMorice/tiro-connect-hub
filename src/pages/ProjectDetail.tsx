@@ -898,17 +898,18 @@ const ProjectDetail = () => {
         {/* Documents Management Section */}
         <Card className="mb-4 sm:mb-6 bg-tiro-white">
           <CardHeader className="pb-3 sm:pb-4">
-            <CardTitle className="text-base sm:text-lg flex items-center">
-              <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-              Documents du Projet
-            </CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <CardTitle className="text-base sm:text-lg flex items-center">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                Documents du Projet
+              </CardTitle>
+              <DocumentUpload 
+                projectId={project.id_project} 
+                onDocumentSubmit={handleDocumentSubmit}
+              />
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Document Upload Component */}
-            <DocumentUpload 
-              projectId={project.id_project} 
-              onDocumentSubmit={handleDocumentSubmit}
-            />
 
             {/* Documents List Display */}
             {documentsLoading ? (
