@@ -51,7 +51,7 @@ const ConversationItem = memo(({
             "font-medium text-foreground truncate text-sm",
             conversation.hasUnreadMessages && "font-bold"
           )}>
-            {conversation.otherParticipant}
+            {conversation.projectTitle}{conversation.packName ? ` - ${conversation.packName}` : ''}
           </h3>
           <time className="text-xs text-muted-foreground">
             {new Date(conversation.lastMessageTime).toLocaleDateString('fr-FR', {
