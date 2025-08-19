@@ -656,7 +656,8 @@ const ProjectDetail = () => {
         {/* Project Header Card - Contains title, status, price, deadline, and discussion link */}
         <Card className="mb-4 sm:mb-6 bg-tiro-white">
           <CardHeader className="pb-3 sm:pb-4">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              {/* Title and Pack Section */}
               <div className="flex-1 min-w-0">
                 <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-clash text-tiro-black tracking-wide mb-1 break-words leading-tight">
                   {project.title}
@@ -666,7 +667,11 @@ const ProjectDetail = () => {
                     {project.pack.name}
                   </p>
                 )}
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              </div>
+              
+              {/* Discussion Button and Status Section */}
+              <div className="flex flex-col sm:items-end gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <Badge className={`${getStatusColor(project.status)} text-xs sm:text-sm`}>
                     {getStatusDisplay(project.status)}
                   </Badge>
@@ -682,17 +687,17 @@ const ProjectDetail = () => {
                     </Button>
                   </Link>
                 </div>
-                {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
-                  <Button
-                    onClick={forceUpdateStatusToStep2}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Forcer passage à STEP2
-                  </Button>
-                )}
               </div>
             </div>
+            {(user as any)?.role === 'admin' && project.status === 'STEP1' && (
+              <Button
+                onClick={forceUpdateStatusToStep2}
+                variant="outline"
+                size="sm"
+              >
+                Forcer passage à STEP2
+              </Button>
+            )}
           </CardHeader>
         </Card>
 
