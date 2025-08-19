@@ -127,7 +127,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          className="flex items-center gap-2" 
+          className="flex items-center gap-2 bg-tiro-gray1 hover:bg-tiro-gray2" 
           onClick={() => {
             if (!session) {
               toast.error("Vous devez être connecté pour téléverser des documents");
@@ -136,7 +136,6 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
             return true;
           }}
         >
-          <File className="h-4 w-4" />
           Partager un document
         </Button>
       </DialogTrigger>

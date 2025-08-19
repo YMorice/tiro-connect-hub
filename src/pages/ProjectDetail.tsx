@@ -917,7 +917,6 @@ const ProjectDetail = () => {
               </div>
             ) : project.documents && project.documents.length > 0 ? (
               <div className="space-y-3">
-                <h4 className="font-medium text-gray-900 text-sm sm:text-base">Uploaded Documents</h4>
                 <div className="grid gap-2 sm:gap-3">
                   {project.documents.map((doc) => (
                     <div 
