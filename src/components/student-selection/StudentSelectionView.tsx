@@ -208,18 +208,27 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                   </div>
 
                   {/* Specialty & Formation */}
-                  <div className="flex flex-col sm:flex-row flex-wrap gap-2 mb-3 items-center sm:items-start">
+                  <div className="flex flex-col gap-2 mb-3">
                     {student.specialty && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <GraduationCap className="h-4 w-4 mr-1 flex-shrink-0" />
-                        <span className="text-center sm:text-left">
-                          {student.specialty?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'UI/UX')}
-                        </span>
+                      <div className="flex flex-wrap gap-1 justify-center sm:justify-start">
+                        {Array.isArray(student.specialty) ? (
+                          student.specialty.map((spec, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              <GraduationCap className="h-3 w-3 mr-1" />
+                              {spec.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'UI/UX')}
+                            </Badge>
+                          ))
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            <GraduationCap className="h-3 w-3 mr-1" />
+                            {student.specialty.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'UI/UX')}
+                          </Badge>
+                        )}
                       </div>
                     )}
                     {student.formation && (
                       <div className="text-sm text-gray-600 text-center sm:text-left">
-                        • {student.formation}
+                        📚 {student.formation}
                       </div>
                     )}
                   </div>
