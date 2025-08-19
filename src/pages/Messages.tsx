@@ -34,9 +34,9 @@ const Messages = () => {
   }, []);
 
   return (
-    <div className="h-screen bg-tiro-test flex flex-col">
-      <div className="flex-1 container mx-auto px-4 max-w-7xl py-6">
-        <div className="flex flex-col lg:flex-row bg-background rounded-[5px] shadow-sm overflow-hidden h-full">
+    <div className="min-h-screen bg-tiro-test py-6">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <div className="flex flex-col lg:flex-row bg-background rounded-[5px] shadow-sm overflow-hidden h-[calc(100vh-8rem)]">
           {/* Liste des conversations */}
           <div className={cn(
             "w-full lg:w-1/3 xl:w-1/4 border-r border-border flex flex-col bg-tiro-white min-h-0",
