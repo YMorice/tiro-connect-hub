@@ -52,16 +52,16 @@ const MessageItem = memo(({
       )}
       <div
         className={cn(
-          "rounded-lg px-3 py-2 text-sm",
+          "px-3 py-2 text-sm",
           isOwn 
-            ? "bg-primary text-primary-foreground text-right" 
-            : "bg-muted text-foreground text-left"
+            ? "rounded-t-lg rounded-l-lg bg-tiro-secondary text-tiro-white text-right" 
+            : "rounded-t-lg rounded-r-lg bg-muted text-foreground text-left"
         )}
       >
         {message.content}
       </div>
       <div className={cn(
-        "text-xs text-muted-foreground mt-1",
+        "text-xs text-muted-foreground mt-1 font-clash",
         isOwn ? "text-right" : "text-left"
       )}>
         {new Date(message.created_at).toLocaleTimeString('fr-FR', {
@@ -136,7 +136,7 @@ export const ChatArea = memo(({
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Header */}
-      <div className="p-4 border-b border-border bg-background flex items-center gap-3 flex-shrink-0">
+      <div className="p-4 border-b border-border bg-tiro-white flex items-center gap-3 flex-shrink-0">
         <Button
           variant="ghost"
           size="icon"
@@ -187,7 +187,7 @@ export const ChatArea = memo(({
       </ScrollArea>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-border bg-background flex-shrink-0">
+      <div className="p-4 border-t border-border bg-tiro-white flex-shrink-0">
         <div className="flex gap-2">
           <Input
             value={newMessage}
@@ -195,7 +195,7 @@ export const ChatArea = memo(({
             onKeyPress={handleKeyPress}
             placeholder="Tapez votre message..."
             disabled={sending}
-            className="flex-1"
+            className="flex-1 bg-tiro-white"
           />
           <Button
             onClick={handleSendMessage}
@@ -203,7 +203,7 @@ export const ChatArea = memo(({
             size="icon"
           >
             {sending ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground bg-tiro-gray1"></div>
             ) : (
               <Send className="h-4 w-4" />
             )}

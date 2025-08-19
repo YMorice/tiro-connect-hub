@@ -80,7 +80,7 @@ const StudentReviewBadge: React.FC<StudentReviewBadgeProps> = ({ studentId }) =>
 
   // If no reviews, don't display anything
   if (reviewCount === 0) {
-    return <div className="text-xs text-muted-foreground">No reviews yet</div>;
+    return <div className="text-xs text-muted-foreground">Pas encore de note</div>;
   }
 
   return (

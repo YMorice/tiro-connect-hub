@@ -197,7 +197,7 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3 gap-2">
                     <div className="min-w-0">
                       <h4 className="text-lg font-semibold text-gray-900">
-                        {student.users.name} {student.users.surname}
+                        {student.users.name}
                       </h4>
                       
                       {/* Add student review badge */}
@@ -257,7 +257,7 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                         rel="noopener noreferrer"
                         className="text-sm text-tiro-primary hover:underline"
                       >
-                        View Portfolio →
+                        Voir mon portfolio →
                       </a>
                     </div>
                   )}
@@ -274,7 +274,7 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                         Selecting...
                       </>
                     ) : (
-                      'Select This Student'
+                      'Choisir ce profil'
                     )}
                   </Button>
                 </div>
