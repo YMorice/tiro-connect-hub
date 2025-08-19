@@ -74,6 +74,9 @@ const Dashboard = () => {
                 updated_at,
                 deadline,
                 student_notification_read,
+                project_packs (
+                  name
+                ),
                 entrepreneurs (
                   users (name, surname)
                 )
@@ -222,7 +225,7 @@ const Dashboard = () => {
                         to={`/projects/${project.id_project}`} 
                         className="font-medium text-gray-900 transition-colors truncate block"
                       >
-                        {project.title}
+                        {project.title} - {project.project_packs?.name || 'Pack du projet'}
                       </Link>
                        <div className="flex items-center mt-1 space-x-2">
                          {project.deadline && (

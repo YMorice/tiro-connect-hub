@@ -707,7 +707,7 @@ const ProjectDetail = () => {
               <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-tiro-black">
                   <UserCheck className="h-5 w-5 text-tiro-secondary" />
-                  Félicitations ! Vous avez été sélectionné pour ce projet - {project.pack?.name || 'Pack du projet'}
+                  Félicitations ! Vous avez été sélectionné pour ce projet
                 </CardTitle>
               </CardHeader>
               <CardContent>
