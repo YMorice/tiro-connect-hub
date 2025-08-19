@@ -226,7 +226,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen w-full bg-background flex">
       {/* Left Sidebar */}
-      <aside className="fixed left-4 top-4 h-[calc(100vh-2rem)] w-56 bg-tiro-white backdrop-blur-md border border-border rounded-[25px] shadow-lg flex flex-col z-40 overflow-hidden">
+      <aside className="fixed left-4 top-4 h-[calc(100vh-2rem)] w-56 bg-tiro-white border border-border rounded-[25px] flex flex-col z-40 overflow-hidden">
         {/* Logo Section */}
         <div className="p-6 flex justify-center">
           <Link to="https://tiro.agency" className="block">

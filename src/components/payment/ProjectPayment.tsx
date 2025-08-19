@@ -85,10 +85,10 @@ export const ProjectPayment = ({
 
   /* 3) Carte principale — paiement requis */
   return (
-    <Card className="border-l-4 border-l-orange-500">
+    <Card className="border-l-4 border-l-tiro-primary">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-orange-600" />
+          <CreditCard className="h-5 w-5 text-tiro-black" />
           Paiement Requis
         </CardTitle>
       </CardHeader>

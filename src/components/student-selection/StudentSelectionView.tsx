@@ -143,11 +143,11 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
       // SUPPRIMÉ : ajout de l'étudiant au groupe de discussion (message_groups)
       // L'ajout se fait désormais uniquement côté backend après paiement (STEP5).
 
-      toast.success('Student selected successfully!');
+      toast.success('Profil choisi avec succès');
       onStudentSelected();
     } catch (error) {
       console.error('Error selecting student:', error);
-      toast.error('Failed to select student');
+      toast.error('Échec de la sélection du profil');
     } finally {
       setSelecting(null);
     }
@@ -164,15 +164,15 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
   if (proposedStudents.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">No students have been proposed for this project yet.</p>
-        <p className="text-sm text-gray-400 mt-2">The admin will propose students for you to choose from.</p>
+        <p className="text-gray-500">Aucun étudiant n'a encore été proposé pour ce projet.</p>
+        <p className="text-sm text-gray-400 mt-2">L'administrateur proposera des étudiants parmi lesquels vous pourrez choisir.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 grid-cols-1">
+      <div className="grid gap-4 grid-cols-1 bg-tiro-white">
         {proposedStudents.map((student) => (
           <Card key={student.id_student} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4 sm:p-6">
@@ -209,40 +209,38 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
 
                   {/* Specialty & Formation */}
                   <div className="flex flex-col gap-2 mb-3">
-                    {student.specialty && (
-                      <div className="flex flex-wrap gap-1 justify-center sm:justify-start">
-                        {(() => {
-                          try {
-                            // Parse JSON string to array
-                            const specialties = typeof student.specialty === 'string' 
-                              ? JSON.parse(student.specialty) 
-                              : Array.isArray(student.specialty) 
-                                ? student.specialty 
-                                : [student.specialty];
-                            
-                            return specialties.map((spec: string, index: number) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                <GraduationCap className="h-3 w-3 mr-1" />
-                                {spec.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'UI/UX')}
-                              </Badge>
-                            ));
-                          } catch {
-                            // Fallback if parsing fails
-                            return (
-                              <Badge variant="secondary" className="text-xs">
-                                <GraduationCap className="h-3 w-3 mr-1" />
-                                {student.specialty.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'UI/UX')}
-                              </Badge>
-                            );
-                          }
-                        })()}
-                      </div>
-                    )}
-                    {student.formation && (
-                      <div className="text-sm text-gray-600 text-center sm:text-left">
-                        📚 {student.formation}
-                      </div>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                      {student.specialty && (() => {
+                        try {
+                          // Parse JSON string to array
+                          const specialties = typeof student.specialty === 'string' 
+                            ? JSON.parse(student.specialty) 
+                            : Array.isArray(student.specialty) 
+                              ? student.specialty 
+                              : [student.specialty];
+                          
+                          return specialties.map((spec: string, index: number) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              <GraduationCap className="h-3 w-3 mr-1" />
+                              {spec.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'Design de site Web')}
+                            </Badge>
+                          ));
+                        } catch {
+                          // Fallback if parsing fails
+                          return (
+                            <Badge variant="secondary" className="text-xs">
+                              <GraduationCap className="h-3 w-3 mr-1" />
+                              {student.specialty.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'Design de site Web')}
+                            </Badge>
+                          );
+                        }
+                      })()}
+                      {student.formation && (
+                        <span className="text-sm text-tiro-black font-medium">
+                          - {student.formation}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Biography */}

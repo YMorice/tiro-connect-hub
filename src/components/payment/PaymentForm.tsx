@@ -64,7 +64,7 @@ export const PaymentForm = ({ amount, clientSecret, paymentIntentId, onPaymentSu
         });
 
         if (confirmError) {
-          console.error('Error confirming payment:', confirmError);
+          console.error('Errors de la confirming payment:', confirmError);
           setErr('Paiement réussi mais erreur de confirmation. Veuillez actualiser la page.');
         } else {
           console.log('Payment confirmed successfully:', confirmData);
@@ -84,7 +84,7 @@ export const PaymentForm = ({ amount, clientSecret, paymentIntentId, onPaymentSu
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <div className="p-4 border rounded-lg bg-gray-50">
+      <div className="p-4 border rounded-lg bg-tiro-white">
         <CardElement
           options={{
             style: {
@@ -98,7 +98,7 @@ export const PaymentForm = ({ amount, clientSecret, paymentIntentId, onPaymentSu
         />
         <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
           <span className="flex items-center">
-            Paiement sécurisé par Stripe
+            Paiement sécurisé par
           </span>
           <img
             src="/stripe-logo.png"
