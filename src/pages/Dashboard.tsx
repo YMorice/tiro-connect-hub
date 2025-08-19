@@ -225,13 +225,10 @@ const Dashboard = () => {
                         {project.title}
                       </Link>
                        <div className="flex items-center mt-1 space-x-2">
-                         <span className="text-xs text-gray-500">
-                           De : {project.entrepreneurs?.users?.name}
-                         </span>
                          {project.deadline && (
                            <span className="text-xs text-gray-500">
                              <Calendar className="h-3 w-3 inline mr-1" />
-                             Échéance : {new Date(project.deadline).toLocaleDateString('fr-FR')}
+                             Deadline : {new Date(project.deadline).toLocaleDateString('fr-FR')}
                            </span>
                          )}
                        </div>
