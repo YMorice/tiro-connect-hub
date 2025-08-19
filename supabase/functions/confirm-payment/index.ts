@@ -60,16 +60,12 @@ serve(async (req) => {
       .from("projects")
       .select(`
         *,
-        entrepreneurs (
+        entrepreneurs!inner (
           id_entrepreneur,
           company_name,
-          company_address,
+          address,
           company_siret,
-          users (
-            email,
-            first_name,
-            last_name
-          )
+          id_user
         )
       `)
       .eq("id_project", projectId)
@@ -78,6 +74,18 @@ serve(async (req) => {
     if (projectError || !project) {
       console.error("Project not found:", projectError);
       throw new Error("Project not found");
+    }
+
+    // Get user info separately
+    const { data: userData, error: userError } = await supabaseAdmin
+      .from("users")
+      .select("email, name, surname")
+      .eq("id_users", project.entrepreneurs.id_user)
+      .single();
+
+    if (userError || !userData) {
+      console.error("User not found:", userError);
+      throw new Error("User not found");
     }
 
     // If payment succeeded, update project status and create invoice
@@ -101,8 +109,8 @@ serve(async (req) => {
       let customerId = paymentIntent.customer as string;
       if (!customerId) {
         const customer = await stripe.customers.create({
-          email: project.entrepreneurs.users.email,
-          name: `${project.entrepreneurs.users.first_name} ${project.entrepreneurs.users.last_name}`,
+          email: userData.email,
+          name: `${userData.name} ${userData.surname}`,
           metadata: {
             entrepreneur_id: project.entrepreneurs.id_entrepreneur,
             company_name: project.entrepreneurs.company_name || "",
@@ -147,18 +155,18 @@ serve(async (req) => {
         console.log("Invoice created and marked as paid:", invoice.id);
 
         // Send invoice by email
-        if (resend && project.entrepreneurs.users.email) {
+        if (resend && userData.email) {
           try {
             // Get invoice PDF
             const invoicePdf = await stripe.invoices.retrievePdf(invoice.id);
             
             await resend.emails.send({
               from: "Tiro Connect <noreply@tiro-connect.com>",
-              to: [project.entrepreneurs.users.email],
+              to: [userData.email],
               subject: `Facture pour votre projet: ${project.title}`,
               html: `
                 <h2>Facture pour votre projet</h2>
-                <p>Bonjour ${project.entrepreneurs.users.first_name},</p>
+                <p>Bonjour ${userData.name},</p>
                 <p>Votre paiement pour le projet "<strong>${project.title}</strong>" a été traité avec succès.</p>
                 <p>Vous trouverez en pièce jointe la facture correspondante.</p>
                 <p><strong>Détails de la transaction :</strong></p>
