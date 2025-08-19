@@ -72,6 +72,7 @@ const Dashboard = () => {
                 title,
                 status,
                 updated_at,
+                deadline,
                 student_notification_read,
                 entrepreneurs (
                   users (name, surname)
@@ -223,15 +224,17 @@ const Dashboard = () => {
                       >
                         {project.title}
                       </Link>
-                      <div className="flex items-center mt-1 space-x-2">
-                        <span className="text-xs text-gray-500">
-                          De : {project.entrepreneurs?.users?.name}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          <Calendar className="h-3 w-3 inline mr-1" />
-                          {new Date(project.created_at).toLocaleDateString('fr-FR')}
-                        </span>
-                      </div>
+                       <div className="flex items-center mt-1 space-x-2">
+                         <span className="text-xs text-gray-500">
+                           De : {project.entrepreneurs?.users?.name}
+                         </span>
+                         {project.deadline && (
+                           <span className="text-xs text-gray-500">
+                             <Calendar className="h-3 w-3 inline mr-1" />
+                             Échéance : {new Date(project.deadline).toLocaleDateString('fr-FR')}
+                           </span>
+                         )}
+                       </div>
                     </div>
                     <div className="flex gap-2">
                       <Link to={`/projects/${project.id_project}`}>
