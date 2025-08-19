@@ -10,7 +10,7 @@ import { CreditCard, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
 import { PaymentForm } from '@/components/payment/PaymentForm';
 
-const stripePromise = loadStripe(import.meta.env.VITE_PUBLIC_STRIPE_PK_TEST!);
+const stripePromise = loadStripe("pk_test_VOTRE_CLE_PUBLIQUE_STRIPE_TEST");
 
 interface Props {
   projectId: string;
