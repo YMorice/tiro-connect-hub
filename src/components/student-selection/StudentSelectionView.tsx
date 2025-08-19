@@ -36,11 +36,32 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
   const [proposedStudents, setProposedStudents] = useState<ProposedStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [selecting, setSelecting] = useState<string | null>(null);
+  const [projectHasSelectedStudent, setProjectHasSelectedStudent] = useState(false);
 
   useEffect(() => {
+    fetchProjectStatus();
     fetchProposedStudents();
     fetchAcceptedStudents();
   }, [projectId]);
+
+  const fetchProjectStatus = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('selected_student')
+        .eq('id_project', projectId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching project status:', error);
+        return;
+      }
+
+      setProjectHasSelectedStudent(!!data?.selected_student);
+    } catch (error) {
+      console.error('Error checking project status:', error);
+    }
+  };
 
   const fetchProposedStudents = async () => {
     try {
@@ -159,6 +180,11 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tiro-primary"></div>
       </div>
     );
+  }
+
+  // Si un étudiant a déjà été sélectionné, ne pas afficher les cards
+  if (projectHasSelectedStudent) {
+    return null;
   }
 
   if (proposedStudents.length === 0) {
