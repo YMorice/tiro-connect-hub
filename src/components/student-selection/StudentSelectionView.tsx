@@ -212,7 +212,9 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                     {student.specialty && (
                       <div className="flex items-center text-sm text-gray-600">
                         <GraduationCap className="h-4 w-4 mr-1 flex-shrink-0" />
-                        <span className="text-center sm:text-left">{student.specialty}</span>
+                        <span className="text-center sm:text-left">
+                          {student.specialty?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'UI/UX')}
+                        </span>
                       </div>
                     )}
                     {student.formation && (
