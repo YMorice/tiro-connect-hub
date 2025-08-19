@@ -152,7 +152,7 @@ export const ChatArea = memo(({
         
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-foreground truncate">
-            {conversation.otherParticipant}
+            {conversation.projectTitle}{conversation.packName ? ` - ${conversation.packName}` : ''}
           </h3>
         </div>
       </div>

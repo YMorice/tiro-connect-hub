@@ -24,7 +24,7 @@ const ConversationItem = memo(({
     onClick={onClick}
     className={cn(
       "p-3 lg:p-4 border-b border-border cursor-pointer hover:bg-muted/50 transition-colors",
-      isSelected && "bg-muted border-l-4 border-l-primary",
+      isSelected && "bg-muted",
       conversation.hasUnreadMessages && "bg-primary/5 border-l-4 border-l-primary"
     )}
   >
