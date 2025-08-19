@@ -32,7 +32,7 @@ const MessageItem = memo(({
   showAvatar: boolean;
   showTime: boolean;
 }) => (
-  <div className={cn("flex gap-3 mb-4", isOwn && "flex-row-reverse")}>
+  <div className={cn("flex gap-3", showAvatar ? "mb-4" : "mb-1", isOwn && "flex-row-reverse")}>
     {showAvatar && !isOwn && (
       <Avatar className="w-8 h-8 flex-shrink-0">
         {message.sender_avatar ? (
@@ -173,14 +173,16 @@ export const ChatArea = memo(({
           {messages.map((message, index) => {
             const isOwn = message.sender_id === user?.id;
             const prevMessage = messages[index - 1];
+            const nextMessage = messages[index + 1];
             const showAvatar = !prevMessage || 
               prevMessage.sender_id !== message.sender_id ||
               new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime() > 300000; // 5 minutes
 
-            const showTime = !prevMessage || 
-              prevMessage.sender_id !== message.sender_id ||
+            // Show time only for the last message of the group
+            const showTime = !nextMessage || 
+              nextMessage.sender_id !== message.sender_id ||
               new Date(message.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) !== 
-              new Date(prevMessage.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+              new Date(nextMessage.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
             return (
               <MessageItem
