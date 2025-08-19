@@ -211,19 +211,31 @@ const StudentSelectionView: React.FC<StudentSelectionViewProps> = ({
                   <div className="flex flex-col gap-2 mb-3">
                     {student.specialty && (
                       <div className="flex flex-wrap gap-1 justify-center sm:justify-start">
-                        {Array.isArray(student.specialty) ? (
-                          student.specialty.map((spec, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              <GraduationCap className="h-3 w-3 mr-1" />
-                              {spec.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'UI/UX')}
-                            </Badge>
-                          ))
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">
-                            <GraduationCap className="h-3 w-3 mr-1" />
-                            {student.specialty.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'UI/UX')}
-                          </Badge>
-                        )}
+                        {(() => {
+                          try {
+                            // Parse JSON string to array
+                            const specialties = typeof student.specialty === 'string' 
+                              ? JSON.parse(student.specialty) 
+                              : Array.isArray(student.specialty) 
+                                ? student.specialty 
+                                : [student.specialty];
+                            
+                            return specialties.map((spec: string, index: number) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                <GraduationCap className="h-3 w-3 mr-1" />
+                                {spec.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'UI/UX')}
+                              </Badge>
+                            ));
+                          } catch {
+                            // Fallback if parsing fails
+                            return (
+                              <Badge variant="secondary" className="text-xs">
+                                <GraduationCap className="h-3 w-3 mr-1" />
+                                {student.specialty.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).replace(/Ui Ux/g, 'UI/UX')}
+                              </Badge>
+                            );
+                          }
+                        })()}
                       </div>
                     )}
                     {student.formation && (
