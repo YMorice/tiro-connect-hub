@@ -24,11 +24,13 @@ interface ChatAreaProps {
 const MessageItem = memo(({ 
   message, 
   isOwn, 
-  showAvatar 
+  showAvatar,
+  showTime 
 }: { 
   message: Message; 
   isOwn: boolean; 
   showAvatar: boolean;
+  showTime: boolean;
 }) => (
   <div className={cn("flex gap-3 mb-4", isOwn && "flex-row-reverse")}>
     {showAvatar && !isOwn && (
@@ -60,15 +62,17 @@ const MessageItem = memo(({
       >
         {message.content}
       </div>
-      <div className={cn(
-        "text-xs text-muted-foreground mt-1 font-clash",
-        isOwn ? "text-right" : "text-left"
-      )}>
-        {new Date(message.created_at).toLocaleTimeString('fr-FR', {
-          hour: '2-digit',
-          minute: '2-digit'
-        })}
-      </div>
+      {showTime && (
+        <div className={cn(
+          "text-xs text-muted-foreground mt-1 font-clash",
+          isOwn ? "text-right" : "text-left"
+        )}>
+          {new Date(message.created_at).toLocaleTimeString('fr-FR', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </div>
+      )}
     </div>
   </div>
 ));
@@ -173,12 +177,18 @@ export const ChatArea = memo(({
               prevMessage.sender_id !== message.sender_id ||
               new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime() > 300000; // 5 minutes
 
+            const showTime = !prevMessage || 
+              prevMessage.sender_id !== message.sender_id ||
+              new Date(message.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) !== 
+              new Date(prevMessage.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
             return (
               <MessageItem
                 key={message.id_message}
                 message={message}
                 isOwn={isOwn}
                 showAvatar={showAvatar}
+                showTime={showTime}
               />
             );
           })}
