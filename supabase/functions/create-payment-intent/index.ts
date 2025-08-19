@@ -68,8 +68,8 @@ serve(async (req) => {
 
     console.log("Project validation passed, creating Stripe payment intent");
 
-    // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    // Initialize Stripe - use test key for testing
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY_TEST") || "", {
       apiVersion: "2023-10-16",
     });
 
