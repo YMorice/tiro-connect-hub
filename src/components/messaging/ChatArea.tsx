@@ -54,10 +54,10 @@ const MessageItem = memo(({
       )}
       <div
         className={cn(
-          "px-3 py-2 text-sm",
+          "px-3 py-2 text-sm inline-block w-fit",
           isOwn 
-            ? "rounded-t-lg rounded-l-lg bg-tiro-secondary text-tiro-white text-right" 
-            : "rounded-t-lg rounded-r-lg bg-muted text-foreground text-left"
+            ? "rounded-t-lg rounded-l-lg bg-tiro-secondary text-tiro-white" 
+            : "rounded-t-lg rounded-r-lg bg-muted text-foreground"
         )}
       >
         {message.content}
