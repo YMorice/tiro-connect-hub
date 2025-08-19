@@ -163,7 +163,7 @@ const PersonalDocuments = () => {
   });
 
   return (
-    <div className="min-h-screen bg-tiro-test py-6">
+    <div className="min-h-screen bg-tiro-test px-3 py-6">
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Header */}
         <div className="mb-8">

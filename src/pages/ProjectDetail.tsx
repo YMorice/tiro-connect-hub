@@ -656,14 +656,14 @@ const ProjectDetail = () => {
         {/* Project Header Card - Contains title, status, price, deadline, and discussion link */}
         <Card className="mb-4 sm:mb-6 bg-tiro-white">
           <CardHeader className="pb-3 sm:pb-4">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               {/* Title and Pack Section */}
               <div className="flex-1 min-w-0">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-clash text-tiro-black tracking-wide mb-1 break-words leading-tight">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-clash text-tiro-black tracking-wide mb-0.5 break-words leading-tight">
                   {project.title}
                 </CardTitle>
                 {project.pack && (
-                  <p className="text-base sm:text-lg font-medium text-tiro-black/70 mb-3">
+                  <p className="text-base sm:text-lg font-medium text-tiro-black/70 mb-1">
                     {project.pack.name}
                   </p>
                 )}
@@ -677,8 +677,7 @@ const ProjectDetail = () => {
                   </Badge>
                   {/* Discussion Link */}
                   <Link to="/messages" className="flex items-center">
-                    <Button variant="outline" size="sm" className="relative text-xs sm:text-sm">
-                      <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <Button variant="outline" size="sm" className="relative text-xs sm:text-sm bg-tiro-gray1 hover:bg-tiro-gray2">
                       <span className="hidden sm:inline">Aller à la Discussion</span>
                       <span className="sm:hidden">Chat</span>
                       {hasUnreadMessages && (
@@ -704,21 +703,20 @@ const ProjectDetail = () => {
         {/* Notification pour étudiant sélectionné */}
         {isStudent && isSelectedForProject && (
           <div className="mb-4 sm:mb-6">
-            <Card className="border-l-4 border-l-green-500 bg-green-50 bg-tiro-white">
+            <Card className="border-l-4 border-l-tiro-secondary bg-tiro-white bg-tiro-white">
               <CardHeader className="pb-3 sm:pb-4">
-                <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-green-800">
-                  <UserCheck className="h-5 w-5 text-green-600" />
+                <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-tiro-black">
+                  <UserCheck className="h-5 w-5 text-tiro-secondary" />
                   Félicitations ! Vous avez été sélectionné pour ce projet
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-start space-x-3">
-                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm text-green-800 font-medium">
+                    <p className="text-sm text-tiro-black font-medium">
                       L'entrepreneur vous a choisi pour travailler sur ce projet
                     </p>
-                    <p className="text-xs text-green-700 mt-1">
+                    <p className="text-xs text-tiro-black mt-1">
                       Vous pouvez maintenant collaborer directement avec l'entrepreneur et accéder à tous les documents du projet.
                     </p>
                   </div>
@@ -751,8 +749,8 @@ const ProjectDetail = () => {
           </div>
         )}
 
-        {/* Student Proposal Actions - Show for students with pending proposals */}
-        {isStudent && proposalStatus && studentId && (
+        {/* Student Proposal Actions - Show for students with pending proposals and not selected */}
+        {isStudent && proposalStatus && studentId && !isSelectedForProject && (
           <div className="mb-4 sm:mb-6">
             <StudentProposalActions
               projectId={project.id_project}
