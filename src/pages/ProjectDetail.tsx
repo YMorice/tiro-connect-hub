@@ -493,7 +493,8 @@ const ProjectDetail = () => {
       'STEP3': 'Sélection',
       'STEP4': 'Paiement',
       'STEP5': 'Actif',
-      'STEP6': 'Terminé'
+      'STEP6': 'Terminé',
+      'completed': 'Terminé'
     };
     return statusMap[status] || status?.replace('_', ' ').toUpperCase() || 'Unknown';
   };
@@ -881,6 +882,68 @@ const ProjectDetail = () => {
           </div>
         )}
 
+        {/* Review Section - Show for completed projects with assigned students */}
+        {project.student && project.selected_student && project.status === 'completed' && (
+          <div className="mb-4 sm:mb-6">
+            <Card className="bg-tiro-white">
+              <CardContent className="p-0">
+                <ProjectReviewSection
+                  projectId={project.id_project}
+                  studentId={project.selected_student}
+                  projectStatus={project.status}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Tip Section - Show for entrepreneurs when project is completed */}
+        {isEntrepreneur && 
+          entrepreneurId === project.id_entrepreneur && 
+          project.status === 'completed' && 
+          project.selected_student && (
+          <div className="mb-4 sm:mb-6">
+            <Card className="border-l-4 border-l-yellow-500 bg-tiro-white">
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-tiro-black">
+                  <BadgeEuro className="h-5 w-5 text-yellow-500" />
+                  Laisser un Pourboire
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-tiro-black font-medium mb-2">
+                      Vous êtes satisfait du travail ? Récompensez l'étudiant !
+                    </p>
+                    <p className="text-xs text-tiro-black/70">
+                      Un pourboire est un excellent moyen de montrer votre satisfaction et d'encourager l'étudiant dans son parcours professionnel.
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+                    <div className="flex-1">
+                      <label htmlFor="tip-amount" className="block text-sm font-medium text-tiro-black mb-1">
+                        Montant du pourboire (€)
+                      </label>
+                      <input
+                        type="number"
+                        id="tip-amount"
+                        min="1"
+                        placeholder="Ex: 50"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tiro-primary focus:border-transparent"
+                      />
+                    </div>
+                    <Button className="bg-yellow-600 hover:bg-yellow-700 text-white whitespace-nowrap">
+                      Envoyer le pourboire
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Student Proposal Actions - Show for students with pending proposals and not selected */}
         {isStudent && proposalStatus && studentId && !isSelectedForProject && (
           <div className="mb-4 sm:mb-6">
@@ -1090,18 +1153,6 @@ const ProjectDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Review Section - Only shown for completed projects with assigned students */}
-        {project.student && project.selected_student && (
-          <Card>
-            <CardContent className="p-0">
-              <ProjectReviewSection
-                projectId={project.id_project}
-                studentId={project.selected_student}
-                projectStatus={project.status}
-              />
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );
