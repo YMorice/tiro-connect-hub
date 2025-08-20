@@ -34,7 +34,7 @@ import StudentProposalActions from "@/components/student/StudentProposalActions"
 import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
 import {ProjectPayment} from "@/components/payment/ProjectPayment";
-import { Download, FileText, Calendar, User, BadgeEuro, MessageCircle, Users, CheckCircle, UserCheck } from "lucide-react";
+import { Download, FileText, Calendar, User, BadgeEuro, MessageCircle, Users, CheckCircle, UserCheck, File, HandHelping, PackageOpen } from "lucide-react";
 import { format } from "date-fns";
 import PaymentStatusMessage from "@/components/PaymentStatusMessage";
 
@@ -466,6 +466,39 @@ const ProjectDetail = () => {
       'STEP6': 'Terminé'
     };
     return statusMap[status] || status?.replace('_', ' ').toUpperCase() || 'Unknown';
+  };
+
+  /**
+   * Returns the appropriate icon component based on document type
+   * 
+   * @param type - The document type
+   * @returns Lucide icon component
+   */
+  const getDocumentIcon = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'proposal':
+        return HandHelping;
+      case 'final':
+        return PackageOpen;
+      case 'regular':
+      default:
+        return File;
+    }
+  };
+
+  /**
+   * Translates document type to French
+   * 
+   * @param type - The document type
+   * @returns Translated document type
+   */
+  const getDocumentTypeDisplay = (type: string) => {
+    const typeMap: { [key: string]: string } = {
+      'proposal': 'Proposition de rendu',
+      'final': 'Rendu final',
+      'regular': 'Document classique'
+    };
+    return typeMap[type?.toLowerCase()] || type;
   };
 
   // Handles successful payment completion
@@ -921,31 +954,34 @@ const ProjectDetail = () => {
             ) : project.documents && project.documents.length > 0 ? (
               <div className="space-y-3">
                 <div className="grid gap-2 sm:gap-3">
-                  {project.documents.map((doc) => (
-                    <div 
-                      key={doc.id_document}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center space-x-3 min-w-0 flex-1">
-                        <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-gray-900 truncate text-sm sm:text-base">{doc.name}</p>
-                          <p className="text-xs sm:text-sm text-gray-500">
-                            {doc.type} • {new Date(doc.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      {/* Téléchargement uniquement sur clic du bouton */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => downloadDocument(doc)}
-                        className="flex-shrink-0 p-2"
+                  {project.documents.map((doc) => {
+                    const IconComponent = getDocumentIcon(doc.type);
+                    return (
+                      <div 
+                        key={doc.id_document}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                       >
-                        <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="flex items-center space-x-3 min-w-0 flex-1">
+                          <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-gray-900 truncate text-sm sm:text-base">{doc.name}</p>
+                            <p className="text-xs sm:text-sm text-gray-500">
+                              {getDocumentTypeDisplay(doc.type)} • {new Date(doc.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        {/* Téléchargement uniquement sur clic du bouton */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => downloadDocument(doc)}
+                          className="flex-shrink-0 p-2"
+                        >
+                          <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ) : (
