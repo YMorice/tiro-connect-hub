@@ -37,6 +37,7 @@ import {ProjectPayment} from "@/components/payment/ProjectPayment";
 import { Download, FileText, Calendar, User, BadgeEuro, MessageCircle, Users, CheckCircle, UserCheck, File, HandHelping, PackageOpen } from "lucide-react";
 import { format } from "date-fns";
 import PaymentStatusMessage from "@/components/PaymentStatusMessage";
+import TipSection from "@/components/TipSection";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 /**
@@ -902,46 +903,10 @@ const ProjectDetail = () => {
           entrepreneurId === project.id_entrepreneur && 
           project.status === 'completed' && 
           project.selected_student && (
-          <div className="mb-4 sm:mb-6">
-            <Card className="border-l-4 border-l-yellow-500 bg-tiro-white">
-              <CardHeader className="pb-3 sm:pb-4">
-                <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-tiro-black">
-                  <BadgeEuro className="h-5 w-5 text-yellow-500" />
-                  Laisser un Pourboire
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-tiro-black font-medium mb-2">
-                      Vous êtes satisfait du travail ? Récompensez l'étudiant !
-                    </p>
-                    <p className="text-xs text-tiro-black/70">
-                      Un pourboire est un excellent moyen de montrer votre satisfaction et d'encourager l'étudiant dans son parcours professionnel.
-                    </p>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
-                    <div className="flex-1">
-                      <label htmlFor="tip-amount" className="block text-sm font-medium text-tiro-black mb-1">
-                        Montant du pourboire (€)
-                      </label>
-                      <input
-                        type="number"
-                        id="tip-amount"
-                        min="1"
-                        placeholder="Ex: 50"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tiro-primary focus:border-transparent"
-                      />
-                    </div>
-                    <Button className="bg-yellow-600 hover:bg-yellow-700 text-white whitespace-nowrap">
-                      Envoyer le pourboire
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <TipSection
+            projectId={project.id_project}
+            studentName={project.student?.users?.name}
+          />
         )}
 
         {/* Student Proposal Actions - Show for students with pending proposals and not selected */}
