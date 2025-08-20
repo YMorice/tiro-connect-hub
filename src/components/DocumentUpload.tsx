@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, File } from "lucide-react";
+import { Upload, File, Link2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { uploadFile, addDocumentToProject } from "@/services/document-service";
 import { useAuth } from "@/context/auth-context";
@@ -169,7 +169,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          className="flex items-center gap-2 bg-tiro-gray1 hover:bg-tiro-gray2" 
+          size="icon"
+          className="bg-tiro-gray1 hover:bg-tiro-gray2" 
           onClick={() => {
             if (!session) {
               toast.error("Vous devez être connecté pour téléverser des documents");
@@ -178,7 +179,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
             return true;
           }}
         >
-          Partager un document
+          <Link2 className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

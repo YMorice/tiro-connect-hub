@@ -3,10 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, ArrowLeft, MoreVertical, FolderOpen, MessageCircle } from 'lucide-react';
+import { Send, ArrowLeft, MoreVertical, FolderOpen, MessageCircle, Link2 } from 'lucide-react';
 import { Message, Conversation } from '@/hooks/useMessaging';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
+import DocumentUpload from '@/components/DocumentUpload';
 
 interface ChatAreaProps {
   conversation: Conversation | null;
@@ -208,6 +209,10 @@ export const ChatArea = memo(({
             placeholder="Tapez votre message..."
             disabled={sending}
             className="flex-1 bg-tiro-white"
+          />
+          <DocumentUpload
+            onDocumentSubmit={() => {}}
+            projectId={conversation.projectId}
           />
           <Button
             onClick={handleSendMessage}
