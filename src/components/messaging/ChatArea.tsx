@@ -211,8 +211,11 @@ export const ChatArea = memo(({
             className="flex-1 bg-tiro-white"
           />
           <DocumentUpload
-            onDocumentSubmit={() => {}}
-            projectId={conversation.projectId}
+            onDocumentSubmit={(documentDetails) => {
+              // Le message automatique est déjà envoyé dans DocumentUpload
+              console.log("Document uploaded from chat:", documentDetails);
+            }}
+            projectId={conversation?.projectId || null}
           />
           <Button
             onClick={handleSendMessage}
