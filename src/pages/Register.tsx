@@ -674,7 +674,7 @@ const Register = () => {
                           href="https://tiro.agency/conditions" 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="text-[#E74C3C] hover:underline"
+                          className="text-[#E74C3C] hover:text-tiro-primary/70"
                         >
                           Conditions d'utilisations
                         </a>
@@ -1318,7 +1318,7 @@ const Register = () => {
             <CardFooter className="flex justify-center">
               <div className="text-sm text-center">
                 <span className="text-muted-foreground">Vous possédez déjà un compte? </span>
-                <Link to="/login" className="text-tiro-primary hover:underline">
+                <Link to="/login" className="text-tiro-primary hover:text-tiro-primary/70">
                   Se connecter
                 </Link>
               </div>

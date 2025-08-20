@@ -134,7 +134,7 @@ const Login = () => {
                 <div className="text-right">
                   <Link 
                     to="/reset-password" 
-                    className="text-xs text-tiro-primary hover:underline"
+                    className="text-xs text-tiro-primary hover:text-tiro-primary/70"
                   >
                     Mot de passe oublié ?
                   </Link>
@@ -152,7 +152,7 @@ const Login = () => {
           <CardFooter className="flex flex-col space-y-2 p-4 pt-0">
             <div className="text-xs text-center">
               <span className="text-muted-foreground">Nouveau sur Tiro ? </span>
-              <Link to="/register" className="text-tiro-primary hover:underline">
+              <Link to="/register" className="text-tiro-primary hover:text-tiro-primary/70">
                 Créer un compte
               </Link>
             </div>

@@ -419,7 +419,7 @@ const Projects = () => {
             <h1 className="text-left text-3xl sm:text-4xl font-clash text-gray-900 tracking-wide">Projets</h1>
             <p className="text-gray-600 mt-1 text-left">
               {userRole === "student" && "Propositions de projets et assignations"}
-              {userRole === "entrepreneur" && "Vos projets"}
+              {userRole === "entrepreneur" && "Tous vos projets"}
               {userRole === "admin" && "Tous les projets du système"}
             </p>
           </div>
@@ -532,9 +532,12 @@ const Projects = () => {
                         </div>
                       )}
                       {project.price && (
-                        <div className="flex items-center text-sm text-tiro-black font-semibold">
-                          <BadgeEuro className="h-4 w-4 mr-1" />
-                          Prix : {userRole === "student" ? Math.round(project.price * 0.75).toLocaleString() : project.price.toLocaleString()}€
+                        <div className="flex items-center text-xs text-gray-500">
+                          <BadgeEuro className="h-3 w-3 mr-1" />
+                          Prix&nbsp;:
+                          <span className="ml-1 font-medium text-gray-700">
+                            {userRole === "student" ? Math.round(project.price * 0.75).toLocaleString() : project.price.toLocaleString()}€
+                          </span>
                         </div>
                       )}
                     </div>
