@@ -153,6 +153,18 @@ const ProjectDetail = () => {
       if ((user as any)?.role === 'entrepreneur') {
         fetchEntrepreneurId();
       }
+      
+      // Handle tip payment result from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('tip_success') === 'true') {
+        toast.success("Pourboire envoyé avec succès ! L'étudiant a été payé.");
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (urlParams.get('tip_cancelled') === 'true') {
+        toast.error("Paiement du pourboire annulé.");
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
   }, [user, id, isValidUUID]);
 

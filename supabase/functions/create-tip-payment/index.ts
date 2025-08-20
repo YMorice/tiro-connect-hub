@@ -54,12 +54,9 @@ serve(async (req) => {
       .select(`
         id_project,
         title,
-        entrepreneurs!inner(
-          id_user,
-          users!inner(
-            name,
-            email
-          )
+        id_entrepreneur,
+        entrepreneurs(
+          id_user
         )
       `)
       .eq('id_project', projectId)
@@ -69,7 +66,7 @@ serve(async (req) => {
       throw new Error("Project not found or access denied");
     }
 
-    if (projectData.entrepreneurs.id_user !== user.id) {
+    if (projectData.entrepreneurs?.id_user !== user.id) {
       throw new Error("Only the project owner can send tips");
     }
 

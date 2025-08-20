@@ -50,9 +50,8 @@ const TipSection: React.FC<TipSectionProps> = ({ projectId, studentName }) => {
       }
 
       if (data?.url) {
-        // Open Stripe checkout in a new tab
-        window.open(data.url, '_blank');
-        toast.success("Redirection vers le paiement...");
+        // Redirect to Stripe checkout in the same tab like normal project payment
+        window.location.href = data.url;
       } else {
         toast.error("Erreur: URL de paiement non reçue");
       }
