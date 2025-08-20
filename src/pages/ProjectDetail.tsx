@@ -365,7 +365,6 @@ const ProjectDetail = () => {
     documentType: "proposal" | "final" | "regular";
   }) => {
     console.log("Document uploaded:", documentDetails);
-    toast.success(`Document "${documentDetails.documentName}" uploaded successfully`);
     
     // Refresh project data to show new document
     if (id) {
