@@ -114,7 +114,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
     try {
       // Map our UI document types to database document types
       const dbDocumentType = documentType === "regular" 
-        ? "regular" 
+        ? "other" 
         : documentType === "final" ? "final_proposal" : "proposal";
 
       console.log("DocumentUpload Debug:", {

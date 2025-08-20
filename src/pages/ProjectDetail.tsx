@@ -480,6 +480,8 @@ const ProjectDetail = () => {
         return HandHelping;
       case 'final_proposal':
         return PackageOpen;
+      case 'other':
+      case 'contract':
       case 'regular':
       default:
         return File;
@@ -496,6 +498,8 @@ const ProjectDetail = () => {
     const typeMap: { [key: string]: string } = {
       'proposal': 'Proposition de rendu',
       'final_proposal': 'Rendu final',
+      'other': 'Document classique',
+      'contract': 'Contrat',
       'regular': 'Document classique'
     };
     return typeMap[type?.toLowerCase()] || type;
