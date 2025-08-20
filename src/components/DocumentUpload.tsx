@@ -113,8 +113,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
 
     try {
       // Map our UI document types to database document types
-      const dbDocumentType = documentType === "proposal" 
-        ? "proposal" 
+      const dbDocumentType = documentType === "regular" 
+        ? "regular" 
         : documentType === "final" ? "final_proposal" : "proposal";
 
       // Upload the file to Supabase storage

@@ -478,7 +478,7 @@ const ProjectDetail = () => {
     switch (type?.toLowerCase()) {
       case 'proposal':
         return HandHelping;
-      case 'final':
+      case 'final_proposal':
         return PackageOpen;
       case 'regular':
       default:
@@ -495,7 +495,7 @@ const ProjectDetail = () => {
   const getDocumentTypeDisplay = (type: string) => {
     const typeMap: { [key: string]: string } = {
       'proposal': 'Proposition de rendu',
-      'final': 'Rendu final',
+      'final_proposal': 'Rendu final',
       'regular': 'Document classique'
     };
     return typeMap[type?.toLowerCase()] || type;
