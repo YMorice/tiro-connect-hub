@@ -17,6 +17,8 @@ import { Upload, File } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { uploadFile, addDocumentToProject } from "@/services/document-service";
 import { useAuth } from "@/context/auth-context";
+import { supabase } from "@/integrations/supabase/client";
+import { Message } from "@/types";
 
 interface DocumentUploadProps {
   onDocumentSubmit: (documentDetails: {
@@ -35,6 +37,43 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
   const [isUploading, setIsUploading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const sendDocumentAddedMessage = async (projectId: string, documentName: string, documentType: string) => {
+    try {
+      if (!user) return;
+
+      // Get the message group for this project
+      const { data: messageGroup, error: groupError } = await supabase
+        .from('message_groups')
+        .select('id_group')
+        .eq('id_project', projectId)
+        .limit(1)
+        .single();
+
+      if (groupError || !messageGroup) {
+        console.error('Error getting message group:', groupError);
+        return;
+      }
+
+      // Create the automatic message
+      const messageContent = `📄 Document ajouté: "${documentName}" (Type: ${documentType === 'proposal' ? 'Proposition' : documentType === 'final' ? 'Rendu final' : 'Document classique'})`;
+
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          content: messageContent,
+          sender_id: user.id,
+          group_id: messageGroup.id_group,
+          read: false
+        });
+
+      if (messageError) {
+        console.error('Error sending automatic message:', messageError);
+      }
+    } catch (error) {
+      console.error('Error in sendDocumentAddedMessage:', error);
+    }
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -95,6 +134,9 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
           dbDocumentType as any,
           fileUrl
         );
+
+        // Send automatic message to project discussion
+        await sendDocumentAddedMessage(projectId, documentName.trim(), documentType);
 
         // Call the onDocumentSubmit callback with the document details
         onDocumentSubmit({
