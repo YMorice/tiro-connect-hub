@@ -37,6 +37,7 @@ import {ProjectPayment} from "@/components/payment/ProjectPayment";
 import { Download, FileText, Calendar, User, BadgeEuro, MessageCircle, Users, CheckCircle, UserCheck, File, HandHelping, PackageOpen } from "lucide-react";
 import { format } from "date-fns";
 import PaymentStatusMessage from "@/components/PaymentStatusMessage";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 /**
  * Interface for project document data structure
@@ -137,6 +138,7 @@ const ProjectDetail = () => {
   const [studentId, setStudentId] = useState<string | null>(null);
   const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
   const [isSelectedForProject, setIsSelectedForProject] = useState(false);
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
 
   // Fetch project data when component mounts or dependencies change
   useEffect(() => {
@@ -226,6 +228,34 @@ const ProjectDetail = () => {
    */
   const handleStudentSelected = () => {
     fetchProject();
+  };
+
+  /**
+   * Handles project closure by updating status to completed
+   */
+  const handleCloseProject = async () => {
+    if (!project || !entrepreneurId) return;
+
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ status: 'completed' })
+        .eq('id_project', project.id_project)
+        .eq('id_entrepreneur', entrepreneurId);
+
+      if (error) {
+        console.error('Error closing project:', error);
+        toast.error("Erreur lors de la clôture du projet");
+        return;
+      }
+
+      toast.success("Projet clôturé avec succès ! L'étudiant sera payé.");
+      setShowCloseDialog(false);
+      fetchProject(); // Refresh project data
+    } catch (error) {
+      console.error('Error closing project:', error);
+      toast.error("Erreur lors de la clôture du projet");
+    }
   };
 
   /**
@@ -782,6 +812,72 @@ const ProjectDetail = () => {
           project.status === 'STEP4' && (
           <div className="mb-4 sm:mb-6">
             <PaymentStatusMessage projectStatus={project.status} />
+          </div>
+        )}
+
+        {/* Project Closure Card - Show for entrepreneurs when project is in STEP5 */}
+        {isEntrepreneur && 
+          entrepreneurId === project.id_entrepreneur && 
+          project.status === 'STEP5' && 
+          project.selected_student && (
+          <div className="mb-4 sm:mb-6">
+            <Card className="border-l-4 border-l-green-500 bg-tiro-white">
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-lg sm:text-xl flex items-center gap-2 text-tiro-black">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  Prêt à clôturer le projet ?
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-tiro-black font-medium mb-2">
+                      Une fois que vous êtes satisfait du travail de l'étudiant
+                    </p>
+                    <p className="text-xs text-tiro-black/70">
+                      En clôturant le projet, vous confirmez que le travail est terminé et satisfaisant. 
+                      Cela déclenchera automatiquement le paiement de l'étudiant.
+                    </p>
+                  </div>
+                  
+                  <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-green-600 hover:bg-green-700 text-white">
+                        Clôturer le projet
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Confirmer la clôture du projet</DialogTitle>
+                        <DialogDescription>
+                          Êtes-vous sûr de vouloir clôturer ce projet ? Cette action :
+                          <br />
+                          • Marquera le projet comme terminé
+                          <br />
+                          • Déclenchera le paiement automatique de l'étudiant
+                          <br />
+                          • Ne pourra pas être annulée
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex justify-end space-x-2 mt-4">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowCloseDialog(false)}
+                        >
+                          Annuler
+                        </Button>
+                        <Button 
+                          onClick={handleCloseProject}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          Confirmer la clôture
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
