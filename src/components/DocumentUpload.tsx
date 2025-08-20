@@ -117,6 +117,13 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
         ? "regular" 
         : documentType === "final" ? "final_proposal" : "proposal";
 
+      console.log("DocumentUpload Debug:", {
+        selectedDocumentType: documentType,
+        mappedDbType: dbDocumentType,
+        projectId,
+        documentName: documentName.trim()
+      });
+
       // Upload the file to Supabase storage
       const fileUrl = await uploadFile(selectedFile, projectId);
       
@@ -126,6 +133,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
         return;
       }
 
+      console.log("File uploaded successfully:", fileUrl);
+
       try {
         // Save document metadata to the database
         await addDocumentToProject(
@@ -134,6 +143,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
           dbDocumentType as any,
           fileUrl
         );
+
+        console.log("Document metadata saved successfully");
 
         // Send automatic message to project discussion
         await sendDocumentAddedMessage(projectId, documentName.trim(), documentType);
@@ -155,6 +166,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentSubmit, proje
         // Si l'upload du fichier a réussi mais que l'ajout des métadonnées échoue,
         // on ne montre pas d'erreur car le fichier est déjà dans le bucket
         console.error("Error adding document metadata:", error);
+        toast.error("Erreur lors de l'ajout des métadonnées du document: " + (error as Error).message);
       }
     } catch (error) {
       console.error("Document upload error:", error);
