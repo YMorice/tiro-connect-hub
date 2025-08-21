@@ -19,7 +19,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { useParams, Navigate, Link } from "react-router-dom";
+import { useParams, Navigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
 import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +34,7 @@ import StudentProposalActions from "@/components/student/StudentProposalActions"
 import StudentSelectionView from "@/components/student-selection/StudentSelectionView";
 import { ProposedStudentsDisplay } from "@/components/student-selection/ProposedStudentsDisplay";
 import {ProjectPayment} from "@/components/payment/ProjectPayment";
+import { TipPayment } from "@/components/TipPayment";
 import { Download, FileText, Calendar, User, BadgeEuro, MessageCircle, Users, CheckCircle, UserCheck, File, HandHelping, PackageOpen } from "lucide-react";
 import { format } from "date-fns";
 import PaymentStatusMessage from "@/components/PaymentStatusMessage";
@@ -117,6 +118,7 @@ interface Project {
 const ProjectDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
+  const location = useLocation();
   
   // Check if the ID is a valid UUID format, if not redirect to appropriate page
   const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || '');
@@ -140,6 +142,27 @@ const ProjectDetail = () => {
   const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
   const [isSelectedForProject, setIsSelectedForProject] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
+
+  // Handle tip payment URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    
+    if (urlParams.get('tip_success') === 'true') {
+      toast("Pourboire envoyé avec succès ! Merci pour votre générosité.", {
+        duration: 5000,
+      });
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    
+    if (urlParams.get('tip_cancelled') === 'true') {
+      toast("Paiement du pourboire annulé.", {
+        duration: 3000,
+      });
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [location.search]);
 
   // Fetch project data when component mounts or dependencies change
   useEffect(() => {
@@ -896,6 +919,15 @@ const ProjectDetail = () => {
           </div>
         )}
 
+        {/* Tip Section - Show for entrepreneurs on completed projects */}
+        {isEntrepreneur && project.student && project.selected_student && (project.status === 'completed' || project.status === 'Terminé') && (
+          <div className="mb-4 sm:mb-6">
+            <TipPayment 
+              projectId={project.id_project}
+              studentName={project.student?.users?.name}
+            />
+          </div>
+        )}
 
         {/* Student Proposal Actions - Show for students with pending proposals and not selected */}
         {isStudent && proposalStatus && studentId && !isSelectedForProject && (

@@ -280,6 +280,7 @@ export type Database = {
           selected_student: string | null
           status: string | null
           student_notification_read: boolean | null
+          tip: number | null
           title: string
           updated_at: string
         }
@@ -294,6 +295,7 @@ export type Database = {
           selected_student?: string | null
           status?: string | null
           student_notification_read?: boolean | null
+          tip?: number | null
           title: string
           updated_at?: string
         }
@@ -308,6 +310,7 @@ export type Database = {
           selected_student?: string | null
           status?: string | null
           student_notification_read?: boolean | null
+          tip?: number | null
           title?: string
           updated_at?: string
         }
