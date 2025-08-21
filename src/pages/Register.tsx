@@ -389,16 +389,18 @@ const Register = () => {
     setStep(4);
   };
 
-  const onSubmitStep3Entrepreneur = (values: z.infer<typeof step3SchemaEntrepreneur>) => {
-    setFormValues(prev => ({ 
-      ...prev, 
+  const onSubmitStep3Entrepreneur = async (values: z.infer<typeof step3SchemaEntrepreneur>) => {
+    const finalFormValues = { 
+      ...formValues, 
       companyName: values.companyName,
       companyRole: values.companyRole,
       siret: values.siret,
       companyAddress: values.companyAddress,
       avatar: avatarUrl
-    }));
-    setStep(4);
+    };
+    
+    setFormValues(finalFormValues);
+    await finalSubmit(finalFormValues);
   };
 
   // Handle Step 4 submission
@@ -1136,7 +1138,7 @@ const Register = () => {
                   className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
                   disabled={isSubmitting}
                 >
-                  Suivant
+                  Terminer l'inscription
                 </Button>
               </div>
             </form>
