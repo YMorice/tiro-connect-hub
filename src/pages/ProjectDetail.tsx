@@ -738,7 +738,8 @@ const ProjectDetail = () => {
     selectedStudent: project?.selected_student,
     showProposedStudents,
     showPaymentSection,
-    projectPrice: project?.price
+    projectPrice: project?.price,
+    showTipSection: isEntrepreneur && entrepreneurId && project.id_entrepreneur === entrepreneurId && project.selected_student && (project.status === 'completed' || project.status === 'Terminé')
   });
 
   return (
@@ -920,7 +921,7 @@ const ProjectDetail = () => {
         )}
 
         {/* Tip Section - Show for entrepreneurs on completed projects */}
-        {isEntrepreneur && project.student && project.selected_student && (project.status === 'completed' || project.status === 'Terminé') && (
+        {isEntrepreneur && entrepreneurId && project.id_entrepreneur === entrepreneurId && project.selected_student && (project.status === 'completed' || project.status === 'Terminé') && (
           <div className="mb-4 sm:mb-6">
             <TipPayment 
               projectId={project.id_project}

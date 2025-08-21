@@ -48,23 +48,26 @@ serve(async (req) => {
 
     logStep("Request data", { project_id, tip_amount });
 
-    // Verify user is the entrepreneur of this project
+    // Verify user is the entrepreneur of this project  
     const { data: project, error: projectError } = await supabaseClient
       .from('projects')
-      .select(`
-        id_project,
-        title,
-        id_entrepreneur,
-        entrepreneurs!inner (
-          id_user
-        )
-      `)
+      .select('id_project, title, id_entrepreneur')
       .eq('id_project', project_id)
-      .eq('entrepreneurs.id_user', user.id)
       .single();
 
     if (projectError || !project) {
-      throw new Error("Project not found or user not authorized");
+      throw new Error("Project not found");
+    }
+
+    // Get the entrepreneur data to verify ownership
+    const { data: entrepreneur, error: entrepreneurError } = await supabaseClient
+      .from('entrepreneurs')
+      .select('id_user')
+      .eq('id_entrepreneur', project.id_entrepreneur)
+      .single();
+
+    if (entrepreneurError || !entrepreneur || entrepreneur.id_user !== user.id) {
+      throw new Error("User not authorized for this project");
     }
 
     logStep("Project verified", { projectId: project.id_project, title: project.title });

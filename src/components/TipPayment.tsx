@@ -98,11 +98,14 @@ export const TipPayment: React.FC<TipPaymentProps> = ({ projectId, studentName }
             onChange={(e) => setTipAmount(e.target.value)}
             className="text-right"
           />
+          <p className="text-xs text-gray-500">
+            Saisissez un montant entre 1€ et 10 000€ pour activer le bouton de paiement
+          </p>
         </div>
         
         <Button
           onClick={handleTipPayment}
-          disabled={isProcessing || !tipAmount}
+          disabled={isProcessing || !tipAmount || parseFloat(tipAmount) < 1}
           className="w-full bg-tiro-orange hover:bg-tiro-orange/90"
         >
           {isProcessing ? (
