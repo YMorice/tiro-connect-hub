@@ -1221,44 +1221,7 @@ const Register = () => {
               </div>
             </form>
           </Form>
-        ) : (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h3 className="text-lg font-medium">Voulez-vous ajouter un projet maintenant ?</h3>
-              <p className="text-sm text-muted-foreground mt-2">
-                Vous pourrez également ajouter des projet sur votre tableau de bord
-              </p>
-            </div>
-            
-            <div className="flex justify-center space-x-4">
-              <Button 
-                variant="outline" 
-                onClick={onSkipProject}
-                disabled={isSubmitting}
-              >
-                Sauter pour le moment
-              </Button>
-              <Button 
-                onClick={onAddProject}
-                className="bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-                disabled={isSubmitting}
-              >
-                Ajouter un projet
-              </Button>
-            </div>
-            
-            <div className="flex justify-start">
-              <Button 
-                type="button" 
-                variant="link" 
-                onClick={goBack}
-                disabled={isSubmitting}
-              >
-                Retour
-              </Button>
-            </div>
-          </div>
-        );
+        ) : null;
 
       case 5:
         return (
