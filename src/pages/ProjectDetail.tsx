@@ -37,7 +37,7 @@ import {ProjectPayment} from "@/components/payment/ProjectPayment";
 import { Download, FileText, Calendar, User, BadgeEuro, MessageCircle, Users, CheckCircle, UserCheck, File, HandHelping, PackageOpen } from "lucide-react";
 import { format } from "date-fns";
 import PaymentStatusMessage from "@/components/PaymentStatusMessage";
-import TipSection from "@/components/TipSection";
+
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 /**
@@ -152,18 +152,6 @@ const ProjectDetail = () => {
       }
       if ((user as any)?.role === 'entrepreneur') {
         fetchEntrepreneurId();
-      }
-      
-      // Handle tip payment result from URL params
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('tip_success') === 'true') {
-        toast.success("Pourboire envoyé avec succès ! L'étudiant a été payé.");
-        // Clean URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } else if (urlParams.get('tip_cancelled') === 'true') {
-        toast.error("Paiement du pourboire annulé.");
-        // Clean URL
-        window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
   }, [user, id, isValidUUID]);
@@ -910,16 +898,6 @@ const ProjectDetail = () => {
           </div>
         )}
 
-        {/* Tip Section - Show for entrepreneurs when project is completed */}
-        {isEntrepreneur && 
-          entrepreneurId === project.id_entrepreneur && 
-          project.status === 'completed' && 
-          project.selected_student && (
-          <TipSection
-            projectId={project.id_project}
-            studentName={project.student?.users?.name}
-          />
-        )}
 
         {/* Student Proposal Actions - Show for students with pending proposals and not selected */}
         {isStudent && proposalStatus && studentId && !isSelectedForProject && (
