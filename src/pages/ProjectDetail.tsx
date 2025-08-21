@@ -886,14 +886,12 @@ const ProjectDetail = () => {
         {/* Review Section - Show for completed projects with assigned students */}
         {project.student && project.selected_student && project.status === 'completed' && (
           <div className="mb-4 sm:mb-6">
-            <Card className="bg-tiro-white">
-              <CardContent className="p-0">
+            <Card className="bg-tiro-test overflow-hidden">
                 <ProjectReviewSection
                   projectId={project.id_project}
                   studentId={project.selected_student}
                   projectStatus={project.status}
                 />
-              </CardContent>
             </Card>
           </div>
         )}
