@@ -85,36 +85,29 @@ serve(async (req) => {
 
     logStep("Customer check", { customerId, email: user.email });
 
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    // Create Stripe payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: tip_amount,
+      currency: "eur",
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `Pourboire - ${project.title}`,
-              description: "Pourboire pour le projet",
-            },
-            unit_amount: tip_amount,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: "payment",
-      success_url: `${req.headers.get("origin")}/projects/${project_id}?tip_success=true`,
-      cancel_url: `${req.headers.get("origin")}/projects/${project_id}?tip_cancelled=true`,
       metadata: {
         project_id: project_id,
         tip_amount: tip_amount.toString(),
         user_id: user.id,
+        project_title: project.title,
       },
+      description: `Pourboire - ${project.title}`,
     });
 
-    logStep("Stripe session created", { sessionId: session.id, url: session.url });
+    logStep("Stripe payment intent created", { 
+      paymentIntentId: paymentIntent.id, 
+      clientSecret: paymentIntent.client_secret 
+    });
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ 
+      client_secret: paymentIntent.client_secret,
+      payment_intent_id: paymentIntent.id 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
