@@ -921,6 +921,7 @@ const ProjectDetail = () => {
         )}
 
         {/* Tip Section - Show for entrepreneurs on completed projects */}
+        {/* Temporarily disabled
         {isEntrepreneur && entrepreneurId && project.id_entrepreneur === entrepreneurId && project.selected_student && (project.status === 'completed' || project.status === 'Terminé') && (
           <div className="mb-4 sm:mb-6">
             <TipPayment 
@@ -929,6 +930,7 @@ const ProjectDetail = () => {
             />
           </div>
         )}
+        */}
 
         {/* Student Proposal Actions - Show for students with pending proposals and not selected */}
         {isStudent && proposalStatus && studentId && !isSelectedForProject && (
