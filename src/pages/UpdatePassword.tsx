@@ -38,62 +38,89 @@ const UpdatePassword = () => {
   });
 
   useEffect(() => {
-    const init = async () => {
+    const handlePasswordReset = async () => {
       try {
-        // 1) PKCE flow: ?code=...
-        // 1) PKCE flow: ?code=... (also support code in URL hash)
-        let code = searchParams.get("code");
-        if (!code && window.location.hash) {
-          const hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
-          code = hashParams.get("code") || code;
-        }
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-          // Nettoie l'URL
-          navigate("/update-password", { replace: true });
+        // Vérifier d'abord si l'utilisateur est déjà connecté
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log("User already authenticated, ready for password update");
           return;
         }
 
-        // 2) Legacy flow: ?access_token=...&refresh_token=...
-        let accessToken = searchParams.get("access_token");
-        let refreshToken = searchParams.get("refresh_token");
+        console.log("Current URL:", window.location.href);
+        console.log("Search params:", Object.fromEntries(searchParams.entries()));
+        console.log("Hash:", window.location.hash);
 
-        // 2b) Fallback: tokens dans le hash (#access_token=...)
-        if (!accessToken || !refreshToken) {
-          const hash = window.location.hash;
-          if (hash && hash.includes("access_token")) {
-            const hashParams = new URLSearchParams(hash.replace("#", ""));
-            accessToken = hashParams.get("access_token") || accessToken;
-            refreshToken = hashParams.get("refresh_token") || refreshToken;
+        // Gérer le flow de récupération de mot de passe avec code
+        const code = searchParams.get("code");
+        if (code) {
+          console.log("Found code in URL params, attempting to exchange for session");
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error("Error exchanging code for session:", error);
+            throw error;
           }
+          console.log("Successfully exchanged code for session:", data);
+          // Nettoie l'URL après échange réussi
+          window.history.replaceState({}, document.title, "/update-password");
+          return;
         }
 
+        // Gérer les tokens dans les paramètres URL
+        const accessToken = searchParams.get("access_token");
+        const refreshToken = searchParams.get("refresh_token");
+        
         if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
+          console.log("Found tokens in URL params, setting session");
+          const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
-          if (error) throw error;
-          // Nettoie l'URL
-          navigate("/update-password", { replace: true });
+          if (error) {
+            console.error("Error setting session with tokens:", error);
+            throw error;
+          }
+          console.log("Successfully set session with tokens:", data);
+          // Nettoie l'URL après échange réussi
+          window.history.replaceState({}, document.title, "/update-password");
           return;
         }
 
-        // 3) Si l'utilisateur est déjà connecté (via magic link), tout va bien
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) return;
+        // Gérer les tokens dans le hash
+        const hash = window.location.hash;
+        if (hash) {
+          const hashParams = new URLSearchParams(hash.replace("#", ""));
+          const hashAccessToken = hashParams.get("access_token");
+          const hashRefreshToken = hashParams.get("refresh_token");
+          
+          if (hashAccessToken && hashRefreshToken) {
+            console.log("Found tokens in hash, setting session");
+            const { data, error } = await supabase.auth.setSession({
+              access_token: hashAccessToken,
+              refresh_token: hashRefreshToken,
+            });
+            if (error) {
+              console.error("Error setting session with hash tokens:", error);
+              throw error;
+            }
+            console.log("Successfully set session with hash tokens:", data);
+            // Nettoie l'URL après échange réussi
+            window.history.replaceState({}, document.title, "/update-password");
+            return;
+          }
+        }
 
+        console.log("No valid authentication tokens found");
         toast.error("Lien de réinitialisation invalide ou expiré");
-        navigate("/login");
+        navigate("/reset-password");
       } catch (err) {
-        console.error("Error initializing password recovery:", err);
-        toast.error("Lien de réinitialisation invalide ou expiré");
-        navigate("/login");
+        console.error("Error in password reset flow:", err);
+        toast.error("Lien de réinitialisation invalide ou expiré. Veuillez demander un nouveau lien.");
+        navigate("/reset-password");
       }
     };
 
-    init();
+    handlePasswordReset();
   }, [searchParams, navigate]);
 
   const onSubmit = async (values: FormValues) => {
