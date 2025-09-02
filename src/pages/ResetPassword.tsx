@@ -47,7 +47,7 @@ const ResetPassword = () => {
       } else {
         console.log("Reset email sent successfully");
         setEmailSent(true);
-        toast.success("Email de réinitialisation du mot de passe envoyé !");
+        toast.success("Email de réinitialisation du mot de passe envoyé");
       }
     } catch (error) {
       console.error("Reset password error:", error);
@@ -86,7 +86,6 @@ const ResetPassword = () => {
                   <p className="text-amber-800">
                     <strong>Important :</strong> L'email peut prendre quelques minutes à arriver. 
                     N'oubliez pas de vérifier votre dossier spam si vous ne le voyez pas dans votre boîte de réception.
-                    Assurez-vous également que l'URL du site et les URL de redirection sont correctement configurées dans vos paramètres Supabase.
                   </p>
                 </div>
               </div>
@@ -112,11 +111,8 @@ const ResetPassword = () => {
         <Card className="shadow-lg">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
-              <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Logo Tiro" className="h-10" />
+              <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Logo Tiro" className="h-14" />
             </div>
-            <CardDescription>
-              Réinitialisez votre mot de passe
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -140,10 +136,6 @@ const ResetPassword = () => {
                     </FormItem>
                   )} 
                 />
-                
-                <p className="text-sm text-muted-foreground">
-                  Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
-                </p>
                 
                 <Button 
                   type="submit" 
