@@ -40,6 +40,8 @@ enable_signup = true
 enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
+secure_email_change_enabled = false
+max_frequency = 300
 
 [functions.create-payment-intent]
 verify_jwt = true
