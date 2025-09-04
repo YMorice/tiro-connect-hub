@@ -64,16 +64,10 @@ const ResetPassword = () => {
           <Card className="shadow-lg">
             <CardHeader className="space-y-1 text-center">
               <div className="flex justify-center mb-2">
-                <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Logo Tiro" className="h-10" />
+                <img src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png" alt="Logo Tiro" className="h-14" />
               </div>
             </CardHeader>
-            <CardContent className="space-y-6 text-center">
-              <div className="mx-auto h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
-              </div>
+            <CardContent className="space-y-6 text-left">
               
               <div className="space-y-3 text-muted-foreground">
                 <p>
