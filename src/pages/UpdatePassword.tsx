@@ -237,9 +237,9 @@ export default function UpdatePassword() {
                   className="w-full" 
                   asChild
                 >
-                  <Link to="/reset-password" className="flex items-center justify-center gap-2">
+                  <Link to="/login" className="flex items-center justify-center gap-2">
                     <ArrowLeft className="h-4 w-4" />
-                    Demander un nouveau code
+                    Retour à la connexion
                   </Link>
                 </Button>
               </form>
