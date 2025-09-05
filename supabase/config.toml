@@ -52,3 +52,18 @@ verify_jwt = true
 
 [functions.confirm-payment]
 verify_jwt = false
+
+[functions.send-password-reset]
+verify_jwt = false
+
+[auth.email.smtp]
+host = "smtp.resend.com"
+port = 587
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "noreply@resend.dev"
+max_frequency = 300
+
+[auth.email.template.recovery]
+subject = ""
+content_path = ""
