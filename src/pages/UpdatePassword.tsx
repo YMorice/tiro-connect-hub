@@ -68,6 +68,9 @@ export default function UpdatePassword() {
 
       console.log("Token verified successfully, updating password");
       
+      // Déconnexion pour s'assurer qu'on ne reste pas connecté avec l'ancienne session
+      await supabase.auth.signOut();
+      
       // Maintenant mettre à jour le mot de passe
       const { error: updateError } = await supabase.auth.updateUser({ 
         password: values.password 
@@ -85,7 +88,7 @@ export default function UpdatePassword() {
         }
       } else {
         console.log("Password updated successfully");
-        toast.success("Mot de passe mis à jour avec succès !");
+        toast.success("Mot de passe mis à jour avec succès ! Vous pouvez maintenant vous connecter.");
         navigate("/login");
       }
     } catch (error) {
