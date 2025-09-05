@@ -1,6 +1,5 @@
-// src/pages/UpdatePassword.tsx
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // ⟵ plus besoin de useSearchParams
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,11 +9,12 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 const formSchema = z
   .object({
-    // Aligne la longueur minimale avec ta policy Supabase (souvent 8)
+    email: z.string().email("Adresse email invalide"),
+    token: z.string().min(6, "Le code doit contenir 6 caractères").max(6, "Le code doit contenir 6 caractères"),
     password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
     confirmPassword: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
   })
@@ -27,56 +27,58 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function UpdatePassword() {
   const navigate = useNavigate();
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { password: "", confirmPassword: "" },
+    defaultValues: { 
+      email: "",
+      token: "", 
+      password: "", 
+      confirmPassword: "" 
+    },
   });
-
-  useEffect(() => {
-    (async () => {
-      try {
-        // 1) Si l’utilisateur est déjà authentifié, on passe au formulaire directement
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          // 2) IMPORTANT : donner l’URL COMPLÈTE pour gérer tous les cas (code en query, tokens en hash…)
-          const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
-          if (error) {
-            console.error("exchangeCodeForSession error:", error);
-            toast.error("Lien de réinitialisation invalide ou expiré. Redemande un email.");
-            return navigate("/reset-password");
-          }
-          // 3) Nettoyer l’URL (on enlève les paramètres/tokens)
-          window.history.replaceState({}, document.title, "/update-password");
-        }
-      } catch (e) {
-        console.error("Error in password reset flow:", e);
-        toast.error("Erreur pendant la validation du lien");
-        return navigate("/reset-password");
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const onSubmit = async (values: FormValues) => {
     if (isSubmitting) return;
+    
     try {
       setIsSubmitting(true);
-      const { error } = await supabase.auth.updateUser({ password: values.password });
+      console.log("Attempting password reset with token");
+      
+      // Utiliser verifyOtp pour valider le token et réinitialiser le mot de passe
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: values.email,
+        token: values.token,
+        type: 'recovery',
+      });
+
       if (error) {
-        console.error("Password update error:", error);
-        toast.error(error.message || "Échec de la mise à jour du mot de passe");
+        console.error("Token verification error:", error);
+        toast.error(error.message || "Code invalide ou expiré");
+        return;
+      }
+
+      console.log("Token verified successfully, updating password");
+      
+      // Maintenant mettre à jour le mot de passe
+      const { error: updateError } = await supabase.auth.updateUser({ 
+        password: values.password 
+      });
+
+      if (updateError) {
+        console.error("Password update error:", updateError);
+        toast.error(updateError.message || "Échec de la mise à jour du mot de passe");
       } else {
-        toast.success("Mot de passe mis à jour avec succès. Tu peux te reconnecter.");
+        console.log("Password updated successfully");
+        toast.success("Mot de passe mis à jour avec succès !");
         navigate("/login");
       }
-    } catch (e) {
-      console.error("Password update exception:", e);
-      toast.error("Échec de la mise à jour du mot de passe");
+    } catch (error) {
+      console.error("Password reset exception:", error);
+      toast.error("Échec de la réinitialisation du mot de passe");
     } finally {
       setIsSubmitting(false);
     }
@@ -91,14 +93,54 @@ export default function UpdatePassword() {
               <img
                 src="/lovable-uploads/c92f520e-b872-478c-9acd-46addb007ada.png"
                 alt="Logo Tiro"
-                className="h-10"
+                className="h-14"
               />
             </div>
-            <CardDescription>Définis ton nouveau mot de passe</CardDescription>
+            <CardDescription>Entrez le code reçu par email et votre nouveau mot de passe</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="Votre adresse email"
+                          {...field}
+                          disabled={isSubmitting}
+                          className="bg-tiro-white"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="token"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Code de réinitialisation</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Code à 6 chiffres"
+                          {...field}
+                          disabled={isSubmitting}
+                          className="bg-tiro-white font-mono text-center text-lg tracking-wider"
+                          maxLength={6}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="password"
@@ -112,6 +154,7 @@ export default function UpdatePassword() {
                             placeholder="Entrez votre nouveau mot de passe"
                             {...field}
                             disabled={isSubmitting}
+                            className="bg-tiro-white pr-10"
                           />
                           <Button
                             type="button"
@@ -143,6 +186,7 @@ export default function UpdatePassword() {
                             placeholder="Confirmez votre nouveau mot de passe"
                             {...field}
                             disabled={isSubmitting}
+                            className="bg-tiro-white pr-10"
                           />
                           <Button
                             type="button"
@@ -167,6 +211,18 @@ export default function UpdatePassword() {
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Mise à jour..." : "Mettre à jour le mot de passe"}
+                </Button>
+
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="w-full" 
+                  asChild
+                >
+                  <Link to="/reset-password" className="flex items-center justify-center gap-2">
+                    <ArrowLeft className="h-4 w-4" />
+                    Demander un nouveau code
+                  </Link>
                 </Button>
               </form>
             </Form>

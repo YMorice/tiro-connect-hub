@@ -35,11 +35,8 @@ const ResetPassword = () => {
       setIsSubmitting(true);
       console.log("Sending password reset email to:", values.email);
       
-      // Use the correct redirect URL for password reset - must match Supabase config exactly
-      const redirectUrl = `${window.location.origin}/update-password`;
-      
-      const { data, error } = await supabase.auth.resetPasswordForEmail(values.email, { redirectTo: redirectUrl });
-      console.log("resetPasswordForEmail result:", { data, error });
+      // Envoyer l'email de réinitialisation sans redirectTo pour éviter les problèmes de lien
+      const { error } = await supabase.auth.resetPasswordForEmail(values.email);
       
       if (error) {
         console.error("Reset password error:", error);
@@ -69,12 +66,12 @@ const ResetPassword = () => {
             </CardHeader>
             <CardContent className="space-y-6 text-left">
               
-              <div className="space-y-3 text-muted-foreground">
+                <div className="space-y-3 text-muted-foreground">
                 <p>
-                  Nous avons envoyé un lien de réinitialisation du mot de passe à <strong className="text-foreground">{form.getValues("email")}</strong>
+                  Nous avons envoyé un code de réinitialisation à <strong className="text-foreground">{form.getValues("email")}</strong>
                 </p>
                 <p>
-                  Veuillez cliquer sur le lien dans l'email pour réinitialiser votre mot de passe.
+                  Copiez le code de 6 chiffres depuis l'email et utilisez-le sur la page de mise à jour du mot de passe.
                 </p>
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
                   <p className="text-amber-800">
@@ -84,14 +81,25 @@ const ResetPassword = () => {
                 </div>
               </div>
               
-              <Button 
-                asChild
-                className="w-full bg-tiro-primary hover:bg-tiro-primary/90 text-white"
-              >
-                <Link to="/login">
-                  Retour à la connexion
-                </Link>
-              </Button>
+              <div className="flex gap-3">
+                <Button 
+                  asChild
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Link to="/login">
+                    Retour à la connexion
+                  </Link>
+                </Button>
+                <Button 
+                  asChild
+                  className="flex-1 bg-tiro-primary hover:bg-tiro-primary/90 text-white"
+                >
+                  <Link to="/update-password">
+                    Entrer le code
+                  </Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
