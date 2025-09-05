@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
@@ -15,8 +15,13 @@ const formSchema = z
   .object({
     email: z.string().email("Adresse email invalide"),
     token: z.string().min(6, "Le code doit contenir 6 caractères").max(6, "Le code doit contenir 6 caractères"),
-    password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
-    confirmPassword: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    password: z.string()
+      .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+      .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
+      .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
+      .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
+      .regex(/[^A-Za-z0-9]/, "Le mot de passe doit contenir au moins un caractère spécial"),
+    confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Les mots de passe ne correspondent pas",
@@ -70,7 +75,14 @@ export default function UpdatePassword() {
 
       if (updateError) {
         console.error("Password update error:", updateError);
-        toast.error(updateError.message || "Échec de la mise à jour du mot de passe");
+        // Gestion des erreurs spécifiques de validation de mot de passe
+        if (updateError.message?.includes("Password should be at least")) {
+          toast.error("Le mot de passe ne respecte pas les exigences de sécurité");
+        } else if (updateError.message?.includes("weak password")) {
+          toast.error("Le mot de passe est trop faible. Utilisez au moins 8 caractères avec majuscules, minuscules, chiffres et caractères spéciaux.");
+        } else {
+          toast.error(updateError.message || "Échec de la mise à jour du mot de passe");
+        }
       } else {
         console.log("Password updated successfully");
         toast.success("Mot de passe mis à jour avec succès !");
@@ -168,6 +180,9 @@ export default function UpdatePassword() {
                           </Button>
                         </div>
                       </FormControl>
+                      <FormDescription className="text-xs text-muted-foreground">
+                        8 caractères minimum avec au moins une majuscule, une minuscule, un chiffre et un caractère spécial
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
