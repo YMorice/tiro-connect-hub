@@ -53,25 +53,22 @@ export default function UpdatePassword() {
       setIsSubmitting(true);
       console.log("Attempting password reset with token");
       
-      // Utiliser verifyOtp pour valider le token et réinitialiser le mot de passe
-      const { data, error } = await supabase.auth.verifyOtp({
+      // Utiliser verifyOtp pour valider le token (crée une session temporaire)
+      const { error: verifyError } = await supabase.auth.verifyOtp({
         email: values.email,
         token: values.token,
         type: 'recovery',
       });
 
-      if (error) {
-        console.error("Token verification error:", error);
-        toast.error(error.message || "Code invalide ou expiré");
+      if (verifyError) {
+        console.error("Token verification error:", verifyError);
+        toast.error(verifyError.message || "Code invalide ou expiré");
         return;
       }
 
       console.log("Token verified successfully, updating password");
       
-      // Déconnexion pour s'assurer qu'on ne reste pas connecté avec l'ancienne session
-      await supabase.auth.signOut();
-      
-      // Maintenant mettre à jour le mot de passe
+      // Maintenant mettre à jour le mot de passe (la session temporaire est active)
       const { error: updateError } = await supabase.auth.updateUser({ 
         password: values.password 
       });
@@ -88,6 +85,8 @@ export default function UpdatePassword() {
         }
       } else {
         console.log("Password updated successfully");
+        // Déconnexion pour nettoyer la session temporaire
+        await supabase.auth.signOut();
         toast.success("Mot de passe mis à jour avec succès ! Vous pouvez maintenant vous connecter.");
         navigate("/login");
       }
