@@ -63,7 +63,8 @@ const handler = async (req: Request): Promise<Response> => {
           id_users,
           name,
           surname,
-          email
+          email,
+          phone
         )
       `)
       .in('id_student', studentIds);
@@ -95,6 +96,8 @@ const handler = async (req: Request): Promise<Response> => {
           entrepreneurName: `${projectData.entrepreneurs.users.name} ${projectData.entrepreneurs.users.surname}`,
           companyName: projectData.entrepreneurs.company_name || 'Non spécifié',
           studentName: student.users.name,
+          studentEmail: student.users.email,
+          studentPhone: student.users.phone || 'Non renseigné',
           projectId: projectId,
         },
       };
