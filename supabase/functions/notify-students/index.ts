@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.7';
+import { Novu } from 'https://esm.sh/@novu/api@latest';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -79,44 +80,24 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('NOVU_API_KEY not configured');
     }
 
+    // Initialize Novu client
+    const novu = new Novu({ 
+      secretKey: novuApiKey
+    });
+
     // Send notification to each student
     const notificationPromises = studentsData.map(async (student) => {
       try {
         console.log(`Processing student: ${student.users.email}`);
         
-        // First, create or update the subscriber in Novu
-        const subscriberPayload = {
-          subscriberId: student.users.id_users,
-          email: student.users.email,
-          firstName: student.users.name,
-          lastName: student.users.surname
-        };
-
-        console.log('Creating/updating subscriber:', JSON.stringify(subscriberPayload, null, 2));
-
-        const subscriberResponse = await fetch(`https://api.novu.co/v1/subscribers`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `ApiKey ${novuApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(subscriberPayload),
-        });
-
-        const subscriberResult = await subscriberResponse.text();
-        console.log(`Subscriber creation response (${subscriberResponse.status}):`, subscriberResult);
-
-        // Continue even if subscriber creation fails (might already exist)
-        
-        // Now send the notification
-        const payload = {
+        const result = await novu.trigger({
+          workflowId: 'project-proposed-to-student',
           to: {
             subscriberId: student.users.id_users,
             email: student.users.email,
             firstName: student.users.name,
             lastName: student.users.surname,
           },
-          name: 'project-proposed-to-student',
           payload: {
             projectTitle: projectData.title,
             projectDescription: projectData.description,
@@ -128,32 +109,8 @@ const handler = async (req: Request): Promise<Response> => {
             studentPhone: student.users.phone || 'Non renseigné',
             projectId: projectId,
           },
-        };
-
-        console.log('Sending notification to student:', student.users.email);
-        console.log('Payload being sent to Novu:', JSON.stringify(payload, null, 2));
-
-        const novuResponse = await fetch('https://api.novu.co/v1/events/trigger', {
-          method: 'POST',
-          headers: {
-            'Authorization': `ApiKey ${novuApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
         });
 
-        console.log(`Novu response status: ${novuResponse.status}`);
-        console.log(`Novu response headers:`, Object.fromEntries(novuResponse.headers.entries()));
-
-        const responseText = await novuResponse.text();
-        console.log(`Novu response body:`, responseText);
-
-        if (!novuResponse.ok) {
-          console.error(`Failed to send notification to ${student.users.email}:`, responseText);
-          throw new Error(`Novu API error: ${novuResponse.status} - ${responseText}`);
-        }
-
-        const result = JSON.parse(responseText);
         console.log(`Notification sent successfully to ${student.users.email}:`, result);
         return result;
       } catch (error) {
