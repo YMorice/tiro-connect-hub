@@ -81,53 +81,85 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send notification to each student
     const notificationPromises = studentsData.map(async (student) => {
-      const payload = {
-        to: {
+      try {
+        console.log(`Processing student: ${student.users.email}`);
+        
+        // First, create or update the subscriber in Novu
+        const subscriberPayload = {
           subscriberId: student.users.id_users,
           email: student.users.email,
           firstName: student.users.name,
-          lastName: student.users.surname,
-        },
-        name: 'project-proposed-to-student',
-        payload: {
-          projectTitle: projectData.title,
-          projectDescription: projectData.description,
-          projectDeadline: projectData.deadline,
-          entrepreneurName: `${projectData.entrepreneurs.users.name} ${projectData.entrepreneurs.users.surname}`,
-          companyName: projectData.entrepreneurs.company_name || 'Non spécifié',
-          studentName: student.users.name,
-          studentEmail: student.users.email,
-          studentPhone: student.users.phone || 'Non renseigné',
-          projectId: projectId,
-        },
-      };
+          lastName: student.users.surname
+        };
 
-      console.log('Sending notification to student:', student.users.email);
-      console.log('Payload being sent to Novu:', JSON.stringify(payload, null, 2));
+        console.log('Creating/updating subscriber:', JSON.stringify(subscriberPayload, null, 2));
 
-      const novuResponse = await fetch('https://api.novu.co/v1/events/trigger', {
-        method: 'POST',
-        headers: {
-          'Authorization': `ApiKey ${novuApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+        const subscriberResponse = await fetch(`https://api.novu.co/v1/subscribers`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `ApiKey ${novuApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(subscriberPayload),
+        });
 
-      console.log(`Novu response status: ${novuResponse.status}`);
-      console.log(`Novu response headers:`, Object.fromEntries(novuResponse.headers.entries()));
+        const subscriberResult = await subscriberResponse.text();
+        console.log(`Subscriber creation response (${subscriberResponse.status}):`, subscriberResult);
 
-      const responseText = await novuResponse.text();
-      console.log(`Novu response body:`, responseText);
+        // Continue even if subscriber creation fails (might already exist)
+        
+        // Now send the notification
+        const payload = {
+          to: {
+            subscriberId: student.users.id_users,
+            email: student.users.email,
+            firstName: student.users.name,
+            lastName: student.users.surname,
+          },
+          name: 'project-proposed-to-student',
+          payload: {
+            projectTitle: projectData.title,
+            projectDescription: projectData.description,
+            projectDeadline: projectData.deadline,
+            entrepreneurName: `${projectData.entrepreneurs.users.name} ${projectData.entrepreneurs.users.surname}`,
+            companyName: projectData.entrepreneurs.company_name || 'Non spécifié',
+            studentName: student.users.name,
+            studentEmail: student.users.email,
+            studentPhone: student.users.phone || 'Non renseigné',
+            projectId: projectId,
+          },
+        };
 
-      if (!novuResponse.ok) {
-        console.error(`Failed to send notification to ${student.users.email}:`, responseText);
-        throw new Error(`Novu API error: ${novuResponse.status} - ${responseText}`);
+        console.log('Sending notification to student:', student.users.email);
+        console.log('Payload being sent to Novu:', JSON.stringify(payload, null, 2));
+
+        const novuResponse = await fetch('https://api.novu.co/v1/events/trigger', {
+          method: 'POST',
+          headers: {
+            'Authorization': `ApiKey ${novuApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        console.log(`Novu response status: ${novuResponse.status}`);
+        console.log(`Novu response headers:`, Object.fromEntries(novuResponse.headers.entries()));
+
+        const responseText = await novuResponse.text();
+        console.log(`Novu response body:`, responseText);
+
+        if (!novuResponse.ok) {
+          console.error(`Failed to send notification to ${student.users.email}:`, responseText);
+          throw new Error(`Novu API error: ${novuResponse.status} - ${responseText}`);
+        }
+
+        const result = JSON.parse(responseText);
+        console.log(`Notification sent successfully to ${student.users.email}:`, result);
+        return result;
+      } catch (error) {
+        console.error(`Error processing student ${student.users.email}:`, error);
+        throw error;
       }
-
-      const result = JSON.parse(responseText);
-      console.log(`Notification sent successfully to ${student.users.email}:`, result);
-      return result;
     });
 
     const results = await Promise.all(notificationPromises);
