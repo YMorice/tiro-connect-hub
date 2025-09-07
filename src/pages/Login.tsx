@@ -80,19 +80,6 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
-        <div className="mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <a href="https://tiro.agency" className="flex items-center gap-2">
-              <ArrowLeft size={16} />
-              Retour au site
-            </a>
-          </Button>
-        </div>
         <Card>
           <CardHeader className="space-y-2 text-center pb-4">
             <div className="flex justify-center mb-1">
@@ -172,6 +159,20 @@ const Login = () => {
             </div>
           </CardFooter>
         </Card>
+        
+        <div className="mt-4 text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <a href="https://tiro.agency" className="flex items-center gap-2 justify-center">
+              <ArrowLeft size={16} />
+              Retour au site
+            </a>
+          </Button>
+        </div>
       </div>
     </div>
   );

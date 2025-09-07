@@ -1268,19 +1268,6 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-tiro-test py-10">
       <div className="w-full max-w-md">
-        <div className="mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <a href="https://tiro.agency" className="flex items-center gap-2">
-              <ArrowLeft size={16} />
-              Retour au site
-            </a>
-          </Button>
-        </div>
         <Card>
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
@@ -1303,6 +1290,20 @@ const Register = () => {
             </CardFooter>
           )}
         </Card>
+        
+        <div className="mt-4 text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <a href="https://tiro.agency" className="flex items-center gap-2 justify-center">
+              <ArrowLeft size={16} />
+              Retour au site
+            </a>
+          </Button>
+        </div>
       </div>
     </div>
   );
