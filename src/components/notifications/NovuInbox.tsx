@@ -16,7 +16,7 @@ export function NovuInbox({ className }: NovuInboxProps) {
   return (
     <div className={className}>
       <Inbox 
-        applicationIdentifier="hLoOZCpd9we1"
+        applicationIdentifier="VOTRE_VRAI_APPLICATION_IDENTIFIER"
         subscriberId={user.id}
       />
     </div>
