@@ -415,6 +415,51 @@ const Dashboard = () => {
           </div>
 
           <div className="space-y-6">
+            {/* Card Déroulé d'un projet - Uniquement pour les entrepreneurs */}
+            {userRole === 'entrepreneur' && (
+              <Card className="text-left bg-tiro-white">
+                <CardHeader className="text-left">
+                  <CardTitle className="text-lg">Déroulé d'un projet</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-left">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-primary rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-white">1</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Créez un projet</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-primary rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-white">2</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Attendez que notre équipe vous propose une sélection</p>
+                      <p className="text-xs text-gray-600">3 profils adaptés et disponibles en 48h</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-primary rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-white">3</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Faites votre sélection finale</p>
+                      <p className="text-xs text-gray-600">Et procédez au paiement</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-secondary rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-white">4</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Rentrez en contact avec votre designer !</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             <Card className="text-left bg-tiro-white">
               <CardHeader className="text-left">
                 <CardTitle className="text-lg">Conseils et Insights</CardTitle>
