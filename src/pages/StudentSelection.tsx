@@ -113,6 +113,28 @@ const StudentSelection = () => {
           throw proposalError;
         }
         
+        // Send notifications to students via Novu
+        console.log('Sending notifications to students via Novu');
+        try {
+          const { error: notifyError } = await supabase.functions.invoke('notify-students', {
+            body: {
+              projectId: projectId,
+              studentIds: selectedStudents.map(s => s.id)
+            }
+          });
+          
+          if (notifyError) {
+            console.error('Error sending notifications:', notifyError);
+            // Don't throw here - we don't want notification errors to break the flow
+            toast.error('Propositions créées mais erreur lors de l\'envoi des notifications');
+          } else {
+            console.log('Notifications sent successfully');
+          }
+        } catch (notifyError) {
+          console.error('Notification error:', notifyError);
+          // Continue with the flow even if notifications fail
+        }
+        
         // Update project status to "Proposals" (STEP2)
         console.log('Updating project status to STEP2');
         const { error: statusError } = await supabase
