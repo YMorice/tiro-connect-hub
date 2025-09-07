@@ -423,25 +423,25 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-4 text-left">
                   <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-primary rounded-full flex items-center justify-center">
-                      <span className="text-xs font-medium text-white">1</span>
+                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-gray2 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-tiro-black">1</span>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900">Créez un projet</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-primary rounded-full flex items-center justify-center">
-                      <span className="text-xs font-medium text-white">2</span>
+                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-gray2 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-tiro-black">2</span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Attendez que notre équipe vous propose une sélection</p>
-                      <p className="text-xs text-gray-600">3 profils adaptés et disponibles en 48h</p>
+                      <p className="text-sm font-medium text-gray-900">Attendez que notre équipe vous propose une sélection sous 48h</p>
+                      <p className="text-xs text-gray-600">3 profils adaptés et disponibles</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-primary rounded-full flex items-center justify-center">
-                      <span className="text-xs font-medium text-white">3</span>
+                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-gray2 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-tiro-black">3</span>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900">Faites votre sélection finale</p>
@@ -449,8 +449,8 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-secondary rounded-full flex items-center justify-center">
-                      <span className="text-xs font-medium text-white">4</span>
+                    <div className="flex-shrink-0 w-6 h-6 bg-tiro-gray2 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-tiro-black">4</span>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900">Rentrez en contact avec votre designer !</p>
