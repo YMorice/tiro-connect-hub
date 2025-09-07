@@ -27,7 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NovuInbox } from "@/components/notifications/NovuInbox";
+
 
 interface AppLayoutProps {
   children?: React.ReactNode;
@@ -141,7 +141,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   </Button>
                 </Link>
               )}
-              <NovuInbox />
               <Avatar className="w-8 h-8">
                 {getAvatarUrl() ? (
                   <AvatarImage 
@@ -320,7 +319,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {/* User Section */}
         <div className="p-4 w-fit mx-auto">
           <div className="flex items-center space-x-3">
-            <NovuInbox />
             <Avatar className="w-10 h-10">
               {getAvatarUrl() ? (
                 <AvatarImage 
