@@ -103,6 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
       };
 
       console.log('Sending notification to student:', student.users.email);
+      console.log('Payload being sent to Novu:', JSON.stringify(payload, null, 2));
 
       const novuResponse = await fetch('https://api.novu.co/v1/events/trigger', {
         method: 'POST',
@@ -113,13 +114,18 @@ const handler = async (req: Request): Promise<Response> => {
         body: JSON.stringify(payload),
       });
 
+      console.log(`Novu response status: ${novuResponse.status}`);
+      console.log(`Novu response headers:`, Object.fromEntries(novuResponse.headers.entries()));
+
+      const responseText = await novuResponse.text();
+      console.log(`Novu response body:`, responseText);
+
       if (!novuResponse.ok) {
-        const errorText = await novuResponse.text();
-        console.error(`Failed to send notification to ${student.users.email}:`, errorText);
-        throw new Error(`Novu API error: ${novuResponse.status} - ${errorText}`);
+        console.error(`Failed to send notification to ${student.users.email}:`, responseText);
+        throw new Error(`Novu API error: ${novuResponse.status} - ${responseText}`);
       }
 
-      const result = await novuResponse.json();
+      const result = JSON.parse(responseText);
       console.log(`Notification sent successfully to ${student.users.email}:`, result);
       return result;
     });
