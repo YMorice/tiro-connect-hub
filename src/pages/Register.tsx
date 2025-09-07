@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import FileUpload from "@/components/FileUpload";
 import { supabase } from "@/integrations/supabase/client";
-import { Palette, Clapperboard, LayoutDashboard, PenTool } from "lucide-react";
+import { Palette, Clapperboard, LayoutDashboard, PenTool, ArrowLeft } from "lucide-react";
 
 // List of available skills for checkboxes
 const AVAILABLE_SKILLS = [
@@ -1268,6 +1268,19 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-tiro-test py-10">
       <div className="w-full max-w-md">
+        <div className="mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <a href="https://tiro.agency" className="flex items-center gap-2">
+              <ArrowLeft size={16} />
+              Retour au site
+            </a>
+          </Button>
+        </div>
         <Card>
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-2">
