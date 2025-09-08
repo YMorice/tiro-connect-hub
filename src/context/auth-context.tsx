@@ -177,7 +177,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         password,
         options: {
-          data: userData
+          data: userData,
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
       if (error) throw error;
@@ -195,7 +196,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         password,
         options: {
-          data: userData
+          data: userData,
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
       if (error) {
@@ -213,23 +215,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = useCallback(async () => {
     try {
-      // Déconnecter de Supabase
+      // Déconnecter de Supabase (ceci gère automatiquement le nettoyage des tokens)
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
       // Nettoyer le state local
       setSession(null);
       setUser(null);
-      
-      // Nettoyer le sessionStorage
-      sessionStorage.clear();
-      
-      // Nettoyer les cookies liés à l'authentification
-      document.cookie.split(";").forEach((c) => {
-        document.cookie = c
-          .replace(/^ +/, "")
-          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-      });
       
       toast.success("Déconnexion réussie");
     } catch (error: any) {
@@ -241,23 +233,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback(async () => {
     try {
-      // Déconnecter de Supabase
+      // Déconnecter de Supabase (ceci gère automatiquement le nettoyage des tokens)
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
       // Nettoyer le state local
       setSession(null);
       setUser(null);
-      
-      // Nettoyer le sessionStorage
-      sessionStorage.clear();
-      
-      // Nettoyer les cookies liés à l'authentification
-      document.cookie.split(";").forEach((c) => {
-        document.cookie = c
-          .replace(/^ +/, "")
-          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-      });
       
       toast.success("Déconnexion réussie");
     } catch (error: any) {
