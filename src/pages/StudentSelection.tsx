@@ -113,10 +113,10 @@ const StudentSelection = () => {
           throw proposalError;
         }
         
-        // Send notifications to students via Novu
-        console.log('Sending notifications to students via Novu');
+        // Send notifications to students via n8n
+        console.log('Sending notifications to students via n8n');
         try {
-          const { error: notifyError } = await supabase.functions.invoke('notify-students', {
+          const { error: notifyError } = await supabase.functions.invoke('trigger-n8n', {
             body: {
               projectId: projectId,
               studentIds: selectedStudents.map(s => s.id)
@@ -124,14 +124,14 @@ const StudentSelection = () => {
           });
           
           if (notifyError) {
-            console.error('Error sending notifications:', notifyError);
+            console.error('Error sending n8n notifications:', notifyError);
             // Don't throw here - we don't want notification errors to break the flow
             toast.error('Propositions créées mais erreur lors de l\'envoi des notifications');
           } else {
-            console.log('Notifications sent successfully');
+            console.log('n8n notifications triggered successfully');
           }
         } catch (notifyError) {
-          console.error('Notification error:', notifyError);
+          console.error('n8n notification error:', notifyError);
           // Continue with the flow even if notifications fail
         }
         
