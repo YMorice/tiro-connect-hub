@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { ConversationList } from '@/components/messaging/ConversationList';
 import { ChatArea } from '@/components/messaging/ChatArea';
+import { ConnectionStatus } from '@/components/messaging/ConnectionStatus';
 import { useMessaging, Conversation } from '@/hooks/useMessaging';
 import { useConversationMessages } from '@/hooks/useConversationMessages';
 import { cn } from '@/lib/utils';
@@ -43,7 +44,10 @@ const Messages = () => {
             selectedConversation && "hidden lg:flex"
           )}>
             <div className="p-3 lg:p-4 border-b border-border flex-shrink-0">
-              <h2 className="text-lg font-clash text-foreground tracking-wide">Messages</h2>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-clash text-foreground tracking-wide">Messages</h2>
+                <ConnectionStatus />
+              </div>
               {conversationsLoading && (
                 <p className="text-sm text-muted-foreground">Chargement...</p>
               )}

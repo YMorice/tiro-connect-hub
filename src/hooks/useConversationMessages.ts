@@ -158,7 +158,20 @@ export const useConversationMessages = (conversationId: string | null) => {
                 sender_avatar: data.users?.pp_link || '',
                 sender_name: data.users ? `${data.users.name} ${data.users.surname}` : '',
               };
-              setMessages(prev => [...prev, messageWithDetails]);
+              
+              // Add message with subtle animation hint
+              setMessages(prev => [...prev, { ...messageWithDetails, isNew: true }]);
+              
+              // Remove animation hint after a short delay
+              setTimeout(() => {
+                setMessages(prev => 
+                  prev.map(msg => 
+                    msg.id_message === messageWithDetails.id_message 
+                      ? { ...msg, isNew: false }
+                      : msg
+                  )
+                );
+              }, 2000);
               
               // Mark as read immediately since user is viewing the conversation
               await supabase
@@ -166,8 +179,7 @@ export const useConversationMessages = (conversationId: string | null) => {
                 .update({ read: true })
                 .eq('id_message', data.id_message);
               
-              // Rafraîchir la liste des conversations pour mettre à jour les pastilles
-              refreshConversations();
+              // Don't refresh all conversations, they're updated by useMessaging hook
             }
           }
         }
@@ -177,7 +189,7 @@ export const useConversationMessages = (conversationId: string | null) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, userInfo.id, refreshConversations]);
+  }, [conversationId, userInfo.id]);
 
   return {
     messages,

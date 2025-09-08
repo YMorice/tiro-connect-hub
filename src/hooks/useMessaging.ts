@@ -203,19 +203,71 @@ export const useMessaging = () => {
 
     fetchConversations();
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates - optimized to only refresh when necessary
     const channel = supabase
       .channel('messaging-updates')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'messages'
         },
-        () => {
-          // Refresh conversations when messages change
-          fetchConversations();
+        (payload) => {
+          // Only refresh conversations, don't refresh all data
+          // This is more efficient than full refetch
+          setConversations(prev => {
+            const updatedConversations = [...prev];
+            const groupId = payload.new.group_id;
+            const conversationIndex = updatedConversations.findIndex(c => c.id === groupId);
+            
+            if (conversationIndex !== -1) {
+              // Update existing conversation
+              const conversation = updatedConversations[conversationIndex];
+              updatedConversations[conversationIndex] = {
+                ...conversation,
+                lastMessage: payload.new.content,
+                lastMessageTime: payload.new.created_at,
+                hasUnreadMessages: payload.new.sender_id !== userInfo.id,
+                unreadCount: payload.new.sender_id !== userInfo.id 
+                  ? conversation.unreadCount + 1 
+                  : conversation.unreadCount
+              };
+              
+              // Move to top if has unread messages
+              if (payload.new.sender_id !== userInfo.id) {
+                const updatedConv = updatedConversations.splice(conversationIndex, 1)[0];
+                updatedConversations.unshift(updatedConv);
+              }
+            }
+            
+            return updatedConversations;
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages'
+        },
+        (payload) => {
+          // Handle read status updates
+          if (payload.new.read && !payload.old.read) {
+            setConversations(prev => 
+              prev.map(conv => {
+                if (conv.id === payload.new.group_id) {
+                  return {
+                    ...conv,
+                    unreadCount: Math.max(0, conv.unreadCount - 1),
+                    hasUnreadMessages: conv.unreadCount <= 1 ? false : true
+                  };
+                }
+                return conv;
+              })
+            );
+          }
         }
       )
       .subscribe();
@@ -223,7 +275,7 @@ export const useMessaging = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchConversations, userInfo.id]);
+  }, [userInfo.id]);
 
   return {
     conversations,
