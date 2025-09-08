@@ -69,6 +69,8 @@ interface Project {
   title: string;
   /** Detailed description of the project */
   description: string;
+  /** Devis/quote for the project */
+  devis?: string;
   /** Current status of the project (STEP1-STEP6, completed, etc.) */
   status: string;
   /** Timestamp when the project was created */
@@ -984,12 +986,12 @@ const ProjectDetail = () => {
 
 
         {/* Project Description Card */}
-        {project.description && (
+        {(project.devis || project.description) && (
           <Card className="mb-4 sm:mb-6 bg-tiro-white">
             <CardHeader className="pb-3 sm:pb-4">
               <CardTitle className="text-base sm:text-lg flex items-center">
                 <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                Description
+                {project.devis ? 'Devis' : 'Description'}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4 text-left">
@@ -1008,7 +1010,7 @@ const ProjectDetail = () => {
                 )}
               </div>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {project.description}
+                {project.devis || project.description}
               </p>
             </CardContent>
           </Card>

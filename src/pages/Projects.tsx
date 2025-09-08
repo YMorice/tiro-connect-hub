@@ -67,7 +67,7 @@ const Projects = () => {
           .single();
           
         if (entrepreneurData) {
-          const { data, error } = await supabase
+          const { data, error } = (await supabase
             .from("projects")
             .select(`
               id_project,
@@ -89,7 +89,7 @@ const Projects = () => {
               )
             `)
             .eq("id_entrepreneur", entrepreneurData.id_entrepreneur)
-            .order("created_at", { ascending: false });
+            .order("created_at", { ascending: false })) as any;
 
           if (error) {
             console.error("Erreur lors de la récupération des projets d'entrepreneur:", error);
@@ -165,7 +165,7 @@ const Projects = () => {
           }));
 
           // Obtenir les projets où l'étudiant est assigné
-          const { data: assignedProjects, error: assignedError } = await supabase
+          const { data: assignedProjects, error: assignedError } = (await supabase
             .from("projects")
             .select(`
               id_project,
@@ -187,7 +187,7 @@ const Projects = () => {
               )
             `)
             .eq("selected_student", studentData.id_student)
-            .order("created_at", { ascending: false });
+            .order("created_at", { ascending: false })) as any;
 
           if (assignedError) {
             console.error("Erreur lors de la récupération des projets assignés:", assignedError);
@@ -224,7 +224,7 @@ const Projects = () => {
         }
       } else if (userRole === "admin") {
         // Les admins voient tous les projets
-        const { data, error } = await supabase
+        const { data, error } = (await supabase
           .from("projects")
           .select(`
             id_project,
@@ -245,7 +245,7 @@ const Projects = () => {
               users (name, surname)
             )
           `)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })) as any;
 
         if (error) {
           console.error("Erreur lors de la récupération des projets d'admin:", error);
