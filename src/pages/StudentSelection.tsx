@@ -116,7 +116,7 @@ const StudentSelection = () => {
         // Send notifications to students via n8n
         console.log('Sending notifications to students via n8n');
         try {
-          const { error: notifyError } = await supabase.functions.invoke('trigger-n8n', {
+          const { error: notifyError } = await supabase.functions.invoke('trigger-n8n-proposal', {
             body: {
               projectId: projectId,
               studentIds: selectedStudents.map(s => s.id)
