@@ -274,6 +274,10 @@ const Admin = () => {
               <GraduationCap className="h-4 w-4 mr-1" />
               Gérer les Étudiants
             </Button>
+            <Button onClick={() => navigate('/admin/entrepreneurs')} className="flex items-center text-sm h-9" size="sm" variant="outline">
+              <Users className="h-4 w-4 mr-1" />
+              Gérer les Entrepreneurs
+            </Button>
           </div>
         </div>
 

@@ -44,6 +44,7 @@ import Profile from "@/pages/Profile";
 import Messages from "@/pages/Messages";
 import Admin from "@/pages/Admin";
 import AdminStudents from "@/pages/AdminStudents";
+import AdminEntrepreneurs from "@/pages/AdminEntrepreneurs";
 import StudentSelection from "@/pages/StudentSelection";
 import NewProject from "@/pages/NewProject";
 import PackSelection from "@/pages/PackSelection";
@@ -127,6 +128,7 @@ function App() {
                   <Route path="/messages" element={<Messages />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/admin/students" element={<AdminStudents />} />
+                  <Route path="/admin/entrepreneurs" element={<AdminEntrepreneurs />} />
                   <Route path="/student-selection" element={<StudentSelection />} />
                   <Route path="/new-project" element={<NewProject />} />
                   <Route path="/accepted-students" element={<AcceptedStudents />} />

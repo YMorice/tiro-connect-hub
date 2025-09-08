@@ -387,18 +387,19 @@ const AdminStudents = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
               </div>
             ) : (
-              <div className="border rounded-md overflow-x-auto">
-                <Table>
+              <div className="w-full overflow-x-auto">
+                <div className="min-w-[1000px]">
+                  <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-sm min-w-[200px]">Étudiant</TableHead>
-                      <TableHead className="hidden md:table-cell text-sm min-w-[150px]">Spécialité</TableHead>
-                      <TableHead className="hidden sm:table-cell text-sm min-w-[100px]">Formation</TableHead>
-                      <TableHead className="hidden sm:table-cell text-sm min-w-[80px]">Note Portfolio</TableHead>
-                      <TableHead className="hidden sm:table-cell text-sm min-w-[80px]">Note Moyenne</TableHead>
-                      <TableHead className="hidden sm:table-cell text-sm min-w-[100px]">Statut</TableHead>
-                      <TableHead className="hidden sm:table-cell text-sm min-w-[100px]">Disponibilité</TableHead>
-                      <TableHead className="text-sm min-w-[120px]">Actions</TableHead>
+                      <TableHead className="text-sm w-[200px]">Étudiant</TableHead>
+                      <TableHead className="text-sm w-[150px]">Spécialité</TableHead>
+                      <TableHead className="text-sm w-[120px]">Formation</TableHead>
+                      <TableHead className="text-sm w-[100px]">Note Portfolio</TableHead>
+                      <TableHead className="text-sm w-[100px]">Note Moyenne</TableHead>
+                      <TableHead className="text-sm w-[100px]">Statut</TableHead>
+                      <TableHead className="text-sm w-[100px]">Disponibilité</TableHead>
+                      <TableHead className="text-sm w-[180px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -427,17 +428,17 @@ const AdminStudents = () => {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="hidden md:table-cell">
+                          <TableCell>
                             <div className="text-sm">
                               {student.specialty || "Non spécifiée"}
                             </div>
                           </TableCell>
-                          <TableCell className="hidden sm:table-cell">
+                          <TableCell>
                             <div className="text-sm">
                               {student.formation || "Non spécifiée"}
                             </div>
                           </TableCell>
-                          <TableCell className="hidden sm:table-cell">
+                          <TableCell>
                             <div className="text-sm">
                               {student.portfolio_grade !== null && student.portfolio_grade !== undefined ? (
                                 <span className="font-medium">{student.portfolio_grade}/20</span>
@@ -446,7 +447,7 @@ const AdminStudents = () => {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="hidden sm:table-cell">
+                          <TableCell>
                             <div className="text-sm">
                               {student.average_rating ? (
                                 <span className={`font-medium ${getRatingColor(student.average_rating)}`}>
@@ -457,7 +458,7 @@ const AdminStudents = () => {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="hidden sm:table-cell">
+                          <TableCell>
                             <Badge 
                               className={student.is_premium 
                                 ? "bg-gradient-to-r from-yellow-400 to-yellow-600 text-white" 
@@ -474,7 +475,7 @@ const AdminStudents = () => {
                               )}
                             </Badge>
                           </TableCell>
-                          <TableCell className="hidden sm:table-cell">
+                          <TableCell>
                             <Badge 
                               className={student.available 
                                 ? "bg-green-100 text-green-800" 
@@ -596,7 +597,8 @@ const AdminStudents = () => {
                       </TableRow>
                     )}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               </div>
             )}
           </CardContent>
