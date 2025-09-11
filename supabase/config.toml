@@ -56,6 +56,9 @@ verify_jwt = false
 [functions.send-password-reset]
 verify_jwt = false
 
+[functions.send-email]
+verify_jwt = true
+
 [auth.email.smtp]
 host = "smtp.resend.com"
 port = 587

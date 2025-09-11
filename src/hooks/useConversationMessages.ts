@@ -108,6 +108,22 @@ export const useConversationMessages = (conversationId: string | null) => {
       };
 
       setMessages(prev => [...prev, messageWithDetails]);
+
+      // Send email notifications to other group members
+      try {
+        const senderName = `${data.users?.name || ''} ${data.users?.surname || ''}`.trim();
+        await supabase.functions.invoke('send-email', {
+          body: {
+            groupId: conversationId,
+            senderName: senderName || 'Un utilisateur'
+          }
+        });
+        console.log('Email notifications sent for new message');
+      } catch (emailError) {
+        console.error('Failed to send email notifications:', emailError);
+        // Don't fail the message sending if email fails
+      }
+
       return true;
     } catch (error: any) {
       console.error('Error sending message:', error);
