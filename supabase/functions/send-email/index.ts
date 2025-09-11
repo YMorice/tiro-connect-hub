@@ -45,6 +45,8 @@ const generateMessageNotificationHTML = (senderName: string) => `
 `
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log('send-email function started')
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -58,6 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { groupId, senderName }: EmailRequest = await req.json()
 
     console.log('Sending email notification for group:', groupId, 'from:', senderName)
+    console.log('Brevo API Key present:', !!brevoApiKey)
 
     // Get all users in the message group except the sender
     const { data: groupMembers, error: groupError } = await supabase
@@ -101,31 +104,52 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Send emails to all recipients using Brevo
-    const emailPromises = recipientEmails.map(email => 
-      fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-          'api-key': brevoApiKey,
-          'Content-Type': 'application/json',
+    console.log('Starting to send emails via Brevo API...')
+    
+    const emailPromises = recipientEmails.map(async (email, index) => {
+      console.log(`Sending email ${index + 1}/${recipientEmails.length} to:`, email)
+      
+      const emailPayload = {
+        sender: {
+          name: 'Tiro',
+          email: 'noreply@tiro.agency'
         },
-        body: JSON.stringify({
-          sender: {
-            name: 'Tiro',
-            email: 'noreply@tiro.agency'
+        to: [{
+          email: email
+        }],
+        subject: `Nouveau message de ${senderName} - Tiro`,
+        htmlContent: generateMessageNotificationHTML(senderName)
+      }
+      
+      console.log('Email payload:', JSON.stringify(emailPayload, null, 2))
+      
+      try {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': brevoApiKey,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
-          to: [{
-            email: email
-          }],
-          subject: `Nouveau message de ${senderName} - Tiro`,
-          htmlContent: generateMessageNotificationHTML(senderName)
+          body: JSON.stringify(emailPayload)
         })
-      }).then(response => {
+        
+        console.log(`Brevo API response status for ${email}:`, response.status)
+        
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          const errorText = await response.text()
+          console.error(`Brevo API error for ${email}:`, errorText)
+          throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`)
         }
-        return response.json()
-      })
-    )
+        
+        const result = await response.json()
+        console.log(`Email sent successfully to ${email}:`, result)
+        return result
+      } catch (error) {
+        console.error(`Failed to send email to ${email}:`, error)
+        throw error
+      }
+    })
 
     const results = await Promise.allSettled(emailPromises)
     
