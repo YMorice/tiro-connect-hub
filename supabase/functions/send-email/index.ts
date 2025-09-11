@@ -1,7 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Resend } from 'npm:resend@4.0.0'
 
-const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string)
+const brevoApiKey = Deno.env.get('BREVO_API_KEY') as string
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
@@ -101,13 +100,30 @@ const handler = async (req: Request): Promise<Response> => {
       })
     }
 
-    // Send emails to all recipients
+    // Send emails to all recipients using Brevo
     const emailPromises = recipientEmails.map(email => 
-      resend.emails.send({
-        from: 'Tiro <noreply@resend.dev>',
-        to: [email],
-        subject: `Nouveau message de ${senderName} - Tiro`,
-        html: generateMessageNotificationHTML(senderName),
+      fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': brevoApiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: {
+            name: 'Tiro',
+            email: 'noreply@tiro.agency'
+          },
+          to: [{
+            email: email
+          }],
+          subject: `Nouveau message de ${senderName} - Tiro`,
+          htmlContent: generateMessageNotificationHTML(senderName)
+        })
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        return response.json()
       })
     )
 
