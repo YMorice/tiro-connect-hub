@@ -23,8 +23,8 @@ serve(async (req) => {
 
     console.log("Confirming payment for intent:", paymentIntentId);
 
-    // Initialize Stripe - use test key to match create-payment-intent
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY_TEST") || "", {
+    // Initialize Stripe - use production key
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
     });
 
