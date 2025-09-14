@@ -76,14 +76,13 @@ const getPackIcon = (packName?: string) => {
   switch (packName?.toLowerCase()) {
     case 'devis personnalisé':
       return ClipboardPen;
-    case 'motion design':
+    case 'pack motion design':
       return Clapperboard;
-    case 'identité visuelle':
     case 'pack identité visuelle':
       return Palette;
-    case 'communication':
+    case 'pack communication':
       return PenTool;
-    case 'design de site web':
+    case 'pack startup launch':
       return Clapperboard;
     default:
       return ClipboardPen;
