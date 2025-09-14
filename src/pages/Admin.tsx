@@ -24,6 +24,7 @@ import { toast } from "@/components/ui/sonner";
 import { Users, MessageCircle, Plus, Search, Eye, UserPlus, Filter, GraduationCap } from "lucide-react";
 import { StudentAvailabilityService } from "@/services/student-availability-service";
 import PriceUpdateDialog from "@/components/admin/PriceUpdateDialog";
+import DevisUpdateDialog from "@/components/admin/DevisUpdateDialog";
 
 interface Project {
   id: string;
@@ -32,6 +33,7 @@ interface Project {
   status: string;
   created_at: string;
   price: number | null;
+  devis: string | null;
   packName: string;
   entrepreneur: {
     name: string;
@@ -109,6 +111,7 @@ const Admin = () => {
             status,
             created_at,
             price,
+            devis,
             project_packs (
               name
             ),
@@ -134,6 +137,7 @@ const Admin = () => {
           status: convertDbStatusToDisplay(project.status || 'STEP1'),
           created_at: project.created_at,
           price: project.price,
+          devis: project.devis,
           packName: project.project_packs?.name || 'N/A',
           entrepreneur: {
             name: `${project.entrepreneurs?.users?.name || ""} ${project.entrepreneurs?.users?.surname || ""}`.trim() || "Nom inconnu",
@@ -188,6 +192,7 @@ const Admin = () => {
           status,
           created_at,
           price,
+          devis,
           project_packs (
             name
           ),
@@ -210,6 +215,7 @@ const Admin = () => {
           status: convertDbStatusToDisplay(project.status || 'STEP1'),
           created_at: project.created_at,
           price: project.price,
+          devis: project.devis,
           packName: project.project_packs?.name || 'N/A',
           entrepreneur: {
             name: `${project.entrepreneurs?.users?.name || ""} ${project.entrepreneurs?.users?.surname || ""}`.trim() || "Nom inconnu",
@@ -483,6 +489,13 @@ const Admin = () => {
                                   onPriceUpdated={refreshProjects}
                                 />
                               )}
+                              
+                              <DevisUpdateDialog
+                                projectId={project.id}
+                                projectTitle={project.title}
+                                currentDevis={project.devis}
+                                onDevisUpdated={refreshProjects}
+                              />
                             </div>
                           </TableCell>
                         </TableRow>
