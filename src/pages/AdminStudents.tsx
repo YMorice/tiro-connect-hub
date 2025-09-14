@@ -272,8 +272,8 @@ const AdminStudents = () => {
   }
 
   return (
-    <div className="h-full overflow-auto">
-      <div className="max-w-full p-4 space-y-4">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-4 space-y-4 max-w-none">
         <div className="flex flex-col gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Gestion des Étudiants</h1>
@@ -401,21 +401,20 @@ const AdminStudents = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
               </div>
             ) : (
-              <div className="w-full overflow-x-auto">
-                <div className="min-w-[1000px]">
-                  <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-sm w-[200px]">Étudiant</TableHead>
-                      <TableHead className="text-sm w-[150px]">Spécialité</TableHead>
-                      <TableHead className="text-sm w-[120px]">Formation</TableHead>
-                      <TableHead className="text-sm w-[100px]">Note Portfolio</TableHead>
-                      <TableHead className="text-sm w-[100px]">Note Moyenne</TableHead>
-                      <TableHead className="text-sm w-[100px]">Statut</TableHead>
-                      <TableHead className="text-sm w-[100px]">Disponibilité</TableHead>
-                      <TableHead className="text-sm w-[180px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
+              <div className="overflow-x-auto border rounded-md">
+                <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-sm w-[200px] min-w-[200px]">Étudiant</TableHead>
+                    <TableHead className="text-sm w-[130px] min-w-[130px]">Spécialité</TableHead>
+                    <TableHead className="text-sm w-[120px] min-w-[120px]">Formation</TableHead>
+                    <TableHead className="text-sm w-[100px] min-w-[100px]">Note Portfolio</TableHead>
+                    <TableHead className="text-sm w-[100px] min-w-[100px]">Note Moyenne</TableHead>
+                    <TableHead className="text-sm w-[100px] min-w-[100px]">Statut</TableHead>
+                    <TableHead className="text-sm w-[110px] min-w-[110px]">Disponibilité</TableHead>
+                    <TableHead className="text-sm w-[220px] min-w-[220px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
                   <TableBody>
                     {filteredStudents.length > 0 ? (
                       filteredStudents.map(student => (
@@ -510,13 +509,13 @@ const AdminStudents = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-wrap">
                               {student.portfolio_link ? (
                                 <Button 
                                   asChild
                                   variant="outline" 
                                   size="sm" 
-                                  className="flex items-center text-xs h-8"
+                                  className="flex items-center text-xs h-7 px-2"
                                 >
                                   <a href={student.portfolio_link} target="_blank" rel="noopener noreferrer">
                                     <Eye className="h-3 w-3 mr-1" />
@@ -528,43 +527,43 @@ const AdminStudents = () => {
                                   variant="outline" 
                                   size="sm" 
                                   disabled
-                                  className="flex items-center text-xs h-8"
+                                  className="flex items-center text-xs h-7 px-2"
                                 >
                                   <Eye className="h-3 w-3 mr-1" />
                                   Portfolio
                                 </Button>
                               )}
-                               <Button 
-                                 variant="outline" 
-                                 size="sm" 
-                                 className="flex items-center text-xs h-8"
-                                 onClick={() => openGradeDialog(student)}
-                               >
-                                 <Pencil className="h-3 w-3 mr-1" />
-                                 Noter
-                               </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex items-center text-xs h-7 px-2"
+                                onClick={() => openGradeDialog(student)}
+                              >
+                                <Pencil className="h-3 w-3 mr-1" />
+                                Noter
+                              </Button>
 
-                               <Button 
-                                 variant="outline" 
-                                 size="sm" 
-                                 className="flex items-center text-xs h-8"
-                                 onClick={() => handleDirectMessage(student.userId)}
-                               >
-                                 <MessageCircle className="h-3 w-3 mr-1" />
-                                 Message
-                               </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex items-center text-xs h-7 px-2"
+                                onClick={() => handleDirectMessage(student.userId)}
+                              >
+                                <MessageCircle className="h-3 w-3 mr-1" />
+                                Message
+                              </Button>
 
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button 
-                                    variant={student.is_premium ? "destructive" : "default"}
-                                    size="sm"
-                                    className={`flex items-center text-xs h-8 ${
-                                      student.is_premium 
-                                        ? "bg-red-600 hover:bg-red-700" 
-                                        : "bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700"
-                                    }`}
-                                  >
+                                <Button 
+                                  variant={student.is_premium ? "destructive" : "default"}
+                                  size="sm"
+                                  className={`flex items-center text-xs h-7 px-2 mt-1 ${
+                                    student.is_premium 
+                                      ? "bg-red-600 hover:bg-red-700" 
+                                      : "bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700"
+                                  }`}
+                                >
                                     {student.is_premium ? (
                                       <>
                                         <UserX className="h-3 w-3 mr-1" />
@@ -621,8 +620,7 @@ const AdminStudents = () => {
                       </TableRow>
                     )}
                   </TableBody>
-                  </Table>
-                </div>
+                </Table>
               </div>
             )}
           </CardContent>
