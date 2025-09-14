@@ -22,10 +22,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
-import { Users, Search, Filter, Star, Crown, Eye, UserCheck, UserX, Pencil } from "lucide-react";
+import { Users, Search, Filter, Star, Crown, Eye, UserCheck, UserX, Pencil, MessageCircle } from "lucide-react";
+import { createOrGetDirectConversation, navigateToDirectConversation } from "@/services/admin-messaging-service";
 
 interface Student {
   id: string;
+  userId: string; // Add user ID for messaging
   name: string;
   surname: string;
   email: string;
@@ -116,6 +118,7 @@ const AdminStudents = () => {
 
             return {
               id: student.id_student,
+              userId: student.users?.id_users || "",
               name: student.users?.name || "",
               surname: student.users?.surname || "",
               email: student.users?.email || "",
@@ -251,6 +254,17 @@ const AdminStudents = () => {
     if (rating >= 4.0) return "text-blue-600";
     if (rating >= 3.5) return "text-yellow-600";
     return "text-red-600";
+  };
+
+  const handleDirectMessage = async (studentUserId: string) => {
+    if (!user?.id) return;
+    
+    try {
+      const { groupId } = await createOrGetDirectConversation(studentUserId, user.id);
+      navigateToDirectConversation(navigate, groupId);
+    } catch (error) {
+      // Error already handled in the service
+    }
   };
 
   if (!user || (user as any).role !== "admin") {
@@ -520,15 +534,25 @@ const AdminStudents = () => {
                                   Portfolio
                                 </Button>
                               )}
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="flex items-center text-xs h-8"
-                                onClick={() => openGradeDialog(student)}
-                              >
-                                <Pencil className="h-3 w-3 mr-1" />
-                                Noter
-                              </Button>
+                               <Button 
+                                 variant="outline" 
+                                 size="sm" 
+                                 className="flex items-center text-xs h-8"
+                                 onClick={() => openGradeDialog(student)}
+                               >
+                                 <Pencil className="h-3 w-3 mr-1" />
+                                 Noter
+                               </Button>
+
+                               <Button 
+                                 variant="outline" 
+                                 size="sm" 
+                                 className="flex items-center text-xs h-8"
+                                 onClick={() => handleDirectMessage(student.userId)}
+                               >
+                                 <MessageCircle className="h-3 w-3 mr-1" />
+                                 Message
+                               </Button>
 
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>

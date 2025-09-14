@@ -9,10 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/sonner";
-import { Users, Search, Filter, Building2, Mail, Phone, MapPin, Calendar } from "lucide-react";
+import { Users, Search, Filter, Building2, Mail, Phone, MapPin, Calendar, MessageCircle } from "lucide-react";
+import { createOrGetDirectConversation, navigateToDirectConversation } from "@/services/admin-messaging-service";
 
 interface Entrepreneur {
   id: string;
+  userId: string; // Add user ID for messaging
   name: string;
   surname: string;
   email: string;
@@ -87,6 +89,7 @@ const AdminEntrepreneurs = () => {
 
             return {
               id: entrepreneur.id_entrepreneur,
+              userId: entrepreneur.users?.id_users || "",
               name: entrepreneur.users?.name || "",
               surname: entrepreneur.users?.surname || "",
               email: entrepreneur.users?.email || "",
@@ -141,6 +144,17 @@ const AdminEntrepreneurs = () => {
       .filter((company): company is string => company !== null)
       .filter((company, index, arr) => arr.indexOf(company) === index);
     return companies.sort();
+  };
+
+  const handleDirectMessage = async (entrepreneurUserId: string) => {
+    if (!user?.id) return;
+    
+    try {
+      const { groupId } = await createOrGetDirectConversation(entrepreneurUserId, user.id);
+      navigateToDirectConversation(navigate, groupId);
+    } catch (error) {
+      // Error already handled in the service
+    }
   };
 
   if (!user || (user as any).role !== "admin") {
@@ -249,6 +263,7 @@ const AdminEntrepreneurs = () => {
                         <TableHead className="text-sm w-[100px]">Projets</TableHead>
                         <TableHead className="text-sm w-[150px]">Contact</TableHead>
                         <TableHead className="text-sm w-[120px]">Inscription</TableHead>
+                        <TableHead className="text-sm w-[100px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -340,11 +355,22 @@ const AdminEntrepreneurs = () => {
                             <TableCell className="text-xs">
                               {new Date(entrepreneur.created_at).toLocaleDateString('fr-FR')}
                             </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center text-xs h-8"
+                                onClick={() => handleDirectMessage(entrepreneur.userId)}
+                              >
+                                <MessageCircle className="h-3 w-3 mr-1" />
+                                Message
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-4 text-sm">
+                          <TableCell colSpan={7} className="text-center py-4 text-sm">
                             {entrepreneurs.length > 0 
                               ? "Aucun entrepreneur ne correspond aux critères de recherche" 
                               : "Aucun entrepreneur trouvé"}

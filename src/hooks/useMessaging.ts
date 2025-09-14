@@ -5,7 +5,7 @@ import { toast } from '@/components/ui/sonner';
 
 export interface Conversation {
   id: string;
-  projectId: string;
+  projectId: string | null; // null for direct conversations
   projectTitle: string;
   otherParticipant: string;
   otherParticipantAvatar?: string;
@@ -15,6 +15,7 @@ export interface Conversation {
   projectStatus: string;
   unreadCount: number;
   packName?: string;
+  isDirect?: boolean; // flag to identify direct conversations
 }
 
 export interface Message {
@@ -46,8 +47,10 @@ export const useMessaging = () => {
     setError(null);
     
     try {
-      // Single optimized query based on user role
-      let query = supabase.from('message_groups').select(`
+      const allConversations = [];
+      
+      // Fetch project-based conversations
+      let projectQuery = supabase.from('message_groups').select(`
         id_group,
         id_project,
         projects (
@@ -66,9 +69,9 @@ export const useMessaging = () => {
             users!students_id_user_fkey (name, surname, pp_link)
           )
         )
-      `);
+      `).not('id_project', 'is', null);
 
-      // Role-specific filtering
+      // Role-specific filtering for projects
       if (userInfo.role === 'entrepreneur') {
         const { data: entrepreneurData } = await supabase
           .from('entrepreneurs')
@@ -76,8 +79,9 @@ export const useMessaging = () => {
           .eq('id_user', userInfo.id)
           .single();
         
-        if (!entrepreneurData) return;
-        query = query.eq('projects.id_entrepreneur', entrepreneurData.id_entrepreneur);
+        if (entrepreneurData) {
+          projectQuery = projectQuery.eq('projects.id_entrepreneur', entrepreneurData.id_entrepreneur);
+        }
       } else if (userInfo.role === 'student') {
         const { data: studentData } = await supabase
           .from('students')
@@ -85,110 +89,204 @@ export const useMessaging = () => {
           .eq('id_user', userInfo.id)
           .single();
         
-        if (!studentData) return;
-        query = query
-          .eq('projects.selected_student', studentData.id_student)
-          .in('projects.status', ['STEP5', 'STEP6', 'completed']);
-      }
-
-      const { data: conversationsData, error } = await query;
-      if (error) throw error;
-
-      if (!conversationsData?.length) {
-        setConversations([]);
-        return;
-      }
-
-      const groupIds = conversationsData.map(g => g.id_group);
-
-      // Batch fetch latest messages and unread counts
-      const [messagesResult, unreadResult] = await Promise.all([
-        supabase
-          .from('messages')
-          .select('group_id, content, created_at')
-          .in('group_id', groupIds)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('messages')
-          .select('group_id')
-          .in('group_id', groupIds)
-          .eq('read', false)
-          .neq('sender_id', userInfo.id)
-      ]);
-
-      // Process data efficiently
-      const messagesByGroup = new Map();
-      const unreadByGroup = new Map();
-
-      messagesResult.data?.forEach(msg => {
-        if (!messagesByGroup.has(msg.group_id)) {
-          messagesByGroup.set(msg.group_id, msg);
+        if (studentData) {
+          projectQuery = projectQuery
+            .eq('projects.selected_student', studentData.id_student)
+            .in('projects.status', ['STEP5', 'STEP6', 'completed']);
         }
-      });
+      }
 
-      unreadResult.data?.forEach(msg => {
-        const count = unreadByGroup.get(msg.group_id) || 0;
-        unreadByGroup.set(msg.group_id, count + 1);
-      });
+      const { data: projectConversations } = await projectQuery;
 
-      // Transform to conversations
-      const processedConversations = conversationsData
-        .map(group => {
-          if (!group.projects) return null;
+      // Fetch direct conversations (where id_project is null)
+      const { data: directConversations } = await supabase
+        .from('message_groups')
+        .select(`
+          id_group,
+          id_user,
+          users (
+            name,
+            surname,
+            pp_link,
+            role
+          )
+        `)
+        .eq('id_user', userInfo.id)
+        .is('id_project', null);
 
-          const latestMessage = messagesByGroup.get(group.id_group);
-          const unreadCount = unreadByGroup.get(group.id_group) || 0;
+      // Process project-based conversations
+      if (projectConversations?.length) {
+        const groupIds = projectConversations.map(g => g.id_group);
+        
+        const [messagesResult, unreadResult] = await Promise.all([
+          supabase
+            .from('messages')
+            .select('group_id, content, created_at')
+            .in('group_id', groupIds)
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('messages')
+            .select('group_id')
+            .in('group_id', groupIds)
+            .eq('read', false)
+            .neq('sender_id', userInfo.id)
+        ]);
 
-          let otherParticipant = '';
-          let otherParticipantAvatar = '';
+        const messagesByGroup = new Map();
+        const unreadByGroup = new Map();
 
-          const project = group.projects;
-          const entrepreneur = project.entrepreneurs?.users;
-          const student = project.students?.users;
-
-          if (userInfo.role === 'admin') {
-            otherParticipant = entrepreneur 
-              ? `${project.title} (${entrepreneur.name} ${entrepreneur.surname})` 
-              : project.title;
-            otherParticipantAvatar = entrepreneur?.pp_link || '';
-          } else if (userInfo.role === 'entrepreneur') {
-            if (project.selected_student && student) {
-              otherParticipant = `${project.title} - ${student.name} ${student.surname}`;
-              otherParticipantAvatar = student.pp_link || '';
-            } else {
-              otherParticipant = `${project.title} - Admin`;
-            }
-          } else if (userInfo.role === 'student') {
-            otherParticipant = entrepreneur 
-              ? `${project.title} - ${entrepreneur.name} ${entrepreneur.surname}` 
-              : project.title;
-            otherParticipantAvatar = entrepreneur?.pp_link || '';
+        messagesResult.data?.forEach(msg => {
+          if (!messagesByGroup.has(msg.group_id)) {
+            messagesByGroup.set(msg.group_id, msg);
           }
+        });
 
-          return {
-            id: group.id_group,
-            projectId: group.id_project,
-            projectTitle: project.title,
-            projectStatus: project.status,
-            otherParticipant,
-            otherParticipantAvatar,
-            lastMessage: latestMessage?.content || 'Pas de message',
-            lastMessageTime: latestMessage?.created_at || project.created_at,
-            hasUnreadMessages: unreadCount > 0,
-            unreadCount,
-            packName: project.project_packs?.name
-          };
-        })
-        .filter(Boolean) as Conversation[];
+        unreadResult.data?.forEach(msg => {
+          const count = unreadByGroup.get(msg.group_id) || 0;
+          unreadByGroup.set(msg.group_id, count + 1);
+        });
+
+        const processedProjectConversations = projectConversations
+          .map(group => {
+            if (!group.projects) return null;
+
+            const latestMessage = messagesByGroup.get(group.id_group);
+            const unreadCount = unreadByGroup.get(group.id_group) || 0;
+
+            let otherParticipant = '';
+            let otherParticipantAvatar = '';
+
+            const project = group.projects;
+            const entrepreneur = project.entrepreneurs?.users;
+            const student = project.students?.users;
+
+            if (userInfo.role === 'admin') {
+              otherParticipant = entrepreneur 
+                ? `${project.title} (${entrepreneur.name} ${entrepreneur.surname})` 
+                : project.title;
+              otherParticipantAvatar = entrepreneur?.pp_link || '';
+            } else if (userInfo.role === 'entrepreneur') {
+              if (project.selected_student && student) {
+                otherParticipant = `${project.title} - ${student.name} ${student.surname}`;
+                otherParticipantAvatar = student.pp_link || '';
+              } else {
+                otherParticipant = `${project.title} - Admin`;
+              }
+            } else if (userInfo.role === 'student') {
+              otherParticipant = entrepreneur 
+                ? `${project.title} - ${entrepreneur.name} ${entrepreneur.surname}` 
+                : project.title;
+              otherParticipantAvatar = entrepreneur?.pp_link || '';
+            }
+
+            return {
+              id: group.id_group,
+              projectId: group.id_project,
+              projectTitle: project.title,
+              projectStatus: project.status,
+              otherParticipant,
+              otherParticipantAvatar,
+              lastMessage: latestMessage?.content || 'Pas de message',
+              lastMessageTime: latestMessage?.created_at || project.created_at,
+              hasUnreadMessages: unreadCount > 0,
+              unreadCount,
+              packName: project.project_packs?.name,
+              isDirect: false
+            };
+          })
+          .filter(Boolean) as Conversation[];
+
+        allConversations.push(...processedProjectConversations);
+      }
+
+      // Process direct conversations
+      if (directConversations?.length) {
+        // Get the other participants for each direct conversation
+        const directGroupIds = directConversations.map(g => g.id_group);
+        
+        const { data: otherParticipants } = await supabase
+          .from('message_groups')
+          .select(`
+            id_group,
+            id_user,
+            users (
+              name,
+              surname,
+              pp_link,
+              role
+            )
+          `)
+          .in('id_group', directGroupIds)
+          .neq('id_user', userInfo.id)
+          .is('id_project', null);
+
+        if (otherParticipants?.length) {
+          const [directMessagesResult, directUnreadResult] = await Promise.all([
+            supabase
+              .from('messages')
+              .select('group_id, content, created_at')
+              .in('group_id', directGroupIds)
+              .order('created_at', { ascending: false }),
+            supabase
+              .from('messages')
+              .select('group_id')
+              .in('group_id', directGroupIds)
+              .eq('read', false)
+              .neq('sender_id', userInfo.id)
+          ]);
+
+          const directMessagesByGroup = new Map();
+          const directUnreadByGroup = new Map();
+
+          directMessagesResult.data?.forEach(msg => {
+            if (!directMessagesByGroup.has(msg.group_id)) {
+              directMessagesByGroup.set(msg.group_id, msg);
+            }
+          });
+
+          directUnreadResult.data?.forEach(msg => {
+            const count = directUnreadByGroup.get(msg.group_id) || 0;
+            directUnreadByGroup.set(msg.group_id, count + 1);
+          });
+
+          const processedDirectConversations = otherParticipants.map(participant => {
+            const latestMessage = directMessagesByGroup.get(participant.id_group);
+            const unreadCount = directUnreadByGroup.get(participant.id_group) || 0;
+            
+            const otherUser = participant.users;
+            const otherParticipant = `${otherUser?.name || ''} ${otherUser?.surname || ''}`.trim();
+            const otherRole = otherUser?.role === 'admin' ? 'Admin' : 
+                             otherUser?.role === 'student' ? 'Étudiant' : 
+                             otherUser?.role === 'entrepreneur' ? 'Entrepreneur' : '';
+            
+            return {
+              id: participant.id_group,
+              projectId: null,
+              projectTitle: `Discussion directe - ${otherRole}`,
+              projectStatus: 'direct',
+              otherParticipant,
+              otherParticipantAvatar: otherUser?.pp_link || '',
+              lastMessage: latestMessage?.content || 'Pas de message',
+              lastMessageTime: latestMessage?.created_at || new Date().toISOString(),
+              hasUnreadMessages: unreadCount > 0,
+              unreadCount,
+              packName: undefined,
+              isDirect: true
+            };
+          });
+
+          allConversations.push(...processedDirectConversations);
+        }
+      }
 
       // Sort: unread first, then by recent message
-      processedConversations.sort((a, b) => {
+      allConversations.sort((a, b) => {
         if (a.hasUnreadMessages && !b.hasUnreadMessages) return -1;
         if (!a.hasUnreadMessages && b.hasUnreadMessages) return 1;
         return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
       });
 
-      setConversations(processedConversations);
+      setConversations(allConversations);
     } catch (err: any) {
       console.error('Error fetching conversations:', err);
       setError(err.message);

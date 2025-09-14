@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { ConversationList } from '@/components/messaging/ConversationList';
 import { ChatArea } from '@/components/messaging/ChatArea';
@@ -11,6 +12,18 @@ const Messages = () => {
   const { conversations, loading: conversationsLoading } = useMessaging();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [newMessage, setNewMessage] = useState('');
+  const [searchParams] = useSearchParams();
+
+  // Handle conversation selection from URL
+  useEffect(() => {
+    const conversationId = searchParams.get('conversation');
+    if (conversationId && conversations.length > 0) {
+      const conversation = conversations.find(c => c.id === conversationId);
+      if (conversation) {
+        setSelectedConversation(conversation);
+      }
+    }
+  }, [searchParams, conversations]);
 
   const {
     messages,
