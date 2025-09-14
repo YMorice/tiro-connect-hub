@@ -214,40 +214,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = useCallback(async () => {
+    let hardError = false;
     try {
-      // Déconnecter de Supabase (ceci gère automatiquement le nettoyage des tokens)
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      // Nettoyer le state local
+      // Vérifier la session courante
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session) {
+        // Session active côté serveur: déconnexion globale
+        const { error } = await supabase.auth.signOut({ scope: 'global' });
+        if (error && error.name !== 'AuthSessionMissingError') {
+          hardError = true;
+          throw error;
+        }
+      } else {
+        // Pas de session active: nettoyer localement pour éviter le 403
+        await supabase.auth.signOut({ scope: 'local' });
+      }
+    } catch (error: any) {
+      if (error?.name !== 'AuthSessionMissingError') {
+        console.error("Erreur lors de la déconnexion:", error);
+        toast.error(error.message || "Erreur lors de la déconnexion");
+        throw error;
+      }
+      // Ignorer AuthSessionMissingError et continuer le nettoyage
+    } finally {
+      // Toujours nettoyer l'état local
       setSession(null);
       setUser(null);
-      
-      toast.success("Déconnexion réussie");
-    } catch (error: any) {
-      console.error("Erreur lors de la déconnexion:", error);
-      toast.error(error.message || "Erreur lors de la déconnexion");
-      throw error;
+      if (!hardError) {
+        toast.success("Déconnexion réussie");
+      }
     }
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      // Déconnecter de Supabase (ceci gère automatiquement le nettoyage des tokens)
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      // Nettoyer le state local
-      setSession(null);
-      setUser(null);
-      
-      toast.success("Déconnexion réussie");
-    } catch (error: any) {
-      console.error("Erreur lors de la déconnexion:", error);
-      toast.error(error.message || "Erreur lors de la déconnexion");
-      throw error;
-    }
-  }, []);
+    // Déléguer à signOut pour conserver une logique unique
+    await signOut();
+  }, [signOut]);
 
   const updateProfile = useCallback(async (userData: any) => {
     if (!user) throw new Error("No user logged in");
