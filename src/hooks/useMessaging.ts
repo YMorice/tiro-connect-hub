@@ -172,7 +172,7 @@ export const useMessaging = () => {
             projectStatus: project.status,
             otherParticipant,
             otherParticipantAvatar,
-            lastMessage: latestMessage?.content || 'No messages yet',
+            lastMessage: latestMessage?.content || 'Pas de message',
             lastMessageTime: latestMessage?.created_at || project.created_at,
             hasUnreadMessages: unreadCount > 0,
             unreadCount,
