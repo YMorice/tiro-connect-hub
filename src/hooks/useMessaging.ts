@@ -53,6 +53,7 @@ export const useMessaging = () => {
         projects (
           title,
           status,
+          created_at,
           id_entrepreneur,
           selected_student,
           project_packs (
@@ -172,7 +173,7 @@ export const useMessaging = () => {
             otherParticipant,
             otherParticipantAvatar,
             lastMessage: latestMessage?.content || 'No messages yet',
-            lastMessageTime: latestMessage?.created_at || new Date().toISOString(),
+            lastMessageTime: latestMessage?.created_at || project.created_at,
             hasUnreadMessages: unreadCount > 0,
             unreadCount,
             packName: project.project_packs?.name
