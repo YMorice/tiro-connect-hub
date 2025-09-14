@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Conversation } from '@/hooks/useMessaging';
 import { cn } from '@/lib/utils';
-import { ClipboardPen, Clapperboard, Palette, PenTool } from 'lucide-react';
+import { ClipboardPen, Clapperboard, Palette, PenTool, Rocket } from 'lucide-react';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -83,7 +83,7 @@ const getPackIcon = (packName?: string) => {
     case 'pack communication':
       return PenTool;
     case 'pack startup launch':
-      return Clapperboard;
+      return Rocket;
     default:
       return ClipboardPen;
   }
