@@ -131,19 +131,19 @@ export type Database = {
         Row: {
           created_at: string
           id_group: string
-          id_project: string
+          id_project: string | null
           id_user: string
         }
         Insert: {
           created_at?: string
           id_group?: string
-          id_project: string
+          id_project?: string | null
           id_user: string
         }
         Update: {
           created_at?: string
           id_group?: string
-          id_project?: string
+          id_project?: string | null
           id_user?: string
         }
         Relationships: [
@@ -273,6 +273,7 @@ export type Database = {
           created_at: string
           deadline: string | null
           description: string | null
+          devis: string | null
           id_entrepreneur: string
           id_pack: string | null
           id_project: string
@@ -288,6 +289,7 @@ export type Database = {
           created_at?: string
           deadline?: string | null
           description?: string | null
+          devis?: string | null
           id_entrepreneur: string
           id_pack?: string | null
           id_project?: string
@@ -303,6 +305,7 @@ export type Database = {
           created_at?: string
           deadline?: string | null
           description?: string | null
+          devis?: string | null
           id_entrepreneur?: string
           id_pack?: string | null
           id_project?: string
