@@ -72,12 +72,14 @@ const ConversationItem = memo(({
 ));
 
 const getPackIcon = (packName?: string) => {
+  console.log('Pack name received:', packName); // Debug log
   switch (packName?.toLowerCase()) {
     case 'devis personnalisé':
       return ClipboardPen;
     case 'motion design':
       return Clapperboard;
     case 'identité visuelle':
+    case 'pack identité visuelle':
       return Palette;
     case 'communication':
       return PenTool;
