@@ -59,7 +59,8 @@ export const useMessaging = () => {
           created_at,
           id_entrepreneur,
           selected_student,
-          project_packs (
+          id_pack,
+          project_packs!projects_id_pack_fkey (
             name
           ),
           entrepreneurs (
