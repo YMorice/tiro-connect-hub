@@ -18,14 +18,14 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
     storage: {
       getItem: (key) => {
-        const value = sessionStorage.getItem(key);
+        const value = localStorage.getItem(key);
         return value ? JSON.parse(value) : null;
       },
       setItem: (key, value) => {
-        sessionStorage.setItem(key, JSON.stringify(value));
+        localStorage.setItem(key, JSON.stringify(value));
       },
       removeItem: (key) => {
-        sessionStorage.removeItem(key);
+        localStorage.removeItem(key);
       },
     },
   },
