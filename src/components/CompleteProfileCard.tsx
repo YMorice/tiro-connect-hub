@@ -62,12 +62,12 @@ export const CompleteProfileCard: React.FC = () => {
   }
 
   return (
-    <Card className="border-l-4 border-l-blue-200 bg-blue-50/50">
+    <Card className="border-l-4 border-l-blue-900 bg-tiro-white">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <Info className="h-5 w-5 text-blue-600" />
+          <Info className="h-5 w-5 text-blue-900" />
           Complétez votre profil
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+          <Badge variant="secondary" className="bg-blue-900/10 text-blue-900">
             {missingCount} élément{missingCount > 1 ? 's' : ''} manquant{missingCount > 1 ? 's' : ''}
           </Badge>
         </CardTitle>
@@ -95,8 +95,9 @@ export const CompleteProfileCard: React.FC = () => {
               onClick={() => navigate('/profile')}
               variant="default"
               size="sm"
+              className="bg-blue-900 text-tiro-white hover:bg-blue-900/50 hover:text-tiro-white"
             >
-              Aller au profil
+              Compléter le profil
             </Button>
           </div>
         </div>
