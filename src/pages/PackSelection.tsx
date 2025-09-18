@@ -37,7 +37,7 @@ useEffect(() => {
           .from('project_packs')
           .select('*')
           .eq('active', true)
-          .order('price', { ascending: true });
+          .order('rank', { ascending: true });
         
         if (error) {
           throw error;
