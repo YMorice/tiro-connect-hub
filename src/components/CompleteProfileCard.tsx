@@ -95,7 +95,7 @@ export const CompleteProfileCard: React.FC = () => {
               onClick={() => navigate('/profile')}
               variant="default"
               size="sm"
-              className="bg-blue-900 text-tiro-white hover:bg-blue-900/50 hover:text-tiro-white"
+              className="bg-blue-900 text-tiro-white hover:bg-blue-900/75 hover:text-tiro-white"
             >
               Compléter le profil
             </Button>
