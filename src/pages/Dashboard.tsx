@@ -10,6 +10,7 @@ import { Calendar, FolderPlus, MessageCircle, TrendingUp, Plus, FilePlus, CheckC
 import { getStudentProposals } from "@/services/proposal-service";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
+import { CompleteProfileCard } from "@/components/CompleteProfileCard";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -202,6 +203,13 @@ const Dashboard = () => {
             )}
           </div>
         </div>
+
+        {/* Carte de profil incomplet pour les étudiants */}
+        {userRole === 'student' && (
+          <div className="mb-8">
+            <CompleteProfileCard />
+          </div>
+        )}
 
         {/* Notifications pour les étudiants sélectionnés */}
         {userRole === 'student' && selectedNotifications.length > 0 && (

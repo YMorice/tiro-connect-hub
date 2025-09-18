@@ -122,7 +122,6 @@ const step4SchemaStudent = z.object({
       message: "Le numéro de SIRET doit contenir 14 chiffres",
     }),
   address: z.string().min(5, "Veuillez entrer une adresse valide"),
-  iban: z.string().min(15, "Veuillez entrer un IBAN valide"),
 });
 
 // Combined type for all form values
@@ -237,7 +236,6 @@ const Register = () => {
     defaultValues: {
       siret: "",
       address: "",
-      iban: "",
     },
   });
 
@@ -383,7 +381,6 @@ const Register = () => {
     step4StudentForm.reset({
       siret: "",
       address: "",
-      iban: "",
     });
     
     setStep(4);
@@ -408,8 +405,7 @@ const Register = () => {
     const finalFormValues = { 
       ...formValues, 
       siret: values.siret,
-      address: values.address,
-      iban: values.iban
+      address: values.address
     };
     
     setFormValues(finalFormValues);
@@ -463,7 +459,7 @@ const Register = () => {
         formation: values.formation || null,
         phoneNumber: values.phoneNumber || null,
         address: values.address || values.companyAddress || null,
-        iban: values.iban || null,
+        iban: null, // IBAN removed from registration
         companyName: values.companyName || null,
         companyRole: values.companyRole || null,
         siret: values.siret || null,
@@ -1185,23 +1181,6 @@ const Register = () => {
                 )}
               />
 
-              <FormField
-                control={step4StudentForm.control}
-                name="iban"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>IBAN</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="FR76 1234 5678 9012 3456 7890 123" 
-                        {...field}
-                        className="bg-tiro-white" 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <div className="flex justify-between">
                 <Button 
