@@ -324,7 +324,9 @@ const NewProject = () => {
             <div>
               <h3 className="font-semibold text-lg mb-2">Besoin d'accompagnement ?</h3>
               <p className="text-muted-foreground">
-                Si vous avez la moindre question sur votre projet, notre équipe est là pour vous accompagner. 
+                Si vous avez la moindre question sur votre projet, notre équipe est là pour vous accompagner.
+              </p>
+              <p className="text-muted-foreground">
                 Réservez un appel gratuit pour discuter de vos besoins.
               </p>
             </div>
