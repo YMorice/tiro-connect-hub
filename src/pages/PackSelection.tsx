@@ -139,7 +139,9 @@ useEffect(() => {
                 {pack.features?.map((feature, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <Badge variant="outline" className="mt-0.5 flex-shrink-0 text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center">✓</Badge>
-                    <span className="text-xs leading-5 break-words">{feature}</span>
+                    <span className="text-xs leading-5 break-words whitespace-pre-line">
+                      {feature}
+                    </span>
                   </li>
                 ))}
               </ul>
