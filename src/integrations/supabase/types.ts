@@ -238,33 +238,57 @@ export type Database = {
       project_packs: {
         Row: {
           active: boolean | null
-          created_at: string
           description: string
           features: string[] | null
           from: boolean | null
           id_pack: string
           name: string
           price: number
+          rank: number | null
         }
         Insert: {
           active?: boolean | null
-          created_at?: string
           description: string
           features?: string[] | null
           from?: boolean | null
           id_pack?: string
           name: string
           price: number
+          rank?: number | null
         }
         Update: {
           active?: boolean | null
-          created_at?: string
           description?: string
           features?: string[] | null
           from?: boolean | null
           id_pack?: string
           name?: string
           price?: number
+          rank?: number | null
+        }
+        Relationships: []
+      }
+      project_services: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          quantity: number
+          service_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          quantity?: number
+          service_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          quantity?: number
+          service_id?: string
         }
         Relationships: []
       }
@@ -485,6 +509,30 @@ export type Database = {
             referencedColumns: ["id_student"]
           },
         ]
+      }
+      services: {
+        Row: {
+          description: string | null
+          price: string | null
+          rank: number | null
+          service_id: string
+          title: string | null
+        }
+        Insert: {
+          description?: string | null
+          price?: string | null
+          rank?: number | null
+          service_id?: string
+          title?: string | null
+        }
+        Update: {
+          description?: string | null
+          price?: string | null
+          rank?: number | null
+          service_id?: string
+          title?: string | null
+        }
+        Relationships: []
       }
       social_account: {
         Row: {

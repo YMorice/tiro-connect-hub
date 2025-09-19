@@ -48,6 +48,7 @@ import AdminEntrepreneurs from "@/pages/AdminEntrepreneurs";
 import StudentSelection from "@/pages/StudentSelection";
 import NewProject from "@/pages/NewProject";
 import PackSelection from "@/pages/PackSelection";
+import ServiceSelection from "@/pages/ServiceSelection";
 import PersonalDocuments from "@/pages/PersonalDocuments";
 import AcceptedStudents from "@/pages/AcceptedStudents";
 import NotFound from "@/pages/NotFound";
@@ -123,7 +124,8 @@ function App() {
                   <Route path="/projects" element={<Projects />} />
                   <Route path="/projects/:id" element={<ProjectDetail />} />
                   <Route path="/projects/new" element={<NewProject />} />
-                  <Route path="/pack-selection" element={<PackSelection />} />
+        <Route path="/pack-selection" element={<PackSelection />} />
+        <Route path="/service-selection" element={<ServiceSelection />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/messages" element={<Messages />} />
                   <Route path="/admin" element={<Admin />} />

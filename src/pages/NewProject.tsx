@@ -32,6 +32,7 @@ interface ProjectPack {
 
 interface LocationState {
   selectedPack: ProjectPack;
+  isCustomQuote?: boolean;
 }
 
 const formSchema = z.object({
@@ -117,6 +118,19 @@ const NewProject = () => {
     
     if (!entrepreneurId) {
       toast.error("No entrepreneur profile found. Please complete your profile first.");
+      return;
+    }
+
+    // For custom quotes, redirect to service selection
+    if (locationState?.isCustomQuote || selectedPack?.name === 'Devis personnalisé') {
+      navigate("/service-selection", {
+        state: {
+          selectedPack,
+          projectTitle: values.title,
+          projectDescription: values.description,
+          deadline: values.deadline
+        }
+      });
       return;
     }
     
