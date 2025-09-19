@@ -242,69 +242,8 @@ const NewProject = () => {
       }
 
       // Create message group for the project
-      try {
-        console.log("Creating message group for project:", projectId);
-
-        // The database trigger should handle message group creation automatically
-        // But let's verify it was created and create manually if needed
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for trigger
-
-        const {
-          data: existingGroup,
-          error: groupCheckError
-        } = await supabase.from('message_groups').select('id_group').eq('id_project', projectId).eq('id_user', user.id).maybeSingle();
-        if (groupCheckError) {
-          console.error("Error checking message group:", groupCheckError);
-        }
-        if (!existingGroup) {
-          console.log("No message group found, creating manually...");
-
-          // Create message group manually
-          const groupId = crypto.randomUUID();
-
-          // Add entrepreneur to the group
-          const {
-            error: groupError
-          } = await supabase.from('message_groups').insert({
-            id_group: groupId,
-            id_project: projectId,
-            id_user: user.id
-          });
-          if (groupError) {
-            console.error("Error creating message group:", groupError);
-          } else {
-            console.log("Message group created manually");
-          }
-
-          // Add admin users to the group
-          const {
-            data: adminUsers
-          } = await supabase.from('users').select('id_users').eq('role', 'admin');
-          if (adminUsers && adminUsers.length > 0) {
-            const adminGroupInserts = adminUsers.map(admin => ({
-              id_group: groupId,
-              id_project: projectId,
-              id_user: admin.id_users
-            }));
-            const {
-              error: adminGroupError
-            } = await supabase.from('message_groups').insert(adminGroupInserts);
-            if (adminGroupError) {
-              console.error("Error adding admins to message group:", adminGroupError);
-            } else {
-              console.log("Admins added to message group");
-            }
-          }
-        } else {
-          console.log("Message group already exists");
-        }
-      } catch (messageError) {
-        console.error("Error with message group creation:", messageError);
-        // Don't fail the whole project creation for message group issues
-        toast.warning("Projet créé mais il peut y avoir un problème avec la configuration de la messagerie");
-      }
-
-
+      // The database trigger handles message group creation automatically
+      console.log("Message group will be created automatically by database trigger");
 
       // Reload projects to get the latest data
       await loadProjects();
