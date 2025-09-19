@@ -195,7 +195,7 @@ const ServiceSelection = () => {
               <h3 className="font-semibold text-lg mb-2">Besoin d'accompagnement ?</h3>
               <p className="text-muted-foreground">
                 Si vous avez la moindre question sur votre projet, notre équipe est là pour vous accompagner. 
-                Réservez un appel gratuit pour discuter de vos besoins.
+                \nRéservez un appel gratuit pour discuter de vos besoins.
               </p>
             </div>
             <Button 
@@ -281,8 +281,8 @@ const ServiceSelection = () => {
         </div>
 
         {/* Summary Sidebar */}
-        <div className="lg:col-span-1 lg:self-start">
-          <Card className="sticky top-4 z-10 bg-background/95 backdrop-blur-sm border shadow-lg max-h-[calc(100vh-1rem)] overflow-auto">
+        <div className="lg:col-span-1">
+          <Card className="sticky top-4">
             <CardHeader>
               <CardTitle>Récapitulatif</CardTitle>
               <CardDescription>Services sélectionnés</CardDescription>
