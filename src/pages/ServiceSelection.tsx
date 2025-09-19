@@ -229,8 +229,8 @@ const ServiceSelection = () => {
                   key={service.service_id} 
                   className={`flex flex-col h-full cursor-pointer transition-all duration-200 ${
                     isSelected 
-                      ? 'border-2 border-tiro-primary' 
-                      : 'hover:bg-tiro-test'
+                      ? 'border-2 border-tiro-primary hover:bg-tiro-gray2/10' 
+                      : 'hover:bg-tiro-gray2/10'
                   }`}
                   onClick={() => handleServiceToggle(service, !isSelected)}
                 >
