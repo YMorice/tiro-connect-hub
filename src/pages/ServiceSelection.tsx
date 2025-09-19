@@ -126,7 +126,13 @@ const ServiceSelection = () => {
       const current = prev[serviceId];
       if (!current) return prev;
       
-      const newQuantity = Math.max(1, current.quantity + delta);
+      const newQuantity = Math.max(0, current.quantity + delta);
+      
+      if (newQuantity === 0) {
+        const newSelection = { ...prev };
+        delete newSelection[serviceId];
+        return newSelection;
+      }
       
       return {
         ...prev,
@@ -253,7 +259,6 @@ const ServiceSelection = () => {
                             size="icon"
                             className="h-8 w-8"
                             onClick={() => handleQuantityChange(service.service_id, -1)}
-                            disabled={quantity <= 1}
                           >
                             <Minus className="h-4 w-4" />
                           </Button>
