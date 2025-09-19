@@ -59,7 +59,6 @@ const NewProject = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
   const [services, setServices] = useState<any[]>([]);
-  const [packDetails, setPackDetails] = useState<any>(null);
   const isMobile = useIsMobile();
 
   // Get the selected pack from location state
@@ -95,21 +94,6 @@ const NewProject = () => {
             }
           }
 
-          // Fetch pack details if we have a selected pack
-          if (selectedPack?.id) {
-            const { data: packData, error: packError } = await supabase
-              .from('project_packs')
-              .select('*')
-              .eq('id_pack', selectedPack.id)
-              .maybeSingle();
-
-            if (packError) {
-              console.error("Error fetching pack details:", packError);
-            } else if (packData) {
-              setPackDetails(packData);
-            }
-          }
-
           // Fetch services if we have selected services
           if (selectedServices.length > 0) {
             const serviceIds = selectedServices.map(s => s.serviceId);
@@ -131,7 +115,7 @@ const NewProject = () => {
       }
     };
     fetchData();
-  }, [user, selectedServices, selectedPack?.id]);
+  }, [user, selectedServices]);
 
   // Redirect to pack selection if no pack is selected
   React.useEffect(() => {
@@ -374,8 +358,8 @@ const NewProject = () => {
           <div className="space-y-4">
             {/* Pack Information */}
             <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-              <h4 className="font-semibold text-lg text-primary mb-2">{packDetails?.name || selectedPack?.name}</h4>
-              <p className="text-sm text-muted-foreground mb-3">{packDetails?.description || selectedPack?.description}</p>
+              <h4 className="font-semibold text-lg text-primary mb-2">{selectedPack?.name}</h4>
+              <p className="text-sm text-muted-foreground mb-3">{selectedPack?.description}</p>
             </div>
 
             {/* Services for custom quote */}
