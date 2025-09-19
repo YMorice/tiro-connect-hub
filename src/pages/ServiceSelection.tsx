@@ -282,7 +282,7 @@ const ServiceSelection = () => {
 
         {/* Summary Sidebar */}
         <div className="lg:col-span-1">
-          <Card className="sticky top-4">
+          <Card className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border shadow-lg">
             <CardHeader>
               <CardTitle>Récapitulatif</CardTitle>
               <CardDescription>Services sélectionnés</CardDescription>
