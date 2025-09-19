@@ -168,7 +168,7 @@ const ServiceSelection = () => {
   }
 
   return (
-    <div className="container max-w-7xl mx-auto py-4 px-4">
+    <div className="container max-w-6xl mx-auto py-4 px-4">
       <div className="mb-8">
         <Button 
           variant="ghost" 
