@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, CheckCircle } from "lucide-react";
 
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,17 +58,21 @@ const NewProject = () => {
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
+  const [services, setServices] = useState<any[]>([]);
   const isMobile = useIsMobile();
 
   // Get the selected pack from location state
   const locationState = location.state as LocationState | undefined;
   const selectedPack = locationState?.selectedPack;
+  const selectedServices = locationState?.selectedServices || [];
+  const totalPrice = locationState?.totalPrice || 0;
 
-  // Fetch entrepreneur ID when component mounts
+  // Fetch entrepreneur ID and services when component mounts
   useEffect(() => {
-    const fetchEntrepreneurId = async () => {
+    const fetchData = async () => {
       if (user) {
         try {
+          // Fetch entrepreneur ID
           console.log("Fetching entrepreneur ID for user:", user.id);
           const {
             data,
@@ -89,14 +93,29 @@ const NewProject = () => {
               toast.error("La recherche de votre profil d'entrepreneur a échouée");
             }
           }
+
+          // Fetch services if we have selected services
+          if (selectedServices.length > 0) {
+            const serviceIds = selectedServices.map(s => s.serviceId);
+            const { data: servicesData, error: servicesError } = await supabase
+              .from('services')
+              .select('*')
+              .in('service_id', serviceIds);
+
+            if (servicesError) {
+              console.error("Error fetching services:", servicesError);
+            } else {
+              setServices(servicesData || []);
+            }
+          }
         } catch (error) {
-          console.error("Error fetching entrepreneur ID:", error);
-          toast.error("La recherche de votre profil d'entrepreneur n'a pas abouti");
+          console.error("Error fetching data:", error);
+          toast.error("Erreur lors du chargement des données");
         }
       }
     };
-    fetchEntrepreneurId();
-  }, [user]);
+    fetchData();
+  }, [user, selectedServices]);
 
   // Redirect to pack selection if no pack is selected
   React.useEffect(() => {
@@ -318,6 +337,58 @@ const NewProject = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Services Summary - Only show for custom quote */}
+      {selectedPack?.name === 'Devis personnalisé' && selectedServices.length > 0 && (
+        <Card className="w-full mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-primary" />
+              Services sélectionnés
+            </CardTitle>
+            <CardDescription>
+              Récapitulatif des services choisis pour votre devis personnalisé
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {selectedServices.map((selection) => {
+                const service = services.find(s => s.service_id === selection.serviceId);
+                if (!service) return null;
+
+                return (
+                  <div key={selection.serviceId} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{service.title}</h4>
+                      {service.description && (
+                        <p className="text-sm text-muted-foreground">{service.description}</p>
+                      )}
+                      <p className="text-sm font-medium text-primary mt-1">
+                        Quantité: {selection.quantity}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-primary">
+                        {(selection.price * selection.quantity).toFixed(0)}€
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center font-semibold text-lg">
+                  <span>Total estimé:</span>
+                  <span className="text-primary">{totalPrice.toFixed(0)}€</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  *Prix indicatif - Un devis détaillé vous sera fourni après validation
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="w-full">
         <CardHeader>
