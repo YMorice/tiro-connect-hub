@@ -134,7 +134,7 @@ useEffect(() => {
               <CardDescription className="text-sm">{pack.description}</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow p-4 pt-0">
-              <h3 className="font-semibold mb-2 text-sm">Fonctionnalités :</h3>
+              <h3 className="font-semibold mb-2 text-sm">Ce pack contient :</h3>
               <ul className="space-y-1">
                 {pack.features?.map((feature, index) => (
                   <li key={index} className="flex items-start gap-2">
