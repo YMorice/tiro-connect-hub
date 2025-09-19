@@ -340,57 +340,82 @@ const NewProject = () => {
         </CardContent>
       </Card>
 
-      {/* Services Summary - Only show for custom quote */}
-      {selectedPack?.name === 'Devis personnalisé' && selectedServices.length > 0 && (
-        <Card className="w-full mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-primary" />
-              Services sélectionnés
-            </CardTitle>
-            <CardDescription>
-              Récapitulatif des services choisis pour votre devis personnalisé
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {selectedServices.map((selection) => {
-                const service = services.find(s => s.service_id === selection.serviceId);
-                if (!service) return null;
-
-                return (
-                  <div key={selection.serviceId} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{service.title}</h4>
-                      {service.description && (
-                        <p className="text-sm text-muted-foreground">{service.description}</p>
-                      )}
-                      <p className="text-sm font-medium text-primary mt-1">
-                        Quantité: {selection.quantity}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-primary">
-                        {(selection.price * selection.quantity).toFixed(0)}€
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-              
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center font-semibold text-lg">
-                  <span>Total estimé:</span>
-                  <span className="text-primary">{totalPrice.toFixed(0)}€</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  *Prix indicatif - Un devis détaillé vous sera fourni après validation
-                </p>
-              </div>
+      {/* Pack Summary - Show for all packs */}
+      <Card className="w-full mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-primary" />
+            Récapitulatif de votre sélection
+          </CardTitle>
+          <CardDescription>
+            {selectedPack?.name === 'Devis personnalisé' 
+              ? 'Services choisis pour votre devis personnalisé'
+              : 'Pack sélectionné pour votre projet'
+            }
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Pack Information */}
+            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <h4 className="font-semibold text-lg text-primary mb-2">{selectedPack?.name}</h4>
+              <p className="text-sm text-muted-foreground mb-3">{selectedPack?.description}</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+
+            {/* Services for custom quote */}
+            {selectedPack?.name === 'Devis personnalisé' && selectedServices.length > 0 && (
+              <>
+                {selectedServices.map((selection) => {
+                  const service = services.find(s => s.service_id === selection.serviceId);
+                  if (!service) return null;
+
+                  return (
+                    <div key={selection.serviceId} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{service.title}</h4>
+                        {service.description && (
+                          <p className="text-sm text-muted-foreground">{service.description}</p>
+                        )}
+                        <p className="text-sm font-medium text-primary mt-1">
+                          Quantité: {selection.quantity}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-primary">
+                          {(selection.price * selection.quantity).toFixed(0)}€
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+            
+            {/* Total pricing */}
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center font-semibold text-lg">
+                <span>
+                  {selectedPack?.name === 'Devis personnalisé' ? 'Total estimé:' : 'Prix du pack:'}
+                </span>
+                <span className="text-primary">
+                  {selectedPack?.name === 'Devis personnalisé' && totalPrice > 0
+                    ? `${totalPrice.toFixed(0)}€`
+                    : selectedPack?.name !== 'Devis personnalisé'
+                    ? 'Sur devis'
+                    : 'À déterminer'
+                  }
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                {selectedPack?.name === 'Devis personnalisé' 
+                  ? '*Prix indicatif - Un devis détaillé vous sera fourni après validation'
+                  : '*Un devis personnalisé sera établi selon vos besoins spécifiques'
+                }
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="w-full">
         <CardHeader>
