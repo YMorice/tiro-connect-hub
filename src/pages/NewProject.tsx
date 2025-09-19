@@ -30,9 +30,16 @@ interface ProjectPack {
   description: string;
 }
 
+interface ServiceSelection {
+  serviceId: string;
+  quantity: number;
+  price: number;
+}
+
 interface LocationState {
   selectedPack: ProjectPack;
-  isCustomQuote?: boolean;
+  selectedServices?: ServiceSelection[];
+  totalPrice?: number;
 }
 
 const formSchema = z.object({
@@ -91,10 +98,10 @@ const NewProject = () => {
     fetchEntrepreneurId();
   }, [user]);
 
-  // Redirect to pack selection if no pack is selected
+  // Redirect to service selection if no pack is selected
   React.useEffect(() => {
     if (!selectedPack) {
-      navigate("/pack-selection", {
+      navigate("/service-selection", {
         replace: true
       });
     }
@@ -121,24 +128,11 @@ const NewProject = () => {
       return;
     }
 
-    // For custom quotes, redirect to service selection
-    if (locationState?.isCustomQuote || selectedPack?.name === 'Devis personnalisé') {
-      navigate("/service-selection", {
-        state: {
-          selectedPack,
-          projectTitle: values.title,
-          projectDescription: values.description,
-          deadline: values.deadline
-        }
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      console.log("Creating project with values:", values);
-
+    // Determine project price - use selected services total or pack price
+    let projectPrice = null;
+    if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
+      projectPrice = locationState.totalPrice;
+    } else {
       // Get the pack details to determine price
       const { data: packData, error: packError } = await supabase
         .from('project_packs')
@@ -151,14 +145,16 @@ const NewProject = () => {
         throw new Error(`Failed to fetch pack details: ${packError.message}`);
       }
 
-      // Determine the project price based on pack type
-      let projectPrice = null;
       if (packData.name !== 'Devis personnalisé') {
         projectPrice = packData.price;
-        console.log("Setting project price from pack:", projectPrice);
-      } else {
-        console.log("Custom quote project - price will be set by admin later");
       }
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      console.log("Creating project with values:", values);
+
 
       // Create the project with proper error handling
       const { data: projectData, error: projectError } = await supabase
@@ -186,6 +182,26 @@ const NewProject = () => {
       
       console.log("Project created successfully:", projectData);
       const projectId = projectData.id_project;
+
+      // Insert selected services if any
+      if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
+        const serviceInserts = locationState.selectedServices.map(selection => ({
+          project_id: projectId,
+          service_id: selection.serviceId,
+          quantity: selection.quantity
+        }));
+
+        const { error: servicesError } = await supabase
+          .from('project_services')
+          .insert(serviceInserts);
+
+        if (servicesError) {
+          console.error("Error inserting services:", servicesError);
+          throw new Error(`Failed to insert services: ${servicesError.message}`);
+        }
+        
+        console.log("Services inserted successfully");
+      }
 
       // Create message group for the project
       try {
@@ -276,10 +292,10 @@ const NewProject = () => {
       <div className="mb-8">
         <Button 
           variant="ghost" 
-          onClick={() => navigate("/pack-selection")} 
+          onClick={() => navigate("/service-selection", { state: locationState })} 
           className="flex items-center text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la sélection de pack
+          <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la sélection de services
         </Button>
       </div>
 

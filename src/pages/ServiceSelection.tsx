@@ -25,8 +25,8 @@ interface ProjectPack {
 
 interface LocationState {
   selectedPack: ProjectPack;
-  projectTitle: string;
-  projectDescription: string;
+  projectTitle?: string;
+  projectDescription?: string;
   deadline?: Date;
 }
 
@@ -49,9 +49,9 @@ const ServiceSelection = () => {
   const locationState = location.state as LocationState | undefined;
   const selectedPack = locationState?.selectedPack;
 
-  // Redirect if no pack selected or not custom quote
+  // Redirect if no pack selected
   React.useEffect(() => {
-    if (!selectedPack || selectedPack.name !== 'Devis personnalisé') {
+    if (!selectedPack) {
       navigate("/pack-selection", { replace: true });
     }
   }, [selectedPack, navigate]);
@@ -146,62 +146,15 @@ const ServiceSelection = () => {
     );
   };
 
-  // Handle project creation with selected services
-  const handleCreateProject = async () => {
-    if (!user || !entrepreneurId || !locationState) {
-      toast.error("Informations manquantes pour créer le projet");
-      return;
-    }
-
-    if (Object.keys(selectedServices).length === 0) {
-      toast.error("Veuillez sélectionner au moins un service");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Create the project first
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .insert({
-          title: locationState.projectTitle,
-          description: locationState.projectDescription,
-          id_entrepreneur: entrepreneurId,
-          id_pack: selectedPack!.id,
-          status: 'STEP1',
-          deadline: locationState.deadline ? locationState.deadline.toISOString().split('T')[0] : null,
-          price: calculateTotal()
-        })
-        .select('id_project')
-        .single();
-
-      if (projectError) throw projectError;
-
-      const projectId = projectData.id_project;
-
-      // Insert selected services
-      const serviceInserts = Object.values(selectedServices).map(selection => ({
-        project_id: projectId,
-        service_id: selection.serviceId,
-        quantity: selection.quantity
-      }));
-
-      const { error: servicesError } = await supabase
-        .from('project_services')
-        .insert(serviceInserts);
-
-      if (servicesError) throw servicesError;
-
-      toast.success("Projet créé avec succès avec les services sélectionnés!");
-      navigate(`/projects/${projectId}`);
-
-    } catch (error) {
-      console.error("Error creating project:", error);
-      toast.error("Erreur lors de la création du projet");
-    } finally {
-      setIsSubmitting(false);
-    }
+  // Handle proceeding to project creation
+  const handleProceedToProjectCreation = () => {
+    navigate("/projects/new", {
+      state: {
+        selectedPack,
+        selectedServices: Object.values(selectedServices),
+        totalPrice: calculateTotal()
+      }
+    });
   };
 
   if (!selectedPack || loading) {
@@ -219,7 +172,7 @@ const ServiceSelection = () => {
       <div className="mb-8">
         <Button 
           variant="ghost" 
-          onClick={() => navigate("/projects/new", { state: locationState })} 
+          onClick={() => navigate("/pack-selection")} 
           className="flex items-center text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> Retour
@@ -231,7 +184,7 @@ const ServiceSelection = () => {
           Sélectionnez vos services
         </h1>
         <p className="text-muted-foreground text-sm text-left">
-          Choisissez les services dont vous avez besoin pour votre devis personnalisé.
+          Choisissez les services dont vous avez besoin pour votre projet.
         </p>
       </div>
 
@@ -372,18 +325,11 @@ const ServiceSelection = () => {
               </div>
               
               <Button 
-                onClick={handleCreateProject}
-                disabled={Object.keys(selectedServices).length === 0 || isSubmitting || !entrepreneurId}
+                onClick={handleProceedToProjectCreation}
+                disabled={Object.keys(selectedServices).length === 0}
                 className="w-full"
               >
-                {isSubmitting ? (
-                  <div className="flex items-center">
-                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
-                    Création...
-                  </div>
-                ) : (
-                  "Créer le projet"
-                )}
+                Continuer
               </Button>
             </CardContent>
           </Card>

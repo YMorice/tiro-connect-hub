@@ -56,22 +56,20 @@ useEffect(() => {
   }, []);
 
   const handleSelectPack = (packId: string) => {
-    // Store the selected pack ID in local storage temporarily
-    localStorage.setItem("selectedPackId", packId);
+    localStorage.setItem('selectedPackId', packId);
     
-    // Find the selected pack to pass as state
     const selectedPack = packs.find(pack => pack.id_pack === packId);
-    
-    // Navigate to new project page with the selected pack info
-    navigate("/projects/new", { 
-      state: { 
-        selectedPack: {
-          id: packId,
-          name: selectedPack?.name || "",
-          description: selectedPack?.description || ""
-        }
-      } 
-    });
+    if (selectedPack) {
+      navigate("/service-selection", { 
+        state: { 
+          selectedPack: {
+            id: selectedPack.id_pack,
+            name: selectedPack.name,
+            description: selectedPack.description
+          }
+        } 
+      });
+    }
   };
 
   if (loading) {
