@@ -197,11 +197,21 @@ const ServiceSelection = () => {
               const quantity = isSelected?.quantity || 0;
 
               return (
-                <Card key={service.service_id} className="flex flex-col h-full">
+                <Card 
+                  key={service.service_id} 
+                  className={`flex flex-col h-full cursor-pointer transition-all duration-200 ${
+                    isSelected 
+                      ? 'ring-2 ring-primary bg-primary/5 border-primary shadow-lg' 
+                      : 'hover:shadow-md hover:border-primary/50'
+                  }`}
+                  onClick={() => handleServiceToggle(service, !isSelected)}
+                >
                   <CardHeader className="flex-shrink-0 p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg">{service.title}</CardTitle>
+                        <CardTitle className={`text-lg ${isSelected ? 'text-primary' : ''}`}>
+                          {service.title}
+                        </CardTitle>
                         {service.description && (
                           <CardDescription className="text-sm mt-1">
                             {service.description}
@@ -216,61 +226,38 @@ const ServiceSelection = () => {
                   
                   <CardContent className="flex-grow p-4 pt-0">
                     <div className="flex items-center justify-between">
-                      {!isSelected ? (
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={service.service_id}
-                            checked={false}
-                            onCheckedChange={(checked) => 
-                              handleServiceToggle(service, checked as boolean)
-                            }
-                          />
-                          <label 
-                            htmlFor={service.service_id}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      <div className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
+                        isSelected 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {isSelected ? '✓ Sélectionné' : 'Cliquer pour sélectionner'}
+                      </div>
+                      
+                      {isSelected && (
+                        <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleQuantityChange(service.service_id, -1)}
+                            disabled={quantity <= 1}
                           >
-                            Sélectionner
-                          </label>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id={service.service_id}
-                              checked={true}
-                              onCheckedChange={(checked) => 
-                                handleServiceToggle(service, checked as boolean)
-                              }
-                            />
-                            <span className="text-sm font-medium text-primary">
-                              Sélectionné
-                            </span>
-                          </div>
+                            <Minus className="h-4 w-4" />
+                          </Button>
                           
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleQuantityChange(service.service_id, -1)}
-                              disabled={quantity <= 1}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            
-                            <span className="w-8 text-center font-medium">
-                              {quantity}
-                            </span>
-                            
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleQuantityChange(service.service_id, 1)}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <span className="w-8 text-center font-medium">
+                            {quantity}
+                          </span>
+                          
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleQuantityChange(service.service_id, 1)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
                         </div>
                       )}
                     </div>
