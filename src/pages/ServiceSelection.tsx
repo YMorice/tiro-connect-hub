@@ -281,9 +281,8 @@ const ServiceSelection = () => {
         </div>
 
         {/* Summary Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-4 z-10">
-            <Card className="bg-background/95 backdrop-blur-sm border shadow-lg">
+        <div className="lg:col-span-1 lg:self-start">
+          <Card className="sticky top-4 z-10 bg-background/95 backdrop-blur-sm border shadow-lg max-h-[calc(100vh-1rem)] overflow-auto">
             <CardHeader>
               <CardTitle>Récapitulatif</CardTitle>
               <CardDescription>Services sélectionnés</CardDescription>
@@ -333,7 +332,6 @@ const ServiceSelection = () => {
               </Button>
             </CardContent>
           </Card>
-          </div>
         </div>
       </div>
     </div>
