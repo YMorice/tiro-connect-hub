@@ -155,21 +155,32 @@ const NewProject = () => {
   });
 
   const onSubmit = async (values: FormValues) => {
+    console.log("🚀 onSubmit started with values:", values);
+    console.log("🔍 Current user:", { id: user?.id, email: user?.email });
+    console.log("🔍 Current entrepreneurId:", entrepreneurId);
+    console.log("🔍 LocationState:", locationState);
+    
     if (!user) {
+      console.error("❌ No user found");
       toast.error("Vous devez être connecté pour pouvoir créer un projet");
       return;
     }
     
     if (!entrepreneurId) {
+      console.error("❌ No entrepreneur ID found");
       toast.error("No entrepreneur profile found. Please complete your profile first.");
       return;
     }
 
     // Determine project price - use selected services total or pack price
     let projectPrice = null;
+    console.log("💰 Determining project price...");
+    
     if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
       projectPrice = locationState.totalPrice;
+      console.log("💰 Using services total price:", projectPrice);
     } else {
+      console.log("💰 Fetching pack price for pack ID:", values.packId);
       // Get the pack details to determine price
       const { data: packData, error: packError } = await supabase
         .from('project_packs')
@@ -177,85 +188,116 @@ const NewProject = () => {
         .eq('id_pack', values.packId)
         .maybeSingle();
 
+      console.log("💰 Pack query result:", { packData, packError });
+
       if (packError) {
-        console.error("Error fetching pack:", packError);
+        console.error("❌ Error fetching pack:", packError);
         throw new Error(`Failed to fetch pack details: ${packError.message}`);
       }
 
       if (packData && packData.name !== 'Devis personnalisé') {
         projectPrice = packData.price;
+        console.log("💰 Using pack price:", projectPrice);
+      } else {
+        console.log("💰 Custom quote - no price set");
       }
     }
     
     setIsSubmitting(true);
     
     try {
-      console.log("Creating project with values:", values);
+      console.log("📝 Preparing project insert with data:");
+      const projectInsertData = {
+        title: values.title,
+        description: values.description,
+        id_entrepreneur: entrepreneurId,
+        id_pack: values.packId,
+        status: 'STEP1',
+        deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null,
+        price: projectPrice,
+        devis: packRecap || null
+      };
+      console.log("📝 Project insert data:", projectInsertData);
 
-
+      console.log("🚀 Starting project insertion...");
       // Create the project with proper error handling
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
-        .insert({
-          title: values.title,
-          description: values.description,
-          id_entrepreneur: entrepreneurId,
-          id_pack: values.packId,
-          status: 'STEP1',
-          deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null,
-          price: projectPrice,
-          devis: packRecap || null
-        })
+        .insert(projectInsertData)
         .select('id_project')
         .maybeSingle();
         
+      console.log("📝 Project insert result:", { projectData, projectError });
+      
       if (projectError) {
-        console.error("Project creation error:", projectError);
+        console.error("❌ Project creation error details:", {
+          message: projectError.message,
+          details: projectError.details,
+          hint: projectError.hint,
+          code: projectError.code
+        });
         throw new Error(`Failed to create project: ${projectError.message}`);
       }
       
       if (!projectData) {
+        console.error("❌ No project data returned after creation");
         throw new Error("No project data returned after creation");
       }
       
-      console.log("Project created successfully:", projectData);
+      console.log("✅ Project created successfully:", projectData);
       const projectId = projectData.id_project;
 
       // Insert selected services if any
       if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
+        console.log("🔧 Preparing to insert services for project:", projectId);
         const serviceInserts = locationState.selectedServices.map(selection => ({
           project_id: projectId,
           service_id: selection.serviceId,
           quantity: selection.quantity
         }));
 
+        console.log("🔧 Service inserts data:", serviceInserts);
+
         const { error: servicesError } = await supabase
           .from('project_services')
           .insert(serviceInserts);
 
+        console.log("🔧 Services insert result:", { servicesError });
+
         if (servicesError) {
-          console.error("Error inserting services:", servicesError);
+          console.error("❌ Error inserting services:", {
+            message: servicesError.message,
+            details: servicesError.details,
+            hint: servicesError.hint,
+            code: servicesError.code
+          });
           throw new Error(`Failed to insert services: ${servicesError.message}`);
         }
         
-        console.log("Services inserted successfully");
+        console.log("✅ Services inserted successfully");
       }
 
       // Create message group for the project
       // The database trigger handles message group creation automatically
-      console.log("Message group will be created automatically by database trigger");
+      console.log("💬 Message group will be created automatically by database trigger for project:", projectId);
 
       // Reload projects to get the latest data
+      console.log("🔄 Reloading projects...");
       await loadProjects();
+      console.log("✅ Projects reloaded successfully");
+      
       toast.success("Projet créé avec succès!");
 
       // Navigate to the specific project page instead of projects list
+      console.log("🧭 Navigating to project page:", `/projects/${projectId}`);
       navigate(`/projects/${projectId}`);
     } catch (error) {
-      console.error("Error creating project:", error);
+      console.error("❌ Error creating project:", error);
+      console.error("❌ Error stack:", error instanceof Error ? error.stack : 'No stack trace');
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast.error(`Erreur lors de la création du projet: ${errorMessage}`);
     } finally {
+      console.log("🏁 Setting isSubmitting to false");
       setIsSubmitting(false);
     }
   };
