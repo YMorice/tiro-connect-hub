@@ -59,6 +59,7 @@ const NewProject = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
   const [services, setServices] = useState<any[]>([]);
+  const [packRecap, setPackRecap] = useState<string>('');
   const isMobile = useIsMobile();
 
   // Get the selected pack from location state
@@ -94,6 +95,21 @@ const NewProject = () => {
             }
           }
 
+          // Fetch pack recap if we have a selected pack
+          if (selectedPack?.id) {
+            const { data: packData, error: packError } = await supabase
+              .from('project_packs')
+              .select('recap')
+              .eq('id_pack', selectedPack.id)
+              .single();
+
+            if (packError) {
+              console.error("Error fetching pack recap:", packError);
+            } else if (packData) {
+              setPackRecap((packData as any).recap || '');
+            }
+          }
+
           // Fetch services if we have selected services
           if (selectedServices.length > 0) {
             const serviceIds = selectedServices.map(s => s.serviceId);
@@ -115,7 +131,7 @@ const NewProject = () => {
       }
     };
     fetchData();
-  }, [user, selectedServices]);
+  }, [user, selectedServices, selectedPack?.id]);
 
   // Redirect to pack selection if no pack is selected
   React.useEffect(() => {
@@ -359,7 +375,7 @@ const NewProject = () => {
             {/* Pack Information */}
             <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
               <h4 className="font-semibold text-lg text-primary mb-2">{selectedPack?.name}</h4>
-              <p className="text-sm text-muted-foreground mb-3">{selectedPack?.description}</p>
+              <p className="text-sm text-muted-foreground mb-3">{packRecap || selectedPack?.description}</p>
             </div>
 
             {/* Services for custom quote */}
