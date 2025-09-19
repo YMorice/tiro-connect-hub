@@ -216,7 +216,7 @@ const ServiceSelection = () => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:items-start">
         {/* Services List */}
         <div className="lg:col-span-3">
           <div className="grid grid-cols-1 gap-4">
@@ -288,8 +288,8 @@ const ServiceSelection = () => {
         </div>
 
         {/* Summary Sidebar */}
-        <div className="lg:col-span-1">
-          <Card className="self-start lg:sticky lg:top-4">
+        <div className="lg:col-span-1 lg:sticky lg:top-6 self-start">
+          <Card className="self-start">
             <CardHeader>
               <CardTitle>Récapitulatif</CardTitle>
               <CardDescription>Services sélectionnés</CardDescription>
