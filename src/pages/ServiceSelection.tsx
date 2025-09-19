@@ -211,7 +211,7 @@ const ServiceSelection = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Services List */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {services.map((service) => {
               const isSelected = selectedServices[service.service_id];
               const quantity = isSelected?.quantity || 0;
@@ -233,7 +233,7 @@ const ServiceSelection = () => {
                           {service.title}
                         </CardTitle>
                         {service.description && (
-                          <CardDescription className="text-sm mt-1">
+                          <CardDescription className="text-sm mt-1 whitespace-pre-line">
                             {service.description}
                           </CardDescription>
                         )}
