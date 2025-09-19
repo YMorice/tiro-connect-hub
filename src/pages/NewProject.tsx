@@ -102,7 +102,7 @@ const NewProject = () => {
               .from('project_packs')
               .select('recap, price')
               .eq('id_pack', selectedPack.id)
-              .single();
+              .maybeSingle();
 
             if (packError) {
               console.error("Error fetching pack recap:", packError);
@@ -175,14 +175,14 @@ const NewProject = () => {
         .from('project_packs')
         .select('price, name')
         .eq('id_pack', values.packId)
-        .single();
+        .maybeSingle();
 
       if (packError) {
         console.error("Error fetching pack:", packError);
         throw new Error(`Failed to fetch pack details: ${packError.message}`);
       }
 
-      if (packData.name !== 'Devis personnalisé') {
+      if (packData && packData.name !== 'Devis personnalisé') {
         projectPrice = packData.price;
       }
     }
@@ -203,10 +203,11 @@ const NewProject = () => {
           id_pack: values.packId,
           status: 'STEP1',
           deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null,
-          price: projectPrice
+          price: projectPrice,
+          devis: packRecap || null
         })
         .select('id_project')
-        .single();
+        .maybeSingle();
         
       if (projectError) {
         console.error("Project creation error:", projectError);
