@@ -60,6 +60,7 @@ const NewProject = () => {
   const [entrepreneurId, setEntrepreneurId] = useState<string | null>(null);
   const [services, setServices] = useState<any[]>([]);
   const [packRecap, setPackRecap] = useState<string>('');
+  const [packPrice, setPackPrice] = useState<number | null>(null);
   const isMobile = useIsMobile();
 
   // Get the selected pack from location state
@@ -99,7 +100,7 @@ const NewProject = () => {
           if (selectedPack?.id) {
             const { data: packData, error: packError } = await supabase
               .from('project_packs')
-              .select('recap')
+              .select('recap, price')
               .eq('id_pack', selectedPack.id)
               .single();
 
@@ -107,6 +108,7 @@ const NewProject = () => {
               console.error("Error fetching pack recap:", packError);
             } else if (packData) {
               setPackRecap((packData as any).recap || '');
+              setPackPrice((packData as any).price || null);
             }
           }
 
@@ -416,6 +418,8 @@ const NewProject = () => {
                 <span className="text-primary">
                   {selectedPack?.name === 'Devis personnalisé' && totalPrice > 0
                     ? `${totalPrice.toFixed(0)}€`
+                    : selectedPack?.name !== 'Devis personnalisé' && packPrice
+                    ? `${packPrice}€`
                     : selectedPack?.name !== 'Devis personnalisé'
                     ? 'Sur devis'
                     : 'À déterminer'
