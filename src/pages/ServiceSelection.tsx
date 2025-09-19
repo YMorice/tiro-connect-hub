@@ -188,6 +188,26 @@ const ServiceSelection = () => {
         </p>
       </div>
 
+      <Card className="w-full mb-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-lg mb-2">Besoin d'accompagnement ?</h3>
+              <p className="text-muted-foreground">
+                Si vous avez la moindre question sur votre projet, notre équipe est là pour vous accompagner. 
+                Réservez un appel gratuit pour discuter de vos besoins.
+              </p>
+            </div>
+            <Button 
+              onClick={() => window.open('https://tiro.agency/reserver-meeting', '_blank')}
+              className="ml-4 bg-primary hover:bg-primary/90 whitespace-nowrap"
+            >
+              Réserver un appel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Services List */}
         <div className="lg:col-span-3">
@@ -225,15 +245,7 @@ const ServiceSelection = () => {
                   </CardHeader>
                   
                   <CardContent className="flex-grow p-4 pt-0">
-                    <div className="flex items-center justify-between">
-                      <div className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
-                        isSelected 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted text-muted-foreground'
-                      }`}>
-                        {isSelected ? '✓ Sélectionné' : 'Cliquer pour sélectionner'}
-                      </div>
-                      
+                    <div className="flex items-center justify-end">
                       {isSelected && (
                         <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                           <Button
