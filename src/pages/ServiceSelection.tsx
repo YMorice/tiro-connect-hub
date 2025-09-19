@@ -49,9 +49,9 @@ const ServiceSelection = () => {
   const locationState = location.state as LocationState | undefined;
   const selectedPack = locationState?.selectedPack;
 
-  // Redirect if no pack selected
+  // Redirect if no pack selected or not custom quote
   React.useEffect(() => {
-    if (!selectedPack) {
+    if (!selectedPack || selectedPack.name !== 'Devis personnalisé') {
       navigate("/pack-selection", { replace: true });
     }
   }, [selectedPack, navigate]);

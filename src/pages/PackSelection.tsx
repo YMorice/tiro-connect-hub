@@ -60,15 +60,29 @@ useEffect(() => {
     
     const selectedPack = packs.find(pack => pack.id_pack === packId);
     if (selectedPack) {
-      navigate("/service-selection", { 
-        state: { 
-          selectedPack: {
-            id: selectedPack.id_pack,
-            name: selectedPack.name,
-            description: selectedPack.description
-          }
-        } 
-      });
+      // Only "Devis personnalisé" goes to service selection
+      if (selectedPack.name === 'Devis personnalisé') {
+        navigate("/service-selection", { 
+          state: { 
+            selectedPack: {
+              id: selectedPack.id_pack,
+              name: selectedPack.name,
+              description: selectedPack.description
+            }
+          } 
+        });
+      } else {
+        // Other packs go directly to project creation
+        navigate("/projects/new", { 
+          state: { 
+            selectedPack: {
+              id: selectedPack.id_pack,
+              name: selectedPack.name,
+              description: selectedPack.description
+            }
+          } 
+        });
+      }
     }
   };
 

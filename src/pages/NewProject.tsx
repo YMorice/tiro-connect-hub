@@ -98,10 +98,10 @@ const NewProject = () => {
     fetchEntrepreneurId();
   }, [user]);
 
-  // Redirect to service selection if no pack is selected
+  // Redirect to pack selection if no pack is selected
   React.useEffect(() => {
     if (!selectedPack) {
-      navigate("/service-selection", {
+      navigate("/pack-selection", {
         replace: true
       });
     }
@@ -292,10 +292,10 @@ const NewProject = () => {
       <div className="mb-8">
         <Button 
           variant="ghost" 
-          onClick={() => navigate("/service-selection", { state: locationState })} 
-          className="flex items-center text-muted-foreground hover:text-foreground"
+          onClick={() => navigate("/pack-selection")} 
+          className="flex items-center text-muted-foregreen hover:text-foreground"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la sélection de services
+          <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la sélection de pack
         </Button>
       </div>
 
