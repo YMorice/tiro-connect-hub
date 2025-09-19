@@ -289,7 +289,7 @@ const ServiceSelection = () => {
 
         {/* Summary Sidebar */}
         <div className="lg:col-span-1">
-          <Card className="sticky top-4">
+          <Card className="self-start lg:sticky lg:top-4">
             <CardHeader>
               <CardTitle>Récapitulatif</CardTitle>
               <CardDescription>Services sélectionnés</CardDescription>
