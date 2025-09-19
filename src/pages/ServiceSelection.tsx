@@ -227,15 +227,15 @@ const ServiceSelection = () => {
                   key={service.service_id} 
                   className={`flex flex-col h-full cursor-pointer transition-all duration-200 ${
                     isSelected 
-                      ? 'ring-2 ring-primary bg-primary/5 border-primary shadow-lg' 
-                      : 'hover:shadow-md hover:border-primary/50'
+                      ? 'border-2 border-tiro-primary' 
+                      : 'hover:bg-tiro-test'
                   }`}
                   onClick={() => handleServiceToggle(service, !isSelected)}
                 >
                   <CardHeader className="flex-shrink-0 p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className={`text-lg ${isSelected ? 'text-primary' : ''}`}>
+                        <CardTitle className="text-lg">
                           {service.title}
                         </CardTitle>
                         {service.description && (
