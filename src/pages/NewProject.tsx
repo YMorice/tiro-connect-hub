@@ -265,8 +265,29 @@ const NewProject = () => {
       console.log("✅ Project created successfully:", projectData);
       const projectId = projectData.id_project;
 
-      // Services are now included in the devis field instead of separate table
-      console.log("✅ Services recap included in devis field, no separate table needed");
+      // Insert selected services into project_services table
+      if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
+        console.log("💾 Inserting project services...");
+        
+        const projectServicesData = locationState.selectedServices.map(selection => ({
+          project_id: projectId,
+          service_id: selection.serviceId,
+          quantity: selection.quantity,
+          unit_price: selection.price
+        }));
+        
+        const { error: servicesError } = await supabase
+          .from('project_services')
+          .insert(projectServicesData);
+        
+        if (servicesError) {
+          console.error("❌ Error inserting project services:", servicesError);
+          // Don't fail the entire project creation for this
+          toast.error("Attention: Les services n'ont pas pu être sauvegardés correctement");
+        } else {
+          console.log("✅ Project services inserted successfully");
+        }
+      }
 
       // Create message group for the project
       // The database trigger handles message group creation automatically
