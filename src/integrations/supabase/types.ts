@@ -245,6 +245,7 @@ export type Database = {
           name: string
           price: number
           rank: number | null
+          recap: string | null
         }
         Insert: {
           active?: boolean | null
@@ -255,6 +256,7 @@ export type Database = {
           name: string
           price: number
           rank?: number | null
+          recap?: string | null
         }
         Update: {
           active?: boolean | null
@@ -265,30 +267,7 @@ export type Database = {
           name?: string
           price?: number
           rank?: number | null
-        }
-        Relationships: []
-      }
-      project_services: {
-        Row: {
-          created_at: string
-          id: string
-          project_id: string
-          quantity: number
-          service_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          project_id: string
-          quantity?: number
-          service_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          project_id?: string
-          quantity?: number
-          service_id?: string
+          recap?: string | null
         }
         Relationships: []
       }
