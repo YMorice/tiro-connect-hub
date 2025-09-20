@@ -207,6 +207,24 @@ const NewProject = () => {
     
     try {
       console.log("📝 Preparing project insert with data:");
+      
+      // Create devis with pack recap and selected services
+      let finalDevis = packRecap || selectedPack?.description || '';
+      
+      if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
+        finalDevis += '\n\n=== Services sélectionnés ===\n';
+        for (const selection of locationState.selectedServices) {
+          const service = services.find(s => s.service_id === selection.serviceId);
+          if (service) {
+            finalDevis += `• ${service.title} (Quantité: ${selection.quantity}) - ${(selection.price * selection.quantity).toFixed(0)}€\n`;
+            if (service.description) {
+              finalDevis += `  ${service.description}\n`;
+            }
+          }
+        }
+        finalDevis += `\nTotal estimé: ${totalPrice.toFixed(0)}€`;
+      }
+      
       const projectInsertData = {
         title: values.title,
         description: values.description,
@@ -215,7 +233,7 @@ const NewProject = () => {
         status: 'STEP1',
         deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null,
         price: projectPrice,
-        devis: packRecap || null
+        devis: finalDevis || null
       };
       console.log("📝 Project insert data:", projectInsertData);
 
@@ -247,35 +265,8 @@ const NewProject = () => {
       console.log("✅ Project created successfully:", projectData);
       const projectId = projectData.id_project;
 
-      // Insert selected services if any
-      if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
-        console.log("🔧 Preparing to insert services for project:", projectId);
-        const serviceInserts = locationState.selectedServices.map(selection => ({
-          project_id: projectId,
-          service_id: selection.serviceId,
-          quantity: selection.quantity
-        }));
-
-        console.log("🔧 Service inserts data:", serviceInserts);
-
-        const { error: servicesError } = await supabase
-          .from('project_services')
-          .insert(serviceInserts);
-
-        console.log("🔧 Services insert result:", { servicesError });
-
-        if (servicesError) {
-          console.error("❌ Error inserting services:", {
-            message: servicesError.message,
-            details: servicesError.details,
-            hint: servicesError.hint,
-            code: servicesError.code
-          });
-          throw new Error(`Failed to insert services: ${servicesError.message}`);
-        }
-        
-        console.log("✅ Services inserted successfully");
-      }
+      // Services are now included in the devis field instead of separate table
+      console.log("✅ Services recap included in devis field, no separate table needed");
 
       // Create message group for the project
       // The database trigger handles message group creation automatically
