@@ -46,8 +46,7 @@ const formSchema = z.object({
   title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
   description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
   packId: z.string().uuid("Pack ID invalide"),
-  deadline: z.date().optional(),
-  devis: z.string().optional()
+  deadline: z.date().optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -76,31 +75,10 @@ const NewProject = () => {
       title: "",
       description: "",
       packId: selectedPack?.id || "",
-      deadline: undefined,
-      devis: ""
+      deadline: undefined
     }
   });
 
-  // Generate auto devis content
-  const generateAutoDevis = useCallback(() => {
-    let finalDevis = packRecap || '';
-    
-    if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
-      finalDevis += '\n\n=== Services sélectionnés ===\n';
-      for (const selection of locationState.selectedServices) {
-        const service = services.find(s => s.service_id === selection.serviceId);
-        if (service) {
-          finalDevis += `• ${service.title} (Quantité: ${selection.quantity}) - ${(selection.price * selection.quantity).toFixed(0)}€\n`;
-          if (service.description) {
-            finalDevis += `  ${service.description}\n`;
-          }
-        }
-      }
-      finalDevis += `\nTotal estimé: ${totalPrice.toFixed(0)}€`;
-    }
-    
-    return finalDevis;
-  }, [packRecap, selectedPack, locationState?.selectedServices, services, totalPrice]);
 
   // Fetch entrepreneur ID and services when component mounts
   useEffect(() => {
@@ -168,13 +146,6 @@ const NewProject = () => {
     fetchData();
   }, [user, selectedServices, selectedPack?.id]);
 
-  // Generate and set auto devis when data is ready
-  useEffect(() => {
-    if (services.length > 0 && selectedPack) {
-      const autoDevis = generateAutoDevis();
-      form.setValue('devis', autoDevis);
-    }
-  }, [services, selectedPack, generateAutoDevis, form]);
 
   // Redirect to pack selection if no pack is selected
   React.useEffect(() => {
@@ -243,15 +214,17 @@ const NewProject = () => {
       let finalDevis = packRecap || '';
       
       if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
+        finalDevis += '\n\n=== Services sélectionnés ===\n';
         for (const selection of locationState.selectedServices) {
           const service = services.find(s => s.service_id === selection.serviceId);
           if (service) {
-            finalDevis += `• ${service.title} - Quantité: ${selection.quantity}\n`;
+            finalDevis += `• ${service.title} (Quantité: ${selection.quantity}) - ${(selection.price * selection.quantity).toFixed(0)}€\n`;
             if (service.description) {
               finalDevis += `  ${service.description}\n`;
             }
           }
         }
+        finalDevis += `\nTotal estimé: ${totalPrice.toFixed(0)}€`;
       }
       
       const projectInsertData = {
@@ -262,7 +235,7 @@ const NewProject = () => {
         status: 'STEP1',
         deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null,
         price: projectPrice,
-        devis: values.devis || null
+        devis: finalDevis || null
       };
       console.log("📝 Project insert data:", projectInsertData);
 
@@ -586,40 +559,6 @@ const NewProject = () => {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="devis"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base font-medium text-gray-700">
-                      Contenu du devis
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="ml-2 text-xs"
-                        onClick={() => {
-                          const autoDevis = generateAutoDevis();
-                          form.setValue('devis', autoDevis);
-                        }}
-                      >
-                        Régénérer automatiquement
-                      </Button>
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Le contenu du devis sera généré automatiquement ou vous pouvez le personnaliser..."
-                        className="min-h-[200px] border-gray-300"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Vous pouvez modifier le contenu du devis avant de créer le projet
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <div className="flex gap-4">
                 <Button 
