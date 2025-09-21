@@ -453,29 +453,6 @@ const NewProject = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="packId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pack de projet</FormLabel>
-                    <Select defaultValue={field.value} onValueChange={field.onChange} disabled>
-                      <FormControl className="bg-tiro-white">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionnez un pack" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value={selectedPack.id}>
-                          {selectedPack.name}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="title"
                 render={({ field }) => (
                   <FormItem>
@@ -485,7 +462,7 @@ const NewProject = () => {
                     <FormControl>
                       <Input
                         placeholder="Ex: Développement d'une application mobile"
-                        className="border-gray-300"
+                        className="border-gray-300 bg-tiro-test"
                         {...field}
                       />
                     </FormControl>
@@ -528,7 +505,7 @@ const NewProject = () => {
                           <Button
                             variant={"outline"}
                             className={cn(
-                              "w-full pl-3 text-left font-normal border-gray-300",
+                              "w-full pl-3 text-left font-normal border-gray-300 bg-tiro-test",
                               !field.value && "text-muted-foreground"
                             )}
                           >
