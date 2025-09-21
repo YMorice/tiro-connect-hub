@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProjects } from "@/context/project-context";
 import { useAuth } from "@/context/auth-context";
@@ -11,16 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Calendar, CheckCircle } from "lucide-react";
-
+import { ArrowLeft, Calendar as CalendarIcon, CheckCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
 
 import { format } from "date-fns";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { fr } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -46,7 +46,8 @@ const formSchema = z.object({
   title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
   description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
   packId: z.string().uuid("Pack ID invalide"),
-  deadline: z.date().optional()
+  deadline: z.date().optional(),
+  devis: z.string().optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -68,6 +69,38 @@ const NewProject = () => {
   const selectedPack = locationState?.selectedPack;
   const selectedServices = locationState?.selectedServices || [];
   const totalPrice = locationState?.totalPrice || 0;
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      packId: selectedPack?.id || "",
+      deadline: undefined,
+      devis: ""
+    }
+  });
+
+  // Generate auto devis content
+  const generateAutoDevis = useCallback(() => {
+    let finalDevis = packRecap || selectedPack?.description || '';
+    
+    if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
+      finalDevis += '\n\n=== Services sélectionnés ===\n';
+      for (const selection of locationState.selectedServices) {
+        const service = services.find(s => s.service_id === selection.serviceId);
+        if (service) {
+          finalDevis += `• ${service.title} (Quantité: ${selection.quantity}) - ${(selection.price * selection.quantity).toFixed(0)}€\n`;
+          if (service.description) {
+            finalDevis += `  ${service.description}\n`;
+          }
+        }
+      }
+      finalDevis += `\nTotal estimé: ${totalPrice.toFixed(0)}€`;
+    }
+    
+    return finalDevis;
+  }, [packRecap, selectedPack, locationState?.selectedServices, services, totalPrice]);
 
   // Fetch entrepreneur ID and services when component mounts
   useEffect(() => {
@@ -135,6 +168,14 @@ const NewProject = () => {
     fetchData();
   }, [user, selectedServices, selectedPack?.id]);
 
+  // Generate and set auto devis when data is ready
+  useEffect(() => {
+    if (services.length > 0 && selectedPack) {
+      const autoDevis = generateAutoDevis();
+      form.setValue('devis', autoDevis);
+    }
+  }, [services, selectedPack, generateAutoDevis, form]);
+
   // Redirect to pack selection if no pack is selected
   React.useEffect(() => {
     if (!selectedPack) {
@@ -143,16 +184,6 @@ const NewProject = () => {
       });
     }
   }, [selectedPack, navigate]);
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      packId: selectedPack?.id || "",
-      deadline: undefined
-    }
-  });
 
   const onSubmit = async (values: FormValues) => {
     console.log("🚀 onSubmit started with values:", values);
@@ -208,23 +239,6 @@ const NewProject = () => {
     try {
       console.log("📝 Preparing project insert with data:");
       
-      // Create devis with pack recap and selected services
-      let finalDevis = packRecap || selectedPack?.description || '';
-      
-      if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
-        finalDevis += '\n\n=== Services sélectionnés ===\n';
-        for (const selection of locationState.selectedServices) {
-          const service = services.find(s => s.service_id === selection.serviceId);
-          if (service) {
-            finalDevis += `• ${service.title} (Quantité: ${selection.quantity}) - ${(selection.price * selection.quantity).toFixed(0)}€\n`;
-            if (service.description) {
-              finalDevis += `  ${service.description}\n`;
-            }
-          }
-        }
-        finalDevis += `\nTotal estimé: ${totalPrice.toFixed(0)}€`;
-      }
-      
       const projectInsertData = {
         title: values.title,
         description: values.description,
@@ -233,7 +247,7 @@ const NewProject = () => {
         status: 'STEP1',
         deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null,
         price: projectPrice,
-        devis: finalDevis || null
+        devis: values.devis || null
       };
       console.log("📝 Project insert data:", projectInsertData);
 
@@ -471,32 +485,40 @@ const NewProject = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Titre du projet</FormLabel>
-                    <FormControl className="bg-tiro-white">
-                      <Input placeholder="Entrez le titre de votre projet" {...field} />
+                    <FormLabel className="text-base font-medium text-gray-700">
+                      Titre du projet
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Ex: Développement d'une application mobile"
+                        className="border-gray-300"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description du projet</FormLabel>
-                    <FormControl className="bg-tiro-white">
-                      <Textarea 
-                        placeholder="Décrivez votre projet en détail et vos besoins spécifiques pour ce pack" 
-                        className="min-h-[200px]" 
-                        {...field} 
+                    <FormLabel className="text-base font-medium text-gray-700">
+                      Description du projet
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Décrivez votre projet en détail..."
+                        className="min-h-[100px] border-gray-300"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -509,27 +531,38 @@ const NewProject = () => {
                 name="deadline"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Deadline (optionnel)</FormLabel>
+                    <FormLabel className="text-base font-medium text-gray-700">
+                      Date limite (optionnelle)
+                    </FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
-                            variant="outline"
-                            className={`w-full justify-start text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal border-gray-300",
+                              !field.value && "text-muted-foreground"
+                            )}
                           >
-                            <Calendar className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP") : "Sélectionnez une date limite"}
+                            {field.value ? (
+                              format(field.value, "PPP", { locale: fr })
+                            ) : (
+                              <span>Choisir une date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <CalendarComponent
+                        <Calendar
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date) => date < new Date()}
+                          disabled={(date) =>
+                            date < new Date()
+                          }
                           initialFocus
-                          className="p-3 pointer-events-auto"
+                          locale={fr}
                         />
                       </PopoverContent>
                     </Popover>
@@ -537,26 +570,57 @@ const NewProject = () => {
                   </FormItem>
                 )}
               />
-              <div className="flex items-center justify-end space-x-4 pt-6 border-t">
+
+              <FormField
+                control={form.control}
+                name="devis"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base font-medium text-gray-700">
+                      Contenu du devis
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="ml-2 text-xs"
+                        onClick={() => {
+                          const autoDevis = generateAutoDevis();
+                          form.setValue('devis', autoDevis);
+                        }}
+                      >
+                        Régénérer automatiquement
+                      </Button>
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Le contenu du devis sera généré automatiquement ou vous pouvez le personnaliser..."
+                        className="min-h-[200px] border-gray-300"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Vous pouvez modifier le contenu du devis avant de créer le projet
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-4">
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => navigate("/projects")} 
-                  disabled={isSubmitting}
+                  onClick={() => navigate("/pack-selection")}
+                  className="flex-1"
                 >
                   Annuler
                 </Button>
                 <Button 
                   type="submit" 
-                  disabled={isSubmitting || !entrepreneurId} 
-                  className="bg-primary hover:bg-primary/90"
+                  disabled={isSubmitting || !entrepreneurId}
+                  className="flex-1"
                 >
-                  {isSubmitting ? (
-                    <div className="flex items-center">
-                      <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
-                      Création...
-                    </div>
-                  ) : "Création du projet"}
+                  {isSubmitting ? "Création..." : "Créer le projet"}
                 </Button>
               </div>
             </form>
