@@ -127,7 +127,7 @@ export default function UpdatePassword() {
                           placeholder="Votre adresse email"
                           {...field}
                           disabled={isSubmitting}
-                          className="bg-tiro-white"
+                          className="bg-tiro-test"
                         />
                       </FormControl>
                       <FormMessage />
@@ -146,7 +146,7 @@ export default function UpdatePassword() {
                           placeholder="Code à 6 chiffres"
                           {...field}
                           disabled={isSubmitting}
-                          className="bg-tiro-white font-mono text-center text-lg tracking-wider"
+                          className="bg-tiro-test font-mono text-center text-lg tracking-wider"
                           maxLength={6}
                         />
                       </FormControl>
@@ -168,7 +168,7 @@ export default function UpdatePassword() {
                             placeholder="Entrez votre nouveau mot de passe"
                             {...field}
                             disabled={isSubmitting}
-                            className="bg-tiro-white pr-10"
+                            className="bg-tiro-test pr-10"
                           />
                           <Button
                             type="button"
@@ -203,7 +203,7 @@ export default function UpdatePassword() {
                             placeholder="Confirmez votre nouveau mot de passe"
                             {...field}
                             disabled={isSubmitting}
-                            className="bg-tiro-white pr-10"
+                            className="bg-tiro-test pr-10"
                           />
                           <Button
                             type="button"

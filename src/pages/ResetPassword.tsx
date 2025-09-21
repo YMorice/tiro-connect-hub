@@ -131,7 +131,7 @@ const ResetPassword = () => {
                           {...field} 
                           autoComplete="email" 
                           disabled={isSubmitting}
-                          className = "bg-tiro-white"
+                          className = "bg-tiro-test"
                         />
                       </FormControl>
                       <FormMessage />
