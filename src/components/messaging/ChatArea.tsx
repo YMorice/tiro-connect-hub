@@ -208,7 +208,7 @@ export const ChatArea = memo(({
             onKeyPress={handleKeyPress}
             placeholder="Tapez votre message..."
             disabled={sending}
-            className="flex-1 bg-tiro-white"
+            className="flex-1 bg-tiro-test"
           />
           <DocumentUpload
             onDocumentSubmit={(documentDetails) => {
