@@ -243,7 +243,7 @@ const NewProject = () => {
       let finalDevis = packRecap || selectedPack?.description || '';
       
       if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
-        finalDevis += '\n\n--- Services sélectionnés ---\n';
+        finalDevis += '\n\n--- Devis ---\n';
         for (const selection of locationState.selectedServices) {
           const service = services.find(s => s.service_id === selection.serviceId);
           if (service) {
