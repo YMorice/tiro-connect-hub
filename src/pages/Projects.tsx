@@ -100,7 +100,7 @@ const Projects = () => {
           const transformedProjects: StudentProject[] = (data || []).map(project => ({
             id: project.id_project,
             title: project.title,
-            description: project.devis || project.description || '',
+            description: project.description || '',
             ownerId: project.id_entrepreneur,
             assigneeId: project.selected_student,
             status: project.status as StudentProject['status'],
@@ -197,7 +197,7 @@ const Projects = () => {
           const assignedProjectsWithStatus: StudentProject[] = (assignedProjects || []).map(project => ({
             id: project.id_project,
             title: project.title,
-            description: project.devis || project.description || '',
+            description: project.description || '',
             ownerId: project.id_entrepreneur,
             assigneeId: project.selected_student,
             status: project.status as StudentProject['status'],
@@ -256,7 +256,7 @@ const Projects = () => {
         const transformedProjects: StudentProject[] = (data || []).map(project => ({
           id: project.id_project,
           title: project.title,
-          description: project.devis || project.description || '',
+          description: project.description || '',
           ownerId: project.id_entrepreneur,
           assigneeId: project.selected_student,
           status: project.status as StudentProject['status'],
