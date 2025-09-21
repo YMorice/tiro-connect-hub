@@ -212,7 +212,6 @@ const NewProject = () => {
       let finalDevis = '';
       
       if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
-        finalDevis += '--- Devis ---\n';
         for (const selection of locationState.selectedServices) {
           const service = services.find(s => s.service_id === selection.serviceId);
           if (service) {
