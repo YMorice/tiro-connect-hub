@@ -105,6 +105,62 @@ serve(async (req) => {
 
       console.log(`Payment succeeded for project ${projectId}, moved to STEP5`);
 
+      // Call n8n webhook with project and entrepreneur data
+      const n8nWebhookUrl = Deno.env.get("N8N_WEBHOOK_LINK_PAYMENT");
+      if (n8nWebhookUrl) {
+        try {
+          const webhookData = {
+            event: "payment_confirmed",
+            project: {
+              id: project.id_project,
+              title: project.title,
+              description: project.description,
+              price: project.price,
+              deadline: project.deadline,
+              status: "STEP5",
+              created_at: project.created_at,
+              updated_at: new Date().toISOString(),
+            },
+            entrepreneur: {
+              id: project.entrepreneurs.id_entrepreneur,
+              company_name: project.entrepreneurs.company_name,
+              company_siret: project.entrepreneurs.company_siret,
+              address: project.entrepreneurs.address,
+            },
+            user: {
+              email: userData.email,
+              name: userData.name,
+              surname: userData.surname,
+            },
+            payment: {
+              intent_id: paymentIntentId,
+              amount: paymentIntent.amount,
+              currency: paymentIntent.currency,
+              status: paymentIntent.status,
+            },
+          };
+
+          const response = await fetch(n8nWebhookUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(webhookData),
+          });
+
+          if (response.ok) {
+            console.log("n8n webhook called successfully");
+          } else {
+            console.error("n8n webhook failed:", response.status, await response.text());
+          }
+        } catch (webhookError) {
+          console.error("Error calling n8n webhook:", webhookError);
+          // Don't fail the payment confirmation if webhook fails
+        }
+      } else {
+        console.warn("N8N_WEBHOOK_LINK_PAYMENT not configured");
+      }
+
       // Create Stripe customer if doesn't exist
       let customerId = paymentIntent.customer as string;
       if (!customerId) {
