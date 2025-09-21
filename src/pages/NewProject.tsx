@@ -239,6 +239,22 @@ const NewProject = () => {
     try {
       console.log("📝 Preparing project insert with data:");
       
+      // Create devis with pack recap and selected services
+      let finalDevis = packRecap || selectedPack?.description || '';
+      
+      if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
+        finalDevis += '\n\n--- Services sélectionnés ---\n';
+        for (const selection of locationState.selectedServices) {
+          const service = services.find(s => s.service_id === selection.serviceId);
+          if (service) {
+            finalDevis += `• ${service.title} - Quantité: ${selection.quantity}\n`;
+            if (service.description) {
+              finalDevis += `  ${service.description}\n`;
+            }
+          }
+        }
+      }
+      
       const projectInsertData = {
         title: values.title,
         description: values.description,
