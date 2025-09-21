@@ -492,7 +492,7 @@ const Profile = () => {
                       id="name"
                       value={profile.name || user?.user_metadata?.name}
                       onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                      className="bg-tiro-white"
+                      className="bg-tiro-test"
                     />
                   </div>
                   <div className="space-y-2 text-left">
@@ -501,7 +501,7 @@ const Profile = () => {
                       id="surname"
                       value={profile.surname || user?.user_metadata?.surname}
                       onChange={(e) => setProfile({ ...profile, surname: e.target.value })}
-                      className="bg-tiro-white"
+                      className="bg-tiro-test"
                     />
                   </div>
                 </div>
@@ -512,7 +512,7 @@ const Profile = () => {
                     id="email"
                     value={profile.email || user?.email}
                     disabled
-                    className="bg-tiro-white"
+                    className="bg-tiro-test"
                   />
                 </div>
 
@@ -522,7 +522,7 @@ const Profile = () => {
                     id="phone"
                     value={profile.phone || user?.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                    className="bg-tiro-white"
+                    className="bg-tiro-test"
                   />
                 </div>
 
@@ -535,7 +535,7 @@ const Profile = () => {
                         id="bio"
                         value={profile.bio || ""}
                         onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                        className="min-h-[100px] bg-tiro-white"
+                        className="min-h-[100px] bg-tiro-test"
                       />
                     </div>
 
@@ -591,7 +591,7 @@ const Profile = () => {
                         id="formation"
                         value={profile.formation || ""}
                         onChange={(e) => setProfile({ ...profile, formation: e.target.value })}
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </div>
 
@@ -602,7 +602,7 @@ const Profile = () => {
                         value={profile.portfolioLink || ""}
                         onChange={(e) => setProfile({ ...profile, portfolioLink: e.target.value })}
                         placeholder="votre-portfolio.com"
-                        className="w-full bg-tiro-white"
+                        className="w-full bg-tiro-test"
                       />
                     </div>
 
@@ -613,7 +613,7 @@ const Profile = () => {
                         value={profile.siret || ""}
                         onChange={(e) => setProfile({ ...profile, siret: e.target.value })}
                         placeholder="Votre numéro SIRET"
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </div>
 
@@ -624,7 +624,7 @@ const Profile = () => {
                         value={profile.iban || ""}
                         onChange={(e) => setProfile({ ...profile, iban: e.target.value })}
                         placeholder="Votre IBAN"
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </div>
 
@@ -635,7 +635,7 @@ const Profile = () => {
                         id="address"
                         value={profile.address || ""}
                         onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                        className="min-h-[100px] bg-tiro-white"
+                        className="min-h-[100px] bg-tiro-test"
                       />
                     </div>
 
@@ -659,7 +659,7 @@ const Profile = () => {
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3">
                           <Select value={newSkill} onValueChange={setNewSkill}>
-                            <SelectTrigger className="flex-1 bg-tiro-white">
+                            <SelectTrigger className="flex-1 bg-tiro-test">
                               <SelectValue placeholder="Sélectionner une compétence à ajouter" />
                             </SelectTrigger>
                             <SelectContent>
@@ -689,7 +689,7 @@ const Profile = () => {
                         id="companyName"
                         value={profile.companyName || ""}
                         onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </div>
 
@@ -699,7 +699,7 @@ const Profile = () => {
                         id="companyRole"
                         value={profile.companyRole || ""}
                         onChange={(e) => setProfile({ ...profile, companyRole: e.target.value })}
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </div>
 
@@ -710,7 +710,7 @@ const Profile = () => {
                         value={profile.siret || ""}
                         onChange={(e) => setProfile({ ...profile, siret: e.target.value })}
                         placeholder="Votre numéro SIRET"
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </div>
 
@@ -720,7 +720,7 @@ const Profile = () => {
                         id="companyAddress"
                         value={profile.companyAddress || ""}
                         onChange={(e) => setProfile({ ...profile, companyAddress: e.target.value })}
-                        className="min-h-[100px] bg-tiro-white"
+                        className="min-h-[100px] bg-tiro-test"
                       />
                     </div>
                   </>
