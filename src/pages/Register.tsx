@@ -604,7 +604,7 @@ const Register = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-left">Email</FormLabel>
-                    <FormControl className="bg-tiro-white">
+                    <FormControl className="bg-tiro-test">
                       <Input 
                         placeholder="exemple@email.com" 
                         {...field} 
@@ -622,7 +622,7 @@ const Register = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Mot de passe</FormLabel>
-                    <FormControl className="bg-tiro-white">
+                    <FormControl className="bg-tiro-test">
                       <Input 
                         type="password" 
                         placeholder="******" 
@@ -640,7 +640,7 @@ const Register = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Confirmer mot de passe</FormLabel>
-                    <FormControl className="bg-tiro-white">
+                    <FormControl className="bg-tiro-test">
                       <Input 
                         type="password" 
                         placeholder="******" 
@@ -766,7 +766,7 @@ const Register = () => {
                     <FormControl>
                       <Textarea 
                         placeholder="Cette description sera utilisée pour présenter votre profil à nos clients." 
-                        className="min-h-[100px] bg-tiro-white"
+                        className="min-h-[100px] bg-tiro-test"
                         {...field}
                       />
                     </FormControl>
@@ -785,7 +785,7 @@ const Register = () => {
                       <Input 
                         placeholder="Votre éducation ou formation" 
                         {...field}
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -803,7 +803,7 @@ const Register = () => {
                       <Input 
                         placeholder="votreportfolio.com" 
                         {...field}
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -864,7 +864,7 @@ const Register = () => {
                       <Input 
                         placeholder="John" 
                         {...field} 
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -882,7 +882,7 @@ const Register = () => {
                       <Input 
                         placeholder="Doe" 
                         {...field}
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -900,7 +900,7 @@ const Register = () => {
                       <Input 
                         placeholder="0612345678" 
                         {...field}
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -963,7 +963,7 @@ const Register = () => {
                       <Input 
                         placeholder="John" 
                         {...field}
-                        className="bg-tiro-white" 
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -981,7 +981,7 @@ const Register = () => {
                       <Input 
                         placeholder="Doe" 
                         {...field}
-                        className="bg-tiro-white" 
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -999,7 +999,7 @@ const Register = () => {
                       <Input 
                         placeholder="0612345678" 
                         {...field}
-                        className="bg-tiro-white" 
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -1059,7 +1059,7 @@ const Register = () => {
                       <Input 
                         placeholder="Tiro Inc." 
                         {...field}
-                        className="bg-tiro-white" 
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -1077,7 +1077,7 @@ const Register = () => {
                       <Input 
                         placeholder="CEO, CTO, Fondateur..." 
                         {...field}
-                        className="bg-tiro-white" 
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -1095,7 +1095,7 @@ const Register = () => {
                       <Input 
                         placeholder="12345678901234" 
                         {...field}
-                        className="bg-tiro-white" 
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -1113,7 +1113,7 @@ const Register = () => {
                       <Textarea 
                         placeholder="Adresse complète de l'entreprise" 
                         {...field}
-                        className="bg-tiro-white" 
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -1155,7 +1155,7 @@ const Register = () => {
                       <Input 
                         placeholder="12345678901234" 
                         {...field}
-                        className="bg-tiro-white" 
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />
@@ -1173,7 +1173,7 @@ const Register = () => {
                       <Textarea 
                         placeholder="Votre adresse complète" 
                         {...field}
-                        className="bg-tiro-white"
+                        className="bg-tiro-test"
                       />
                     </FormControl>
                     <FormMessage />

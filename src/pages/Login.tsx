@@ -99,7 +99,7 @@ const Login = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm">Email</FormLabel>
-                      <FormControl className="bg-tiro-white">
+                      <FormControl className="bg-tiro-test">
                         <Input 
                           placeholder="exemple@email.com" 
                           {...field} 
@@ -118,7 +118,7 @@ const Login = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm">Mot de passe</FormLabel>
-                      <FormControl className="bg-tiro-white">
+                      <FormControl className="bg-tiro-test">
                         <Input 
                           type="password" 
                           placeholder="******" 
