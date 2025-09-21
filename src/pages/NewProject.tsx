@@ -368,8 +368,12 @@ const NewProject = () => {
           <div className="space-y-4">
             {/* Pack Information */}
             <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-              <h4 className="font-semibold text-lg text-primary mb-2">{selectedPack?.name}</h4>
-              <p className="text-sm text-muted-foreground mb-3">{packRecap || selectedPack?.description}</p>
+              <h4 className="font-semibold text-lg text-foreground mb-2">{selectedPack?.name}</h4>
+              <div className="text-sm text-muted-foreground mb-3">
+                {(packRecap || selectedPack?.description)?.split(' - ').map((item, index) => (
+                  <div key={index} className="mb-1">{item.trim()}</div>
+                ))}
+              </div>
             </div>
 
             {/* Services for custom quote */}
