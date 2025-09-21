@@ -21,10 +21,11 @@ import {
   AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/sonner";
-import { Users, MessageCircle, Plus, Search, Eye, UserPlus, Filter, GraduationCap } from "lucide-react";
+import { Users, MessageCircle, Plus, Search, Eye, UserPlus, Filter, GraduationCap, ArrowRightLeft } from "lucide-react";
 import { StudentAvailabilityService } from "@/services/student-availability-service";
 import PriceUpdateDialog from "@/components/admin/PriceUpdateDialog";
 import DevisUpdateDialog from "@/components/admin/DevisUpdateDialog";
+import TransferProjectDialog from "@/components/admin/TransferProjectDialog";
 
 interface Project {
   id: string;
@@ -87,6 +88,17 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [transferDialog, setTransferDialog] = useState<{
+    open: boolean;
+    projectId: string;
+    projectTitle: string;
+    currentEntrepreneurName: string;
+  }>({
+    open: false,
+    projectId: "",
+    projectTitle: "",
+    currentEntrepreneurName: "",
+  });
 
   // Redirect if not admin
   useEffect(() => {
@@ -255,6 +267,19 @@ const Admin = () => {
   const clearFilters = () => {
     setSearchQuery("");
     setStatusFilter("");
+  };
+
+  const handleTransferProject = (project: Project) => {
+    setTransferDialog({
+      open: true,
+      projectId: project.id,
+      projectTitle: project.title,
+      currentEntrepreneurName: project.entrepreneur.name,
+    });
+  };
+
+  const handleTransferSuccess = () => {
+    refreshProjects();
   };
 
   const statusOptions = ['Nouveau', 'Propositions', 'Sélection', 'Paiement', 'Actif', 'En cours'];
@@ -496,6 +521,17 @@ const Admin = () => {
                                 currentDevis={project.devis}
                                 onDevisUpdated={refreshProjects}
                               />
+                              
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleTransferProject(project)}
+                                className="flex items-center text-xs h-8"
+                              >
+                                <ArrowRightLeft className="h-3 w-3 mr-1" />
+                                <span className="hidden sm:inline">Transférer</span>
+                                <span className="sm:hidden">Transférer</span>
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -516,6 +552,17 @@ const Admin = () => {
           </CardContent>
         </Card>
       </div>
+      
+      <TransferProjectDialog
+        open={transferDialog.open}
+        onOpenChange={(open) =>
+          setTransferDialog(prev => ({ ...prev, open }))
+        }
+        projectId={transferDialog.projectId}
+        projectTitle={transferDialog.projectTitle}
+        currentEntrepreneurName={transferDialog.currentEntrepreneurName}
+        onTransferSuccess={handleTransferSuccess}
+      />
     </div>
   );
 };
