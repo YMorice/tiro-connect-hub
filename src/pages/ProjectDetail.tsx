@@ -991,7 +991,7 @@ const ProjectDetail = () => {
             <CardHeader className="pb-3 sm:pb-4">
               <CardTitle className="text-base sm:text-lg flex items-center">
                 <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                {project.devis ? 'Devis' : 'Description'}
+                Description du projet
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4 text-left">
@@ -1010,8 +1010,18 @@ const ProjectDetail = () => {
                 )}
               </div>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {project.devis || project.description}
+                {project.description}
               </p>
+              {project.devis && (
+                <>
+                  <div className="w-full h-px bg-border my-4"></div>
+                  <div className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    <strong>Devis :</strong>
+                    <br />
+                    {project.devis}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         )}

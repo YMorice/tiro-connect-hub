@@ -83,10 +83,10 @@ const NewProject = () => {
 
   // Generate auto devis content
   const generateAutoDevis = useCallback(() => {
-    let finalDevis = packRecap || selectedPack?.description || '';
+    let finalDevis = '';
     
     if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
-      finalDevis += '\n\n=== Services sélectionnés ===\n';
+      finalDevis += '=== Services sélectionnés ===\n';
       for (const selection of locationState.selectedServices) {
         const service = services.find(s => s.service_id === selection.serviceId);
         if (service) {
@@ -100,7 +100,7 @@ const NewProject = () => {
     }
     
     return finalDevis;
-  }, [packRecap, selectedPack, locationState?.selectedServices, services, totalPrice]);
+  }, [locationState?.selectedServices, services, totalPrice]);
 
   // Fetch entrepreneur ID and services when component mounts
   useEffect(() => {
@@ -239,11 +239,11 @@ const NewProject = () => {
     try {
       console.log("📝 Preparing project insert with data:");
       
-      // Create devis with pack recap and selected services
-      let finalDevis = packRecap || selectedPack?.description || '';
+      // Create devis without pack description
+      let finalDevis = '';
       
       if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
-        finalDevis += '\n\n--- Devis ---\n';
+        finalDevis += '--- Devis ---\n';
         for (const selection of locationState.selectedServices) {
           const service = services.find(s => s.service_id === selection.serviceId);
           if (service) {
