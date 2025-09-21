@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Download, FileText, Search, Calendar, FolderOpen } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/auth-context';
 import { toast } from '@/components/ui/sonner';
 import AppLayout from '@/components/AppLayout';
@@ -31,11 +31,6 @@ const PersonalDocuments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'proposal' | 'final_proposal'>('all');
 
-  // Create a clean supabase client
-  const supabaseClient = createClient(
-    'https://zkypxeoihxjrmbwqkeyd.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpreXB4ZW9paHhqcm1id3FrZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4MzI0NTgsImV4cCI6MjA2MzQwODQ1OH0.5e-rQR9Q9H_69nhhB50C8DtzbYiBXel9LPr57s1UUpE'
-  );
 
   useEffect(() => {
     if (user?.id) {
@@ -48,7 +43,7 @@ const PersonalDocuments = () => {
       setLoading(true);
       
       // Get documents for the current user
-      const { data: documentsData, error: documentsError } = await supabaseClient
+      const { data: documentsData, error: documentsError } = await supabase
         .from('documents')
         .select('id_document, name, type, link, created_at, updated_at, id_project')
         .eq('id_user', user?.id)
@@ -67,7 +62,7 @@ const PersonalDocuments = () => {
 
       // Get project titles
       const projectIds = documentsData.map(doc => doc.id_project);
-      const { data: projectsData, error: projectsError } = await supabaseClient
+      const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
         .select('id_project, title')
         .in('id_project', projectIds);
@@ -105,7 +100,7 @@ const PersonalDocuments = () => {
       const bucketName = pathParts[pathParts.length - 2];
       const fileName = pathParts[pathParts.length - 1];
 
-      const { data, error } = await supabaseClient.storage
+      const { data, error } = await supabase.storage
         .from(bucketName)
         .download(fileName);
 
