@@ -986,12 +986,12 @@ const ProjectDetail = () => {
 
 
         {/* Project Description Card */}
-        {(project.devis || project.description) && (
+        {(project.description || project.devis) && (
           <Card className="mb-4 sm:mb-6 bg-tiro-white">
             <CardHeader className="pb-3 sm:pb-4">
               <CardTitle className="text-base sm:text-lg flex items-center">
                 <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                {project.devis ? 'Devis' : 'Description'}
+                Description du projet
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4 text-left">
@@ -1009,9 +1009,19 @@ const ProjectDetail = () => {
                   </p>
                 )}
               </div>
-              <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {project.devis || project.description}
-              </p>
+              {project.description && (
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {project.description}
+                </p>
+              )}
+              {project.devis && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h4 className="font-semibold text-gray-800 mb-2">Devis :</h4>
+                  <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {project.devis}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

@@ -83,7 +83,7 @@ const NewProject = () => {
 
   // Generate auto devis content
   const generateAutoDevis = useCallback(() => {
-    let finalDevis = packRecap || selectedPack?.description || '';
+    let finalDevis = packRecap || '';
     
     if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
       finalDevis += '\n\n=== Services sélectionnés ===\n';
@@ -240,7 +240,7 @@ const NewProject = () => {
       console.log("📝 Preparing project insert with data:");
       
       // Create devis with pack recap and selected services
-      let finalDevis = packRecap || selectedPack?.description || '';
+      let finalDevis = packRecap || '';
       
       if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
         finalDevis += '\n\n--- Devis ---\n';
