@@ -22,7 +22,7 @@ export const useConversationMessages = (conversationId: string | null) => {
   }), [user?.id, (user as any)?.role, (user as any)?.pp_link]);
 
   const fetchMessages = useCallback(async (pageNum = 0, reset = true) => {
-    if (!conversationId || !userInfo.id) return;
+    if (!conversationId || !userInfo.id || !userInfo.role) return;
 
     setLoading(true);
     try {
@@ -72,7 +72,7 @@ export const useConversationMessages = (conversationId: string | null) => {
     } finally {
       setLoading(false);
     }
-  }, [conversationId, userInfo.id, refreshConversations]);
+  }, [conversationId, userInfo.id, userInfo.role, refreshConversations]);
 
   const loadMoreMessages = useCallback(() => {
     if (!loading && hasMore) {
@@ -81,7 +81,7 @@ export const useConversationMessages = (conversationId: string | null) => {
   }, [fetchMessages, loading, hasMore, page]);
 
   const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim() || !conversationId || !userInfo.id || sending) return false;
+    if (!content.trim() || !conversationId || !userInfo.id || !userInfo.role || sending) return false;
 
     setSending(true);
     try {
@@ -132,7 +132,7 @@ export const useConversationMessages = (conversationId: string | null) => {
     } finally {
       setSending(false);
     }
-  }, [conversationId, userInfo.id, sending]);
+  }, [conversationId, userInfo.id, userInfo.role, sending]);
 
   // Reset when conversation changes
   useEffect(() => {
@@ -205,7 +205,7 @@ export const useConversationMessages = (conversationId: string | null) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, userInfo.id]);
+  }, [conversationId, userInfo.id, userInfo.role]);
 
   return {
     messages,

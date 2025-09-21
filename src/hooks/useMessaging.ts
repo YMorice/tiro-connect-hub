@@ -41,7 +41,10 @@ export const useMessaging = () => {
   }), [user?.id, (user as any)?.role, (user as any)?.pp_link]);
 
   const fetchConversations = useCallback(async () => {
-    if (!userInfo.id) return;
+    if (!userInfo.id || !userInfo.role) {
+      console.log('Waiting for user profile to load completely...');
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -95,6 +98,12 @@ export const useMessaging = () => {
             .eq('projects.selected_student', studentData.id_student)
             .in('projects.status', ['STEP5', 'STEP6', 'completed']);
         }
+      } else {
+        // Security: If role is not recognized, don't return any conversations
+        console.error('Invalid user role for messaging:', userInfo.role);
+        setConversations([]);
+        setLoading(false);
+        return;
       }
 
       const { data: projectConversations } = await projectQuery;
@@ -299,7 +308,7 @@ export const useMessaging = () => {
 
   // Setup real-time updates
   useEffect(() => {
-    if (!userInfo.id) return;
+    if (!userInfo.id || !userInfo.role) return;
 
     fetchConversations();
 

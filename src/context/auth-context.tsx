@@ -119,9 +119,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             }, 0);
           } else {
-            // For token refresh and other events, use basic user data
-            setUser(session.user as ExtendedUser);
-            if (mounted) setLoading(false);
+            // For token refresh and other events, still fetch profile data for security
+            setTimeout(async () => {
+              if (!mounted) return;
+              
+              const profileData = await fetchUserProfile(session.user.id);
+              
+              if (mounted) {
+                const enhancedUser: ExtendedUser = {
+                  ...session.user,
+                  ...profileData
+                };
+                setUser(enhancedUser);
+                setLoading(false);
+              }
+            }, 0);
           }
         }
       }
