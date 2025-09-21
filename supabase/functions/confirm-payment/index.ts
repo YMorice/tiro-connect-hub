@@ -117,7 +117,7 @@ serve(async (req) => {
               description: project.description,
               price: project.price,
               deadline: project.deadline,
-              status: "STEP5",
+              devis: project.devis,
               created_at: project.created_at,
               updated_at: new Date().toISOString(),
             },
