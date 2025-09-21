@@ -135,19 +135,19 @@ const Dashboard = () => {
 
   const getStatusColor = (status: string) => {
     const statusColorMap: { [key: string]: string } = {
-      'STEP1': 'bg-blue-100 text-blue-700',
-      'STEP2': 'bg-yellow-100 text-yellow-700',
+      'STEP1': "bg-yellow-100 text-yellow-700",
+      'STEP2': "bg-orange-100 text-orange-700",
       'STEP3': 'bg-purple-100 text-purple-700', 
-      'STEP4': 'bg-orange-100 text-orange-700',
-      'STEP5': 'bg-indigo-100 text-indigo-700',
-      'STEP6': 'bg-cyan-100 text-cyan-700',
-      'completed': 'bg-green-100 text-green-700',
-      'new': 'bg-blue-100 text-blue-700',
-      'proposals': 'bg-yellow-100 text-yellow-700',
+      'STEP4': "bg-red-100 text-red-700",
+      'STEP5': "bg-blue-100 text-blue-700",
+      'STEP6': "bg-green-100 text-green-700",
+      'completed': "bg-green-100 text-green-700",
+      'new': "bg-yellow-100 text-yellow-700",
+      'proposals': "bg-orange-100 text-orange-700",
       'selection': 'bg-purple-100 text-purple-700',
-      'payment': 'bg-orange-100 text-orange-700', 
-      'active': 'bg-indigo-100 text-indigo-700',
-      'in progress': 'bg-cyan-100 text-cyan-700'
+      'payment': "bg-red-100 text-red-700", 
+      'active': "bg-blue-100 text-blue-700",
+      'in progress':  "bg-blue-100 text-blue-700"
     };
     return statusColorMap[status?.toLowerCase()] || 'bg-gray-100 text-gray-700';
   };
