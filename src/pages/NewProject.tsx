@@ -232,10 +232,23 @@ const NewProject = () => {
     try {
       console.log("📝 Preparing project insert with data:");
       
-      // Create devis based on pack type
+      // Compute pack info and create devis based on pack type
+      const packName = (packData as any)?.name ?? selectedPack?.name;
+      const packRecapFinal = (packData as any)?.recap ?? packRecap;
+      const isCustom = (packName || '').toLowerCase() === 'devis personnalisé';
+
+      // Ensure price is set for standard packs even if first fetch failed
+      if (!isCustom && projectPrice == null) {
+        if ((packData as any)?.price != null) {
+          projectPrice = (packData as any).price;
+        } else if (packPrice != null) {
+          projectPrice = packPrice;
+        }
+      }
+
       let finalDevis = '';
-      
-      if (packData && packData.name === 'Devis personnalisé') {
+
+      if (isCustom) {
         console.log("📝 Processing custom quote devis...");
         // For custom quote, use selected services
         if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
@@ -250,13 +263,13 @@ const NewProject = () => {
           }
         }
         console.log("📝 Generated devis for custom quote:", finalDevis);
-      } else if (packData) {
-        console.log("📝 Processing standard pack devis...");
-        // For standard packs, use pack title + recap
-        finalDevis = `${packData.name}${packData.recap ? '\n\n' + packData.recap : ''}`;
-        console.log("📝 Generated devis for standard pack:", finalDevis);
       } else {
-        console.log("⚠️ No pack data found, devis will be empty");
+        console.log("📝 Processing standard pack devis with fallback...");
+        // For standard packs, use pack title + recap with fallbacks from selectedPack/loaded recap
+        const namePart = packName ? String(packName) : '';
+        const recapPart = packRecapFinal ? `\n\n${packRecapFinal}` : '';
+        finalDevis = `${namePart}${recapPart}`.trim();
+        console.log("📝 Generated devis for standard pack:", finalDevis);
       }
       
       console.log("📝 Final devis value:", finalDevis);
