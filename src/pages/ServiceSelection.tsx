@@ -324,7 +324,7 @@ const ServiceSelection = () => {
                           (() => {
                             const extraServices = getExtraServicesForService(service.service_id);
                             return extraServices.length > 0 ? (
-                              <div className="border-t border-border bg-muted/30 p-4">
+                              <div className="border-t border-border bg-background p-4">
                                 <h4 className="text-sm font-medium mb-3 text-foreground">Services supplémentaires :</h4>
                                 <div className="space-y-2">
                                   {extraServices.map((extraService) => {
@@ -335,7 +335,9 @@ const ServiceSelection = () => {
                                       <div 
                                         key={extraService.service_id}
                                         className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
-                                          isExtraSelected ? 'border-tiro-primary bg-tiro-primary/10' : 'border-border hover:border-tiro-primary/50'
+                                          isExtraSelected 
+                                            ? 'border-tiro-primary bg-tiro-primary/5 hover:bg-tiro-primary/10' 
+                                            : 'border-border bg-card hover:border-tiro-primary/50 hover:bg-accent/50'
                                         }`}
                                         onClick={(e) => {
                                           e.stopPropagation();
