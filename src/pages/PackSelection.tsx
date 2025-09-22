@@ -106,7 +106,7 @@ useEffect(() => {
         </p>
       </div>
 
-      <Card className="w-full mb-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+      <Card className="w-full mb-6 bg-gradient-to-r from-blue/5 to-blue/10 border-blue/20">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
