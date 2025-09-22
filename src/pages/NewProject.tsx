@@ -172,29 +172,46 @@ const NewProject = () => {
       return;
     }
 
-    // Determine project price - use selected services total or pack price
+    // Determine project price and get pack data in one request
     let projectPrice = null;
-    console.log("💰 Determining project price...");
+    let packData = null;
+    console.log("💰 Determining project price and pack data...");
     
     if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
       projectPrice = locationState.totalPrice;
       console.log("💰 Using services total price:", projectPrice);
-    } else {
-      console.log("💰 Fetching pack price for pack ID:", values.packId);
-      // Get the pack details to determine price
-      const { data: packData, error: packError } = await supabase
+      
+      // Still need pack data for devis generation
+      const { data: packDataResult, error: packError } = await supabase
         .from('project_packs')
-        .select('price, name')
+        .select('name, recap, price')
         .eq('id_pack', values.packId)
         .maybeSingle();
 
-      console.log("💰 Pack query result:", { packData, packError });
+      if (packError) {
+        console.error("❌ Error fetching pack:", packError);
+        throw new Error(`Failed to fetch pack details: ${packError.message}`);
+      }
+      
+      packData = packDataResult;
+    } else {
+      console.log("💰 Fetching pack data for pack ID:", values.packId);
+      // Get the pack details to determine price and devis
+      const { data: packDataResult, error: packError } = await supabase
+        .from('project_packs')
+        .select('price, name, recap')
+        .eq('id_pack', values.packId)
+        .maybeSingle();
+
+      console.log("💰 Pack query result:", { packDataResult, packError });
 
       if (packError) {
         console.error("❌ Error fetching pack:", packError);
         throw new Error(`Failed to fetch pack details: ${packError.message}`);
       }
 
+      packData = packDataResult;
+      
       if (packData && packData.name !== 'Devis personnalisé') {
         projectPrice = packData.price;
         console.log("💰 Using pack price:", projectPrice);
@@ -202,6 +219,8 @@ const NewProject = () => {
         console.log("💰 Custom quote - no price set");
       }
     }
+    
+    console.log("📦 Final pack data:", packData);
     
     setIsSubmitting(true);
     
@@ -211,20 +230,8 @@ const NewProject = () => {
       // Create devis based on pack type
       let finalDevis = '';
       
-      // Get pack data to determine if it's custom quote or standard pack
-      const { data: packData, error: packError } = await supabase
-        .from('project_packs')
-        .select('name, recap')
-        .eq('id_pack', values.packId)
-        .maybeSingle();
-
-      if (packError) {
-        console.error("❌ Error fetching pack for devis:", packError);
-      }
-      
-      console.log("📦 Pack data for devis:", packData);
-      
       if (packData && packData.name === 'Devis personnalisé') {
+        console.log("📝 Processing custom quote devis...");
         // For custom quote, use selected services
         if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
           for (const selection of locationState.selectedServices) {
@@ -237,10 +244,14 @@ const NewProject = () => {
             }
           }
         }
+        console.log("📝 Generated devis for custom quote:", finalDevis);
       } else if (packData) {
+        console.log("📝 Processing standard pack devis...");
         // For standard packs, use pack title + recap
-        finalDevis = `${packData.name}\n\n${packData.recap || ''}`;
+        finalDevis = `${packData.name}${packData.recap ? '\n\n' + packData.recap : ''}`;
         console.log("📝 Generated devis for standard pack:", finalDevis);
+      } else {
+        console.log("⚠️ No pack data found, devis will be empty");
       }
       
       console.log("📝 Final devis value:", finalDevis);
