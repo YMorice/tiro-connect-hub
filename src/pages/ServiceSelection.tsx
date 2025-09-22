@@ -69,6 +69,7 @@ const ServiceSelection = () => {
           .order('rank', { ascending: true });
 
         if (servicesError) throw servicesError;
+        console.log("Services data from database:", servicesData);
         setServices(servicesData || []);
 
         // Fetch entrepreneur ID
