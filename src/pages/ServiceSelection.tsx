@@ -264,10 +264,10 @@ const ServiceSelection = () => {
                     return (
                       <Card 
                         key={service.service_id} 
-                        className={`flex flex-col h-full cursor-pointer transition-all duration-200 ${
+                        className={`group flex flex-col h-full cursor-pointer transition-all duration-200 ${
                           isSelected 
-                            ? 'border-2 border-tiro-primary hover:bg-tiro-gray2/10' 
-                            : 'hover:bg-tiro-gray2/10'
+                            ? 'border-2 border-tiro-primary group-hover:bg-tiro-gray2/10' 
+                            : 'group-hover:bg-tiro-gray2/10'
                         }`}
                         onClick={() => handleServiceToggle(service, !isSelected)}
                       >
@@ -324,7 +324,7 @@ const ServiceSelection = () => {
                           (() => {
                             const extraServices = getExtraServicesForService(service.service_id);
                             return extraServices.length > 0 ? (
-                              <div className="border-t border-border bg-tiro-white p-4">
+                              <div className="border-t border-border bg-tiro-white group-hover:bg-tiro-gray2/5 p-4 transition-all duration-200">
                                 <h4 className="text-sm font-medium mb-3 text-foreground">Services supplémentaires :</h4>
                                 <div className="space-y-2">
                                   {extraServices.map((extraService) => {
