@@ -15,6 +15,7 @@ interface Service {
   description: string | null;
   price: string;
   rank: number;
+  type?: string | null;
 }
 
 interface ProjectPack {
@@ -219,71 +220,91 @@ const ServiceSelection = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:items-start">
         {/* Services List */}
         <div className="lg:col-span-3">
-          <div className="grid grid-cols-1 gap-4">
-            {services.map((service) => {
-              const isSelected = selectedServices[service.service_id];
-              const quantity = isSelected?.quantity || 0;
+          <div className="space-y-8">
+            {/* Group services by type */}
+            {Object.entries(
+              services.reduce((acc, service) => {
+                const type = service.type || 'Autres';
+                if (!acc[type]) acc[type] = [];
+                acc[type].push(service);
+                return acc;
+              }, {} as Record<string, Service[]>)
+            ).map(([type, typeServices]) => (
+              <div key={type} className="space-y-4">
+                {/* Type header */}
+                <div className="border-b border-border pb-2">
+                  <h2 className="text-xl font-semibold text-foreground">{type}</h2>
+                </div>
+                
+                {/* Services of this type */}
+                <div className="grid grid-cols-1 gap-4">
+                  {typeServices.map((service) => {
+                    const isSelected = selectedServices[service.service_id];
+                    const quantity = isSelected?.quantity || 0;
 
-              return (
-                <Card 
-                  key={service.service_id} 
-                  className={`flex flex-col h-full cursor-pointer transition-all duration-200 ${
-                    isSelected 
-                      ? 'border-2 border-tiro-primary hover:bg-tiro-gray2/10' 
-                      : 'hover:bg-tiro-gray2/10'
-                  }`}
-                  onClick={() => handleServiceToggle(service, !isSelected)}
-                >
-                  <CardHeader className="flex-shrink-0 p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">
-                          {service.title}
-                        </CardTitle>
-                        {service.description && (
-                          <CardDescription className="text-sm mt-1 whitespace-pre-line">
-                            {service.description}
-                          </CardDescription>
-                        )}
-                      </div>
-                      <div className="ml-4 text-right">
-                        <p className="font-semibold text-primary">{service.price}</p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="flex-grow p-4 pt-0">
-                    <div className="flex items-center justify-end">
-                      {isSelected && (
-                        <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleQuantityChange(service.service_id, -1)}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          
-                          <span className="w-8 text-center font-medium">
-                            {quantity}
-                          </span>
-                          
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleQuantityChange(service.service_id, 1)}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                    return (
+                      <Card 
+                        key={service.service_id} 
+                        className={`flex flex-col h-full cursor-pointer transition-all duration-200 ${
+                          isSelected 
+                            ? 'border-2 border-tiro-primary hover:bg-tiro-gray2/10' 
+                            : 'hover:bg-tiro-gray2/10'
+                        }`}
+                        onClick={() => handleServiceToggle(service, !isSelected)}
+                      >
+                        <CardHeader className="flex-shrink-0 p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <CardTitle className="text-lg">
+                                {service.title}
+                              </CardTitle>
+                              {service.description && (
+                                <CardDescription className="text-sm mt-1 whitespace-pre-line">
+                                  {service.description}
+                                </CardDescription>
+                              )}
+                            </div>
+                            <div className="ml-4 text-right">
+                              <p className="font-semibold text-primary">{service.price}</p>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        
+                        <CardContent className="flex-grow p-4 pt-0">
+                          <div className="flex items-center justify-end">
+                            {isSelected && (
+                              <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleQuantityChange(service.service_id, -1)}
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                
+                                <span className="w-8 text-center font-medium">
+                                  {quantity}
+                                </span>
+                                
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleQuantityChange(service.service_id, 1)}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
