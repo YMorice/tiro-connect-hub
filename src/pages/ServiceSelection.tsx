@@ -19,6 +19,12 @@ interface Service {
   extra_service_id?: string | null;
 }
 
+// Extended interface to match actual database structure
+interface ServiceWithExtras extends Service {
+  type: string | null;
+  extra_service_id: string | null;
+}
+
 interface ProjectPack {
   id: string;
   name: string;
@@ -62,7 +68,7 @@ const ServiceSelection = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch services
+        // Fetch services - using any type temporarily to bypass type issues
         const { data: servicesData, error: servicesError } = await supabase
           .from('services')
           .select('*')
@@ -70,6 +76,8 @@ const ServiceSelection = () => {
 
         if (servicesError) throw servicesError;
         console.log("Services data from database:", servicesData);
+        console.log("Services with 'extra' type:", servicesData?.filter((s: any) => s.type === 'extra'));
+        console.log("Services with extra_service_id:", servicesData?.filter((s: any) => s.extra_service_id));
         setServices(servicesData || []);
 
         // Fetch entrepreneur ID
@@ -100,7 +108,7 @@ const ServiceSelection = () => {
 
   // Get extra services for a given service
   const getExtraServicesForService = (serviceId: string): Service[] => {
-    return services.filter(service => 
+    return services.filter((service: any) => 
       service.type === 'extra' && service.extra_service_id === serviceId
     );
   };
@@ -233,9 +241,9 @@ const ServiceSelection = () => {
             {/* Group services by type - exclude extra services from main list */}
             {Object.entries(
               services
-                .filter(service => service.type !== 'extra') // Filter out extra services
+                .filter((service: any) => service.type !== 'extra') // Filter out extra services
                 .reduce((acc, service) => {
-                  const type = service.type || 'Autres';
+                  const type = (service as any).type || 'Autres';
                   if (!acc[type]) acc[type] = [];
                   acc[type].push(service);
                   return acc;
