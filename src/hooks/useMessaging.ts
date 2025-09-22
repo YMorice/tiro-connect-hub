@@ -98,6 +98,9 @@ export const useMessaging = () => {
             .eq('projects.selected_student', studentData.id_student)
             .in('projects.status', ['STEP5', 'STEP6', 'completed']);
         }
+      } else if (userInfo.role === 'admin') {
+        // Admin can see all project conversations
+        // No additional filtering needed
       } else {
         // Security: If role is not recognized, don't return any conversations
         console.error('Invalid user role for messaging:', userInfo.role);
