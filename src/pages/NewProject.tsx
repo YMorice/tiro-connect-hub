@@ -208,19 +208,36 @@ const NewProject = () => {
     try {
       console.log("📝 Preparing project insert with data:");
       
-      // Create devis without pack description
+      // Create devis based on pack type
       let finalDevis = '';
       
-      if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
-        for (const selection of locationState.selectedServices) {
-          const service = services.find(s => s.service_id === selection.serviceId);
-          if (service) {
-            finalDevis += `• ${service.title} - Quantité: ${selection.quantity}\n`;
-            if (service.description) {
-              finalDevis += `  ${service.description}\n`;
+      // Get pack data to determine if it's custom quote or standard pack
+      const { data: packData, error: packError } = await supabase
+        .from('project_packs')
+        .select('name, recap')
+        .eq('id_pack', values.packId)
+        .maybeSingle();
+
+      if (packError) {
+        console.error("❌ Error fetching pack for devis:", packError);
+      }
+      
+      if (packData && packData.name === 'Devis personnalisé') {
+        // For custom quote, use selected services
+        if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
+          for (const selection of locationState.selectedServices) {
+            const service = services.find(s => s.service_id === selection.serviceId);
+            if (service) {
+              finalDevis += `• ${service.title} - Quantité: ${selection.quantity}\n`;
+              if (service.description) {
+                finalDevis += `  ${service.description}\n`;
+              }
             }
           }
         }
+      } else if (packData) {
+        // For standard packs, use pack title + recap
+        finalDevis = `${packData.name}\n\n${packData.recap || ''}`;
       }
       
       const projectInsertData = {
