@@ -106,11 +106,11 @@ useEffect(() => {
         </p>
       </div>
 
-      <Card className="w-full mb-6 bg-gradient-to-r from-blue/5 to-blue/10 border-blue/20">
+      <Card className="w-full mb-6 bg-blue/10 border-blue/30">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-lg mb-2">Besoin d'accompagnement ?</h3>
+              <h3 className="font-semibold text-lg mb-2 text-blue">Besoin d'accompagnement ?</h3>
               <p className="text-muted-foreground">
                 Si vous avez la moindre question sur votre projet, notre équipe est là pour vous accompagner.
               </p>
@@ -120,7 +120,7 @@ useEffect(() => {
             </div>
             <Button 
               onClick={() => window.open('https://tiro.agency/reserver-meeting', '_blank')}
-              className="ml-4 bg-primary hover:bg-primary/90 whitespace-nowrap"
+              className="bg-blue hover:bg-blue/90 text-blue-foreground ml-4 whitespace-nowrap"
             >
               Réserver un appel
             </Button>

@@ -194,11 +194,11 @@ const ServiceSelection = () => {
         </p>
       </div>
 
-      <Card className="w-full mb-6 bg-gradient-to-r from-blue/5 to-blue/10 border-blue/20">
+      <Card className="w-full mb-6 bg-blue/10 border-blue/30">
         <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-2">Besoin d'accompagnement ?</h3>
+              <h3 className="font-semibold text-lg mb-2 text-blue">Besoin d'accompagnement ?</h3>
               <p className="text-muted-foreground text-sm sm:text-base">
                 Si vous avez la moindre question sur votre projet, notre équipe est là pour vous accompagner.
               </p>
@@ -208,7 +208,7 @@ const ServiceSelection = () => {
             </div>
             <Button 
               onClick={() => window.open('https://tiro.agency/reserver-meeting', '_blank')}
-              className="bg-primary hover:bg-primary/90 w-full sm:w-auto sm:ml-4 sm:whitespace-nowrap"
+              className="bg-blue hover:bg-blue/90 text-blue-foreground w-full sm:w-auto sm:ml-4 sm:whitespace-nowrap"
             >
               Réserver un appel
             </Button>
