@@ -332,13 +332,13 @@ const ServiceSelection = () => {
                                     const extraQuantity = isExtraSelected?.quantity || 0;
                                     
                                     return (
-                                      <div 
-                                        key={extraService.service_id}
-                                        className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
-                                          isExtraSelected 
-                                            ? 'border-tiro-primary bg-tiro-primary/5 hover:bg-tiro-primary/10' 
-                                            : 'border-border bg-card hover:border-tiro-primary/50 hover:bg-accent/50'
-                                        }`}
+                                       <div 
+                                         key={extraService.service_id}
+                                         className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
+                                           isExtraSelected 
+                                             ? 'border-tiro-primary bg-tiro-primary/5 hover:bg-tiro-primary/15 group-hover:bg-tiro-gray2/10' 
+                                             : 'border-border bg-card hover:bg-tiro-gray2/20 group-hover:bg-tiro-gray2/10'
+                                         }`}
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           handleServiceToggle(extraService, !isExtraSelected);
