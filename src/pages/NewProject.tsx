@@ -145,14 +145,17 @@ const NewProject = () => {
     fetchData();
   }, [user, selectedServices, selectedPack?.id]);
 
-  // Redirect to pack selection if no pack is selected
+  // Ensure packId is set in form and redirect if missing
   React.useEffect(() => {
     if (!selectedPack) {
-      navigate("/pack-selection", {
-        replace: true
-      });
+      navigate("/pack-selection", { replace: true });
+      return;
     }
-  }, [selectedPack, navigate]);
+    // Keep form packId in sync with selected pack
+    if (selectedPack.id) {
+      form.setValue('packId', selectedPack.id, { shouldValidate: true, shouldDirty: false });
+    }
+  }, [selectedPack, navigate, form]);
 
   const onSubmit = async (values: FormValues) => {
     console.log("🚀 onSubmit started with values:", values);
@@ -172,6 +175,8 @@ const NewProject = () => {
       return;
     }
 
+    const effectivePackId = values.packId || selectedPack?.id || "";
+
     // Determine project price and get pack data in one request
     let projectPrice = null;
     let packData = null;
@@ -185,7 +190,7 @@ const NewProject = () => {
       const { data: packDataResult, error: packError } = await supabase
         .from('project_packs')
         .select('name, recap, price')
-        .eq('id_pack', values.packId)
+        .eq('id_pack', effectivePackId)
         .maybeSingle();
 
       if (packError) {
@@ -200,7 +205,7 @@ const NewProject = () => {
       const { data: packDataResult, error: packError } = await supabase
         .from('project_packs')
         .select('price, name, recap')
-        .eq('id_pack', values.packId)
+        .eq('id_pack', effectivePackId)
         .maybeSingle();
 
       console.log("💰 Pack query result:", { packDataResult, packError });
@@ -260,7 +265,7 @@ const NewProject = () => {
         title: values.title,
         description: values.description,
         id_entrepreneur: entrepreneurId,
-        id_pack: values.packId,
+        id_pack: effectivePackId,
         status: 'STEP1',
         deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null,
         price: projectPrice,
