@@ -198,7 +198,7 @@ const ServiceSelection = () => {
         <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-2 text-blue">Besoin d'accompagnement ?</h3>
+              <h3 className="font-semibold text-lg mb-2">Besoin d'accompagnement ?</h3>
               <p className="text-muted-foreground text-sm sm:text-base">
                 Si vous avez la moindre question sur votre projet, notre équipe est là pour vous accompagner.
               </p>

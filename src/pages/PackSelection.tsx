@@ -110,7 +110,7 @@ useEffect(() => {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-lg mb-2 text-blue">Besoin d'accompagnement ?</h3>
+              <h3 className="font-semibold text-lg mb-2">Besoin d'accompagnement ?</h3>
               <p className="text-muted-foreground">
                 Si vous avez la moindre question sur votre projet, notre équipe est là pour vous accompagner.
               </p>
