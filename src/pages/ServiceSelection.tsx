@@ -16,6 +16,7 @@ interface Service {
   price: string;
   rank: number;
   type?: string | null;
+  extra_service_id?: string | null;
 }
 
 interface ProjectPack {
@@ -95,6 +96,13 @@ const ServiceSelection = () => {
 
     fetchData();
   }, [user]);
+
+  // Get extra services for a given service
+  const getExtraServicesForService = (serviceId: string): Service[] => {
+    return services.filter(service => 
+      service.type === 'extra' && service.extra_service_id === serviceId
+    );
+  };
 
   // Parse price from string (remove € and "à partir de" text)
   const parsePrice = (priceString: string): number => {
@@ -221,14 +229,16 @@ const ServiceSelection = () => {
         {/* Services List */}
         <div className="lg:col-span-3">
           <div className="space-y-8">
-            {/* Group services by type */}
+            {/* Group services by type - exclude extra services from main list */}
             {Object.entries(
-              services.reduce((acc, service) => {
-                const type = service.type || 'Autres';
-                if (!acc[type]) acc[type] = [];
-                acc[type].push(service);
-                return acc;
-              }, {} as Record<string, Service[]>)
+              services
+                .filter(service => service.type !== 'extra') // Filter out extra services
+                .reduce((acc, service) => {
+                  const type = service.type || 'Autres';
+                  if (!acc[type]) acc[type] = [];
+                  acc[type].push(service);
+                  return acc;
+                }, {} as Record<string, Service[]>)
             ).map(([type, typeServices]) => (
               <div key={type} className="space-y-4">
                 {/* Type header */}
@@ -299,6 +309,70 @@ const ServiceSelection = () => {
                             )}
                           </div>
                         </CardContent>
+                        
+                        {/* Extra services section - only show when main service is selected */}
+                        {isSelected && (
+                          (() => {
+                            const extraServices = getExtraServicesForService(service.service_id);
+                            return extraServices.length > 0 ? (
+                              <div className="border-t border-border bg-muted/30 p-4">
+                                <h4 className="text-sm font-medium mb-3 text-foreground">Services supplémentaires :</h4>
+                                <div className="space-y-2">
+                                  {extraServices.map((extraService) => {
+                                    const isExtraSelected = selectedServices[extraService.service_id];
+                                    const extraQuantity = isExtraSelected?.quantity || 0;
+                                    
+                                    return (
+                                      <div 
+                                        key={extraService.service_id}
+                                        className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
+                                          isExtraSelected ? 'border-tiro-primary bg-tiro-primary/10' : 'border-border hover:border-tiro-primary/50'
+                                        }`}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleServiceToggle(extraService, !isExtraSelected);
+                                        }}
+                                      >
+                                        <div className="flex-1">
+                                          <p className="text-sm font-medium">{extraService.title}</p>
+                                          {extraService.description && (
+                                            <p className="text-xs text-muted-foreground mt-1">{extraService.description}</p>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                          <span className="text-sm font-medium text-primary">{extraService.price}</span>
+                                          {isExtraSelected && (
+                                            <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
+                                              <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-6 w-6"
+                                                onClick={() => handleQuantityChange(extraService.service_id, -1)}
+                                              >
+                                                <Minus className="h-3 w-3" />
+                                              </Button>
+                                              <span className="w-6 text-center text-xs font-medium">
+                                                {extraQuantity}
+                                              </span>
+                                              <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-6 w-6"
+                                                onClick={() => handleQuantityChange(extraService.service_id, 1)}
+                                              >
+                                                <Plus className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ) : null;
+                          })()
+                        )}
                       </Card>
                     );
                   })}
