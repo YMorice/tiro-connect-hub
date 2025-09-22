@@ -222,6 +222,8 @@ const NewProject = () => {
         console.error("❌ Error fetching pack for devis:", packError);
       }
       
+      console.log("📦 Pack data for devis:", packData);
+      
       if (packData && packData.name === 'Devis personnalisé') {
         // For custom quote, use selected services
         if (locationState?.selectedServices && locationState.selectedServices.length > 0) {
@@ -238,7 +240,10 @@ const NewProject = () => {
       } else if (packData) {
         // For standard packs, use pack title + recap
         finalDevis = `${packData.name}\n\n${packData.recap || ''}`;
+        console.log("📝 Generated devis for standard pack:", finalDevis);
       }
+      
+      console.log("📝 Final devis value:", finalDevis);
       
       const projectInsertData = {
         title: values.title,
