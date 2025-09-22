@@ -266,8 +266,8 @@ const ServiceSelection = () => {
                         key={service.service_id} 
                         className={`group flex flex-col h-full cursor-pointer transition-all duration-200 ${
                           isSelected 
-                            ? 'border-2 border-tiro-primary hover:border-tiro-primary/20' 
-                            : 'hover:border-tiro-primary/20'
+                            ? 'border-2 border-tiro-primary hover:border-tiro-primary/40' 
+                            : 'hover:border-tiro-primary/40'
                         }`}
                         onClick={() => handleServiceToggle(service, !isSelected)}
                       >
@@ -334,7 +334,7 @@ const ServiceSelection = () => {
                                     return (
                                        <div 
                                          key={extraService.service_id}
-                                         className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
+                                         className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:scale-105 ${
                                            isExtraSelected 
                                              ? 'border-tiro-primary bg-tiro-primary/5 group-hover:bg-tiro-gray2/10 hover:bg-tiro-primary/15' 
                                              : 'border-border bg-card group-hover:bg-tiro-gray2/10 hover:bg-tiro-gray2/20'
